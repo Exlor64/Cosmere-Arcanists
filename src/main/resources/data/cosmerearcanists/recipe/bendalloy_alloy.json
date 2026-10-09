@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "cosmerearcanists:lead_ingot"
+    },
+    {
+      "item": "cosmerearcanists:tin_ingot"
+    },
+    {
+      "item": "cosmerearcanists:cadmium_ingot"
+    }
+  ],
+  "result": {
+    "id": "cosmerearcanists:bendalloy_ingot",
+    "count": 3
+  },
+  "neoforge:conditions": [
+    {
+      "type": "cosmerearcanists:alloy_enabled",
+      "metal": "bendalloy"
+    }
+  ]
+}

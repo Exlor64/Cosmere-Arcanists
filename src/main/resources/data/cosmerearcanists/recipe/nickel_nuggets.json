@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "cosmerearcanists:nickel_ingot"
+    }
+  ],
+  "result": {
+    "id": "cosmerearcanists:nickel_nugget",
+    "count": 9
+  }
+}

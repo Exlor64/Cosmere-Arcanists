@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": {
+      "item": "cosmerearcanists:zinc_nugget"
+    }
+  },
+  "result": {
+    "id": "cosmerearcanists:zinc_ingot",
+    "count": 1
+  }
+}

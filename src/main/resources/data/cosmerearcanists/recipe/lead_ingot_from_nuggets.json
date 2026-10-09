@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": {
+      "item": "cosmerearcanists:lead_nugget"
+    }
+  },
+  "result": {
+    "id": "cosmerearcanists:lead_ingot",
+    "count": 1
+  }
+}

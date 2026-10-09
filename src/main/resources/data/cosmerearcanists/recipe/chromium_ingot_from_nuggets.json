@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": {
+      "item": "cosmerearcanists:chromium_nugget"
+    }
+  },
+  "result": {
+    "id": "cosmerearcanists:chromium_ingot",
+    "count": 1
+  }
+}

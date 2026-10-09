@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "cosmerearcanists:lead_ingot"
+    }
+  ],
+  "result": {
+    "id": "cosmerearcanists:lead_nugget",
+    "count": 9
+  }
+}

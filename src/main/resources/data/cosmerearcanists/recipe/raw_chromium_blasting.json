@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "ingredient": {
+    "item": "cosmerearcanists:raw_chromium"
+  },
+  "result": {
+    "id": "cosmerearcanists:chromium_ingot"
+  },
+  "experience": 0.7,
+  "cookingtime": 100
+}

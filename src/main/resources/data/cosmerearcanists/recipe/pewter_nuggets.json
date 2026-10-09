@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "cosmerearcanists:pewter_ingot"
+    }
+  ],
+  "result": {
+    "id": "cosmerearcanists:pewter_nugget",
+    "count": 9
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "replace": false,
+  "values": [
+    "cosmerearcanists:tin_ore",
+    "cosmerearcanists:deepslate_tin_ore",
+    "cosmerearcanists:zinc_ore",
+    "cosmerearcanists:deepslate_zinc_ore",
+    "cosmerearcanists:aluminum_ore",
+    "cosmerearcanists:deepslate_aluminum_ore",
+    "cosmerearcanists:chromium_ore",
+    "cosmerearcanists:deepslate_chromium_ore",
+    "cosmerearcanists:cadmium_ore",
+    "cosmerearcanists:deepslate_cadmium_ore",
+    "cosmerearcanists:lead_ore",
+    "cosmerearcanists:deepslate_lead_ore",
+    "cosmerearcanists:silver_ore",
+    "cosmerearcanists:deepslate_silver_ore",
+    "cosmerearcanists:nickel_ore",
+    "cosmerearcanists:deepslate_nickel_ore"
+  ]
+}

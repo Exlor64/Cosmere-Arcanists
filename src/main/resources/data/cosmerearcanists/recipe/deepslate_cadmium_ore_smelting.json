@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "ingredient": {
+    "item": "cosmerearcanists:deepslate_cadmium_ore"
+  },
+  "result": {
+    "id": "cosmerearcanists:cadmium_ingot"
+  },
+  "experience": 0.7,
+  "cookingtime": 200
+}

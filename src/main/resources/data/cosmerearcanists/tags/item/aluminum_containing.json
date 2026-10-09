@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "cosmerearcanists:aluminum_ingot",
+    "cosmerearcanists:aluminum_nugget",
+    "cosmerearcanists:duralumin_ingot",
+    "cosmerearcanists:duralumin_nugget",
+    "cosmerearcanists:raw_aluminum",
+    "cosmerearcanists:aluminum_ore",
+    "cosmerearcanists:deepslate_aluminum_ore"
+  ]
+}

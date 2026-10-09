@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:copper_ingot"
+    },
+    {
+      "item": "cosmerearcanists:zinc_ingot"
+    }
+  ],
+  "result": {
+    "id": "cosmerearcanists:brass_ingot",
+    "count": 2
+  },
+  "neoforge:conditions": [
+    {
+      "type": "cosmerearcanists:alloy_enabled",
+      "metal": "brass"
+    }
+  ]
+}

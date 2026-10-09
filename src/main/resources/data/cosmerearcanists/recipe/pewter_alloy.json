@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "cosmerearcanists:tin_ingot"
+    },
+    {
+      "item": "cosmerearcanists:lead_ingot"
+    }
+  ],
+  "result": {
+    "id": "cosmerearcanists:pewter_ingot",
+    "count": 2
+  },
+  "neoforge:conditions": [
+    {
+      "type": "cosmerearcanists:alloy_enabled",
+      "metal": "pewter"
+    }
+  ]
+}

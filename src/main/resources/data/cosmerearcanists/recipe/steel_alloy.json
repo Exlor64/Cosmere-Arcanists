@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:iron_ingot"
+    },
+    {
+      "item": "minecraft:coal"
+    }
+  ],
+  "result": {
+    "id": "cosmerearcanists:steel_ingot",
+    "count": 1
+  },
+  "neoforge:conditions": [
+    {
+      "type": "cosmerearcanists:alloy_enabled",
+      "metal": "steel"
+    }
+  ]
+}

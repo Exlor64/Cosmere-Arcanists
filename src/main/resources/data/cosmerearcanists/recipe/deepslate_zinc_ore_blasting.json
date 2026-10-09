@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "ingredient": {
+    "item": "cosmerearcanists:deepslate_zinc_ore"
+  },
+  "result": {
+    "id": "cosmerearcanists:zinc_ingot"
+  },
+  "experience": 0.7,
+  "cookingtime": 100
+}
