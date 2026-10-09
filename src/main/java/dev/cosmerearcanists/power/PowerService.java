@@ -154,7 +154,10 @@ public final class PowerService {
         Vec3 velocity = e.getDeltaMovement().add(impulse); double speed = velocity.length(), cap = PowerConfig.MAX_SPEED.get();
         if (speed > cap) velocity = velocity.scale(cap / speed);
         e.setDeltaMovement(velocity); e.hurtMarked = true;
-        if (e instanceof ServerPlayer player) player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket(e));
+        if (e instanceof ServerPlayer player) {
+            player.connection.aboveGroundTickCount = 0;
+            player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket(e));
+        }
     }
     @SubscribeEvent public void commands(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("cosmere").then(Commands.literal("power").requires(s -> s.hasPermission(2))

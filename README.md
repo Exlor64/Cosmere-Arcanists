@@ -57,7 +57,7 @@ Default keys (all rebindable):
 
 Craft an iron or steel vial with a glass bottle and one corresponding nugget. Right-click the vial to ingest it, returning the bottle. Each adds 60 reserve units by default (capacity 300). Burning costs one unit/second; flaring triples consumption and doubles force. Sensing consumes reserves too. States/reserves are separate per metal; switching selected power does not turn off other burning metals. Death retains powers/reserves/selection but turns active states off.
 
-Fixed blocks pull/push the player. Dropped stacks and equipped entities move under force, with player reaction and mass-dependent acceleration. Forces weaken with distance and have a configurable velocity cap. Armor sources affect the equipped entity, not a detached piece of equipment. Fall damage remains vanilla.
+Fixed blocks pull/push the player. Dropped stacks and equipped entities move under force, with player reaction and mass-dependent acceleration. Forces weaken with distance and have a configurable velocity cap. Armor sources affect the equipped entity, not a detached piece of equipment. Fall damage remains vanilla. Server-approved propulsion resets vanilla's floating timeout without granting creative flight.
 
 Server-authoritative controls/physics settings: `<world>/serverconfig/cosmerearcanists-powers-server.toml`. Client HUD/line settings: `config/cosmerearcanists-client.toml`. Existing per-art/per-metal gates still apply. Settings cover range, force, flaring, reserves, reaction, player targets, target categories, scanner budget, and sync interval. Block checks are spread across ticks and do not load chunks.
 
@@ -70,4 +70,4 @@ Operator testing commands:
 - `/cosmere power revoke <player> <power>` removes an operator grant; natural origin powers remain.
 - `/cosmere power refill <player>` fills iron and steel reserves.
 
-`./gradlew build` runs tests for recursive metal/aluminum classification, cyclic recipes, power states, and mass/distance/flaring force rules. Multiplayer controls, blue-line rendering, and movement still require in-game validation.
+`./gradlew build` runs tests for recursive metal/aluminum classification, cyclic recipes, power states, and mass/distance/flaring force rules. CI also runs the GameTest server to validate runtime recipe detection and player data cloning. Multiplayer input, blue-line appearance, and hands-on movement still require client playtesting.
