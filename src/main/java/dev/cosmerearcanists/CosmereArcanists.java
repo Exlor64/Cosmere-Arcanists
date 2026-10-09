@@ -12,6 +12,7 @@ public final class CosmereArcanists {
     public CosmereArcanists(IEventBus bus, ModContainer container) {
         container.registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC);
         ModMetals.register(bus);
+        dev.cosmerearcanists.power.PowerAttributes.register(bus);
         MetalOreFeature.register(bus);
         AlloyEnabledCondition.register(bus);
         container.registerConfig(ModConfig.Type.COMMON, MetallurgyConfig.SPEC);

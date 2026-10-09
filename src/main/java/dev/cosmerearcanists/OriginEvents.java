@@ -38,6 +38,7 @@ public final class OriginEvents {
         root.then(Commands.literal("reset").requires(s -> s.hasPermission(2))
             .then(Commands.argument("player", EntityArgument.player()).executes(ctx -> {
                 var p = EntityArgument.getPlayer(ctx, "player");
+                dev.cosmerearcanists.power.PowerAttributes.reset(p);
                 OriginData.reset(p);
                 p.getPersistentData().remove(dev.cosmerearcanists.power.PowerData.KEY);
                 dev.cosmerearcanists.power.PowerNetwork.sync(p, java.util.List.of());
@@ -68,6 +69,8 @@ public final class OriginEvents {
             }
         }
         var data = new OriginData(planet, "human", a.equals("none") ? "" : a, f.equals("none") ? "" : f);
+        var previous = OriginData.assigned(p) ? OriginData.read(p) : null;
+        dev.cosmerearcanists.power.PowerAttributes.assignOrigin(p, previous, data);
         data.save(p);
         message(p, data.summary());
         dev.cosmerearcanists.power.PowerNetwork.sync(p, java.util.List.of());

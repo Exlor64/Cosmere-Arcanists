@@ -18,17 +18,12 @@ public final class PowerData {
         catch (IllegalArgumentException ex) { return false; }
     }
     public static List<String> available(ServerPlayer p) {
+        PowerAttributes.migrate(p);
         if (!PowerConfig.ENABLED.get()) return List.of();
-        var result = new TreeSet<String>();
-        if (OriginData.assigned(p)) {
-            var origin = OriginData.read(p);
-            if (!origin.allomancy().isEmpty()) result.add("a:" + origin.allomancy());
-            if (!origin.feruchemy().isEmpty()) result.add("f:" + origin.feruchemy());
-        }
-        var grants = data(p).getCompound("grants");
-        for (var key : grants.getAllKeys()) if (grants.getBoolean(key)) result.add(key);
-        return result.stream().filter(PowerData::enabled).toList();
+        return PowerAttributes.keys().stream().filter(key -> PowerAttributes.strength(p, key) > 0)
+            .filter(PowerData::enabled).sorted().toList();
     }
+
     public static String selected(ServerPlayer p) {
         var list = available(p); var key = data(p).getString("selected");
         return list.contains(key) ? key : list.isEmpty() ? "" : list.getFirst();
@@ -44,10 +39,10 @@ public final class PowerData {
         reserves.putDouble(metal, Math.max(0, Math.min(PowerConfig.RESERVE_CAP.get(), amount))); d.put("reserves", reserves);
     }
     public static void grant(ServerPlayer p, String power, boolean grant) {
-        var d = data(p); var grants = d.getCompound("grants"); grants.putBoolean(power, grant); d.put("grants", grants);
+        PowerAttributes.set(p, power, grant ? Math.max(1, PowerAttributes.strength(p, power)) : 0);
     }
     public static void clonePlayer(ServerPlayer original, ServerPlayer replacement) {
-        if (!original.getPersistentData().contains(KEY)) return;
+        PowerAttributes.copy(original, replacement);
         replacement.getPersistentData().put(KEY, original.getPersistentData().getCompound(KEY).copy());
         // Preserve reserves/selection but require deliberate reactivation after respawn.
         data(replacement).put("states", new CompoundTag());

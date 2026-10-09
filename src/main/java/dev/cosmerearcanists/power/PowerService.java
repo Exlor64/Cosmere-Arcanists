@@ -169,7 +169,7 @@ public final class PowerService {
         var point = best.position(p.level(), 1); var offset = point.subtract(chest(p)); double distance = offset.length();
         if (distance < .3) return;
         Vec3 direction = offset.normalize().scale(power.equals("a:iron") ? 1 : -1);
-        double force = PowerConfig.FORCE.get() * (PowerData.state(p, power) == 2 ? PowerConfig.FLARE_STRENGTH.get() : 1);
+        double force = PowerConfig.FORCE.get() * PowerAttributes.strength(p, power) * (PowerData.state(p, power) == 2 ? PowerConfig.FLARE_STRENGTH.get() : 1);
         double accel = AllomanticPhysics.acceleration(force, distance, PowerConfig.RANGE.get(), PowerConfig.PLAYER_MASS.get());
         // Fixed blocks anchor the force: iron draws the player in; steel pushes them away.
         if (best.entityId() < 0) { accelerate(p, direction.scale(accel)); return; }

@@ -67,9 +67,33 @@ Operator testing commands:
 - `/cosmere power grant <player> a:iron`
 - `/cosmere power grant <player> a:steel`
 - `/cosmere power grant <player> f:iron` (selector test only)
-- `/cosmere power revoke <player> <power>` removes an operator grant; natural origin powers remain.
+- `/cosmere power revoke <player> <power>` sets the power’s base attribute to zero, including natural origin powers.
 - `/cosmere power refill <player>` fills iron and steel reserves.
 
 `./gradlew build` runs tests for recursive metal/aluminum classification, cyclic recipes, power states, and mass/distance/flaring force rules. CI also runs the GameTest server to validate runtime recipe detection and player data cloning. Multiplayer input, blue-line appearance, and hands-on movement still require client playtesting.
 
 Activation uses START/TICK/STOP phases, allowing future instant abilities to act on press and held abilities to act continuously. Selection/state changes, release, disconnect, reload, death, and dimension changes stop the old handler. Unimplemented powers still show effects pending. The activation key's internal identifier is preserved so existing keybinds remain intact.
+
+### Persistent power attributes
+
+All 16 Allomantic and 16 Feruchemical powers have player attributes named
+`cosmerearcanists:allomancy_<metal>` and `cosmerearcanists:feruchemy_<metal>`.
+Zero means no power; 1 is normal strength. Positive effective values grant access,
+and iron/steel force scales with the effective value (including attribute modifiers).
+Other powers still have selection/state support only. Config switches still gate access.
+
+Operator examples:
+```mcfunction
+/attribute @s cosmerearcanists:allomancy_steel base set 1
+/attribute @s cosmerearcanists:allomancy_steel base set 2
+/attribute @s cosmerearcanists:allomancy_steel base set 0
+/attribute @s cosmerearcanists:feruchemy_iron base set 1
+```
+
+Attributes persist through saving, reconnecting, death and dimension changes.
+Respawning copies base values and permanent modifiers; burning/tapping states reset.
+Old origins and operator grants migrate once. Origins describe initial ancestry;
+attributes determine current powers. Grant sets at least normal strength; revoke
+sets the base to zero. Modifiers can still grant a positive effective value.
+Origin reset clears all power attributes and modifiers. Origin rerolls replace
+the previous origin's base powers while preserving other attribute powers.

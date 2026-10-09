@@ -47,10 +47,35 @@ public final class PowerGameTests {
         helper.succeed();
     }
     @GameTest(template = "empty")
+    public static void persistentPowerAttributes(GameTestHelper helper) {
+        var server = helper.getLevel().getServer();
+        var original = new ServerPlayer(server, helper.getLevel(), new GameProfile(UUID.randomUUID(), "Attributes"), ClientInformation.createDefault());
+        var clone = new ServerPlayer(server, helper.getLevel(), new GameProfile(original.getUUID(), "Attributes"), ClientInformation.createDefault());
+        new OriginData("scadrial", "human", "steel", "iron").save(original);
+        var legacy = new net.minecraft.nbt.CompoundTag(); legacy.putBoolean("a:iron", true);
+        PowerData.data(original).put("grants", legacy);
+        helper.assertTrue(PowerData.available(original).containsAll(java.util.List.of("a:steel", "a:iron", "f:iron")), "Legacy powers must migrate");
+        var attribute = BuiltInRegistries.ATTRIBUTE.getHolder(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID, "allomancy_steel")).orElseThrow();
+        var instance = original.getAttribute(attribute);
+        instance.setBaseValue(2);
+        instance.addPermanentModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+            ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID, "test_strength"), 0.5,
+            net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE));
+        helper.assertTrue(PowerAttributes.strength(original, "a:steel") == 2.5, "Effective strength must include modifiers");
+        PowerData.clonePlayer(original, clone);
+        helper.assertTrue(PowerAttributes.strength(clone, "a:steel") == 2.5, "Base and permanent modifiers must survive respawn/save-load");
+        instance.removeModifiers(); instance.setBaseValue(0);
+        helper.assertTrue(!PowerData.available(original).contains("a:steel"), "Origin metadata must not restore a zero attribute");
+        PowerData.clonePlayer(original, clone);
+        helper.assertTrue(!PowerData.available(clone).contains("a:steel"), "Revocation must survive respawn");
+        helper.assertTrue(PowerAttributes.keys().size() == 32, "All Metallic Art attributes must be registered");
+        helper.succeed();
+    }
+    @GameTest(template = "empty")
     public static void commandsParseNamespacedPowerIds(GameTestHelper helper) {
         var server = helper.getLevel().getServer();
         var dispatcher = server.getCommands().getDispatcher();
-        for (String command : new String[]{"cosmere power grant TestPlayer a:steel", "cosmere power revoke TestPlayer f:iron"}) {
+        for (String command : new String[]{"cosmere power grant TestPlayer a:steel", "cosmere power revoke TestPlayer f:iron", "attribute @s cosmerearcanists:allomancy_steel base set 2"}) {
             var parsed = dispatcher.parse(command, server.createCommandSourceStack());
             helper.assertTrue(parsed.getExceptions().isEmpty() && !parsed.getReader().canRead(), "Command must consume the full namespaced power ID: " + command);
         }
