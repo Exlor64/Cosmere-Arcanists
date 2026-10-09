@@ -34,8 +34,8 @@ public final class PowerConfig {
         DETECTION_BLOCKS = b.define("blocks", true); DETECTION_ITEMS = b.define("droppedItems", true); DETECTION_GEAR = b.define("equippedItems", true);
         RECIPE_DETECTION = b.comment("Trace every crafting ingredient recursively. Any possible aluminum ingredient excludes the result.").define("recursiveRecipes", true);
         MAX_TARGETS = b.defineInRange("maxTargets", 96, 8, 256);
-        SCAN_BUDGET = b.comment("Loaded block positions checked per player per tick; no chunk loading.").defineInRange("blockChecksPerTick", 2048, 128, 8192);
-        SYNC_INTERVAL = b.defineInRange("syncIntervalTicks", 5, 2, 40);
+        SCAN_BUDGET = b.comment("Maximum spherical scan positions per player per tick, nearest first; discoveries publish immediately. No chunk loading.").defineInRange("blockChecksPerTick", 2048, 128, 8192);
+        SYNC_INTERVAL = b.defineInRange("syncIntervalTicks", 2, 2, 40);
         b.pop(); SPEC = b.build();
     }
     private PowerConfig() { }

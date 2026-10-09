@@ -19,6 +19,34 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @PrefixGameTestTemplate(false)
 public final class PowerGameTests {
     @GameTest(template = "empty")
+    public static void nearFirstBlockScanning(GameTestHelper helper) {
+        var offsets = PowerService.scanOffsets(16);
+        helper.assertTrue(offsets.getFirst().equals(net.minecraft.core.BlockPos.ZERO), "Nearby blocks must be scanned first");
+        helper.assertTrue(new java.util.HashSet<>(offsets).size() == offsets.size(), "Scan positions must be unique");
+        helper.assertTrue(offsets.size() < 18000, "Scan budget must not be wasted on cube corners");
+        double previous = -1;
+        for (var offset : offsets) {
+            double distance = offset.distSqr(net.minecraft.core.BlockPos.ZERO);
+            helper.assertTrue(distance >= previous && distance <= 256, "Scan must progress outward inside the configured sphere");
+            previous = distance;
+        }
+        helper.assertTrue(offsets.contains(new net.minecraft.core.BlockPos(16, 0, 0)) && offsets.contains(new net.minecraft.core.BlockPos(-16, 0, 0)), "Both range edges must be scanned");
+        var server = helper.getLevel().getServer();
+        var player = new ServerPlayer(server, helper.getLevel(), new GameProfile(UUID.randomUUID(), "ScanMovement"), ClientInformation.createDefault());
+        var start = helper.absolutePos(new net.minecraft.core.BlockPos(1, 2, 1));
+        player.setPos(start.getX() + .5, start.getY(), start.getZ() + .5);
+        var metal = start.offset(1, 0, 0);
+        helper.getLevel().setBlock(metal, net.minecraft.world.level.block.Blocks.IRON_BLOCK.defaultBlockState(), 3);
+        var session = new PowerService.Session();
+        PowerService.scan(player, session);
+        helper.assertTrue(session.blocks.contains(metal), "Nearby discoveries must publish before a pass finishes");
+        int cursor = session.cursor;
+        player.setPos(player.getX() + 5, player.getY(), player.getZ());
+        PowerService.scan(player, session);
+        helper.assertTrue(session.cursor > cursor, "Moving five blocks must not restart the scan");
+        helper.succeed();
+    }
+    @GameTest(template = "empty")
     public static void recipeDetection(GameTestHelper helper) {
         var server = helper.getLevel().getServer(); MetalDetector.rebuild(server);
         helper.assertTrue(MetalDetector.detects(server, new ItemStack(Items.IRON_INGOT)), "Iron must be detectable");

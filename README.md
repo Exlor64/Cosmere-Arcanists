@@ -97,3 +97,5 @@ attributes determine current powers. Grant sets at least normal strength; revoke
 sets the base to zero. Modifiers can still grant a positive effective value.
 Origin reset clears all power attributes and modifiers. Origin rerolls replace
 the previous origin's base powers while preserving other attribute powers.
+
+Metal block scanning publishes discoveries every tick, scanning a sphere from near to far. Moving does not restart an unfinished pass; teleporting beyond twice the radius does. The default snapshot interval is now 2 ticks (100 ms). Existing server configs retain their chosen interval; set `metalDetection.syncIntervalTicks = 2` for the faster cadence.

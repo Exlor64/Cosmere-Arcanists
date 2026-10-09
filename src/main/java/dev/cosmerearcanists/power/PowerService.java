@@ -24,9 +24,10 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 public final class PowerService {
     public static final AbilityDispatcher<ServerPlayer, MetalTarget> ABILITIES = new AbilityDispatcher<>();
     private static final EquipmentSlot[] SLOTS = {EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND, EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
+    private static final Map<Integer, List<BlockPos>> SCAN_OFFSETS = new HashMap<>();
     private static final Map<UUID, Session> SESSIONS = new HashMap<>();
-    private static final class Session {
-        BlockPos scanCenter; int cursor; final List<BlockPos> collecting = new ArrayList<>(), blocks = new ArrayList<>();
+    static final class Session {
+        BlockPos scanCenter; int cursor, scanRadius; final Set<BlockPos> blocks = new HashSet<>();
         List<MetalTarget> targets = List.of(); boolean applying, pulse; long lastApply, packetTick = -1; int packets;
         String dimension = "", activePower = "";
         Vec3 previousPosition, observedMovement;
@@ -106,7 +107,7 @@ public final class PowerService {
             }
         }
         if (active) { scan(p, s); s.targets = targets(p, s); }
-        else { s.targets = List.of(); s.scanCenter = null; s.blocks.clear(); s.collecting.clear(); }
+        else { s.targets = List.of(); s.scanCenter = null; s.blocks.clear(); }
         String selected = PowerData.selected(p);
         String activated = (s.applying || s.pulse) && p.isAlive() && !p.isSpectator() && p.level().getGameTime() - s.lastApply <= 15
                 && available.contains(selected) && PowerData.state(p, selected) != 0 ? selected : "";
@@ -118,21 +119,43 @@ public final class PowerService {
         s.pulse = false;
         if (p.tickCount % PowerConfig.SYNC_INTERVAL.get() == 0) PowerNetwork.sync(p, s.targets);
     }
-    private void scan(ServerPlayer p, Session s) {
+    static void scan(ServerPlayer p, Session s) {
         int radius = PowerConfig.RANGE.get(); var center = p.blockPosition();
         String dimension = p.level().dimension().location().toString();
         if (!dimension.equals(s.dimension)) { s.dimension = dimension; s.blocks.clear(); s.scanCenter = null; }
         if (!PowerConfig.DETECTION_BLOCKS.get()) { s.blocks.clear(); return; }
-        if (s.scanCenter == null || s.scanCenter.distSqr(center) > 16) { s.scanCenter = center; s.cursor = 0; s.collecting.clear(); }
-        int side = radius * 2 + 1, total = side * side * side;
-        for (int i = 0; i < PowerConfig.SCAN_BUDGET.get() && s.cursor < total; i++, s.cursor++) {
-            int n = s.cursor; var pos = s.scanCenter.offset(n % side - radius, n / side % side - radius, n / (side * side) - radius);
-            if (pos.distSqr(s.scanCenter) > radius * radius || !p.serverLevel().hasChunkAt(pos)) continue;
-            if (MetalDetector.detects(p.server, new ItemStack(p.level().getBlockState(pos).getBlock().asItem())))
-                if (s.collecting.size() < PowerConfig.MAX_TARGETS.get() * 4) s.collecting.add(pos.immutable());
+        // Keep a pass alive while walking; restarting it on every few blocks starves discovery.
+        if (s.scanCenter == null || s.scanRadius != radius || s.scanCenter.distSqr(center) > 4 * radius * radius) {
+            s.scanCenter = center; s.scanRadius = radius; s.cursor = 0;
+            s.blocks.clear();
         }
-        if (s.cursor >= total) { s.blocks.clear(); s.blocks.addAll(s.collecting); s.collecting.clear(); s.scanCenter = center; s.cursor = 0; }
+        var offsets = scanOffsets(radius);
+        s.blocks.removeIf(pos -> pos.distSqr(center) > (radius + 2) * (radius + 2));
+        int budget = PowerConfig.SCAN_BUDGET.get();
+        for (int i = 0; i < budget && s.cursor < offsets.size(); i++, s.cursor++) {
+            var pos = s.scanCenter.offset(offsets.get(s.cursor));
+            if (!p.serverLevel().hasChunkAt(pos)) continue;
+            // Publish discoveries immediately rather than waiting for the complete volume.
+            if (MetalDetector.detects(p.server, new ItemStack(p.level().getBlockState(pos).getBlock().asItem()))) s.blocks.add(pos);
+            else s.blocks.remove(pos);
+        }
+        int capacity = PowerConfig.MAX_TARGETS.get() * 4;
+        if (s.blocks.size() > capacity) {
+            var nearest = s.blocks.stream().sorted(Comparator.comparingDouble(pos -> pos.distSqr(center))).limit(capacity).toList();
+            s.blocks.clear(); s.blocks.addAll(nearest);
+        }
+        if (s.cursor >= offsets.size()) { s.scanCenter = center; s.cursor = 0; }
     }
+    static List<BlockPos> scanOffsets(int radius) {
+        return SCAN_OFFSETS.computeIfAbsent(radius, r -> {
+            var offsets = new ArrayList<BlockPos>();
+            for (int x = -r; x <= r; x++) for (int y = -r; y <= r; y++) for (int z = -r; z <= r; z++)
+                if (x * x + y * y + z * z <= r * r) offsets.add(new BlockPos(x, y, z));
+            offsets.sort(Comparator.comparingDouble(pos -> pos.distSqr(BlockPos.ZERO)));
+            return List.copyOf(offsets);
+        });
+    }
+
     private List<MetalTarget> targets(ServerPlayer p, Session s) {
         int range = PowerConfig.RANGE.get(); double rangeSq = range * range; var chest = chest(p);
         var result = new ArrayList<MetalTarget>();
