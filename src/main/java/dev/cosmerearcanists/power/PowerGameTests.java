@@ -46,4 +46,14 @@ public final class PowerGameTests {
         helper.assertTrue(PowerData.state(clone, "a:steel") == 0, "States must be off after respawn");
         helper.succeed();
     }
+    @GameTest(template = "empty")
+    public static void commandsParseNamespacedPowerIds(GameTestHelper helper) {
+        var server = helper.getLevel().getServer();
+        var dispatcher = server.getCommands().getDispatcher();
+        for (String command : new String[]{"cosmere power grant TestPlayer a:steel", "cosmere power revoke TestPlayer f:iron"}) {
+            var parsed = dispatcher.parse(command, server.createCommandSourceStack());
+            helper.assertTrue(parsed.getExceptions().isEmpty() && !parsed.getReader().canRead(), "Command must consume the full namespaced power ID: " + command);
+        }
+        helper.succeed();
+    }
 }

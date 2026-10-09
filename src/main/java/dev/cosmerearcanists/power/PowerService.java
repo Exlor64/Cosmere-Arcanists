@@ -1,7 +1,7 @@
 package dev.cosmerearcanists.power;
 
 import java.util.*;
-import com.mojang.brigadier.arguments.StringArgumentType;
+import net.minecraft.commands.arguments.ResourceLocationArgument;
 import dev.cosmerearcanists.Metal;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -210,15 +210,15 @@ public final class PowerService {
     }
     @SubscribeEvent public void commands(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("cosmere").then(Commands.literal("power").requires(s -> s.hasPermission(2))
-            .then(Commands.literal("grant").then(Commands.argument("player", EntityArgument.player()).then(Commands.argument("power", StringArgumentType.word())
+            .then(Commands.literal("grant").then(Commands.argument("player", EntityArgument.player()).then(Commands.argument("power", ResourceLocationArgument.id())
                 .suggests((ctx, b) -> { for (var m : Metal.values()) { b.suggest("a:" + m.id()); b.suggest("f:" + m.id()); } return b.buildFuture(); })
                 .executes(ctx -> {
-                    var p = EntityArgument.getPlayer(ctx, "player"); var key = StringArgumentType.getString(ctx, "power");
+                    var p = EntityArgument.getPlayer(ctx, "player"); var key = ResourceLocationArgument.getId(ctx, "power").toString();
                     if (!validPower(key)) return 0; PowerData.grant(p, key, true); PowerNetwork.sync(p, List.of());
                     ctx.getSource().sendSuccess(() -> Component.literal("Granted " + key + " to " + p.getScoreboardName()), true); return 1;
                 }))))
-            .then(Commands.literal("revoke").then(Commands.argument("player", EntityArgument.player()).then(Commands.argument("power", StringArgumentType.word()).executes(ctx -> {
-                var p = EntityArgument.getPlayer(ctx, "player"); var key = StringArgumentType.getString(ctx, "power");
+            .then(Commands.literal("revoke").then(Commands.argument("player", EntityArgument.player()).then(Commands.argument("power", ResourceLocationArgument.id()).executes(ctx -> {
+                var p = EntityArgument.getPlayer(ctx, "player"); var key = ResourceLocationArgument.getId(ctx, "power").toString();
                 if (!validPower(key)) return 0; PowerData.grant(p, key, false); PowerData.state(p, key, 0); PowerNetwork.sync(p, List.of()); return 1;
             }))))
             .then(Commands.literal("refill").then(Commands.argument("player", EntityArgument.player()).executes(ctx -> {
