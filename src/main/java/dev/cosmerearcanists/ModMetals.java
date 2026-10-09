@@ -28,6 +28,8 @@ public final class ModMetals {
             ITEMS.registerSimpleItem(metal + "_nugget", new Item.Properties());
         }
         ITEMS.registerSimpleItem("copper_nugget", new Item.Properties());
+        ITEMS.register("iron_vial", () -> new dev.cosmerearcanists.power.MetalVialItem("iron"));
+        ITEMS.register("steel_vial", () -> new dev.cosmerearcanists.power.MetalVialItem("steel"));
         TABS.register("metals", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.cosmerearcanists.metals"))
             .icon(() -> Items.IRON_INGOT.getDefaultInstance())

@@ -16,5 +16,8 @@ public final class CosmereArcanists {
         AlloyEnabledCondition.register(bus);
         container.registerConfig(ModConfig.Type.COMMON, MetallurgyConfig.SPEC);
         NeoForge.EVENT_BUS.register(new OriginEvents());
+        container.registerConfig(ModConfig.Type.SERVER, dev.cosmerearcanists.power.PowerConfig.SPEC, "cosmerearcanists-powers-server.toml");
+        bus.addListener(dev.cosmerearcanists.power.PowerNetwork::register);
+        NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.power.PowerService());
     }
 }

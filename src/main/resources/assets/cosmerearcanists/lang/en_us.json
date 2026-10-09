@@ -56,5 +56,11 @@
   "block.cosmerearcanists.deepslate_silver_ore": "Deepslate Silver Ore",
   "item.cosmerearcanists.raw_nickel": "Raw Nickel",
   "block.cosmerearcanists.nickel_ore": "Nickel Ore",
-  "block.cosmerearcanists.deepslate_nickel_ore": "Deepslate Nickel Ore"
+  "block.cosmerearcanists.deepslate_nickel_ore": "Deepslate Nickel Ore",
+  "item.cosmerearcanists.iron_vial": "Iron Vial",
+  "item.cosmerearcanists.steel_vial": "Steel Vial",
+  "key.categories.cosmerearcanists": "Cosmere Arcanists",
+  "key.cosmerearcanists.select": "Select power (hold + scroll; tap to cycle state)",
+  "key.cosmerearcanists.state": "Power state (hold + scroll)",
+  "key.cosmerearcanists.apply": "Apply selected power (hold)"
 }

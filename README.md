@@ -46,3 +46,28 @@ Alloy crafting uses coal for steel, tin/lead for pewter, copper/zinc for brass, 
 Ores require an iron-tier pickaxe, support Silk Touch/Fortune, and smelt/blast into ingots. New ores generate in new Overworld chunks at Y -64 to 64 with six attempts per chunk and vein size seven. This is provisional balance. Adjust global/per-metal generation switches and vein acceptance probability in `config/cosmerearcanists-common.toml`; restart required. Per-alloy crafting switches are in the same file. Datapacks can modify vein size, height, attempt count, and all recipe ingredients/output quantities. Existing ores/items remain registered when generation or crafting is disabled.
 
 The Cosmere Metals creative tab contains the new materials. Textures are initial distinct pixel palettes. `cosmerearcanists:metals` and `cosmerearcanists:aluminum_containing` item tags seed later detection; blue-line detection and pushes/pulls are not implemented yet. Duralumin is included in the aluminum exclusion tag.
+
+## Iron/steel and power controls (0.3.0)
+Only iron and steel Allomantic effects are implemented. Other assigned powers appear in the selector with **effects pending**; Feruchemical state levels are controls only, with no storage/tapping mechanics yet.
+
+Default keys (all rebindable):
+- Hold **R**, scroll to a power, then release R to select it. Tap R to cycle that power's state. Left-click while the menu is open also cycles the highlighted power's state.
+- Hold **V** and scroll to change state; release to apply. Tap V cycles state. Allomancy has Off/Burning/Flaring. Feruchemy has Off, Storing 1–5, and Tapping 1–5.
+- While burning/flaring iron or steel, hold **G** to pull/push the metal source closest to your aim within the target cone. Blue lines run from your chest to blocks, dropped items, and individual equipment sources. Lines are private to the Allomancer.
+
+Craft an iron or steel vial with a glass bottle and one corresponding nugget. Right-click the vial to ingest it, returning the bottle. Each adds 60 reserve units by default (capacity 300). Burning costs one unit/second; flaring triples consumption and doubles force. Sensing consumes reserves too. States/reserves are separate per metal; switching selected power does not turn off other burning metals. Death retains powers/reserves/selection but turns active states off.
+
+Fixed blocks pull/push the player. Dropped stacks and equipped entities move under force, with player reaction and mass-dependent acceleration. Forces weaken with distance and have a configurable velocity cap. Armor sources affect the equipped entity, not a detached piece of equipment. Fall damage remains vanilla.
+
+Server-authoritative controls/physics settings: `<world>/serverconfig/cosmerearcanists-powers-server.toml`. Client HUD/line settings: `config/cosmerearcanists-client.toml`. Existing per-art/per-metal gates still apply. Settings cover range, force, flaring, reserves, reaction, player targets, target categories, scanner budget, and sync interval. Block checks are spread across ticks and do not load chunks.
+
+Detection seeds use common metal tags plus `cosmerearcanists:metals`, then trace crafting/smithing/stonecutting recipes recursively. Furnace recycling is excluded from ingredient propagation. Aluminum anywhere in a recipe chain makes the result undetectable, even when another recipe avoids aluminum. This conservative treatment prevents aluminum bypasses. `cosmerearcanists:aluminum_containing` seeds exclusions and `cosmerearcanists:undetectable` directly excludes specific items. Unknown mod materials should supply common ingot/nugget/ore tags or the explicit seed tag. Dynamic/NBT-dependent recipes may need explicit tags.
+
+Operator testing commands:
+- `/cosmere power grant <player> a:iron`
+- `/cosmere power grant <player> a:steel`
+- `/cosmere power grant <player> f:iron` (selector test only)
+- `/cosmere power revoke <player> <power>` removes an operator grant; natural origin powers remain.
+- `/cosmere power refill <player>` fills iron and steel reserves.
+
+`./gradlew build` runs tests for recursive metal/aluminum classification, cyclic recipes, power states, and mass/distance/flaring force rules. Multiplayer controls, blue-line rendering, and movement still require in-game validation.

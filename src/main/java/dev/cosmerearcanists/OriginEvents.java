@@ -39,6 +39,8 @@ public final class OriginEvents {
             .then(Commands.argument("player", EntityArgument.player()).executes(ctx -> {
                 var p = EntityArgument.getPlayer(ctx, "player");
                 OriginData.reset(p);
+                p.getPersistentData().remove(dev.cosmerearcanists.power.PowerData.KEY);
+                dev.cosmerearcanists.power.PowerNetwork.sync(p, java.util.List.of());
                 ctx.getSource().sendSuccess(() -> Component.literal("Reset origin for " + p.getScoreboardName()), true);
                 return 1;
             })));
@@ -68,7 +70,8 @@ public final class OriginEvents {
         var data = new OriginData(planet, "human", a.equals("none") ? "" : a, f.equals("none") ? "" : f);
         data.save(p);
         message(p, data.summary());
-        return message(p, "Foundation preview: planets and power effects are not implemented yet.");
+        dev.cosmerearcanists.power.PowerNetwork.sync(p, java.util.List.of());
+        return message(p, "Origin set. Iron/steel Allomancy is available; other effects and planetary travel are still in development.");
     }
     private boolean valid(String id, ServerConfig.ArtSettings art) {
         return id.equals("none") || art.enabled().get() && Arrays.stream(Metal.values())

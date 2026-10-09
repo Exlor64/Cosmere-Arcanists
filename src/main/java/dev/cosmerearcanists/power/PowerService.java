@@ -1,0 +1,181 @@
+package dev.cosmerearcanists.power;
+
+import java.util.*;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import dev.cosmerearcanists.Metal;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.OnDatapackSyncEvent;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+
+public final class PowerService {
+    private static final EquipmentSlot[] SLOTS = {EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND, EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
+    private static final Map<UUID, Session> SESSIONS = new HashMap<>();
+    private static final class Session {
+        BlockPos scanCenter; int cursor; final List<BlockPos> collecting = new ArrayList<>(), blocks = new ArrayList<>();
+        List<MetalTarget> targets = List.of(); boolean applying; long lastApply, packetTick = -1; int packets;
+        String dimension = "";
+    }
+    private static Session session(ServerPlayer p) { return SESSIONS.computeIfAbsent(p.getUUID(), id -> new Session()); }
+    public static void control(ServerPlayer p, PowerNetwork.Control packet) {
+        var s = session(p); long now = p.level().getGameTime();
+        if (s.packetTick != now) { s.packetTick = now; s.packets = 0; }
+        if (++s.packets > 12) return;
+        if (packet.action() == 2) { s.applying = packet.value() != 0 && p.isAlive() && !p.isSpectator(); s.lastApply = now; return; }
+        if (packet.action() == 4) { PowerNetwork.sync(p, s.targets); return; }
+        if (!p.isAlive() || p.isSpectator() || !PowerData.available(p).contains(packet.power())) return;
+        switch (packet.action()) {
+            case 0 -> PowerData.data(p).putString("selected", packet.power());
+            case 1 -> PowerData.state(p, packet.power(), packet.value());
+            case 3 -> PowerData.state(p, packet.power(), PowerRules.next(packet.power(), PowerData.state(p, packet.power()), PowerConfig.FERUCHEMY_LEVELS.get()));
+            default -> { return; }
+        }
+        PowerNetwork.sync(p, s.targets);
+    }
+    @SubscribeEvent public void syncDatapack(OnDatapackSyncEvent event) {
+        if (event.getPlayer() == null) { MetalDetector.rebuild(event.getPlayerList().getServer()); SESSIONS.clear(); }
+        event.getRelevantPlayers().forEach(p -> PowerNetwork.sync(p, List.of()));
+    }
+    @SubscribeEvent public void login(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer p) { SESSIONS.remove(p.getUUID()); PowerNetwork.sync(p, List.of()); }
+    }
+    @SubscribeEvent public void logout(PlayerEvent.PlayerLoggedOutEvent event) { SESSIONS.remove(event.getEntity().getUUID()); }
+    @SubscribeEvent public void clonePlayer(PlayerEvent.Clone event) {
+        if (event.getOriginal() instanceof ServerPlayer old && event.getEntity() instanceof ServerPlayer p) {
+            PowerData.clonePlayer(old, p); SESSIONS.remove(p.getUUID());
+        }
+    }
+    @SubscribeEvent public void respawn(PlayerEvent.PlayerRespawnEvent event) { if (event.getEntity() instanceof ServerPlayer p) PowerNetwork.sync(p, List.of()); }
+    @SubscribeEvent public void dimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (event.getEntity() instanceof ServerPlayer p) { SESSIONS.remove(p.getUUID()); PowerNetwork.sync(p, List.of()); }
+    }
+    @SubscribeEvent public void stopped(ServerStoppedEvent event) { SESSIONS.clear(); MetalDetector.clear(); }
+    @SubscribeEvent public void tick(PlayerTickEvent.Post event) {
+        if (!(event.getEntity() instanceof ServerPlayer p)) return;
+        var s = session(p); var available = PowerData.available(p);
+        boolean active = false;
+        for (String power : List.of("a:iron", "a:steel")) {
+            if (!PowerConfig.IRON_STEEL.get() || !p.isAlive() || p.isSpectator() || !available.contains(power)) continue;
+            int state = PowerData.state(p, power); if (state == 0) continue;
+            if (state == 2 && !PowerConfig.FLARING.get()) { state = 1; PowerData.state(p, power, state); }
+            String metal = power.substring(2); double fuel = PowerData.reserve(p, metal);
+            if (PowerConfig.CONSUMPTION.get() && fuel <= 0) { PowerData.state(p, power, 0); continue; }
+            active = true;
+            if (PowerConfig.CONSUMPTION.get()) {
+                double drain = PowerConfig.BURN_DRAIN.get() / 20.0 * (state == 2 ? PowerConfig.FLARE_DRAIN.get() : 1);
+                PowerData.reserve(p, metal, fuel - drain);
+            }
+        }
+        if (active) { scan(p, s); s.targets = targets(p, s); }
+        else { s.targets = List.of(); s.scanCenter = null; s.blocks.clear(); s.collecting.clear(); }
+        if (active && s.applying && p.level().getGameTime() - s.lastApply <= 15) {
+            String selected = PowerData.selected(p);
+            if (PowerRules.implemented(selected) && available.contains(selected) && PowerData.state(p, selected) > 0) apply(p, selected, s.targets);
+        }
+        if (p.tickCount % PowerConfig.SYNC_INTERVAL.get() == 0) PowerNetwork.sync(p, s.targets);
+    }
+    private void scan(ServerPlayer p, Session s) {
+        int radius = PowerConfig.RANGE.get(); var center = p.blockPosition();
+        String dimension = p.level().dimension().location().toString();
+        if (!dimension.equals(s.dimension)) { s.dimension = dimension; s.blocks.clear(); s.scanCenter = null; }
+        if (!PowerConfig.DETECTION_BLOCKS.get()) { s.blocks.clear(); return; }
+        if (s.scanCenter == null || s.scanCenter.distSqr(center) > 16) { s.scanCenter = center; s.cursor = 0; s.collecting.clear(); }
+        int side = radius * 2 + 1, total = side * side * side;
+        for (int i = 0; i < PowerConfig.SCAN_BUDGET.get() && s.cursor < total; i++, s.cursor++) {
+            int n = s.cursor; var pos = s.scanCenter.offset(n % side - radius, n / side % side - radius, n / (side * side) - radius);
+            if (pos.distSqr(s.scanCenter) > radius * radius || !p.serverLevel().hasChunkAt(pos)) continue;
+            if (MetalDetector.detects(p.server, new ItemStack(p.level().getBlockState(pos).getBlock().asItem())))
+                if (s.collecting.size() < PowerConfig.MAX_TARGETS.get() * 4) s.collecting.add(pos.immutable());
+        }
+        if (s.cursor >= total) { s.blocks.clear(); s.blocks.addAll(s.collecting); s.collecting.clear(); s.scanCenter = center; s.cursor = 0; }
+    }
+    private List<MetalTarget> targets(ServerPlayer p, Session s) {
+        int range = PowerConfig.RANGE.get(); double rangeSq = range * range; var chest = chest(p);
+        var result = new ArrayList<MetalTarget>();
+        // Gear/items are prioritized over dense collections of metal blocks.
+        for (var e : p.level().getEntities(p, p.getBoundingBox().inflate(range))) {
+            if (e instanceof ItemEntity item && PowerConfig.DETECTION_ITEMS.get() && MetalDetector.detects(p.server, item.getItem())) result.add(MetalTarget.entity(e, 6));
+            else if (e instanceof LivingEntity living && PowerConfig.DETECTION_GEAR.get()) {
+                if (e instanceof ServerPlayer && !PowerConfig.PLAYER_TARGETS.get()) continue;
+                for (int i = 0; i < SLOTS.length; i++) if (MetalDetector.detects(p.server, living.getItemBySlot(SLOTS[i]))) result.add(MetalTarget.entity(e, i));
+            }
+        }
+        for (var pos : s.blocks) if (p.serverLevel().hasChunkAt(pos) && MetalDetector.detects(p.server, new ItemStack(p.level().getBlockState(pos).getBlock().asItem()))) result.add(MetalTarget.block(pos));
+        // A directly aimed block is available immediately, before a background scan finishes.
+        var hit = p.level().clip(new net.minecraft.world.level.ClipContext(p.getEyePosition(), p.getEyePosition().add(p.getLookAngle().scale(range)), net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, p));
+        if (PowerConfig.DETECTION_BLOCKS.get() && hit.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK
+            && MetalDetector.detects(p.server, new ItemStack(p.level().getBlockState(hit.getBlockPos()).getBlock().asItem()))) {
+            var target = MetalTarget.block(hit.getBlockPos()); if (!result.contains(target)) result.add(target);
+        }
+        return result.stream().filter(t -> { var pos = t.position(p.level(), 1); return pos != null && pos.distanceToSqr(chest) <= rangeSq; })
+            .sorted(Comparator.comparingDouble(t -> t.position(p.level(), 1).distanceToSqr(chest))).limit(PowerConfig.MAX_TARGETS.get()).toList();
+    }
+    public static Vec3 chest(Entity p) { return p.position().add(0, p.getBbHeight() * .65, 0); }
+    private void apply(ServerPlayer p, String power, List<MetalTarget> targets) {
+        MetalTarget best = null; double score = -1, threshold = Math.cos(Math.toRadians(PowerConfig.AIM_ANGLE.get()));
+        for (var target : targets) {
+            Vec3 point = target.position(p.level(), 1); if (point == null) continue;
+            Vec3 offset = point.subtract(p.getEyePosition()); double distance = offset.length(); if (distance < .1) continue;
+            double dot = offset.normalize().dot(p.getLookAngle());
+            if (dot < threshold) continue;
+            double candidate = dot - distance * .0001;
+            if (candidate > score) { score = candidate; best = target; }
+        }
+        if (best == null) return;
+        var point = best.position(p.level(), 1); var offset = point.subtract(chest(p)); double distance = offset.length();
+        if (distance < .3) return;
+        Vec3 direction = offset.normalize().scale(power.equals("a:iron") ? 1 : -1);
+        double force = PowerConfig.FORCE.get() * (PowerData.state(p, power) == 2 ? PowerConfig.FLARE_STRENGTH.get() : 1);
+        double accel = AllomanticPhysics.acceleration(force, distance, PowerConfig.RANGE.get(), PowerConfig.PLAYER_MASS.get());
+        // Fixed blocks anchor the force: iron draws the player in; steel pushes them away.
+        if (best.entityId() < 0) { accelerate(p, direction.scale(accel)); return; }
+        Entity entity = p.level().getEntity(best.entityId()); if (entity == null) return;
+        if (entity instanceof ItemEntity item && !MetalDetector.detects(p.server, item.getItem())) return;
+        if (entity instanceof LivingEntity living && (best.slot() < 0 || best.slot() >= SLOTS.length || !MetalDetector.detects(p.server, living.getItemBySlot(SLOTS[best.slot()])))) return;
+        double mass = entity instanceof ItemEntity item ? Math.max(.2, item.getItem().getCount() * .2)
+            : entity instanceof ServerPlayer ? PowerConfig.PLAYER_MASS.get() : Math.max(10, entity.getBbWidth() * entity.getBbWidth() * entity.getBbHeight() * 100);
+        accelerate(entity, direction.scale(-AllomanticPhysics.acceleration(force, distance, PowerConfig.RANGE.get(), mass)));
+        if (PowerConfig.RECOIL.get()) accelerate(p, direction.scale(accel));
+    }
+    private void accelerate(Entity e, Vec3 impulse) {
+        Vec3 velocity = e.getDeltaMovement().add(impulse); double speed = velocity.length(), cap = PowerConfig.MAX_SPEED.get();
+        if (speed > cap) velocity = velocity.scale(cap / speed);
+        e.setDeltaMovement(velocity); e.hurtMarked = true;
+        if (e instanceof ServerPlayer player) player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket(e));
+    }
+    @SubscribeEvent public void commands(RegisterCommandsEvent event) {
+        event.getDispatcher().register(Commands.literal("cosmere").then(Commands.literal("power").requires(s -> s.hasPermission(2))
+            .then(Commands.literal("grant").then(Commands.argument("player", EntityArgument.player()).then(Commands.argument("power", StringArgumentType.word())
+                .suggests((ctx, b) -> { for (var m : Metal.values()) { b.suggest("a:" + m.id()); b.suggest("f:" + m.id()); } return b.buildFuture(); })
+                .executes(ctx -> {
+                    var p = EntityArgument.getPlayer(ctx, "player"); var key = StringArgumentType.getString(ctx, "power");
+                    if (!validPower(key)) return 0; PowerData.grant(p, key, true); PowerNetwork.sync(p, List.of());
+                    ctx.getSource().sendSuccess(() -> Component.literal("Granted " + key + " to " + p.getScoreboardName()), true); return 1;
+                }))))
+            .then(Commands.literal("revoke").then(Commands.argument("player", EntityArgument.player()).then(Commands.argument("power", StringArgumentType.word()).executes(ctx -> {
+                var p = EntityArgument.getPlayer(ctx, "player"); var key = StringArgumentType.getString(ctx, "power");
+                if (!validPower(key)) return 0; PowerData.grant(p, key, false); PowerData.state(p, key, 0); PowerNetwork.sync(p, List.of()); return 1;
+            }))))
+            .then(Commands.literal("refill").then(Commands.argument("player", EntityArgument.player()).executes(ctx -> {
+                var p = EntityArgument.getPlayer(ctx, "player");
+                PowerData.reserve(p, "iron", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "steel", PowerConfig.RESERVE_CAP.get()); PowerNetwork.sync(p, List.of()); return 1;
+            })))));
+    }
+    private boolean validPower(String key) {
+        if (!(key.startsWith("a:") || key.startsWith("f:"))) return false;
+        return Arrays.stream(Metal.values()).anyMatch(m -> m.id().equals(key.substring(2)));
+    }
+}
