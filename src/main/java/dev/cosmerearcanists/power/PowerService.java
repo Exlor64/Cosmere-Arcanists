@@ -22,6 +22,7 @@ import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 public final class PowerService {
+    public static final AbilityDispatcher<ServerPlayer, MetalTarget> ABILITIES = new AbilityDispatcher<>();
     private static final EquipmentSlot[] SLOTS = {EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND, EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
     private static final Map<UUID, Session> SESSIONS = new HashMap<>();
     private static final class Session {
@@ -32,13 +33,13 @@ public final class PowerService {
         long sampledTick = -1, impulseTick = -1;
     }
     public PowerService() {
-        AbilityDispatcher.Handler ironSteel = (player, power, phase, targets) -> {
+        AbilityDispatcher.Handler<ServerPlayer, MetalTarget> ironSteel = (player, power, phase, targets) -> {
             if (phase == AbilityDispatcher.Phase.STOP || !PowerConfig.IRON_STEEL.get()) return;
             if (PowerConfig.CONSUMPTION.get() && PowerData.reserve(player, power.substring(2)) <= 0) return;
             apply(player, power, targets);
         };
-        AbilityDispatcher.register("a:iron", ironSteel);
-        AbilityDispatcher.register("a:steel", ironSteel);
+        ABILITIES.register("a:iron", ironSteel);
+        ABILITIES.register("a:steel", ironSteel);
     }
     private static Session session(ServerPlayer p) { return SESSIONS.computeIfAbsent(p.getUUID(), id -> new Session()); }
     public static void control(ServerPlayer p, PowerNetwork.Control packet) {
@@ -66,7 +67,7 @@ public final class PowerService {
     private static void stopActivation(ServerPlayer p) {
         var s = SESSIONS.get(p.getUUID());
         if (s != null && !s.activePower.isEmpty()) {
-            AbilityDispatcher.activate(p, s.activePower, AbilityDispatcher.Phase.STOP, s.targets);
+            ABILITIES.activate(p, s.activePower, AbilityDispatcher.Phase.STOP, s.targets);
             s.activePower = "";
         }
     }
@@ -109,10 +110,10 @@ public final class PowerService {
         String activated = s.applying && p.isAlive() && !p.isSpectator() && p.level().getGameTime() - s.lastApply <= 15
                 && available.contains(selected) && PowerData.state(p, selected) != 0 ? selected : "";
         if (!activated.equals(s.activePower)) {
-            if (!s.activePower.isEmpty()) AbilityDispatcher.activate(p, s.activePower, AbilityDispatcher.Phase.STOP, s.targets);
+            if (!s.activePower.isEmpty()) ABILITIES.activate(p, s.activePower, AbilityDispatcher.Phase.STOP, s.targets);
             s.activePower = activated;
-            if (!activated.isEmpty()) AbilityDispatcher.activate(p, activated, AbilityDispatcher.Phase.START, s.targets);
-        } else if (!activated.isEmpty()) AbilityDispatcher.activate(p, activated, AbilityDispatcher.Phase.TICK, s.targets);
+            if (!activated.isEmpty()) ABILITIES.activate(p, activated, AbilityDispatcher.Phase.START, s.targets);
+        } else if (!activated.isEmpty()) ABILITIES.activate(p, activated, AbilityDispatcher.Phase.TICK, s.targets);
         if (p.tickCount % PowerConfig.SYNC_INTERVAL.get() == 0) PowerNetwork.sync(p, s.targets);
     }
     private void scan(ServerPlayer p, Session s) {
