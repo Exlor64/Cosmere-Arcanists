@@ -20,6 +20,9 @@ public final class PowerClient {
     public static final KeyMapping SELECT = new KeyMapping("key.cosmerearcanists.select", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R, "key.categories.cosmerearcanists");
     public static final KeyMapping STATE = new KeyMapping("key.cosmerearcanists.state", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_V, "key.categories.cosmerearcanists");
     public static final KeyMapping APPLY = new KeyMapping("key.cosmerearcanists.apply", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_G, "key.categories.cosmerearcanists");
+    public static final KeyMapping ALTERNATE = new KeyMapping("key.cosmerearcanists.alternate", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_ALT, "key.categories.cosmerearcanists");
+    private static int lastActivation;
+    private static boolean alternateLatched, alternatePreviouslyHeld;
     private static PowerNetwork.Snapshot snapshot = new PowerNetwork.Snapshot("", "", 5, List.of(), List.of());
     private static boolean selecting, choosingState, applied, connected;
     private static int selectTicks, stateTicks, clock, previewIndex, previewState;
@@ -36,13 +39,14 @@ public final class PowerClient {
         while (SELECT.consumeClick()) selectClick = true;
         while (STATE.consumeClick()) stateClick = true;
         while (APPLY.consumeClick()) activateClick = true;
+        while (ALTERNATE.consumeClick()) { }
         if (mc.player == null || mc.level == null) {
-            snapshot = new PowerNetwork.Snapshot("", "", 5, List.of(), List.of()); connected = false; selecting = choosingState = applied = false; return;
+            snapshot = new PowerNetwork.Snapshot("", "", 5, List.of(), List.of()); connected = false; selecting = choosingState = applied = false; alternateLatched = alternatePreviouslyHeld = false; lastActivation = 0; return;
         }
         if (!connected) { connected = true; send(4, "", 0); }
         if (!playing()) {
             if (applied) send(2, "", 0);
-            selecting = choosingState = applied = false; return;
+            selecting = choosingState = applied = false; alternateLatched = alternatePreviouslyHeld = false; lastActivation = 0; return;
         }
         if (selectClick && !SELECT.isDown() && !selecting && !selected().isEmpty()) send(3, selected(), 0);
         if (stateClick && !STATE.isDown() && !choosingState && !SELECT.isDown() && !selected().isEmpty()) send(3, selected(), 0);
@@ -67,9 +71,22 @@ public final class PowerClient {
             }
             choosingState = false;
         }
-        if (activateClick && !APPLY.isDown() && !selecting && !choosingState) send(5, "", 0);
         down = APPLY.isDown() && !selecting && !choosingState;
-        if (down != applied || down && clock % 5 == 0) { send(2, "", down ? 1 : 0); applied = down; }
+        boolean alternateReady = ALTERNATE.isDown() && alternatePreviouslyHeld;
+        if (down && !applied) alternateLatched = alternateReady;
+        int inputs = movementInputs(mc);
+        if (activateClick && !APPLY.isDown() && !selecting && !choosingState) send(5, "", (alternateReady ? 2 : 0) | inputs);
+        int activation = down ? 1 | (alternateLatched ? 2 : 0) | inputs : 0;
+        if (activation != lastActivation || down && clock % 2 == 0) send(2, "", activation);
+        lastActivation = activation; applied = down;
+        if (!down) alternateLatched = false;
+        alternatePreviouslyHeld = ALTERNATE.isDown();
+    }
+    private static int movementInputs(Minecraft mc) {
+        return (mc.options.keyUp.isDown() ? 4 : 0) | (mc.options.keyDown.isDown() ? 8 : 0)
+            | (mc.options.keyLeft.isDown() ? 16 : 0) | (mc.options.keyRight.isDown() ? 32 : 0)
+            | (mc.options.keyJump.isDown() ? 64 : 0) | (mc.options.keyShift.isDown() ? 128 : 0);
+
     }
     @SubscribeEvent public void scroll(InputEvent.MouseScrollingEvent event) {
         if (!playing() || event.getScrollDeltaY() == 0) return;

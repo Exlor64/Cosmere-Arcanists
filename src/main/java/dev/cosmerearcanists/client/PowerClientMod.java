@@ -19,6 +19,6 @@ public final class PowerClientMod {
         NeoForge.EVENT_BUS.register(new PowerClient());
     }
     private void keys(RegisterKeyMappingsEvent event) {
-        event.register(PowerClient.SELECT); event.register(PowerClient.STATE); event.register(PowerClient.APPLY);
+        event.register(PowerClient.SELECT); event.register(PowerClient.STATE); event.register(PowerClient.APPLY); event.register(PowerClient.ALTERNATE);
     }
 }

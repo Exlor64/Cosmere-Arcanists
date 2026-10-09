@@ -99,3 +99,35 @@ Origin reset clears all power attributes and modifiers. Origin rerolls replace
 the previous origin's base powers while preserving other attribute powers.
 
 Metal block scanning publishes discoveries every tick, scanning a sphere from near to far. Moving does not restart an unfinished pass; teleporting beyond twice the radius does. The default snapshot interval is now 2 ticks (100 ms). Existing server configs retain their chosen interval; set `metalDetection.syncIntervalTicks = 2` for the faster cadence.
+
+### Resistance and alternate steel movement
+
+Solid blocks between the player's chest and a metal target add hardness-based
+detection distance. The target itself and player voxel are excluded; air and
+noncolliding blocks add no resistance. Defaults: 0.25 blocks of distance per
+hardness point, capped at 50 per blocker (also used for unbreakable blocks).
+For example, one obsidian blocker adds 12.5 blocks to the detection distance.
+Disable or tune `metalDetection.blockResistance`, `resistanceDistancePerHardness`,
+and `resistanceHardnessCap` in the powers server config. This gates both lines
+and usable targets, including equipped gear and dropped items.
+
+Hold **Left Alt** (Alternate power function) before pressing **G** with steel selected
+and burning/flaring. While holding G, WASD requests horizontal movement relative
+to player yaw, Space requests upward movement, and Shift requests downward movement.
+The alternate mode latches at activation; release G before changing modes.
+It shares the usual fuel, range, power strength, speed cap and fall braking rules.
+Iron currently retains its normal aimed pull in alternate mode.
+
+Steel assistance uses up to four contributions from real detected metal anchors.
+Each push follows the chest-to-metal line, with one combined force budget so dense
+metal builds do not multiply power. Oblique anchors receive less force; anchors
+more than 60 degrees off the requested direction cannot contribute, and a combined
+force more than 45 degrees off is rejected. No movement input or suitable metal
+means no assisted push. Set `ironSteel.alternateMovement = false` to disable it;
+`movementAnchorAngleDegrees` tunes anchor acceptance. Equipped items on the same
+entity share one anchor; entity recoil must be enabled to assist from loose gear/items.
+
+Normal targeting now prefers the actual metal block hit by the crosshair, including
+its edges. Forces still follow physical chest-to-metal directions, so an off-center
+anchor can cause a diagonal push. Distance and target mass still influence force.
+Horizontal walking displacement is no longer injected into ability velocity.

@@ -19,6 +19,27 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @PrefixGameTestTemplate(false)
 public final class PowerGameTests {
     @GameTest(template = "empty")
+    public static void hardnessBlocksDetection(GameTestHelper helper) {
+        var level = helper.getLevel(); var server = level.getServer();
+        var player = new ServerPlayer(server, level, new GameProfile(UUID.randomUUID(), "Resistance"), ClientInformation.createDefault());
+        var start = helper.absolutePos(new net.minecraft.core.BlockPos(1, 3, 1));
+        var end = start.offset(4, 0, 0);
+        var from = net.minecraft.world.phys.Vec3.atCenterOf(start); var to = net.minecraft.world.phys.Vec3.atCenterOf(end);
+        for (int x=0;x<=4;x++) level.setBlock(start.offset(x,0,0), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+        level.setBlock(end, net.minecraft.world.level.block.Blocks.IRON_BLOCK.defaultBlockState(), 3);
+        helper.assertTrue(MetalResistance.cost(player,from,to)==0, "Target metal must not resist itself");
+        level.setBlock(start.offset(2,0,0), net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(), 3);
+        double stone=MetalResistance.cost(player,from,to);
+        helper.assertTrue(stone>0, "Solid stone must resist detection");
+        level.setBlock(start.offset(2,0,0), net.minecraft.world.level.block.Blocks.OBSIDIAN.defaultBlockState(), 3);
+        double obsidian=MetalResistance.cost(player,from,to);
+        helper.assertTrue(obsidian>stone, "Harder blocks must provide more resistance");
+        helper.assertTrue(from.distanceTo(to)+obsidian>PowerConfig.RANGE.get(), "Obsidian must hide a distant target at default range");
+        level.setBlock(start.offset(1,0,0), net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(), 3);
+        helper.assertTrue(MetalResistance.cost(player,from,to)>obsidian, "Multiple blockers must accumulate");
+        helper.succeed();
+    }
+    @GameTest(template = "empty")
     public static void nearFirstBlockScanning(GameTestHelper helper) {
         var offsets = PowerService.scanOffsets(16);
         helper.assertTrue(offsets.getFirst().equals(net.minecraft.core.BlockPos.ZERO), "Nearby blocks must be scanned first");

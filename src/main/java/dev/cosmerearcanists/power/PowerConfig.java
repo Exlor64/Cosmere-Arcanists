@@ -4,9 +4,9 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class PowerConfig {
     public static final ModConfigSpec SPEC;
-    public static final ModConfigSpec.BooleanValue ENABLED, IRON_STEEL, DETECTION_BLOCKS, DETECTION_ITEMS, DETECTION_GEAR, RECIPE_DETECTION, CONSUMPTION, FLARING, RECOIL, PLAYER_TARGETS, FALL_MITIGATION;
+    public static final ModConfigSpec.BooleanValue ENABLED, IRON_STEEL, DETECTION_BLOCKS, DETECTION_ITEMS, DETECTION_GEAR, RECIPE_DETECTION, CONSUMPTION, FLARING, RECOIL, PLAYER_TARGETS, FALL_MITIGATION, BLOCK_RESISTANCE, STEEL_MOVEMENT;
     public static final ModConfigSpec.IntValue RANGE, MAX_TARGETS, SCAN_BUDGET, SYNC_INTERVAL, FERUCHEMY_LEVELS;
-    public static final ModConfigSpec.DoubleValue FORCE, FLARE_STRENGTH, FLARE_DRAIN, BURN_DRAIN, RESERVE_CAP, VIAL_RESERVE, MAX_SPEED, PLAYER_MASS, AIM_ANGLE, FALL_MITIGATION_STRENGTH;
+    public static final ModConfigSpec.DoubleValue FORCE, FLARE_STRENGTH, FLARE_DRAIN, BURN_DRAIN, RESERVE_CAP, VIAL_RESERVE, MAX_SPEED, PLAYER_MASS, AIM_ANGLE, FALL_MITIGATION_STRENGTH, RESISTANCE_COST, RESISTANCE_HARDNESS_CAP, MOVEMENT_ANGLE;
     static {
         var b = new ModConfigSpec.Builder();
         b.push("controls");
@@ -14,6 +14,8 @@ public final class PowerConfig {
         FERUCHEMY_LEVELS = b.comment("Selector levels only; Feruchemical effects are not implemented yet.").defineInRange("feruchemyLevels", 5, 1, 20);
         b.pop(); b.push("ironSteel");
         IRON_STEEL = b.define("enabled", true);
+        STEEL_MOVEMENT = b.define("alternateMovement", true);
+        MOVEMENT_ANGLE = b.comment("Anchors outside this angle from intended movement contribute no force; oblique anchors contribute less.").defineInRange("movementAnchorAngleDegrees", 60.0, 5.0, 80.0);
         RANGE = b.defineInRange("range", 16, 4, 32);
         FORCE = b.comment("Force per game tick, divided by target mass.").defineInRange("force", 7.0, 0.1, 100.0);
         PLAYER_MASS = b.defineInRange("playerMass", 80.0, 1.0, 1000.0);
@@ -33,6 +35,9 @@ public final class PowerConfig {
         b.pop(); b.push("metalDetection");
         DETECTION_BLOCKS = b.define("blocks", true); DETECTION_ITEMS = b.define("droppedItems", true); DETECTION_GEAR = b.define("equippedItems", true);
         RECIPE_DETECTION = b.comment("Trace every crafting ingredient recursively. Any possible aluminum ingredient excludes the result.").define("recursiveRecipes", true);
+        BLOCK_RESISTANCE = b.define("blockResistance", true);
+        RESISTANCE_COST = b.comment("Each intervening solid block adds hardness times this value to detection distance.").defineInRange("resistanceDistancePerHardness", 0.25, 0.0, 10.0);
+        RESISTANCE_HARDNESS_CAP = b.comment("Maximum hardness per blocker; also used for unbreakable blocks.").defineInRange("resistanceHardnessCap", 50.0, 1.0, 10000.0);
         MAX_TARGETS = b.defineInRange("maxTargets", 96, 8, 256);
         SCAN_BUDGET = b.comment("Maximum spherical scan positions per player per tick, nearest first; discoveries publish immediately. No chunk loading.").defineInRange("blockChecksPerTick", 2048, 128, 8192);
         SYNC_INTERVAL = b.defineInRange("syncIntervalTicks", 2, 2, 40);

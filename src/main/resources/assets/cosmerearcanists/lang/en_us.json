@@ -94,5 +94,6 @@
   "attribute.cosmerearcanists.feruchemy_gold": "Gold Feruchemy",
   "attribute.cosmerearcanists.feruchemy_electrum": "Electrum Feruchemy",
   "attribute.cosmerearcanists.feruchemy_cadmium": "Cadmium Feruchemy",
-  "attribute.cosmerearcanists.feruchemy_bendalloy": "Bendalloy Feruchemy"
+  "attribute.cosmerearcanists.feruchemy_bendalloy": "Bendalloy Feruchemy",
+  "key.cosmerearcanists.alternate": "Alternate power function (hold before activating)"
 }

@@ -28,7 +28,7 @@ public final class PowerService {
     private static final Map<UUID, Session> SESSIONS = new HashMap<>();
     static final class Session {
         BlockPos scanCenter; int cursor, scanRadius; final Set<BlockPos> blocks = new HashSet<>();
-        List<MetalTarget> targets = List.of(); boolean applying, pulse; long lastApply, packetTick = -1; int packets;
+        List<MetalTarget> targets = List.of(); boolean applying, pulse, alternate; int movementInputs; long lastApply, packetTick = -1; int packets;
         String dimension = "", activePower = "";
         Vec3 previousPosition, observedMovement;
         long sampledTick = -1, impulseTick = -1;
@@ -37,7 +37,9 @@ public final class PowerService {
         AbilityDispatcher.Handler<ServerPlayer, MetalTarget> ironSteel = (player, power, phase, targets) -> {
             if (phase == AbilityDispatcher.Phase.STOP || !PowerConfig.IRON_STEEL.get()) return;
             if (PowerConfig.CONSUMPTION.get() && PowerData.reserve(player, power.substring(2)) <= 0) return;
-            apply(player, power, targets);
+            if (power.equals("a:steel") && session(player).alternate) {
+                if (PowerConfig.STEEL_MOVEMENT.get()) assistMovement(player, power, targets);
+            } else apply(player, power, targets);
         };
         ABILITIES.register("a:iron", ironSteel);
         ABILITIES.register("a:steel", ironSteel);
@@ -47,8 +49,13 @@ public final class PowerService {
         var s = session(p); long now = p.level().getGameTime();
         if (s.packetTick != now) { s.packetTick = now; s.packets = 0; }
         if (++s.packets > 12) return;
-        if (packet.action() == 2) { s.applying = packet.value() != 0 && p.isAlive() && !p.isSpectator(); s.lastApply = now; return; }
-        if (packet.action() == 5) { s.pulse = p.isAlive() && !p.isSpectator(); s.lastApply = now; return; }
+        if (packet.action() == 2) {
+            boolean held = (packet.value() & 1) != 0 && p.isAlive() && !p.isSpectator();
+            if (!s.applying && held) s.alternate = (packet.value() & 2) != 0;
+            if (!held) s.alternate = false;
+            s.movementInputs = packet.value() & 252; s.applying = held; s.lastApply = now; return;
+        }
+        if (packet.action() == 5) { s.pulse = p.isAlive() && !p.isSpectator(); s.alternate = (packet.value() & 2) != 0; s.movementInputs = packet.value() & 252; s.lastApply = now; return; }
         if (packet.action() == 4) { PowerNetwork.sync(p, s.targets); return; }
         if (!p.isAlive() || p.isSpectator() || !PowerData.available(p).contains(packet.power())) return;
         switch (packet.action()) {
@@ -174,40 +181,78 @@ public final class PowerService {
             && MetalDetector.detects(p.server, new ItemStack(p.level().getBlockState(hit.getBlockPos()).getBlock().asItem()))) {
             var target = MetalTarget.block(hit.getBlockPos()); if (!result.contains(target)) result.add(target);
         }
-        return result.stream().filter(t -> { var pos = t.position(p.level(), 1); return pos != null && pos.distanceToSqr(chest) <= rangeSq; })
+        return result.stream().filter(t -> { var pos = t.position(p.level(), 1); return pos != null && pos.distanceToSqr(chest) <= rangeSq && chest.distanceTo(pos) + MetalResistance.cost(p, chest, pos) <= range; })
             .sorted(Comparator.comparingDouble(t -> t.position(p.level(), 1).distanceToSqr(chest))).limit(PowerConfig.MAX_TARGETS.get()).toList();
     }
     public static Vec3 chest(Entity p) { return p.position().add(0, p.getBbHeight() * .65, 0); }
     private void apply(ServerPlayer p, String power, List<MetalTarget> targets) {
         MetalTarget best = null; double score = -1, threshold = Math.cos(Math.toRadians(PowerConfig.AIM_ANGLE.get()));
+        var hit = p.level().clip(new net.minecraft.world.level.ClipContext(p.getEyePosition(), p.getEyePosition().add(p.getLookAngle().scale(PowerConfig.RANGE.get())), net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, p));
+        BlockPos aimedBlock = hit.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK ? hit.getBlockPos() : null;
         for (var target : targets) {
             Vec3 point = target.position(p.level(), 1); if (point == null) continue;
             Vec3 offset = point.subtract(p.getEyePosition()); double distance = offset.length(); if (distance < .1) continue;
             double dot = offset.normalize().dot(p.getLookAngle());
-            if (dot < threshold) continue;
+            if (dot < threshold && !(target.entityId() < 0 && target.block().equals(aimedBlock))) continue;
             double candidate = dot - distance * .0001;
+            // Prefer the block actually under the crosshair over a neighboring center in the cone.
+            if (target.entityId() < 0 && target.block().equals(aimedBlock)) candidate += 2;
             if (candidate > score) { score = candidate; best = target; }
         }
         if (best == null) return;
         var point = best.position(p.level(), 1); var offset = point.subtract(chest(p)); double distance = offset.length();
         if (distance < .3) return;
         Vec3 direction = offset.normalize().scale(power.equals("a:iron") ? 1 : -1);
-        double force = PowerConfig.FORCE.get() * PowerAttributes.strength(p, power) * (PowerData.state(p, power) == 2 ? PowerConfig.FLARE_STRENGTH.get() : 1);
+        accelerate(p, targetImpulse(p, best, direction, powerForce(p, power)));
+    }
+    private static double powerForce(ServerPlayer p, String power) {
+        return PowerConfig.FORCE.get() * PowerAttributes.strength(p, power) * (PowerData.state(p, power) == 2 ? PowerConfig.FLARE_STRENGTH.get() : 1);
+    }
+    private Vec3 targetImpulse(ServerPlayer p, MetalTarget best, Vec3 direction, double force) {
+        var point = best.position(p.level(), 1); if (point == null) return Vec3.ZERO;
+        double distance = point.distanceTo(chest(p));
         double accel = AllomanticPhysics.acceleration(force, distance, PowerConfig.RANGE.get(), PowerConfig.PLAYER_MASS.get());
         // Fixed blocks anchor the force: iron draws the player in; steel pushes them away.
-        if (best.entityId() < 0) { accelerate(p, direction.scale(accel)); return; }
-        Entity entity = p.level().getEntity(best.entityId()); if (entity == null) return;
-        if (entity instanceof ItemEntity item && !MetalDetector.detects(p.server, item.getItem())) return;
-        if (entity instanceof LivingEntity living && (best.slot() < 0 || best.slot() >= SLOTS.length || !MetalDetector.detects(p.server, living.getItemBySlot(SLOTS[best.slot()])))) return;
+        if (best.entityId() < 0) return direction.scale(accel);
+        Entity entity = p.level().getEntity(best.entityId()); if (entity == null) return Vec3.ZERO;
+        if (entity instanceof ItemEntity item && !MetalDetector.detects(p.server, item.getItem())) return Vec3.ZERO;
+        if (entity instanceof LivingEntity living && (best.slot() < 0 || best.slot() >= SLOTS.length || !MetalDetector.detects(p.server, living.getItemBySlot(SLOTS[best.slot()])))) return Vec3.ZERO;
         double mass = entity instanceof ItemEntity item ? Math.max(.2, item.getItem().getCount() * .2)
             : entity instanceof ServerPlayer ? PowerConfig.PLAYER_MASS.get() : Math.max(10, entity.getBbWidth() * entity.getBbWidth() * entity.getBbHeight() * 100);
         accelerate(entity, direction.scale(-AllomanticPhysics.acceleration(force, distance, PowerConfig.RANGE.get(), mass)));
-        if (PowerConfig.RECOIL.get()) accelerate(p, direction.scale(accel));
+        return PowerConfig.RECOIL.get() ? direction.scale(accel) : Vec3.ZERO;
+    }
+    private void assistMovement(ServerPlayer p, String power, List<MetalTarget> targets) {
+        int input = session(p).movementInputs;
+        double forward = ((input & 4) != 0 ? 1 : 0) - ((input & 8) != 0 ? 1 : 0);
+        double left = ((input & 16) != 0 ? 1 : 0) - ((input & 32) != 0 ? 1 : 0);
+        double vertical = ((input & 64) != 0 ? 1 : 0) - ((input & 128) != 0 ? 1 : 0);
+        double yaw = Math.toRadians(p.getYRot());
+        Vec3 desired = new Vec3(-Math.sin(yaw)*forward + Math.cos(yaw)*left, vertical, Math.cos(yaw)*forward + Math.sin(yaw)*left);
+        if (desired.lengthSqr() < 1e-8) return;
+        desired = desired.normalize();
+        var anchors = new ArrayList<MetalTarget>(); var directions = new ArrayList<Vec3>(); var strengths = new ArrayList<Double>();
+        var usedEntities = new HashSet<Integer>();
+        for (var target : targets) {
+            // Multiple pieces of equipment on one entity are one physical anchor.
+            if (target.entityId() >= 0 && (!PowerConfig.RECOIL.get() || !usedEntities.add(target.entityId()))) continue;
+            var point = target.position(p.level(), 1); if (point == null || point.distanceTo(chest(p)) < .3) continue;
+            anchors.add(target); directions.add(chest(p).subtract(point).normalize());
+            strengths.add(AllomanticPhysics.acceleration(1, point.distanceTo(chest(p)), PowerConfig.RANGE.get(), PowerConfig.PLAYER_MASS.get()));
+        }
+        double[][] vectors = directions.stream().map(v -> new double[]{v.x,v.y,v.z}).toArray(double[][]::new);
+        double[] weights = SteelMovement.weights(new double[]{desired.x,desired.y,desired.z}, vectors,
+            strengths.stream().mapToDouble(Double::doubleValue).toArray(), Math.cos(Math.toRadians(PowerConfig.MOVEMENT_ANGLE.get())));
+        Vec3 impulse = Vec3.ZERO;
+        for (int i=0;i<weights.length;i++) if (weights[i]>1e-6)
+            impulse = impulse.add(targetImpulse(p, anchors.get(i), directions.get(i), powerForce(p,power)*weights[i]));
+        if (impulse.lengthSqr()>1e-12) accelerate(p,impulse);
     }
     private static boolean usableMovement(Vec3 movement) {
         return movement != null && movement.lengthSqr() > 1e-8 && movement.lengthSqr() < 64;
     }
     private void accelerate(Entity e, Vec3 impulse) {
+        if (impulse.lengthSqr() < 1e-12) return;
         Vec3 previous = e.getDeltaMovement();
         if (e instanceof ServerPlayer player) {
             var s = session(player); long now = player.level().getGameTime();
@@ -215,7 +260,10 @@ public final class PowerService {
                 // Movement packets report positions, not velocity. Preserve the observed fall momentum.
                 Vec3 observed = s.sampledTick == now ? s.observedMovement
                         : s.previousPosition == null ? null : player.position().subtract(s.previousPosition);
-                if (usableMovement(observed)) previous = observed;
+                if (usableMovement(observed)) {
+                    // Horizontal displacement includes vanilla walking: feeding it back as velocity doubles movement.
+                    previous = new Vec3(previous.x, observed.y, previous.z);
+                }
                 s.impulseTick = now;
             }
         }
