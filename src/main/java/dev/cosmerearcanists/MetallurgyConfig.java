@@ -25,7 +25,7 @@ public final class MetallurgyConfig {
         b.pop();
         b.push("alloying");
         ALLOYING = b.comment("Enable alloy crafting recipes. Restart or reload recipes after changes.").define("enabled", true);
-        for (String metal : new String[]{"steel", "pewter", "brass", "bronze", "duralumin", "electrum", "bendalloy"})
+        for (String metal : new String[]{"steel", "pewter", "brass", "bronze", "duralumin", "electrum", "bendalloy", "nicrosil"})
             ALLOYS.put(metal, b.define(metal, true));
         b.pop(); SPEC = b.build();
     }
