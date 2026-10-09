@@ -33,10 +33,10 @@ public final class PowerClient {
     private static boolean playing() { var mc = Minecraft.getInstance(); return mc.player != null && mc.level != null && mc.screen == null && mc.isWindowActive(); }
     @SubscribeEvent public void tick(ClientTickEvent.Post event) {
         var mc = Minecraft.getInstance(); clock++;
-        boolean selectClick = false, stateClick = false;
+        boolean selectClick = false, stateClick = false, activateClick = false;
         while (SELECT.consumeClick()) selectClick = true;
         while (STATE.consumeClick()) stateClick = true;
-        while (APPLY.consumeClick()) { }
+        while (APPLY.consumeClick()) activateClick = true;
         if (mc.player == null || mc.level == null) {
             snapshot = new PowerNetwork.Snapshot("", "", 5, List.of(), List.of()); connected = false; selecting = choosingState = applied = false; return;
         }
@@ -68,6 +68,7 @@ public final class PowerClient {
             }
             choosingState = false;
         }
+        if (activateClick && !APPLY.isDown() && !selecting && !choosingState) send(5, "", 0);
         down = APPLY.isDown() && !selecting && !choosingState;
         if (down != applied || down && clock % 5 == 0) { send(2, "", down ? 1 : 0); applied = down; }
     }

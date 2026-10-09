@@ -27,7 +27,7 @@ public final class PowerService {
     private static final Map<UUID, Session> SESSIONS = new HashMap<>();
     private static final class Session {
         BlockPos scanCenter; int cursor; final List<BlockPos> collecting = new ArrayList<>(), blocks = new ArrayList<>();
-        List<MetalTarget> targets = List.of(); boolean applying; long lastApply, packetTick = -1; int packets;
+        List<MetalTarget> targets = List.of(); boolean applying, pulse; long lastApply, packetTick = -1; int packets;
         String dimension = "", activePower = "";
         Vec3 previousPosition, observedMovement;
         long sampledTick = -1, impulseTick = -1;
@@ -47,6 +47,7 @@ public final class PowerService {
         if (s.packetTick != now) { s.packetTick = now; s.packets = 0; }
         if (++s.packets > 12) return;
         if (packet.action() == 2) { s.applying = packet.value() != 0 && p.isAlive() && !p.isSpectator(); s.lastApply = now; return; }
+        if (packet.action() == 5) { s.pulse = p.isAlive() && !p.isSpectator(); s.lastApply = now; return; }
         if (packet.action() == 4) { PowerNetwork.sync(p, s.targets); return; }
         if (!p.isAlive() || p.isSpectator() || !PowerData.available(p).contains(packet.power())) return;
         switch (packet.action()) {
@@ -107,13 +108,14 @@ public final class PowerService {
         if (active) { scan(p, s); s.targets = targets(p, s); }
         else { s.targets = List.of(); s.scanCenter = null; s.blocks.clear(); s.collecting.clear(); }
         String selected = PowerData.selected(p);
-        String activated = s.applying && p.isAlive() && !p.isSpectator() && p.level().getGameTime() - s.lastApply <= 15
+        String activated = (s.applying || s.pulse) && p.isAlive() && !p.isSpectator() && p.level().getGameTime() - s.lastApply <= 15
                 && available.contains(selected) && PowerData.state(p, selected) != 0 ? selected : "";
         if (!activated.equals(s.activePower)) {
             if (!s.activePower.isEmpty()) ABILITIES.activate(p, s.activePower, AbilityDispatcher.Phase.STOP, s.targets);
             s.activePower = activated;
             if (!activated.isEmpty()) ABILITIES.activate(p, activated, AbilityDispatcher.Phase.START, s.targets);
         } else if (!activated.isEmpty()) ABILITIES.activate(p, activated, AbilityDispatcher.Phase.TICK, s.targets);
+        s.pulse = false;
         if (p.tickCount % PowerConfig.SYNC_INTERVAL.get() == 0) PowerNetwork.sync(p, s.targets);
     }
     private void scan(ServerPlayer p, Session s) {

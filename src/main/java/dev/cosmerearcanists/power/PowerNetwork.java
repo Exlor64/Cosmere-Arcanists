@@ -35,7 +35,7 @@ public final class PowerNetwork {
         };
         @Override public Type<Snapshot> type() { return TYPE; }
     }
-    /** action: 0 select, 1 set state, 2 activate selected ability hold, 3 cycle state, 4 request snapshot. */
+    /** action: 0 select, 1 set state, 2 activate selected ability hold, 3 cycle state, 4 request snapshot, 5 brief activation press. */
     public record Control(int action, String power, int value) implements CustomPacketPayload {
         public static final Type<Control> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID, "power_control"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Control> CODEC = new StreamCodec<>() {
