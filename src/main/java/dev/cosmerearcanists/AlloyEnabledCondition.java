@@ -9,7 +9,7 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
 public record AlloyEnabledCondition(String metal) implements ICondition {
     public static final MapCodec<AlloyEnabledCondition> CODEC = Codec.STRING.fieldOf("metal").xmap(AlloyEnabledCondition::new, AlloyEnabledCondition::metal);
-    private static final DeferredRegister<MapCodec<? extends ICondition>> SERIALIZERS = DeferredRegister.create(NeoForgeRegistries.Keys.CONDITION_SERIALIZERS, CosmereArcanists.MOD_ID);
+    private static final DeferredRegister<MapCodec<? extends ICondition>> SERIALIZERS = DeferredRegister.create(NeoForgeRegistries.Keys.CONDITION_CODECS, CosmereArcanists.MOD_ID);
     static { SERIALIZERS.register("alloy_enabled", () -> CODEC); }
     public static void register(IEventBus bus) { SERIALIZERS.register(bus); }
     @Override public boolean test(IContext context) {
