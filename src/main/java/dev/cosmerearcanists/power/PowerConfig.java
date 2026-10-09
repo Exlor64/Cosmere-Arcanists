@@ -4,9 +4,9 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class PowerConfig {
     public static final ModConfigSpec SPEC;
-    public static final ModConfigSpec.BooleanValue ENABLED, IRON_STEEL, DETECTION_BLOCKS, DETECTION_ITEMS, DETECTION_GEAR, RECIPE_DETECTION, CONSUMPTION, FLARING, RECOIL, PLAYER_TARGETS;
+    public static final ModConfigSpec.BooleanValue ENABLED, IRON_STEEL, DETECTION_BLOCKS, DETECTION_ITEMS, DETECTION_GEAR, RECIPE_DETECTION, CONSUMPTION, FLARING, RECOIL, PLAYER_TARGETS, FALL_MITIGATION;
     public static final ModConfigSpec.IntValue RANGE, MAX_TARGETS, SCAN_BUDGET, SYNC_INTERVAL, FERUCHEMY_LEVELS;
-    public static final ModConfigSpec.DoubleValue FORCE, FLARE_STRENGTH, FLARE_DRAIN, BURN_DRAIN, RESERVE_CAP, VIAL_RESERVE, MAX_SPEED, PLAYER_MASS, AIM_ANGLE;
+    public static final ModConfigSpec.DoubleValue FORCE, FLARE_STRENGTH, FLARE_DRAIN, BURN_DRAIN, RESERVE_CAP, VIAL_RESERVE, MAX_SPEED, PLAYER_MASS, AIM_ANGLE, FALL_MITIGATION_STRENGTH;
     static {
         var b = new ModConfigSpec.Builder();
         b.push("controls");
@@ -20,6 +20,8 @@ public final class PowerConfig {
         MAX_SPEED = b.defineInRange("maxSpeed", 2.0, 0.1, 10.0);
         AIM_ANGLE = b.defineInRange("targetConeDegrees", 12.0, 1.0, 45.0);
         RECOIL = b.define("reactionForce", true);
+        FALL_MITIGATION = b.comment("Upward iron/steel force reduces accumulated fall damage only when it actually slows a descent.").define("reduceFallDamageWhenBraking", true);
+        FALL_MITIGATION_STRENGTH = b.comment("1: full speed-squared reduction; 0: vanilla fall distance.").defineInRange("fallDamageReductionStrength", 1.0, 0.0, 1.0);
         PLAYER_TARGETS = b.define("affectOtherPlayers", true);
         FLARING = b.define("allowFlaring", true);
         FLARE_STRENGTH = b.defineInRange("flareStrengthMultiplier", 2.0, 1.0, 10.0);

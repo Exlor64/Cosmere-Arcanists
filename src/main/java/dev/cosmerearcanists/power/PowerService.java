@@ -27,7 +27,18 @@ public final class PowerService {
     private static final class Session {
         BlockPos scanCenter; int cursor; final List<BlockPos> collecting = new ArrayList<>(), blocks = new ArrayList<>();
         List<MetalTarget> targets = List.of(); boolean applying; long lastApply, packetTick = -1; int packets;
-        String dimension = "";
+        String dimension = "", activePower = "";
+        Vec3 previousPosition, observedMovement;
+        long sampledTick = -1, impulseTick = -1;
+    }
+    public PowerService() {
+        AbilityDispatcher.Handler ironSteel = (player, power, phase, targets) -> {
+            if (phase == AbilityDispatcher.Phase.STOP || !PowerConfig.IRON_STEEL.get()) return;
+            if (PowerConfig.CONSUMPTION.get() && PowerData.reserve(player, power.substring(2)) <= 0) return;
+            apply(player, power, targets);
+        };
+        AbilityDispatcher.register("a:iron", ironSteel);
+        AbilityDispatcher.register("a:steel", ironSteel);
     }
     private static Session session(ServerPlayer p) { return SESSIONS.computeIfAbsent(p.getUUID(), id -> new Session()); }
     public static void control(ServerPlayer p, PowerNetwork.Control packet) {
@@ -46,26 +57,39 @@ public final class PowerService {
         PowerNetwork.sync(p, s.targets);
     }
     @SubscribeEvent public void syncDatapack(OnDatapackSyncEvent event) {
-        if (event.getPlayer() == null) { MetalDetector.rebuild(event.getPlayerList().getServer()); SESSIONS.clear(); }
+        if (event.getPlayer() == null) { event.getPlayerList().getPlayers().forEach(PowerService::stopActivation); MetalDetector.rebuild(event.getPlayerList().getServer()); SESSIONS.clear(); }
         event.getRelevantPlayers().forEach(p -> PowerNetwork.sync(p, List.of()));
     }
     @SubscribeEvent public void login(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer p) { SESSIONS.remove(p.getUUID()); PowerNetwork.sync(p, List.of()); }
+        if (event.getEntity() instanceof ServerPlayer p) { stopActivation(p); SESSIONS.remove(p.getUUID()); PowerNetwork.sync(p, List.of()); }
     }
-    @SubscribeEvent public void logout(PlayerEvent.PlayerLoggedOutEvent event) { SESSIONS.remove(event.getEntity().getUUID()); }
+    private static void stopActivation(ServerPlayer p) {
+        var s = SESSIONS.get(p.getUUID());
+        if (s != null && !s.activePower.isEmpty()) {
+            AbilityDispatcher.activate(p, s.activePower, AbilityDispatcher.Phase.STOP, s.targets);
+            s.activePower = "";
+        }
+    }
+    @SubscribeEvent public void logout(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer p) stopActivation(p);
+        SESSIONS.remove(event.getEntity().getUUID());
+    }
     @SubscribeEvent public void clonePlayer(PlayerEvent.Clone event) {
         if (event.getOriginal() instanceof ServerPlayer old && event.getEntity() instanceof ServerPlayer p) {
-            PowerData.clonePlayer(old, p); SESSIONS.remove(p.getUUID());
+            stopActivation(old); PowerData.clonePlayer(old, p); SESSIONS.remove(p.getUUID());
         }
     }
     @SubscribeEvent public void respawn(PlayerEvent.PlayerRespawnEvent event) { if (event.getEntity() instanceof ServerPlayer p) PowerNetwork.sync(p, List.of()); }
     @SubscribeEvent public void dimension(PlayerEvent.PlayerChangedDimensionEvent event) {
-        if (event.getEntity() instanceof ServerPlayer p) { SESSIONS.remove(p.getUUID()); PowerNetwork.sync(p, List.of()); }
+        if (event.getEntity() instanceof ServerPlayer p) { stopActivation(p); SESSIONS.remove(p.getUUID()); PowerNetwork.sync(p, List.of()); }
     }
-    @SubscribeEvent public void stopped(ServerStoppedEvent event) { SESSIONS.clear(); MetalDetector.clear(); }
+    @SubscribeEvent public void stopped(ServerStoppedEvent event) { event.getServer().getPlayerList().getPlayers().forEach(PowerService::stopActivation); SESSIONS.clear(); MetalDetector.clear(); }
     @SubscribeEvent public void tick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer p)) return;
         var s = session(p); var available = PowerData.available(p);
+        Vec3 displacement = s.previousPosition == null ? null : p.position().subtract(s.previousPosition);
+        s.observedMovement = usableMovement(displacement) ? displacement : null;
+        s.previousPosition = p.position(); s.sampledTick = p.level().getGameTime();
         boolean active = false;
         for (String power : List.of("a:iron", "a:steel")) {
             if (!PowerConfig.IRON_STEEL.get() || !p.isAlive() || p.isSpectator() || !available.contains(power)) continue;
@@ -81,10 +105,14 @@ public final class PowerService {
         }
         if (active) { scan(p, s); s.targets = targets(p, s); }
         else { s.targets = List.of(); s.scanCenter = null; s.blocks.clear(); s.collecting.clear(); }
-        if (active && s.applying && p.level().getGameTime() - s.lastApply <= 15) {
-            String selected = PowerData.selected(p);
-            if (PowerRules.implemented(selected) && available.contains(selected) && PowerData.state(p, selected) > 0) apply(p, selected, s.targets);
-        }
+        String selected = PowerData.selected(p);
+        String activated = s.applying && p.isAlive() && !p.isSpectator() && p.level().getGameTime() - s.lastApply <= 15
+                && available.contains(selected) && PowerData.state(p, selected) != 0 ? selected : "";
+        if (!activated.equals(s.activePower)) {
+            if (!s.activePower.isEmpty()) AbilityDispatcher.activate(p, s.activePower, AbilityDispatcher.Phase.STOP, s.targets);
+            s.activePower = activated;
+            if (!activated.isEmpty()) AbilityDispatcher.activate(p, activated, AbilityDispatcher.Phase.START, s.targets);
+        } else if (!activated.isEmpty()) AbilityDispatcher.activate(p, activated, AbilityDispatcher.Phase.TICK, s.targets);
         if (p.tickCount % PowerConfig.SYNC_INTERVAL.get() == 0) PowerNetwork.sync(p, s.targets);
     }
     private void scan(ServerPlayer p, Session s) {
@@ -150,9 +178,27 @@ public final class PowerService {
         accelerate(entity, direction.scale(-AllomanticPhysics.acceleration(force, distance, PowerConfig.RANGE.get(), mass)));
         if (PowerConfig.RECOIL.get()) accelerate(p, direction.scale(accel));
     }
+    private static boolean usableMovement(Vec3 movement) {
+        return movement != null && movement.lengthSqr() > 1e-8 && movement.lengthSqr() < 64;
+    }
     private void accelerate(Entity e, Vec3 impulse) {
-        Vec3 velocity = e.getDeltaMovement().add(impulse); double speed = velocity.length(), cap = PowerConfig.MAX_SPEED.get();
+        Vec3 previous = e.getDeltaMovement();
+        if (e instanceof ServerPlayer player) {
+            var s = session(player); long now = player.level().getGameTime();
+            if (s.impulseTick != now) {
+                // Movement packets report positions, not velocity. Preserve the observed fall momentum.
+                Vec3 observed = s.sampledTick == now ? s.observedMovement
+                        : s.previousPosition == null ? null : player.position().subtract(s.previousPosition);
+                if (usableMovement(observed)) previous = observed;
+                s.impulseTick = now;
+            }
+        }
+        Vec3 velocity = previous.add(impulse);
+        // Existing fast falls are not instantly slowed to the ability's speed cap.
+        double speed = velocity.length(), cap = Math.max(PowerConfig.MAX_SPEED.get(), previous.length());
         if (speed > cap) velocity = velocity.scale(cap / speed);
+        if (PowerConfig.FALL_MITIGATION.get()) e.fallDistance = AllomanticPhysics.brakedFallDistance(
+                e.fallDistance, previous.y, velocity.y, impulse.y, PowerConfig.FALL_MITIGATION_STRENGTH.get());
         e.setDeltaMovement(velocity); e.hurtMarked = true;
         if (e instanceof ServerPlayer player) {
             player.connection.aboveGroundTickCount = 0;

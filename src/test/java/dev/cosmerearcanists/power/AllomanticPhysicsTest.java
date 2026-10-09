@@ -15,4 +15,20 @@ class AllomanticPhysicsTest {
         assertTrue(near > AllomanticPhysics.acceleration(7, 14, 16, 80));
         assertEquals(near * 2, AllomanticPhysics.acceleration(14, 2, 16, 80), 1e-9);
     }
+    @Test void brakingReducesDamageByRemainingDescentEnergy() {
+        assertEquals(25f, AllomanticPhysics.brakedFallDistance(100, -2, -1, 1, 1));
+        assertEquals(62.5f, AllomanticPhysics.brakedFallDistance(100, -2, -1, 1, .5));
+        assertEquals(100f, AllomanticPhysics.brakedFallDistance(100, -2, -1, 1, 0));
+    }
+    @Test void arrestingDescentCancelsAccumulatedDistanceButDoesNotProtectLaterFalls() {
+        assertEquals(0f, AllomanticPhysics.brakedFallDistance(100, -2, 0, 2, 1));
+        assertEquals(0f, AllomanticPhysics.brakedFallDistance(100, -2, .5, 2.5, 1));
+        assertEquals(8f, AllomanticPhysics.brakedFallDistance(8, -1, -1.08, 0, 1));
+    }
+    @Test void sidewaysDownwardAndNonBrakingForcesDoNotReduceDamage() {
+        assertEquals(100f, AllomanticPhysics.brakedFallDistance(100, -2, -2, 0, 1));
+        assertEquals(100f, AllomanticPhysics.brakedFallDistance(100, -2, -3, -1, 1));
+        assertEquals(100f, AllomanticPhysics.brakedFallDistance(100, 1, 2, 1, 1));
+        assertEquals(100f, AllomanticPhysics.brakedFallDistance(100, -2, -2.1, .1, 1));
+    }
 }

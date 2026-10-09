@@ -62,5 +62,5 @@
   "key.categories.cosmerearcanists": "Cosmere Arcanists",
   "key.cosmerearcanists.select": "Select power (hold + scroll; tap to cycle state)",
   "key.cosmerearcanists.state": "Power state (hold + scroll)",
-  "key.cosmerearcanists.apply": "Apply selected power (hold)"
+  "key.cosmerearcanists.apply": "Activate ability (hold)"
 }
