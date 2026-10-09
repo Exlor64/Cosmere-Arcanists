@@ -16,6 +16,7 @@ public final class PowerClientMod {
         container.registerConfig(ModConfig.Type.CLIENT, PowerClientConfig.SPEC);
         bus.addListener(this::keys);
         PowerNetwork.clientReceiver = PowerClient::receive;
+        PowerNetwork.impulseReceiver = PowerClient::receiveImpulse;
         NeoForge.EVENT_BUS.register(new PowerClient());
     }
     private void keys(RegisterKeyMappingsEvent event) {

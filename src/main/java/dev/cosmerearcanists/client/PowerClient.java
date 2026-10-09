@@ -28,6 +28,32 @@ public final class PowerClient {
     private static int selectTicks, stateTicks, clock, previewIndex, previewState;
     private static boolean scrolledSelect, scrolledState;
     public static void receive(PowerNetwork.Snapshot packet) { snapshot = packet; }
+    private static Vec3 walkingForce = Vec3.ZERO;
+    private static int impulseClock = -100;
+    public static void receiveImpulse(PowerNetwork.Impulse packet) {
+        var mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null || !packet.dimension().equals(mc.level.dimension().location().toString())) return;
+        Vec3 previous = mc.player.getDeltaMovement();
+        double[] result = ImpulsePhysics.add(new double[]{previous.x, previous.y, previous.z},
+            new double[]{packet.x(),packet.y(),packet.z()}, packet.maxSpeed());
+        mc.player.setDeltaMovement(new Vec3(result[0],result[1],result[2]));
+        if (packet.resistWalking()) {
+            Vec3 force = new Vec3(packet.x(),0,packet.z());
+            walkingForce = impulseClock == clock ? walkingForce.add(force) : force;
+            impulseClock = clock;
+        }
+    }
+    @SubscribeEvent public void movementInput(MovementInputUpdateEvent event) {
+        var mc = Minecraft.getInstance();
+        if (event.getEntity() != mc.player || mc.level == null || clock - impulseClock > 2) return;
+        var input = event.getInput(); double yaw = Math.toRadians(mc.player.getYRot());
+        double sin = Math.sin(yaw), cos = Math.cos(yaw);
+        double x = -sin*input.forwardImpulse + cos*input.leftImpulse;
+        double z = cos*input.forwardImpulse + sin*input.leftImpulse;
+        double[] filtered = ImpulsePhysics.walkingInput(x,z,walkingForce.x,walkingForce.z);
+        input.forwardImpulse = (float)(-sin*filtered[0] + cos*filtered[1]);
+        input.leftImpulse = (float)(cos*filtered[0] + sin*filtered[1]);
+    }
     private static String selected() { return snapshot.selected(); }
     private static String preview() { return snapshot.powers().isEmpty() ? "" : snapshot.powers().get(Math.floorMod(previewIndex, snapshot.powers().size())).power(); }
     private static int state(String power) { return snapshot.powers().stream().filter(e -> e.power().equals(power)).mapToInt(PowerNetwork.Entry::state).findFirst().orElse(0); }
@@ -41,7 +67,7 @@ public final class PowerClient {
         while (APPLY.consumeClick()) activateClick = true;
         while (ALTERNATE.consumeClick()) { }
         if (mc.player == null || mc.level == null) {
-            snapshot = new PowerNetwork.Snapshot("", "", 5, List.of(), List.of()); connected = false; selecting = choosingState = applied = false; alternateLatched = alternatePreviouslyHeld = false; lastActivation = 0; return;
+            snapshot = new PowerNetwork.Snapshot("", "", 5, List.of(), List.of()); connected = false; walkingForce = Vec3.ZERO; impulseClock = -100; selecting = choosingState = applied = false; alternateLatched = alternatePreviouslyHeld = false; lastActivation = 0; return;
         }
         if (!connected) { connected = true; send(4, "", 0); }
         if (!playing()) {

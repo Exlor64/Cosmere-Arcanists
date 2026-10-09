@@ -15,6 +15,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 public final class PowerNetwork {
     /** Assigned by physical-client initialization; no common class references a client class. */
     public static Consumer<Snapshot> clientReceiver = packet -> { };
+    public static Consumer<Impulse> impulseReceiver = packet -> { };
     public record Entry(String power, int state, double reserve) { }
     public record Snapshot(String dimension, String selected, int levels, List<Entry> powers, List<MetalTarget> targets) implements CustomPacketPayload {
         public static final Type<Snapshot> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID, "power_snapshot"));
@@ -44,8 +45,18 @@ public final class PowerNetwork {
         };
         @Override public Type<Control> type() { return TYPE; }
     }
+    /** Add a server-authorized impulse to the recipient's actual client velocity. */
+    public record Impulse(String dimension, double x, double y, double z, double maxSpeed, boolean resistWalking) implements CustomPacketPayload {
+        public static final Type<Impulse> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID, "power_impulse"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, Impulse> CODEC = new StreamCodec<>() {
+            public Impulse decode(RegistryFriendlyByteBuf b) { return new Impulse(b.readUtf(128), b.readDouble(), b.readDouble(), b.readDouble(), b.readDouble(), b.readBoolean()); }
+            public void encode(RegistryFriendlyByteBuf b, Impulse p) { b.writeUtf(p.dimension,128); b.writeDouble(p.x); b.writeDouble(p.y); b.writeDouble(p.z); b.writeDouble(p.maxSpeed); b.writeBoolean(p.resistWalking); }
+        };
+        @Override public Type<Impulse> type() { return TYPE; }
+    }
     public static void register(RegisterPayloadHandlersEvent event) {
-        var r = event.registrar("1");
+        var r = event.registrar("2");
+        r.playToClient(Impulse.TYPE, Impulse.CODEC, (packet, context) -> context.enqueueWork(() -> impulseReceiver.accept(packet)));
         r.playToClient(Snapshot.TYPE, Snapshot.CODEC, (packet, context) -> context.enqueueWork(() -> clientReceiver.accept(packet)));
         r.playToServer(Control.TYPE, Control.CODEC, (packet, context) -> context.enqueueWork(() -> {
             if (context.player() instanceof ServerPlayer player) PowerService.control(player, packet);

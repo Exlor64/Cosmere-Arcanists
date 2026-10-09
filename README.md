@@ -145,3 +145,12 @@ New or removed targets sync immediately even with an existing slower
 Network latency and server tick rate still affect when lines reach the client.
 
 0.5.2 fixes the horizontal-momentum regression introduced in 0.5.0. Horizontal and diagonal pushes/pulls now preserve observed momentum alongside vertical fall momentum.
+
+0.5.3: player forces use an additive server-to-client impulse instead of replacing
+client velocity with position displacement, preventing walking feedback while
+preserving real inertia on all axes. Vanilla walking input opposing a recent
+Allomantic impulse is removed, while perpendicular strafing remains available.
+Disable that input rule with `ironSteel.preventWalkingAgainstForce = false`.
+Actual momentum still takes force/time to reverse; this does not instantly stop
+a player already moving toward an anchor. Input filtering expires after impulses
+stop. Both client and server must update to this version (network protocol 2).

@@ -292,11 +292,15 @@ public final class PowerService {
         if (speed > cap) velocity = velocity.scale(cap / speed);
         if (PowerConfig.FALL_MITIGATION.get()) e.fallDistance = AllomanticPhysics.brakedFallDistance(
                 e.fallDistance, previous.y, velocity.y, impulse.y, PowerConfig.FALL_MITIGATION_STRENGTH.get());
-        e.setDeltaMovement(velocity); e.hurtMarked = true;
+        e.setDeltaMovement(velocity);
         if (e instanceof ServerPlayer player) {
             player.connection.aboveGroundTickCount = 0;
-            player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket(e));
-        }
+            // Replacing client velocity with measured displacement re-injects walking every tick.
+            // Send only the new force; the client retains its real horizontal and vertical momentum.
+            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, new PowerNetwork.Impulse(
+                player.level().dimension().location().toString(), impulse.x, impulse.y, impulse.z,
+                PowerConfig.MAX_SPEED.get(), PowerConfig.RESIST_WALKING.get()));
+        } else e.hurtMarked = true;
     }
     @SubscribeEvent public void commands(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("cosmere").then(Commands.literal("power").requires(s -> s.hasPermission(2))
