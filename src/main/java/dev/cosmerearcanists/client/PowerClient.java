@@ -90,7 +90,7 @@ public final class PowerClient {
     @SubscribeEvent public void click(InputEvent.MouseButton.Pre event) {
         if (playing() && SELECT.isDown() && selecting && event.getButton() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
             if (event.getAction() == GLFW.GLFW_PRESS && !preview().isEmpty()) send(3, preview(), 0);
-            scrolledSelect = true; event.setCanceled(true);
+            scrolledSelect = true; Minecraft.getInstance().options.keyAttack.setDown(false); event.setCanceled(true);
         }
     }
     private static String name(String key) {
