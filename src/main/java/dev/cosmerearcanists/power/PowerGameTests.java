@@ -19,6 +19,25 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @PrefixGameTestTemplate(false)
 public final class PowerGameTests {
     @GameTest(template = "empty")
+    public static void fallingDiscoversNewAnchorsImmediately(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var player = new ServerPlayer(level.getServer(), level, new GameProfile(UUID.randomUUID(), "FallingScan"), ClientInformation.createDefault());
+        var start = helper.absolutePos(new net.minecraft.core.BlockPos(1, 20, 1));
+        player.setPos(start.getX()+.5,start.getY(),start.getZ()+.5);
+        var session = new PowerService.Session();
+        PowerService.scan(player,session);
+        var lower = start.offset(0,-12,0);
+        var nearby = lower.offset(1,-2,0); var distant = lower.offset(0,-10,0);
+        level.setBlock(nearby,net.minecraft.world.level.block.Blocks.IRON_BLOCK.defaultBlockState(),3);
+        level.setBlock(distant,net.minecraft.world.level.block.Blocks.IRON_BLOCK.defaultBlockState(),3);
+        player.setPos(lower.getX()+.5,lower.getY(),lower.getZ()+.5);
+        session.observedMovement = new net.minecraft.world.phys.Vec3(0,-2,0);
+        PowerService.scan(player,session);
+        helper.assertTrue(session.blocks.contains(nearby), "Current nearby anchors must appear on the first falling tick");
+        helper.assertTrue(session.blocks.contains(distant), "Fall-priority scan must find range anchors before the old background pass finishes");
+        helper.succeed();
+    }
+    @GameTest(template = "empty")
     public static void hardnessBlocksDetection(GameTestHelper helper) {
         var level = helper.getLevel(); var server = level.getServer();
         var player = new ServerPlayer(server, level, new GameProfile(UUID.randomUUID(), "Resistance"), ClientInformation.createDefault());

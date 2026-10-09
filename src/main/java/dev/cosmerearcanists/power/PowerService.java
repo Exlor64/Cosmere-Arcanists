@@ -27,7 +27,7 @@ public final class PowerService {
     private static final Map<Integer, List<BlockPos>> SCAN_OFFSETS = new HashMap<>();
     private static final Map<UUID, Session> SESSIONS = new HashMap<>();
     static final class Session {
-        BlockPos scanCenter; int cursor, scanRadius; final Set<BlockPos> blocks = new HashSet<>();
+        BlockPos scanCenter, urgentCenter; boolean urgentApplying; int cursor, scanRadius; final Set<BlockPos> blocks = new HashSet<>();
         List<MetalTarget> targets = List.of(); boolean applying, pulse, alternate; int movementInputs; long lastApply, packetTick = -1; int packets;
         String dimension = "", activePower = "";
         Vec3 previousPosition, observedMovement;
@@ -113,8 +113,9 @@ public final class PowerService {
                 PowerData.reserve(p, metal, fuel - drain);
             }
         }
+        var previousTargets = s.targets;
         if (active) { scan(p, s); s.targets = targets(p, s); }
-        else { s.targets = List.of(); s.scanCenter = null; s.blocks.clear(); }
+        else { s.targets = List.of(); s.scanCenter = s.urgentCenter = null; s.urgentApplying = false; s.blocks.clear(); }
         String selected = PowerData.selected(p);
         String activated = (s.applying || s.pulse) && p.isAlive() && !p.isSpectator() && p.level().getGameTime() - s.lastApply <= 15
                 && available.contains(selected) && PowerData.state(p, selected) != 0 ? selected : "";
@@ -124,7 +125,7 @@ public final class PowerService {
             if (!activated.isEmpty()) ABILITIES.activate(p, activated, AbilityDispatcher.Phase.START, s.targets);
         } else if (!activated.isEmpty()) ABILITIES.activate(p, activated, AbilityDispatcher.Phase.TICK, s.targets);
         s.pulse = false;
-        if (p.tickCount % PowerConfig.SYNC_INTERVAL.get() == 0) PowerNetwork.sync(p, s.targets);
+        if (!s.targets.equals(previousTargets) || p.tickCount % PowerConfig.SYNC_INTERVAL.get() == 0) PowerNetwork.sync(p, s.targets);
     }
     static void scan(ServerPlayer p, Session s) {
         int radius = PowerConfig.RANGE.get(); var center = p.blockPosition();
@@ -136,6 +137,17 @@ public final class PowerService {
             s.scanCenter = center; s.scanRadius = radius; s.cursor = 0;
             s.blocks.clear();
         }
+        // Always refresh the immediate neighborhood at the player's CURRENT position.
+        // The background pass can otherwise still be centered high above a falling player.
+        scanPositions(p, s, center, scanOffsets(Math.min(radius, PowerConfig.NEAR_SCAN_RADIUS.get())), Integer.MAX_VALUE);
+        Vec3 movement = s.observedMovement;
+        boolean fast = movement != null && (movement.y < -.15 || movement.horizontalDistanceSqr() > .25);
+        boolean urgent = (fast && !center.equals(s.urgentCenter)) || ((s.applying || s.pulse) && !s.urgentApplying);
+        if (urgent && PowerConfig.URGENT_SCAN_BUDGET.get() > 0) {
+            scanPositions(p, s, center, scanOffsets(radius), PowerConfig.URGENT_SCAN_BUDGET.get());
+            s.urgentCenter = center;
+        }
+        s.urgentApplying = s.applying || s.pulse;
         var offsets = scanOffsets(radius);
         s.blocks.removeIf(pos -> pos.distSqr(center) > (radius + 2) * (radius + 2));
         int budget = PowerConfig.SCAN_BUDGET.get();
@@ -152,6 +164,14 @@ public final class PowerService {
             s.blocks.clear(); s.blocks.addAll(nearest);
         }
         if (s.cursor >= offsets.size()) { s.scanCenter = center; s.cursor = 0; }
+    }
+    private static void scanPositions(ServerPlayer p, Session s, BlockPos center, List<BlockPos> offsets, int budget) {
+        for (int i = 0; i < Math.min(budget, offsets.size()); i++) {
+            var pos = center.offset(offsets.get(i));
+            if (!p.serverLevel().hasChunkAt(pos)) continue;
+            if (MetalDetector.detects(p.server, new ItemStack(p.level().getBlockState(pos).getBlock().asItem()))) s.blocks.add(pos);
+            else s.blocks.remove(pos);
+        }
     }
     static List<BlockPos> scanOffsets(int radius) {
         return SCAN_OFFSETS.computeIfAbsent(radius, r -> {

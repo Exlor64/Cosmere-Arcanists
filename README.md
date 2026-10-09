@@ -131,3 +131,14 @@ Normal targeting now prefers the actual metal block hit by the crosshair, includ
 its edges. Forces still follow physical chest-to-metal directions, so an off-center
 anchor can cause a diagonal push. Distance and target mass still influence force.
 Horizontal walking displacement is no longer injected into ability velocity.
+
+Fast line discovery (0.5.1): each active tick refreshes a 6-block neighborhood at
+the current player position. Falling or fast movement into a new block, and
+starting activation, additionally scan up to 32768 near-first positions at the
+current position (the full default 16-block sphere). All scans use loaded chunks
+only and still apply hardness resistance. Configure `immediateScanRadius` and
+`urgentBlockChecksPerTick` under `metalDetection`; reducing the urgent budget
+reduces server work at the expense of distant anchor discovery during falls.
+New or removed targets sync immediately even with an existing slower
+`syncIntervalTicks`; periodic state/reserve updates now default to every tick.
+Network latency and server tick rate still affect when lines reach the client.

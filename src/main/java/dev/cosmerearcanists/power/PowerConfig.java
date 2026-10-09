@@ -5,7 +5,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 public final class PowerConfig {
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.BooleanValue ENABLED, IRON_STEEL, DETECTION_BLOCKS, DETECTION_ITEMS, DETECTION_GEAR, RECIPE_DETECTION, CONSUMPTION, FLARING, RECOIL, PLAYER_TARGETS, FALL_MITIGATION, BLOCK_RESISTANCE, STEEL_MOVEMENT;
-    public static final ModConfigSpec.IntValue RANGE, MAX_TARGETS, SCAN_BUDGET, SYNC_INTERVAL, FERUCHEMY_LEVELS;
+    public static final ModConfigSpec.IntValue RANGE, MAX_TARGETS, SCAN_BUDGET, SYNC_INTERVAL, FERUCHEMY_LEVELS, NEAR_SCAN_RADIUS, URGENT_SCAN_BUDGET;
     public static final ModConfigSpec.DoubleValue FORCE, FLARE_STRENGTH, FLARE_DRAIN, BURN_DRAIN, RESERVE_CAP, VIAL_RESERVE, MAX_SPEED, PLAYER_MASS, AIM_ANGLE, FALL_MITIGATION_STRENGTH, RESISTANCE_COST, RESISTANCE_HARDNESS_CAP, MOVEMENT_ANGLE;
     static {
         var b = new ModConfigSpec.Builder();
@@ -40,7 +40,9 @@ public final class PowerConfig {
         RESISTANCE_HARDNESS_CAP = b.comment("Maximum hardness per blocker; also used for unbreakable blocks.").defineInRange("resistanceHardnessCap", 50.0, 1.0, 10000.0);
         MAX_TARGETS = b.defineInRange("maxTargets", 96, 8, 256);
         SCAN_BUDGET = b.comment("Maximum spherical scan positions per player per tick, nearest first; discoveries publish immediately. No chunk loading.").defineInRange("blockChecksPerTick", 2048, 128, 8192);
-        SYNC_INTERVAL = b.defineInRange("syncIntervalTicks", 2, 2, 40);
+        NEAR_SCAN_RADIUS = b.comment("Radius refreshed around the current player every active tick, independent of the background scan.").defineInRange("immediateScanRadius", 6, 2, 10);
+        URGENT_SCAN_BUDGET = b.comment("Extra near-first positions checked when falling/moving quickly into a new block or starting activation. 32768 covers the full default 16-block sphere; 0 disables this pass. Loaded chunks only.").defineInRange("urgentBlockChecksPerTick", 32768, 0, 262144);
+        SYNC_INTERVAL = b.comment("Periodic state/reserve updates. Target-list changes are always sent immediately, regardless of this interval.").defineInRange("syncIntervalTicks", 1, 1, 40);
         b.pop(); SPEC = b.build();
     }
     private PowerConfig() { }
