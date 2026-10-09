@@ -130,7 +130,8 @@ entity share one anchor; entity recoil must be enabled to assist from loose gear
 Normal targeting now prefers the actual metal block hit by the crosshair, including
 its edges. Forces still follow physical chest-to-metal directions, so an off-center
 anchor can cause a diagonal push. Distance and target mass still influence force.
-Horizontal walking displacement is no longer injected into ability velocity.
+Player impulse calculations preserve observed movement on all three axes, since
+server-side player delta motion does not retain horizontal client momentum.
 
 Fast line discovery (0.5.1): each active tick refreshes a 6-block neighborhood at
 the current player position. Falling or fast movement into a new block, and
@@ -142,3 +143,5 @@ reduces server work at the expense of distant anchor discovery during falls.
 New or removed targets sync immediately even with an existing slower
 `syncIntervalTicks`; periodic state/reserve updates now default to every tick.
 Network latency and server tick rate still affect when lines reach the client.
+
+0.5.2 fixes the horizontal-momentum regression introduced in 0.5.0. Horizontal and diagonal pushes/pulls now preserve observed momentum alongside vertical fall momentum.

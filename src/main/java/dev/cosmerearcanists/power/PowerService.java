@@ -277,13 +277,12 @@ public final class PowerService {
         if (e instanceof ServerPlayer player) {
             var s = session(player); long now = player.level().getGameTime();
             if (s.impulseTick != now) {
-                // Movement packets report positions, not velocity. Preserve the observed fall momentum.
+                // Player movement packets report positions, not velocity. Use observed motion on ALL axes.
+                // Server-side horizontal delta is reset during player movement processing.
                 Vec3 observed = s.sampledTick == now ? s.observedMovement
                         : s.previousPosition == null ? null : player.position().subtract(s.previousPosition);
-                if (usableMovement(observed)) {
-                    // Horizontal displacement includes vanilla walking: feeding it back as velocity doubles movement.
-                    previous = new Vec3(previous.x, observed.y, previous.z);
-                }
+                if (usableMovement(observed)) previous = observed;
+
                 s.impulseTick = now;
             }
         }
