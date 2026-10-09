@@ -92,7 +92,7 @@ public final class PowerAttributes {
             var source = original.getAttribute(holder);
             var target = replacement.getAttribute(holder);
             // save/load copies the base and permanent modifiers, not temporary equipment effects.
-            if (source != null && target != null) target.load(source.save());
+            if (source != null && target != null) { target.removeModifiers(); target.load(source.save()); }
         }
     }
     private PowerAttributes() { }

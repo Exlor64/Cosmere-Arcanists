@@ -3,7 +3,6 @@ package dev.cosmerearcanists.client;
 import java.util.*;
 import org.lwjgl.glfw.GLFW;
 import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.vertex.PoseStack;
 import dev.cosmerearcanists.CosmereArcanists;
 import dev.cosmerearcanists.power.*;
 import net.minecraft.client.KeyMapping;
@@ -144,15 +143,18 @@ public final class PowerClient {
             || !snapshot.dimension().equals(mc.level.dimension().location().toString()) || snapshot.targets().isEmpty()) return;
         float partial = event.getPartialTick().getGameTimeDeltaPartialTick(false);
         Vec3 chest = mc.player.getPosition(partial).add(0, mc.player.getBbHeight() * .65, 0), camera = event.getCamera().getPosition();
-        var poses = new PoseStack(); poses.mulPose(event.getModelViewMatrix()); poses.translate(-camera.x, -camera.y, -camera.z);
-        var pose = poses.last(); var buffers = mc.renderBuffers().bufferSource(); var type = MetalLineRenderType.get(); var vertices = buffers.getBuffer(type);
+        // Reuse the world pose: the event matrix is not a substitute for this stack.
+        // Subtract the camera in doubles before converting vertices to floats.
+        Vec3 relativeChest = chest.subtract(camera);
+        var pose = event.getPoseStack().last(); var buffers = mc.renderBuffers().bufferSource(); var type = MetalLineRenderType.get(); var vertices = buffers.getBuffer(type);
         for (var target : snapshot.targets()) {
             Vec3 point = target.position(mc.level, partial); if (point == null) continue;
             Vec3 normal = point.subtract(chest).normalize();
+            Vec3 relativePoint = point.subtract(camera);
             boolean aimed = point.subtract(mc.player.getEyePosition(partial)).normalize().dot(mc.player.getLookAngle()) > Math.cos(Math.toRadians(12));
             int red = aimed ? 115 : 35, green = aimed ? 205 : 125, alpha = aimed ? 240 : 160;
-            vertices.addVertex(pose.pose(), (float)chest.x, (float)chest.y, (float)chest.z).setColor(red, green, 255, alpha).setNormal(pose, (float)normal.x, (float)normal.y, (float)normal.z);
-            vertices.addVertex(pose.pose(), (float)point.x, (float)point.y, (float)point.z).setColor(red, green, 255, alpha).setNormal(pose, (float)normal.x, (float)normal.y, (float)normal.z);
+            vertices.addVertex(pose.pose(), (float)relativeChest.x, (float)relativeChest.y, (float)relativeChest.z).setColor(red, green, 255, alpha).setNormal(pose, (float)normal.x, (float)normal.y, (float)normal.z);
+            vertices.addVertex(pose.pose(), (float)relativePoint.x, (float)relativePoint.y, (float)relativePoint.z).setColor(red, green, 255, alpha).setNormal(pose, (float)normal.x, (float)normal.y, (float)normal.z);
         }
         buffers.endBatch(type);
     }
