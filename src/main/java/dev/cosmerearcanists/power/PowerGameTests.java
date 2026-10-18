@@ -18,6 +18,29 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @GameTestHolder(CosmereArcanists.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class PowerGameTests {
+    @GameTest(template = "empty")
+    public static void alternateSteelDropsMetalDownward(GameTestHelper helper) {
+        var level=helper.getLevel(); MetalDetector.rebuild(level.getServer());
+        var player=new ServerPlayer(level.getServer(),level,new GameProfile(UUID.randomUUID(),"DownDropper"),ClientInformation.createDefault());
+        var pos=helper.absolutePos(new net.minecraft.core.BlockPos(1,4,1));
+        player.setPos(pos.getX()+.5,pos.getY(),pos.getZ()+.5); player.setYRot(90); player.setXRot(-45);
+        PowerAttributes.set(player,"a:steel",1); PowerData.state(player,"a:steel",2); PowerData.reserve(player,"steel",10);
+        PowerService.control(player,new PowerNetwork.Control(2,"",3)); // Held activation with alternate latched.
+        var stack=new ItemStack(Items.IRON_NUGGET,16);
+        var drop=new net.minecraft.world.entity.item.ItemEntity(level,player.getX()+1,player.getEyeY(),player.getZ(),stack);
+        drop.setDeltaMovement(1,.3,1); drop.setPickUpDelay(40);
+        helper.assertTrue(MetalProjectiles.launch(player,drop)==null,"Alternate activation must retain a regular item instead of launching a projectile");
+        helper.assertTrue(drop.getX()==player.getX() && drop.getZ()==player.getZ() && drop.getY()<player.getY()+.3,"Drop must start at the feet directly below the player");
+        helper.assertTrue(drop.getDeltaMovement().x==0 && drop.getDeltaMovement().z==0 && drop.getDeltaMovement().y<0,"Drop must fall straight down regardless of aim or original toss velocity");
+        helper.assertTrue(drop.getItem().getCount()==16 && drop.hasPickUpDelay(),"Stack and pickup delay must remain intact");
+        helper.assertTrue(PowerData.reserve(player,"steel")==10,"Downward drops must not spend projectile reserves");
+        PowerService.control(player,new PowerNetwork.Control(2,"",0));
+        PowerService.control(player,new PowerNetwork.Control(2,"",1));
+        var recoil=MetalProjectiles.launch(player,drop);
+        helper.assertTrue(recoil!=null && PowerData.reserve(player,"steel")==9,"Normal steel activation must still launch and spend shot fuel");
+        level.getEntitiesOfClass(SteelProjectile.class,player.getBoundingBox().inflate(3),e->e.getOwner()==player).forEach(net.minecraft.world.entity.Entity::discard);
+        PowerService.control(player,new PowerNetwork.Control(2,"",0)); helper.succeed();
+    }
     @GameTest(template = "empty", timeoutTicks = 30)
     public static void projectileActivationHeartbeatExpires(GameTestHelper helper) {
         var level=helper.getLevel();

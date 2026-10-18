@@ -191,6 +191,9 @@ the server has a fresh held-activation input. Burning alone, activating another
 power, a brief released tap, and expired hold inputs leave ordinary drops.
 Inventory drops also require that held activation; opening a GUI normally
 releases activation.
+With **Alt held before G**, Q instead drops metal straight down at your feet as
+an ordinary item, without projectile damage, launch recoil, or shot reserve
+cost. This uses the latched alternate mode; release G before switching modes.
 Nonmetal and aluminum-containing drops remain ordinary items. Steel must be
 available/enabled, with enough reserves when consumption is enabled. The shot
 uses normal power attributes and Low burn/Burning/Flaring multipliers.
@@ -223,3 +226,5 @@ the new projectile entity and renderer. Client appearance still needs in-game
 verification; automated tests cover content, damage, collision and recovery.
 
 0.7.1 corrects projectile activation: active steel pushing (G held, steel selected and burning) is required. Releasing G restores normal drops immediately on the server. Projectiles already fired continue their physical flight.
+
+0.7.2: Alt+G+Q drops metal straight down rather than firing. Normal G+Q still shoots. `steelProjectiles.alternateDropDownwards` controls repositioning; disabling it retains ordinary vanilla drops during alternate mode, never projectile fire.

@@ -15,11 +15,18 @@ public final class MetalProjectiles {
     public static final DeferredHolder<EntityType<?>,EntityType<SteelProjectile>> STEEL=ENTITIES.register("steel_projectile",
         ()->EntityType.Builder.<SteelProjectile>of(SteelProjectile::new,MobCategory.MISC).sized(.25f,.25f).clientTrackingRange(8).updateInterval(1).build("cosmerearcanists:steel_projectile"));
     public static void register(net.neoforged.bus.api.IEventBus bus){ENTITIES.register(bus);}
-    /** Null leaves the normal drop intact; a recoil vector means the projectile replaced it successfully. */
+    /** Null keeps the ordinary ItemEntity (optionally positioned downward); a vector means a launched projectile replaced it. */
     public static Vec3 launch(ServerPlayer player,ItemEntity dropped) {
         if(!PowerConfig.STEEL_PROJECTILES.get() || !PowerConfig.IRON_STEEL.get() || !player.isAlive() || player.isSpectator()
             || !PowerService.holdingAbility(player,"a:steel") || !PowerData.available(player).contains("a:steel") || PowerData.state(player,"a:steel")==0)return null;
         double units=MetalAmounts.units(player.server,dropped.getItem()); if(units<=0)return null;
+        if(PowerService.holdingAlternateAbility(player,"a:steel")) {
+            if(PowerConfig.ALTERNATE_DROP_DOWN.get()) {
+                dropped.setPos(player.getX(),player.getY()+.2,player.getZ());
+                dropped.setDeltaMovement(0,-.1,0);
+            }
+            return null; // Keep the original stack, pickup delay and ownership; no shot fuel or recoil.
+        }
         double cost=PowerConfig.PROJECTILE_RESERVE_COST.get();
         if(PowerConfig.CONSUMPTION.get() && PowerData.reserve(player,"steel")<cost)return null;
         if(!PowerConfig.FLARING.get() && PowerData.state(player,"a:steel")==3)PowerData.state(player,"a:steel",2);

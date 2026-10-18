@@ -51,6 +51,9 @@ public final class PowerService {
         long age = player.level().getGameTime() - s.lastApply;
         return age >= 0 && age <= 15;
     }
+    static boolean holdingAlternateAbility(ServerPlayer player, String power) {
+        return holdingAbility(player, power) && SESSIONS.get(player.getUUID()).alternate;
+    }
     public static void control(ServerPlayer p, PowerNetwork.Control packet) {
         var s = session(p); long now = p.level().getGameTime();
         if (s.packetTick != now) { s.packetTick = now; s.packets = 0; }

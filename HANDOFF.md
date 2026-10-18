@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-18**. Current mod version: **0.7.1-alpha**.
+Last updated: **2026-10-18**. Current mod version: **0.7.2-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -9,10 +9,11 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
-- User reports the projectile concept works, but clarified it must fire only while **actively pushing with steel**, not merely burning steel.
-- 0.7.1 adds a server-side held-input gate: steel selected, burning, fresh G-held heartbeat. Releasing G, selecting another power, brief taps and stale input prevent launches without spending fuel or replacing ordinary drops. Already-fired projectiles continue in flight.
-- 0.7.1 build, 27 JUnit methods, 13 server GameTests and artifact upload passed in CI (evidence below).
-- Next: collect G+Q versus ordinary Q playtest feedback. Do not restore automatic fire on burning alone.
+- User requested Alt + steel activation + item throw to drop straight down instead of firing a projectile.
+- 0.7.2 keeps normal G+Q fire, but latched Alt+G+Q retains the original ordinary ItemEntity, moves it to the player's feet and sets only downward velocity. Preserves stack/ownership/pickup delay; no projectile damage, shot reserve cost or launch recoil. Regular burning and later normal Allomantic forces still apply.
+- `steelProjectiles.alternateDropDownwards` defaults true. When disabled, alternate mode retains a vanilla drop instead of firing.
+- Build/server verification for 0.7.2 is pending at this commit; prior successful evidence remains below until superseded.
+- Next: verify CI, record evidence, and collect normal G+Q versus Alt+G+Q playtest feedback. Alt mode is latched when G starts; release G before changing modes.
 
 ## Vision and accepted constraints
 
@@ -88,7 +89,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 ## Steel-thrown projectiles — 0.7.0
 
 - Hold **G** with steel **selected and burning**, then throw with **Q**. Burning alone is insufficient. Server checks a fresh held-input heartbeat (up to 15 ticks); release, other selection, brief released taps, expired input, disabled/unavailable/unfueled steel, nonmetal and aluminum leave normal drops. Inventory drops only qualify if a valid held activation still exists; GUI opening normally releases it. Already-fired projectiles do not require continued G holding.
-- One thrown stack becomes one `SteelProjectile`; it cannot merge in flight. The exact stack/components/count are stored separately from the rendered single item and persist through save/load.
+- Alt held before G changes Q to a straight-down ordinary drop at the feet, independent of look direction. No shot fuel or recoil; stack data/pickup delay retained. Disabling `alternateDropDownwards` leaves a vanilla alternate-mode drop, never a projectile. Normal G+Q behavior remains unchanged.
+- One normally fired thrown stack becomes one `SteelProjectile`; it cannot merge in flight. The exact stack/components/count are stored separately from the rendered single item and persist through save/load.
 - `MetalAmounts` / `RecipeMetalAmounts` count nugget-equivalent content: nugget 1, ingot 9, iron block 81, anvil 279. Repeated ingredients and output counts matter; nonmetal ingredients add zero. Ingredient/recipe alternatives use the minimum resolvable amount.
 - Primitive ore/raw items use 9 units as a balance approximation; unresolved detectable items default to 9 units per item (configurable). Multiply by thrown stack count. This is not a real-world mass/metallurgy claim.
 - At baseline steel Burning: one nugget launches at 3.5 blocks/tick and deals about **2 raw damage**; armor and hurt immunity still apply. Power is effective steel force divided by 7, so attributes, force config and burn levels scale it.
@@ -102,7 +104,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - Origin/per-art/per-metal SERVER config: `ServerConfig`. Powers SERVER config: `cosmerearcanists-powers-server.toml` (world/server config location follows NeoForge). Metallurgy COMMON config: `MetallurgyConfig`. Client HUD/line config: `PowerClientConfig`.
 - `ironSteel`: force, iron multiplier, burn strength/drain, speed/mass, reaction/fall braking, player targets, separate iron/steel alternate toggles, angle limit, input filtering, reserves.
 - `metalDetection`: categories, recursive recipes, hardness cost/cap, range-related scanning budgets, target count and sync cadence.
-- `steelProjectiles`: enabled, reference/max speed, nugget damage, cap ≤100, recoil mass, unknown content fallback, per-shot reserve cost (default 1), lifetime.
+- `steelProjectiles`: enabled, reference/max speed, nugget damage, cap ≤100, recoil mass, unknown content fallback, per-shot reserve cost (default 1), lifetime, alternate straight-down drop.
 - Existing config files retain saved values. New fields obtain defaults. Datapacks can override generation and recipes. Feature disablement must not delete saved data or registry entries.
 - `PowerService`: validated inputs, ticks/sessions, dispatcher, target selection, forces, throw event. `PowerAttributes`/`PowerData`: powers/persistence. `PowerNetwork`: controls, snapshots, additive impulse; **current protocol 3**. Update both server and client, especially for new projectile registration/renderer.
 - `PowerClient`/`PowerClientMod`: input, HUD, lines, impulse reception, renderer. Common classes must not reference client classes. Client supplies no target positions or force magnitudes.
@@ -119,3 +121,5 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - User reports the projectile concept works in game; this does not independently validate every projectile behavior or balance setting. No manual client/multiplayer visual playtest has been performed by the assistant. Projectile appearance, movement feel/balance, real network latency, and modded/dynamic recipe edge cases still need playtesting.
 - Java **21** required. Commands: `./gradlew build --no-daemon`, `./gradlew runGameTestServer --no-daemon`; on Windows use `gradlew.bat`. CI installs Java 21 and uploads `build/libs/*.jar` as `Cosmere-Arcanists`. In this session local builds were unavailable because of local runtime/download constraints; CI is the verification evidence.
 - Passed 0.7.1 checks add regression coverage for burning without G, iron selected, pulse-only input, G release, stale heartbeat, fuel preservation and valid held steel launch.
+
+0.7.2 pending regression: downward position/velocity despite upward/sideways aim, exact stack/pickup-delay retention, no shot cost, and unchanged normal launch.
