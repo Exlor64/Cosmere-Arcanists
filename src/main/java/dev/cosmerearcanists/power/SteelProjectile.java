@@ -43,7 +43,10 @@ public final class SteelProjectile extends ThrowableItemProjectile {
     @Override protected void onHit(HitResult hit) {
         if(isRemoved())return;
         super.onHit(hit);
-        if(!level().isClientSide && hit.getType()!=HitResult.Type.MISS)recover();
+        if(!level().isClientSide && hit.getType()!=HitResult.Type.MISS) {
+            setPos(hit.getLocation().subtract(getDeltaMovement().normalize().scale(.05)));
+            recover();
+        }
     }
     private void recover() {
         if(isRemoved())return;

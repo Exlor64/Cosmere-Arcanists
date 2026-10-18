@@ -19,6 +19,26 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @PrefixGameTestTemplate(false)
 public final class PowerGameTests {
     @GameTest(template = "empty")
+    public static void thrownMetalLaunchAndRecoil(GameTestHelper helper) {
+        var level=helper.getLevel(); var server=level.getServer(); MetalDetector.rebuild(server);
+        var player=new ServerPlayer(server,level,new GameProfile(UUID.randomUUID(),"MetalThrower"),ClientInformation.createDefault());
+        var pos=helper.absolutePos(new net.minecraft.core.BlockPos(1,6,1));
+        player.setPos(pos.getX()+.5,pos.getY(),pos.getZ()+.5);
+        PowerAttributes.set(player,"a:steel",1); PowerData.state(player,"a:steel",2); PowerData.reserve(player,"steel",10);
+        var nugget=new net.minecraft.world.entity.item.ItemEntity(level,player.getX(),player.getY(),player.getZ(),new ItemStack(Items.IRON_NUGGET));
+        var anvil=new net.minecraft.world.entity.item.ItemEntity(level,player.getX(),player.getY(),player.getZ(),new ItemStack(Items.ANVIL));
+        var light=MetalProjectiles.launch(player,nugget); var heavy=MetalProjectiles.launch(player,anvil);
+        helper.assertTrue(light!=null && heavy!=null && heavy.length()>light.length()*50,"Anvil launch must apply much greater recoil than nugget launch");
+        helper.assertTrue(PowerData.reserve(player,"steel")==8,"Each successful launch must deduct its extra reserve cost");
+        var shots=level.getEntitiesOfClass(SteelProjectile.class,player.getBoundingBox().inflate(3),e->e.getOwner()==player);
+        helper.assertTrue(shots.size()==2,"Each thrown stack must launch exactly one shot");
+        var speeds=shots.stream().mapToDouble(e->e.getDeltaMovement().length()).sorted().toArray();
+        helper.assertTrue(speeds[0]<speeds[1]*.3,"Anvil must fly much slower than nugget");
+        PowerData.state(player,"a:steel",0);
+        helper.assertTrue(MetalProjectiles.launch(player,nugget)==null,"Throwing without burning must remain an ordinary drop");
+        shots.forEach(net.minecraft.world.entity.Entity::discard); helper.succeed();
+    }
+    @GameTest(template = "empty")
     public static void metalProjectileContentAndRecovery(GameTestHelper helper) {
         var level=helper.getLevel(); var server=level.getServer(); MetalDetector.rebuild(server);
         helper.assertTrue(MetalAmounts.units(server,new ItemStack(Items.IRON_NUGGET))==1,"Nugget must contain one unit");
@@ -55,7 +75,7 @@ public final class PowerGameTests {
         projectile.cargo(new ItemStack(Items.IRON_NUGGET),1); projectile.setDeltaMovement(new net.minecraft.world.phys.Vec3(3.5,0,0)); level.addFreshEntity(projectile);
         helper.runAfterDelay(5,()->{
             helper.assertTrue(projectile.isRemoved(),"Fast shot must collide instead of tunneling through a mob");
-            helper.assertTrue(Math.abs((health-cow.getHealth())-2)<.2,"Baseline nugget must deal about two damage before armor");
+            helper.assertTrue(Math.abs((health-cow.getHealth())-2)<.2,"Baseline nugget must deal about two damage before armor; before="+health+", after="+cow.getHealth()+", impact="+projectile.position());
             cow.discard(); helper.succeed();
         });
     }
