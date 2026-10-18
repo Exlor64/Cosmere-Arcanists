@@ -1,0 +1,21 @@
+{
+  "replace": false,
+  "values": [
+    "#c:ingots/aluminum",
+    "#c:ingots/bendalloy",
+    "#c:ingots/brass",
+    "#c:ingots/bronze",
+    "#c:ingots/cadmium",
+    "#c:ingots/chromium",
+    "#c:ingots/duralumin",
+    "#c:ingots/electrum",
+    "#c:ingots/lead",
+    "#c:ingots/nickel",
+    "#c:ingots/nicrosil",
+    "#c:ingots/pewter",
+    "#c:ingots/silver",
+    "#c:ingots/steel",
+    "#c:ingots/tin",
+    "#c:ingots/zinc"
+  ]
+}

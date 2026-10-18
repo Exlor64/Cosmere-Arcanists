@@ -13,7 +13,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - Work in progress: new equipment items/entity, recipes, shared AllomanticProjectile interface, tether ownership/recovery, radial rope tension and visible rope. No Hemalurgic charge/steal mechanics are included.
 - Spike recipe interpretation: two same-metal ingots diagonally craft two spikes. Crossbow recipe is vanilla crossbow plus two iron ingots. Ball recipe is one non-aluminum ingot plus three string. Grapple recipe adds iron, tripwire hook and three string; these crossbow/hook recipes are provisional choices.
 - Ball launches on right-click only while actively holding steel's assigned activation key and burning; subsequent right-click reels in. Grapple charges like a bow in 10 ticks, latches to blocks, preserves tangential motion, and Space shortens rope. Right-click again recalls it. Both items stay in inventory rather than being duplicated as drops.
-- Build/server verification is pending; previous successful evidence remains below. Placeholder item icons reuse vanilla assets; rope rendering and real swinging need client playtesting.
+- Initial build passed; latching, rope tension/Space recall, and reusable ball tests passed. Crafting exposed missing common ingot aggregation; added `c:ingots` entries for the mod metals. Final verification pending. Placeholder item icons reuse vanilla assets; rope rendering and real swinging need client playtesting.
 - Next: finish validation and tests, resolve any API/runtime issues, then record final status and playtest instructions.
 
 ## Vision and accepted constraints
@@ -149,3 +149,5 @@ Recall returns the entity without dropping another inventory item; loss/death
 of owner or loss/replacement of the matching item ends it. No forced chunks.
 Control action 9 carries only Space input with a short timeout; server owns
 rope constraints and shortening. Protocol 5 requires both sides to update.
+
+Recall temporarily removes returning equipment heads from Allomantic targeting so a still-held steel key does not fight the reel-in. Custom spike ammunition supports standard crossbow loading, Quick Charge and spread; arrow-only Piercing behavior is not implemented.

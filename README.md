@@ -294,3 +294,5 @@ Tethers have one active head per inventory item; lost ownership/items end the
 tether, and range overflow recalls it. Recipe choices beyond the user-specified
 spikes and ball ingredients are provisional. Current icons reuse vanilla item
 art; physical rope renders separately. Update both sides for protocol 5.
+
+Returning tether heads temporarily leave Allomantic targeting until reused, so holding steel does not fight recall. Spike ammunition currently does not implement arrow-only Piercing behavior.

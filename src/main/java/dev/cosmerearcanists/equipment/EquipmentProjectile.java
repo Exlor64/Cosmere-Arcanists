@@ -40,7 +40,7 @@ public final class EquipmentProjectile extends ThrowableItemProjectile implement
     public boolean returning(){return entityData.get(RETURNING);}
     public double ropeLength(){return entityData.get(ROPE_LENGTH);}
     public void configure(int kind,ItemStack stack,double units){entityData.set(KIND,kind);cargo=stack.copy();setItem(stack.copyWithCount(1));this.units=Math.max(.001,units);}
-    @Override public boolean allomanticallyDetectable(MinecraftServer server){return !isRemoved() && PowerConfig.DETECTION_PROJECTILES.get() && MetalDetector.detects(server,cargo);}
+    @Override public boolean allomanticallyDetectable(MinecraftServer server){return !isRemoved() && !returning() && PowerConfig.DETECTION_PROJECTILES.get() && MetalDetector.detects(server,cargo);}
     @Override public double allomanticMass(){return Math.max(.001,units*PowerConfig.NUGGET_MASS.get());}
     @Override public boolean fixedMetalAnchor(){return latched() && kind()!=BALL && !returning();}
     @Override public void beforeAllomanticForce(){if(kind()==BALL && latched()){entityData.set(LATCHED,false);setNoGravity(false);spent=false;}}
