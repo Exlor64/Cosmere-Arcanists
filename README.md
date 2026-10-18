@@ -248,3 +248,23 @@ those speeds until the configured projectile maxSpeed (default 8) is reached.
 Heavy cargo still reduces speed. Recoil and impact damage follow the resulting
 velocity; the damage ceiling remains 100. Existing in-flight push/pull also
 uses effective Allomantic force and cargo mass.
+
+### Two activation slots (0.8.0)
+
+**G** activates the primary power; **H** activates the secondary power. Both
+are rebindable and may be held together. Alt mode latches independently when
+each activation starts. Each power still needs its own active state/reserves.
+
+Hold R, scroll to highlight a power, and **right-click to switch its assignment
+between primary and secondary**. Moving a power already assigned to the other
+slot swaps them. Left-click still cycles its state. Releasing R after a
+right-click preserves the assignment; ordinary scroll-and-release chooses
+primary as before. HUD and menu show the actual bound key for each assignment.
+V continues to change the primary power's state; use menu left-click to cycle
+secondary's state. Assignments persist through respawn/save/reconnect.
+
+Steel throws use whichever key has steel assigned: normal held G or H + Q
+fires; Alt before that key + Q drops downward. The other key cannot authorize
+a steel shot. Separate hold heartbeats/release and lifecycle cleanup apply.
+Set `controls.secondaryActivation = false` to disable the secondary slot
+without deleting its saved assignment. Both sides must update: protocol 4.

@@ -24,6 +24,6 @@ public final class PowerClientMod {
         event.registerEntityRenderer(dev.cosmerearcanists.power.MetalProjectiles.STEEL.get(), net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
     }
     private void keys(RegisterKeyMappingsEvent event) {
-        event.register(PowerClient.SELECT); event.register(PowerClient.STATE); event.register(PowerClient.APPLY); event.register(PowerClient.ALTERNATE);
+        event.register(PowerClient.SELECT); event.register(PowerClient.STATE); event.register(PowerClient.APPLY); event.register(PowerClient.SECONDARY); event.register(PowerClient.ALTERNATE);
     }
 }

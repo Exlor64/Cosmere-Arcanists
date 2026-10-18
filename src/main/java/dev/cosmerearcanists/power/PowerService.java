@@ -26,18 +26,22 @@ public final class PowerService {
     private static final EquipmentSlot[] SLOTS = {EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND, EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
     private static final Map<Integer, List<BlockPos>> SCAN_OFFSETS = new HashMap<>();
     private static final Map<UUID, Session> SESSIONS = new HashMap<>();
-    static final class Session {
-        BlockPos scanCenter, urgentCenter; boolean urgentApplying; int cursor, scanRadius; final Set<BlockPos> blocks = new HashSet<>();
-        List<MetalTarget> targets = List.of(); boolean applying, pulse, alternate; int movementInputs; long lastApply, packetTick = -1; int packets;
-        String dimension = "", activePower = "";
-        Vec3 previousPosition, observedMovement;
-        long sampledTick = -1, impulseTick = -1;
+    static class Activation {
+        boolean applying,pulse,alternate; int movementInputs; long lastApply;
+        String activePower="";
+    }
+    static final class Session extends Activation {
+        final Activation secondary=new Activation();
+        BlockPos scanCenter,urgentCenter; boolean urgentApplying; int cursor,scanRadius;
+        final Set<BlockPos> blocks=new HashSet<>(); List<MetalTarget> targets=List.of();
+        long packetTick=-1; int packets; String dimension="";
+        Vec3 previousPosition,observedMovement; long sampledTick=-1,impulseTick=-1;
     }
     public PowerService() {
         AbilityDispatcher.Handler<ServerPlayer, MetalTarget> ironSteel = (player, power, phase, targets) -> {
             if (phase == AbilityDispatcher.Phase.STOP || !PowerConfig.IRON_STEEL.get()) return;
             if (PowerConfig.CONSUMPTION.get() && PowerData.reserve(player, power.substring(2)) <= 0) return;
-            if (session(player).alternate) {
+            if (activationForPower(player,power).alternate) {
                 if ((power.equals("a:iron") ? PowerConfig.IRON_MOVEMENT : PowerConfig.STEEL_MOVEMENT).get()) assistMovement(player, power, targets);
             } else apply(player, power, targets);
         };
@@ -45,30 +49,40 @@ public final class PowerService {
         ABILITIES.register("a:steel", ironSteel);
     }
     private static Session session(ServerPlayer p) { return SESSIONS.computeIfAbsent(p.getUUID(), id -> new Session()); }
-    static boolean holdingAbility(ServerPlayer player, String power) {
-        var s = SESSIONS.get(player.getUUID());
-        if (s == null || !s.applying || !PowerData.selected(player).equals(power)) return false;
-        long age = player.level().getGameTime() - s.lastApply;
-        return age >= 0 && age <= 15;
+    private static Activation activationForPower(ServerPlayer p,String power) {
+        var s=session(p); return PowerData.secondary(p).equals(power)?s.secondary:s;
     }
-    static boolean holdingAlternateAbility(ServerPlayer player, String power) {
-        return holdingAbility(player, power) && SESSIONS.get(player.getUUID()).alternate;
+    static boolean holdingAbility(ServerPlayer player,String power) {
+        if(!PowerData.selected(player).equals(power) && !PowerData.secondary(player).equals(power))return false;
+        var a=activationForPower(player,power); long age=player.level().getGameTime()-a.lastApply;
+        return a.applying && age>=0 && age<=15;
+    }
+    static boolean holdingAlternateAbility(ServerPlayer player,String power) {
+        return holdingAbility(player,power) && activationForPower(player,power).alternate;
     }
     public static void control(ServerPlayer p, PowerNetwork.Control packet) {
         var s = session(p); long now = p.level().getGameTime();
         if (s.packetTick != now) { s.packetTick = now; s.packets = 0; }
         if (++s.packets > 12) return;
-        if (packet.action() == 2) {
-            boolean held = (packet.value() & 1) != 0 && p.isAlive() && !p.isSpectator();
-            if (!s.applying && held) s.alternate = (packet.value() & 2) != 0;
-            if (!held) s.alternate = false;
-            s.movementInputs = packet.value() & 252; s.applying = held; s.lastApply = now; return;
+        if(packet.action()==2 || packet.action()==7 || packet.action()==5 || packet.action()==8) {
+            boolean secondary=packet.action()==7 || packet.action()==8;
+            if(secondary && !PowerConfig.SECONDARY_ENABLED.get())return;
+            var a=secondary?s.secondary:s;
+            if(packet.action()==2 || packet.action()==7) {
+                boolean held=(packet.value()&1)!=0 && p.isAlive() && !p.isSpectator();
+                if(!a.applying && held)a.alternate=(packet.value()&2)!=0;
+                if(!held)a.alternate=false;
+                a.movementInputs=packet.value()&252; a.applying=held;
+            } else {
+                a.pulse=p.isAlive() && !p.isSpectator(); a.alternate=(packet.value()&2)!=0; a.movementInputs=packet.value()&252;
+            }
+            a.lastApply=now; return;
         }
-        if (packet.action() == 5) { s.pulse = p.isAlive() && !p.isSpectator(); s.alternate = (packet.value() & 2) != 0; s.movementInputs = packet.value() & 252; s.lastApply = now; return; }
         if (packet.action() == 4) { PowerNetwork.sync(p, s.targets); return; }
         if (!p.isAlive() || p.isSpectator() || !PowerData.available(p).contains(packet.power())) return;
         switch (packet.action()) {
-            case 0 -> PowerData.data(p).putString("selected", packet.power());
+            case 0 -> PowerData.assignSlot(p,packet.power(),0);
+            case 6 -> PowerData.assignSlot(p,packet.power(),PowerData.secondary(p).equals(packet.power())?0:1);
             case 1 -> PowerData.state(p, packet.power(), packet.value());
             case 3 -> PowerData.state(p, packet.power(), PowerRules.next(packet.power(), PowerData.state(p, packet.power()), PowerConfig.FERUCHEMY_LEVELS.get()));
             default -> { return; }
@@ -84,9 +98,9 @@ public final class PowerService {
     }
     private static void stopActivation(ServerPlayer p) {
         var s = SESSIONS.get(p.getUUID());
-        if (s != null && !s.activePower.isEmpty()) {
-            ABILITIES.activate(p, s.activePower, AbilityDispatcher.Phase.STOP, s.targets);
-            s.activePower = "";
+        if(s!=null)for(var a:List.of(s,s.secondary)) {
+            if(!a.activePower.isEmpty())ABILITIES.activate(p,a.activePower,AbilityDispatcher.Phase.STOP,s.targets);
+            a.activePower=""; a.applying=a.pulse=false;
         }
     }
     @SubscribeEvent public void logout(PlayerEvent.PlayerLoggedOutEvent event) {
@@ -125,16 +139,20 @@ public final class PowerService {
         var previousTargets = s.targets;
         if (active) { scan(p, s); s.targets = targets(p, s); }
         else { s.targets = List.of(); s.scanCenter = s.urgentCenter = null; s.urgentApplying = false; s.blocks.clear(); }
-        String selected = PowerData.selected(p);
-        String activated = (s.applying || s.pulse) && p.isAlive() && !p.isSpectator() && p.level().getGameTime() - s.lastApply <= 15
-                && available.contains(selected) && PowerData.state(p, selected) != 0 ? selected : "";
-        if (!activated.equals(s.activePower)) {
-            if (!s.activePower.isEmpty()) ABILITIES.activate(p, s.activePower, AbilityDispatcher.Phase.STOP, s.targets);
-            s.activePower = activated;
-            if (!activated.isEmpty()) ABILITIES.activate(p, activated, AbilityDispatcher.Phase.START, s.targets);
-        } else if (!activated.isEmpty()) ABILITIES.activate(p, activated, AbilityDispatcher.Phase.TICK, s.targets);
-        s.pulse = false;
+        advanceActivation(p,s,s,PowerData.selected(p),available);
+        advanceActivation(p,s,s.secondary,PowerData.secondary(p),available);
         if (!s.targets.equals(previousTargets) || p.tickCount % PowerConfig.SYNC_INTERVAL.get() == 0) PowerNetwork.sync(p, s.targets);
+    }
+    static void advanceActivation(ServerPlayer p,Session s,Activation a,String power,List<String> available) {
+        long age=p.level().getGameTime()-a.lastApply;
+        String activated=(a.applying||a.pulse) && p.isAlive() && !p.isSpectator() && age>=0 && age<=15
+            && available.contains(power) && PowerData.state(p,power)!=0 ? power : "";
+        if(!activated.equals(a.activePower)) {
+            if(!a.activePower.isEmpty())ABILITIES.activate(p,a.activePower,AbilityDispatcher.Phase.STOP,s.targets);
+            a.activePower=activated;
+            if(!activated.isEmpty())ABILITIES.activate(p,activated,AbilityDispatcher.Phase.START,s.targets);
+        } else if(!activated.isEmpty())ABILITIES.activate(p,activated,AbilityDispatcher.Phase.TICK,s.targets);
+        a.pulse=false;
     }
     static void scan(ServerPlayer p, Session s) {
         int radius = PowerConfig.RANGE.get(); var center = p.blockPosition();
@@ -151,12 +169,12 @@ public final class PowerService {
         scanPositions(p, s, center, scanOffsets(Math.min(radius, PowerConfig.NEAR_SCAN_RADIUS.get())), Integer.MAX_VALUE);
         Vec3 movement = s.observedMovement;
         boolean fast = movement != null && (movement.y < -.15 || movement.horizontalDistanceSqr() > .25);
-        boolean urgent = (fast && !center.equals(s.urgentCenter)) || ((s.applying || s.pulse) && !s.urgentApplying);
+        boolean urgent = (fast && !center.equals(s.urgentCenter)) || ((s.applying || s.pulse || s.secondary.applying || s.secondary.pulse) && !s.urgentApplying);
         if (urgent && PowerConfig.URGENT_SCAN_BUDGET.get() > 0) {
             scanPositions(p, s, center, scanOffsets(radius), PowerConfig.URGENT_SCAN_BUDGET.get());
             s.urgentCenter = center;
         }
-        s.urgentApplying = s.applying || s.pulse;
+        s.urgentApplying = s.applying || s.pulse || s.secondary.applying || s.secondary.pulse;
         var offsets = scanOffsets(radius);
         s.blocks.removeIf(pos -> pos.distSqr(center) > (radius + 2) * (radius + 2));
         int budget = PowerConfig.SCAN_BUDGET.get();
@@ -257,7 +275,7 @@ public final class PowerService {
         return (power.equals("a:iron") ? anchor.subtract(chest) : chest.subtract(anchor)).normalize();
     }
     private void assistMovement(ServerPlayer p, String power, List<MetalTarget> targets) {
-        int input = session(p).movementInputs;
+        int input = activationForPower(p,power).movementInputs;
         double forward = ((input & 4) != 0 ? 1 : 0) - ((input & 8) != 0 ? 1 : 0);
         double left = ((input & 16) != 0 ? 1 : 0) - ((input & 32) != 0 ? 1 : 0);
         double vertical = ((input & 64) != 0 ? 1 : 0) - ((input & 128) != 0 ? 1 : 0);

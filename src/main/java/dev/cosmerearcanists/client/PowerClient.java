@@ -20,10 +20,13 @@ public final class PowerClient {
     public static final KeyMapping SELECT = new KeyMapping("key.cosmerearcanists.select", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R, "key.categories.cosmerearcanists");
     public static final KeyMapping STATE = new KeyMapping("key.cosmerearcanists.state", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_V, "key.categories.cosmerearcanists");
     public static final KeyMapping APPLY = new KeyMapping("key.cosmerearcanists.apply", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_G, "key.categories.cosmerearcanists");
+    public static final KeyMapping SECONDARY = new KeyMapping("key.cosmerearcanists.secondary", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_H, "key.categories.cosmerearcanists");
+    private static boolean secondaryApplied,secondaryAlternate,assignmentChanged;
+    private static int lastSecondaryActivation;
     public static final KeyMapping ALTERNATE = new KeyMapping("key.cosmerearcanists.alternate", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_ALT, "key.categories.cosmerearcanists");
     private static int lastActivation;
     private static boolean alternateLatched, alternatePreviouslyHeld;
-    private static PowerNetwork.Snapshot snapshot = new PowerNetwork.Snapshot("", "", 5, List.of(), List.of());
+    private static PowerNetwork.Snapshot snapshot = new PowerNetwork.Snapshot("", "", "", 5, List.of(), List.of());
     private static boolean selecting, choosingState, applied, connected;
     private static int selectTicks, stateTicks, clock, previewIndex, previewState;
     private static boolean scrolledSelect, scrolledState;
@@ -65,25 +68,28 @@ public final class PowerClient {
         while (SELECT.consumeClick()) selectClick = true;
         while (STATE.consumeClick()) stateClick = true;
         while (APPLY.consumeClick()) activateClick = true;
+        boolean secondaryClick=false; while(SECONDARY.consumeClick())secondaryClick=true;
         while (ALTERNATE.consumeClick()) { }
         if (mc.player == null || mc.level == null) {
-            snapshot = new PowerNetwork.Snapshot("", "", 5, List.of(), List.of()); connected = false; walkingForce = Vec3.ZERO; impulseClock = -100; selecting = choosingState = applied = false; alternateLatched = alternatePreviouslyHeld = false; lastActivation = 0; return;
+            snapshot = new PowerNetwork.Snapshot("", "", "", 5, List.of(), List.of()); connected = false; walkingForce = Vec3.ZERO; impulseClock = -100; selecting = choosingState = applied = false; alternateLatched = alternatePreviouslyHeld = false; lastActivation = lastSecondaryActivation = 0; secondaryApplied=secondaryAlternate=false; return;
         }
         if (!connected) { connected = true; send(4, "", 0); }
         if (!playing()) {
             if (applied) send(2, "", 0);
-            selecting = choosingState = applied = false; alternateLatched = alternatePreviouslyHeld = false; lastActivation = 0; return;
+            if(secondaryApplied)send(7,"",0);
+            selecting = choosingState = applied = false; alternateLatched = alternatePreviouslyHeld = false; lastActivation = lastSecondaryActivation = 0; secondaryApplied=secondaryAlternate=false; return;
         }
         if (selectClick && !SELECT.isDown() && !selecting && !selected().isEmpty()) send(3, selected(), 0);
         if (stateClick && !STATE.isDown() && !choosingState && !SELECT.isDown() && !selected().isEmpty()) send(3, selected(), 0);
         boolean down = SELECT.isDown();
         if (down && !selecting) {
-            selecting = true; selectTicks = 0; scrolledSelect = false; previewIndex = 0;
+            selecting = true; selectTicks = 0; assignmentChanged=false; scrolledSelect = false; previewIndex = 0;
             for (int i = 0; i < snapshot.powers().size(); i++) if (snapshot.powers().get(i).power().equals(selected())) previewIndex = i;
         }
         if (down) selectTicks++;
         if (!down && selecting) {
-            if (selectTicks >= PowerClientConfig.HOLD_TICKS.get() || scrolledSelect) { if (!preview().isEmpty()) send(0, preview(), 0); }
+            if(assignmentChanged) { /* A menu click already applied its change; release must not overwrite slot assignments. */ }
+            else if (selectTicks >= PowerClientConfig.HOLD_TICKS.get() || scrolledSelect) { if (!preview().isEmpty()) send(0, preview(), 0); }
             else if (!selected().isEmpty()) send(3, selected(), 0);
             selecting = false;
         }
@@ -106,6 +112,13 @@ public final class PowerClient {
         if (activation != lastActivation || down && clock % 2 == 0) send(2, "", activation);
         lastActivation = activation; applied = down;
         if (!down) alternateLatched = false;
+        boolean secondaryDown=SECONDARY.isDown() && !selecting && !choosingState;
+        if(secondaryDown && !secondaryApplied)secondaryAlternate=alternateReady;
+        if(secondaryClick && !SECONDARY.isDown() && !selecting && !choosingState)send(8,"",(alternateReady?2:0)|inputs);
+        int secondaryActivation=secondaryDown?1|(secondaryAlternate?2:0)|inputs:0;
+        if(secondaryActivation!=lastSecondaryActivation || secondaryDown && clock%2==0)send(7,"",secondaryActivation);
+        lastSecondaryActivation=secondaryActivation; secondaryApplied=secondaryDown;
+        if(!secondaryDown)secondaryAlternate=false;
         alternatePreviouslyHeld = ALTERNATE.isDown();
     }
     private static int movementInputs(Minecraft mc) {
@@ -119,7 +132,7 @@ public final class PowerClient {
         int direction = event.getScrollDeltaY() > 0 ? -1 : 1;
         if (SELECT.isDown()) {
             if (!selecting) {
-                selecting = true; selectTicks = 0; previewIndex = 0;
+                selecting = true; selectTicks = 0; assignmentChanged=false; previewIndex = 0;
                 for (int i = 0; i < snapshot.powers().size(); i++) if (snapshot.powers().get(i).power().equals(selected())) previewIndex = i;
             }
             if (!snapshot.powers().isEmpty()) previewIndex = Math.floorMod(previewIndex + direction, snapshot.powers().size());
@@ -131,10 +144,21 @@ public final class PowerClient {
         }
     }
     @SubscribeEvent public void click(InputEvent.MouseButton.Pre event) {
-        if (playing() && SELECT.isDown() && selecting && event.getButton() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-            if (event.getAction() == GLFW.GLFW_PRESS && !preview().isEmpty()) send(3, preview(), 0);
-            scrolledSelect = true; Minecraft.getInstance().options.keyAttack.setDown(false); event.setCanceled(true);
+        boolean left=event.getButton()==GLFW.GLFW_MOUSE_BUTTON_LEFT;
+        boolean right=event.getButton()==GLFW.GLFW_MOUSE_BUTTON_RIGHT;
+        if(playing() && SELECT.isDown() && selecting && (left||right)) {
+            if(event.getAction()==GLFW.GLFW_PRESS && !preview().isEmpty()) {
+                if(right){send(6,preview(),0);assignmentChanged=true;}
+                else {send(3,preview(),0);assignmentChanged=true;}
+            }
+            scrolledSelect=true;
+            if(left)Minecraft.getInstance().options.keyAttack.setDown(false);
+            else Minecraft.getInstance().options.keyUse.setDown(false);
+            event.setCanceled(true);
         }
+    }
+    private static String slotLabel(String power) {
+        return power.equals(selected())?APPLY.getTranslatedKeyMessage().getString():power.equals(snapshot.secondary())?SECONDARY.getTranslatedKeyMessage().getString():"—";
     }
     private static String name(String key) {
         if (key.isEmpty()) return "No power";
@@ -152,13 +176,26 @@ public final class PowerClient {
             int x = PowerClientConfig.HUD_X.get() < 0 ? width - 200 : PowerClientConfig.HUD_X.get();
             int y = PowerClientConfig.HUD_Y.get() < 0 ? height - 65 : PowerClientConfig.HUD_Y.get();
             g.fill(x - 3, y - 3, x + 194, y + 34, 0xB0101B29); g.renderItem(icon(selected()), x, y);
-            g.drawString(mc.font, name(selected()), x + 21, y, 0x91CFFF);
+            g.drawString(mc.font, mc.font.plainSubstrByWidth("["+slotLabel(selected())+"] "+name(selected()),170), x + 21, y, 0x91CFFF);
             String label = PowerRules.label(selected(), state(selected()));
             if (!PowerRules.implemented(selected())) label += " · effects pending";
             g.drawString(mc.font, label, x + 21, y + 12, 0xFFFFFF);
             if (selected().startsWith("a:")) {
                 double reserve = snapshot.powers().stream().filter(e -> e.power().equals(selected())).mapToDouble(PowerNetwork.Entry::reserve).findFirst().orElse(0);
                 g.drawString(mc.font, String.format(Locale.ROOT, "Reserve: %.1f", reserve), x + 21, y + 24, 0xACB9C8);
+            }
+        }
+        if(PowerClientConfig.HUD.get() && !snapshot.secondary().isEmpty()) {
+            int x=PowerClientConfig.HUD_X.get()<0?width-200:PowerClientConfig.HUD_X.get();
+            int y=(PowerClientConfig.HUD_Y.get()<0?height-65:PowerClientConfig.HUD_Y.get())-44;
+            String power=snapshot.secondary();
+            g.fill(x-3,y-3,x+194,y+34,0xB0101B29); g.renderItem(icon(power),x,y);
+            g.drawString(mc.font,mc.font.plainSubstrByWidth("["+slotLabel(power)+"] "+name(power),170),x+21,y,0x91CFFF);
+            String label=PowerRules.label(power,state(power)); if(!PowerRules.implemented(power))label+=" · effects pending";
+            g.drawString(mc.font,label,x+21,y+12,0xFFFFFF);
+            if(power.startsWith("a:")) {
+                double reserve=snapshot.powers().stream().filter(e->e.power().equals(power)).mapToDouble(PowerNetwork.Entry::reserve).findFirst().orElse(0);
+                g.drawString(mc.font,String.format(Locale.ROOT,"Reserve: %.1f",reserve),x+21,y+24,0xACB9C8);
             }
         }
         if (selecting && (selectTicks >= PowerClientConfig.HOLD_TICKS.get() || scrolledSelect)) {
@@ -169,9 +206,9 @@ public final class PowerClient {
             else for (int delta = -Math.min(2, (snapshot.powers().size() - 1) / 2); delta < Math.min(5, snapshot.powers().size()) - Math.min(2, (snapshot.powers().size() - 1) / 2); delta++) {
                 int index = Math.floorMod(previewIndex + delta, snapshot.powers().size()); var power = snapshot.powers().get(index).power(); int row = y + (delta + 2) * 18;
                 if (delta == 0) g.fill(x - 3, row - 2, x + 253, row + 16, 0xA0356491);
-                g.renderItem(icon(power), x, row); g.drawString(mc.font, name(power), x + 23, row + 4, delta == 0 ? 0xFFFFFF : 0x8797A8);
+                g.renderItem(icon(power), x, row); g.drawString(mc.font, "["+slotLabel(power)+"] "+name(power), x + 23, row + 4, delta == 0 ? 0xFFFFFF : 0x8797A8);
             }
-            g.drawString(mc.font, "Click to cycle state", x, y + 94, 0xACB9C8);
+            g.drawString(mc.font, "Left: state · Right: switch activation key", x, y + 94, 0xACB9C8);
         } else if (choosingState && (stateTicks >= PowerClientConfig.HOLD_TICKS.get() || scrolledState)) {
             int x = width / 2 - 110, y = height / 2 - 25;
             g.fill(x - 8, y - 12, x + 220, y + 45, 0xE0101B29);

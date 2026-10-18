@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-18**. Current mod version: **0.7.4-alpha**.
+Last updated: **2026-10-18**. Current mod version: **0.8.0-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -9,11 +9,12 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
-- User requested projectile velocity to follow actual push strength, with weaker Low burn and stronger attributes.
-- Launch speed already included those inputs via sqrt(power). 0.7.4 changes it to direct linear power scaling, making variations more pronounced while preserving cargo slowdown and the configurable speed cap.
-- Default nugget speeds at attribute 1: Low burn 1.75, Burning 3.5, Flaring 7 blocks/tick. Attribute 2 doubles these up to maxSpeed (default 8). Recoil/damage still derive from actual speed; raw damage cap stays 100.
-- 0.7.4 build, 28 JUnit methods, 16 server GameTests and artifact upload passed (evidence below).
-- Next: collect burn-level/attribute speed playtest feedback.
+- User requested a secondary activation button and right-click menu assignment between two keys.
+- 0.8.0 adds H (rebindable) for the secondary slot. G and H have independent hold/pulse/Alt/heartbeat/lifecycle state and can activate together. Right-clicking the highlighted menu power toggles its slot, swapping existing assignments when needed. Left-click still cycles state; R release after assignment must not overwrite it.
+- HUD/menu display actual key bindings for both slots. V controls primary; menu left-click can set either power's state. Secondary assignment persists in PowerData `secondary`; only distinct available powers may occupy slots. No secondary is assigned automatically.
+- `controls.secondaryActivation` gates the secondary slot without deleting saved data. Protocol is now 4; update both client/server.
+- Build/server checks are pending at this commit; prior validated evidence remains below until superseded.
+- Next: verify CI, record evidence, then playtest simultaneous G/H, right-click swaps, HUD and secondary steel projectile/Alt drop behavior.
 
 ## Vision and accepted constraints
 
@@ -47,7 +48,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - Attributes: `cosmerearcanists:allomancy_<metal>` and `cosmerearcanists:feruchemy_<metal>` for the 16 ordinary metals. Default 0; positive effective values grant access; 1 is baseline, maximum 1024. Config gates still apply.
 - Effective attributes include modifiers; iron/steel force scales with effective strength. Base values persist through save/relog. Respawn copies base values and permanent modifiers, clears temporary effects, and resets activation states while retaining reserves/selection.
 - Origin/grant NBT migrates once to attributes; legacy grant booleans are no longer the access source. Setting an attribute to zero must not be undone by origin metadata.
-- `PowerData.KEY = cosmerearcanists_powers`: states, reserves, selected power, migration markers. Origin metadata remains under `cosmerearcanists_origin` (schema 1).
+- `PowerData.KEY = cosmerearcanists_powers`: states, reserves, primary `selected` and `secondary` assignments, migration markers. Origin metadata remains under `cosmerearcanists_origin` (schema 1).
 - `burn_levels_schema = 1` migrates old active states 1/2 to current 2/3 once; Off and Feruchemy states retain their meanings.
 - `/attribute @s cosmerearcanists:allomancy_steel base set 1` grants baseline steel. Replace `steel` with `iron` as needed; 0 removes the base power.
 - `/cosmere power grant <player> a:steel` sets at least baseline strength. `revoke` sets the base to zero, including a natural origin power; a positive modifier can still grant access. `/cosmere power refill <player>` refills iron/steel reserves.
@@ -58,8 +59,9 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 - **R:** hold and scroll to select a power; release selects. Short tap cycles state; clicking within selection also cycles it. HUD shows selected ingot icon/name/state/reserve.
 - **V:** hold and scroll to select state; release applies. Tap cycles states.
-- **G:** generic **Activate ability**, routed to the selected power through START/TICK/STOP handlers.
-- **Left Alt:** hold **before** pressing G to latch the alternate mode for that activation. Release G before changing modes. All keys are rebindable.
+- **G:** primary Activate ability. **H:** secondary Activate power (rebindable). Both can run simultaneously with independent START/TICK/STOP, hold/pulse/Alt and heartbeat state.
+- In R menu, **right-click** toggles highlighted power between primary and secondary (swaps occupied slots); left-click cycles state. Release after right-click does not revert the assignment. Ordinary scroll/release chooses primary. V targets primary. HUD/menu show both assigned keys.
+- **Left Alt:** hold **before** pressing the relevant activation key to latch the alternate mode for that activation. Release that key before changing modes. All keys are rebindable.
 - Allomancy states: **0 Off, 1 Low burn, 2 Burning, 3 Flaring**. Default force multipliers: 0 / 0.5 / 1 / 2. Consumption multipliers: 0 / 0.5 / 1 / 3. Disabling flaring falls back to Burning.
 - Feruchemy: zero Off, negative Storing levels, positive Tapping levels (default 1–5); no effects yet.
 - Iron baseline multiplier is **2** on top of the global force, attributes and burn level. At Burning, attribute 1 equals pre-0.6.0 iron attribute 2. Low burn intentionally gives a weaker pull. Steel's baseline was not increased.
@@ -88,7 +90,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Steel-thrown projectiles — 0.7.0
 
-- Hold **G** with steel **selected and burning**, then throw with **Q**. Burning alone is insufficient. Server checks a fresh held-input heartbeat (up to 15 ticks); release, other selection, brief released taps, expired input, disabled/unavailable/unfueled steel, nonmetal and aluminum leave normal drops. Inventory drops only qualify if a valid held activation still exists; GUI opening normally releases it. Already-fired projectiles do not require continued G holding.
+- Hold steel's assigned activation key (**G** primary or **H** secondary) while it is burning, then throw with **Q**. Burning alone is insufficient. Server checks a fresh held-input heartbeat (up to 15 ticks); release, other selection, brief released taps, expired input, disabled/unavailable/unfueled steel, nonmetal and aluminum leave normal drops. Inventory drops only qualify if a valid held activation still exists; GUI opening normally releases it. Already-fired projectiles do not require continued G holding.
 - Alt held before G changes Q to a straight-down ordinary drop at the feet, independent of look direction. No shot fuel or recoil; stack data/pickup delay retained. Disabling `alternateDropDownwards` leaves a vanilla alternate-mode drop, never a projectile. Normal G+Q behavior remains unchanged.
 - In-flight shots are detectable and can be pushed/pulled by other Allomancers or the shooter, with centered blue lines and cargo-based mass. `metalDetection.firedProjectiles` controls this independently. Trajectories update in place; original ownership/cargo persist. Impact-speed damage stays capped at 100.
 - One normally fired thrown stack becomes one `SteelProjectile`; it cannot merge in flight. The exact stack/components/count are stored separately from the rendered single item and persist through save/load.
@@ -103,11 +105,12 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 ## Configuration and architecture map
 
 - Origin/per-art/per-metal SERVER config: `ServerConfig`. Powers SERVER config: `cosmerearcanists-powers-server.toml` (world/server config location follows NeoForge). Metallurgy COMMON config: `MetallurgyConfig`. Client HUD/line config: `PowerClientConfig`.
+- `controls.secondaryActivation`: enable secondary slot while preserving saved assignment.
 - `ironSteel`: force, iron multiplier, burn strength/drain, speed/mass, reaction/fall braking, player targets, separate iron/steel alternate toggles, angle limit, input filtering, reserves.
 - `metalDetection`: categories (including fired projectiles), recursive recipes, hardness cost/cap, range-related scanning budgets, target count and sync cadence.
 - `steelProjectiles`: enabled, reference/max speed, nugget damage, cap ≤100, recoil mass, unknown content fallback, per-shot reserve cost (default 1), lifetime, alternate straight-down drop.
 - Existing config files retain saved values. New fields obtain defaults. Datapacks can override generation and recipes. Feature disablement must not delete saved data or registry entries.
-- `PowerService`: validated inputs, ticks/sessions, dispatcher, target selection, forces, throw event. `PowerAttributes`/`PowerData`: powers/persistence. `PowerNetwork`: controls, snapshots, additive impulse; **current protocol 3**. Update both server and client, especially for new projectile registration/renderer.
+- `PowerService`: validated inputs, ticks/sessions, dispatcher, target selection, forces, throw event. `PowerAttributes`/`PowerData`: powers/persistence. `PowerNetwork`: controls, snapshots, additive impulse; **current protocol 4**. Update both server and client, especially for new projectile registration/renderer.
 - `PowerClient`/`PowerClientMod`: input, HUD, lines, impulse reception, renderer. Common classes must not reference client classes. Client supplies no target positions or force magnitudes.
 - `MetalDetector`/`MetalGraph`: classification/aluminum closure. `MetalAmounts`/`RecipeMetalAmounts`: quantities. `MetalProjectilePhysics`: pure scaling formulas. `MetalProjectiles`: registration/launch. `SteelProjectile`: collision, damage, persistence and recovery.
 - Session state clears on logout, dimension change, respawn, datapack reload and server stop. Keep migrations idempotent and configuration gates server-authoritative.
@@ -128,3 +131,5 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 0.7.3 passed regression: another Allomancer detects a shot, steel/iron alter its velocity in opposite directions, heavy cargo resists more, velocity sync is flagged, and aluminum cargo remains excluded.
 
 0.7.4 passed regression: linear speed math, speed cap, and actual launches across five attribute/burn combinations.
+
+0.8.0 pending regression: distinct assignments/swapping, independent holds and Alt flags, secondary-authorized steel fire, clone persistence, snapshot round trip, and independent START/TICK/STOP dispatch.

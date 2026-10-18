@@ -96,5 +96,6 @@
   "attribute.cosmerearcanists.feruchemy_cadmium": "Cadmium Feruchemy",
   "attribute.cosmerearcanists.feruchemy_bendalloy": "Bendalloy Feruchemy",
   "key.cosmerearcanists.alternate": "Alternate power function (hold before activating)",
-  "entity.cosmerearcanists.steel_projectile": "Steel-launched metal"
+  "entity.cosmerearcanists.steel_projectile": "Steel-launched metal",
+  "key.cosmerearcanists.secondary": "Activate secondary power (hold)"
 }

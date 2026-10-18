@@ -33,9 +33,28 @@ public final class PowerData {
             .filter(PowerData::enabled).sorted().toList();
     }
 
+    public static String secondary(ServerPlayer p) {
+        String key=data(p).getString("secondary");
+        return PowerConfig.SECONDARY_ENABLED.get() && available(p).contains(key) ? key : "";
+    }
     public static String selected(ServerPlayer p) {
-        var list = available(p); var key = data(p).getString("selected");
+        String secondary=secondary(p);
+        var list=available(p).stream().filter(key->!key.equals(secondary)).toList();
+        var key=data(p).getString("selected");
         return list.contains(key) ? key : list.isEmpty() ? "" : list.getFirst();
+    }
+    public static boolean assignSlot(ServerPlayer p,String power,int slot) {
+        if(!available(p).contains(power) || slot<0 || slot>1 || slot==1 && !PowerConfig.SECONDARY_ENABLED.get())return false;
+        String primary=selected(p), secondary=secondary(p);
+        var tag=data(p);
+        if(slot==1) {
+            tag.putString("secondary",power);
+            if(primary.equals(power))tag.putString("selected",secondary);
+        } else {
+            tag.putString("selected",power);
+            if(secondary.equals(power))tag.putString("secondary",primary);
+        }
+        return true;
     }
     public static int state(ServerPlayer p, String power) { return PowerRules.clamp(power, data(p).getCompound("states").getInt(power), PowerConfig.FERUCHEMY_LEVELS.get()); }
     public static void state(ServerPlayer p, String power, int state) {

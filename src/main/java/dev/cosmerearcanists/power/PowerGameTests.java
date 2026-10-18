@@ -19,6 +19,60 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @PrefixGameTestTemplate(false)
 public final class PowerGameTests {
     @GameTest(template = "empty")
+    public static void secondaryAssignmentsAndIndependentHolds(GameTestHelper helper) {
+        var level=helper.getLevel();
+        var player=new ServerPlayer(level.getServer(),level,new GameProfile(UUID.randomUUID(),"DualPowers"),ClientInformation.createDefault());
+        PowerAttributes.set(player,"a:steel",1); PowerAttributes.set(player,"a:iron",1);
+        helper.assertTrue(PowerData.assignSlot(player,"a:steel",0) && PowerData.assignSlot(player,"a:iron",1),"Available powers must assign to both slots");
+        helper.assertTrue(PowerData.selected(player).equals("a:steel") && PowerData.secondary(player).equals("a:iron"),"Slots must be distinct");
+        helper.assertTrue(!PowerData.assignSlot(player,"a:pewter",1),"Unavailable powers cannot be assigned");
+        PowerData.state(player,"a:steel",2); PowerData.state(player,"a:iron",2); PowerData.reserve(player,"steel",10);
+        PowerService.control(player,new PowerNetwork.Control(2,"",1));
+        PowerService.control(player,new PowerNetwork.Control(7,"",3));
+        helper.assertTrue(PowerService.holdingAbility(player,"a:steel") && PowerService.holdingAbility(player,"a:iron"),"Both activation keys must be held independently");
+        helper.assertTrue(!PowerService.holdingAlternateAbility(player,"a:steel") && PowerService.holdingAlternateAbility(player,"a:iron"),"Alt modes must be independent per key");
+        PowerService.control(player,new PowerNetwork.Control(2,"",0));
+        helper.assertTrue(!PowerService.holdingAbility(player,"a:steel") && PowerService.holdingAbility(player,"a:iron"),"Primary release must not stop secondary");
+        PowerData.assignSlot(player,"a:steel",1);
+        helper.assertTrue(PowerData.selected(player).equals("a:iron") && PowerData.secondary(player).equals("a:steel"),"Moving an assigned power must swap the two slots");
+        PowerService.control(player,new PowerNetwork.Control(7,"",0)); PowerService.control(player,new PowerNetwork.Control(7,"",1));
+        var drop=new net.minecraft.world.entity.item.ItemEntity(level,player.getX(),player.getY(),player.getZ(),new ItemStack(Items.IRON_NUGGET));
+        helper.assertTrue(MetalProjectiles.launch(player,drop)!=null,"Steel assigned to secondary must launch projectiles with its own held key");
+        level.getEntitiesOfClass(SteelProjectile.class,player.getBoundingBox().inflate(3),e->e.getOwner()==player).forEach(net.minecraft.world.entity.Entity::discard);
+        var clone=new ServerPlayer(level.getServer(),level,new GameProfile(player.getUUID(),"DualPowers"),ClientInformation.createDefault());
+        PowerData.clonePlayer(player,clone);
+        helper.assertTrue(PowerData.selected(clone).equals("a:iron") && PowerData.secondary(clone).equals("a:steel"),"Both assignments must survive respawn");
+        helper.assertTrue(PowerData.state(clone,"a:steel")==0 && !PowerService.holdingAbility(clone,"a:iron"),"Respawn must reset states; primary hold is released");
+        var snapshot=new PowerNetwork.Snapshot(level.dimension().location().toString(),"a:iron","a:steel",5,java.util.List.of(),java.util.List.of());
+        var buffer=new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(),level.registryAccess());
+        try {
+            PowerNetwork.Snapshot.CODEC.encode(buffer,snapshot);
+            helper.assertTrue(PowerNetwork.Snapshot.CODEC.decode(buffer).equals(snapshot),"Snapshot must transmit both assignments");
+        } finally {buffer.release();}
+        PowerService.control(player,new PowerNetwork.Control(7,"",0)); helper.succeed();
+    }
+    @GameTest(template = "empty")
+    public static void twoActivationChannelsDispatchIndependently(GameTestHelper helper) {
+        var level=helper.getLevel();
+        var player=new ServerPlayer(level.getServer(),level,new GameProfile(UUID.randomUUID(),"DualDispatch"),ClientInformation.createDefault());
+        var events=new java.util.ArrayList<String>();
+        PowerService.ABILITIES.register("test:primary",(p,key,phase,targets)->events.add("p"+phase));
+        PowerService.ABILITIES.register("test:secondary",(p,key,phase,targets)->events.add("s"+phase));
+        PowerData.state(player,"test:primary",1); PowerData.state(player,"test:secondary",1);
+        var session=new PowerService.Session(); session.applying=true; session.secondary.applying=true;
+        session.lastApply=session.secondary.lastApply=level.getGameTime();
+        var available=java.util.List.of("test:primary","test:secondary");
+        PowerService.advanceActivation(player,session,session,"test:primary",available);
+        PowerService.advanceActivation(player,session,session.secondary,"test:secondary",available);
+        session.applying=false;
+        PowerService.advanceActivation(player,session,session,"test:primary",available);
+        PowerService.advanceActivation(player,session,session.secondary,"test:secondary",available);
+        session.secondary.applying=false;
+        PowerService.advanceActivation(player,session,session.secondary,"test:secondary",available);
+        helper.assertTrue(events.equals(java.util.List.of("pSTART","sSTART","pSTOP","sTICK","sSTOP")),"Releasing one activation channel must not interrupt the other handler");
+        helper.succeed();
+    }
+    @GameTest(template = "empty")
     public static void projectileLaunchUsesBurnLevelAndAttribute(GameTestHelper helper) {
         var level=helper.getLevel(); MetalDetector.rebuild(level.getServer());
         var player=new ServerPlayer(level.getServer(),level,new GameProfile(UUID.randomUUID(),"ScaledShooter"),ClientInformation.createDefault());
