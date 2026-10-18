@@ -1,6 +1,8 @@
 # Cosmere Arcanists
 Minecraft **1.21.1**, NeoForge **21.1.256**, Java **21**. Author: **Ex**.
 
+For current project status, accepted design decisions, verification and continuation notes, read [HANDOFF.md](HANDOFF.md). Development and handoff-maintenance instructions are in [AGENTS.md](AGENTS.md).
+
 ## Origins and assignment
 - Persistent planet/race and natural Allomantic/Feruchemical power identifiers.
 - Command-based Scadrial and separate Overworld origins; human race only so far.
