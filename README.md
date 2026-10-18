@@ -52,10 +52,10 @@ Only iron and steel Allomantic effects are implemented. Other assigned powers ap
 
 Default keys (all rebindable):
 - Hold **R**, scroll to a power, then release R to select it. Tap R to cycle that power's state. Left-click while the menu is open also cycles the highlighted power's state.
-- Hold **V** and scroll to change state; release to apply. Tap V cycles state. Allomancy has Off/Burning/Flaring. Feruchemy has Off, Storing 1–5, and Tapping 1–5.
+- Hold **V** and scroll to change state; release to apply. Tap V cycles state. Allomancy has Off/Low burn/Burning/Flaring. Feruchemy has Off, Storing 1–5, and Tapping 1–5.
 - Hold **G** (Activate ability) to activate the currently selected implemented power. Iron/steel pull/push the metal source closest to your aim within the target cone while burning/flaring. Blue lines run from your chest to blocks, dropped items, and individual equipment sources. Lines are private to the Allomancer.
 
-Craft an iron or steel vial with a glass bottle and one corresponding nugget. Right-click the vial to ingest it, returning the bottle. Each adds 60 reserve units by default (capacity 300). Burning costs one unit/second; flaring triples consumption and doubles force. Sensing consumes reserves too. States/reserves are separate per metal; switching selected power does not turn off other burning metals. Death retains powers/reserves/selection but turns active states off.
+Craft an iron or steel vial with a glass bottle and one corresponding nugget. Right-click the vial to ingest it, returning the bottle. Each adds 60 reserve units by default (capacity 300). Low burn applies half force at half consumption; Burning costs one unit/second at normal force; Flaring triples consumption and doubles force. Sensing consumes reserves too. States/reserves are separate per metal; switching selected power does not turn off other burning metals. Death retains powers/reserves/selection but turns active states off.
 
 Fixed blocks pull/push the player. Dropped stacks and equipped entities move under force, with player reaction and mass-dependent acceleration. Forces weaken with distance and have a configurable velocity cap. Armor sources affect the equipped entity, not a detached piece of equipment. Upward iron/steel force reduces accumulated fall distance in proportion to the reduction in squared downward speed. Arresting a descent can cancel its accumulated damage; a later unbraked descent adds fall distance normally. Sideways/downward force or merely burning metal grants no protection. This mitigation is configurable. Server-approved propulsion resets vanilla's floating timeout without granting creative flight.
 
@@ -166,3 +166,17 @@ Space or Shift to pull toward suitable metals. Space requires overhead metal;
 strafing left requires metal to the left. No suitable anchor means no force.
 It shares steel's angle limits and single combined force budget. Disable iron
 assistance separately with `ironSteel.ironAlternateMovement = false`.
+
+0.6.1: Allomancy now has three active levels plus Off: Low burn (state 1),
+Burning (2), Flaring (3). R tap/V tap cycle through all four states; hold V and
+scroll to select a level. Applies to all Allomantic selectors; only implemented
+powers currently have effects. Both aimed and alternate iron/steel use the levels.
+Default force multipliers are 0.5/1/2 and consumption multipliers 0.5/1/3.
+The iron base multiplier remains 2, so normal Burning at attribute 1 retains the
+new iron baseline; Low burn deliberately provides a weaker pull.
+
+Configure `lowBurnStrengthMultiplier`, `burningStrengthMultiplier`,
+`flareStrengthMultiplier`, `lowBurnDrainMultiplier`, `burnDrainPerSecond`, and
+`flareDrainMultiplier` under `ironSteel`. Existing saved Burning/Flaring states
+migrate once to retain their meanings. Disabling flaring falls back to Burning.
+Both client and server must update (network protocol 3).

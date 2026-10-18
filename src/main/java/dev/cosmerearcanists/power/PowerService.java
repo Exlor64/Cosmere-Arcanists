@@ -104,12 +104,12 @@ public final class PowerService {
         for (String power : List.of("a:iron", "a:steel")) {
             if (!PowerConfig.IRON_STEEL.get() || !p.isAlive() || p.isSpectator() || !available.contains(power)) continue;
             int state = PowerData.state(p, power); if (state == 0) continue;
-            if (state == 2 && !PowerConfig.FLARING.get()) { state = 1; PowerData.state(p, power, state); }
+            if (state == 3 && !PowerConfig.FLARING.get()) { state = 2; PowerData.state(p, power, state); }
             String metal = power.substring(2); double fuel = PowerData.reserve(p, metal);
             if (PowerConfig.CONSUMPTION.get() && fuel <= 0) { PowerData.state(p, power, 0); continue; }
             active = true;
             if (PowerConfig.CONSUMPTION.get()) {
-                double drain = PowerConfig.BURN_DRAIN.get() / 20.0 * (state == 2 ? PowerConfig.FLARE_DRAIN.get() : 1);
+                double drain = PowerConfig.BURN_DRAIN.get() / 20.0 * PowerRules.levelMultiplier(state, PowerConfig.LOW_DRAIN.get(), 1, PowerConfig.FLARE_DRAIN.get());
                 PowerData.reserve(p, metal, fuel - drain);
             }
         }
@@ -226,7 +226,7 @@ public final class PowerService {
         accelerate(p, targetImpulse(p, best, direction, powerForce(p, power)));
     }
     static double powerForce(ServerPlayer p, String power) {
-        return PowerConfig.FORCE.get() * (power.equals("a:iron") ? PowerConfig.IRON_STRENGTH.get() : 1) * PowerAttributes.strength(p, power) * (PowerData.state(p, power) == 2 ? PowerConfig.FLARE_STRENGTH.get() : 1);
+        return PowerConfig.FORCE.get() * (power.equals("a:iron") ? PowerConfig.IRON_STRENGTH.get() : 1) * PowerAttributes.strength(p, power) * PowerRules.levelMultiplier(PowerData.state(p, power), PowerConfig.LOW_STRENGTH.get(), PowerConfig.BURN_STRENGTH.get(), PowerConfig.FLARE_STRENGTH.get());
     }
     private Vec3 targetImpulse(ServerPlayer p, MetalTarget best, Vec3 direction, double force) {
         var point = best.position(p.level(), 1); if (point == null) return Vec3.ZERO;

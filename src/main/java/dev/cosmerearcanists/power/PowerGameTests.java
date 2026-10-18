@@ -19,10 +19,31 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @PrefixGameTestTemplate(false)
 public final class PowerGameTests {
     @GameTest(template = "empty")
+    public static void threeBurnLevelsAndLegacyMigration(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var player = new ServerPlayer(level.getServer(), level, new GameProfile(UUID.randomUUID(), "BurnLevels"), ClientInformation.createDefault());
+        var legacy = new net.minecraft.nbt.CompoundTag(); var states = new net.minecraft.nbt.CompoundTag();
+        states.putInt("a:iron",1); states.putInt("a:steel",2); states.putInt("f:iron",3);
+        legacy.put("states",states); player.getPersistentData().put(PowerData.KEY,legacy);
+        helper.assertTrue(PowerData.state(player,"a:iron")==2 && PowerData.state(player,"a:steel")==3, "Old burning/flaring states must retain their meanings");
+        helper.assertTrue(PowerData.state(player,"f:iron")==3, "Feruchemy levels must be preserved");
+        PowerAttributes.set(player,"a:iron",1);
+        double burning = PowerService.powerForce(player,"a:iron");
+        PowerData.state(player,"a:iron",1);
+        helper.assertTrue(PowerData.state(player,"a:iron")==1, "Low burn must not be migrated a second time");
+        helper.assertTrue(PowerService.powerForce(player,"a:iron")==burning*.5, "Low burn must apply half strength");
+        PowerData.state(player,"a:iron",3);
+        helper.assertTrue(PowerService.powerForce(player,"a:iron")==burning*2, "Flaring must apply twice burning strength");
+        PowerData.state(player,"a:iron",0);
+        helper.assertTrue(PowerService.powerForce(player,"a:iron")==0, "Off must apply no force");
+        helper.succeed();
+    }
+    @GameTest(template = "empty")
     public static void ironStrengthAndPullAssistance(GameTestHelper helper) {
         var level = helper.getLevel();
         var player = new ServerPlayer(level.getServer(), level, new GameProfile(UUID.randomUUID(), "IronAssist"), ClientInformation.createDefault());
         PowerAttributes.set(player,"a:iron",1); PowerAttributes.set(player,"a:steel",1);
+        PowerData.state(player,"a:iron",2); PowerData.state(player,"a:steel",2);
         double steel = PowerService.powerForce(player,"a:steel");
         helper.assertTrue(PowerService.powerForce(player,"a:iron") == steel * 2, "Default iron force must be doubled without increasing steel force");
         PowerAttributes.set(player,"a:iron",2);
@@ -128,7 +149,7 @@ public final class PowerGameTests {
         new OriginData("scadrial", "human", "iron", "steel").save(original);
         PowerData.grant(original, "a:steel", true);
         PowerData.data(original).putString("selected", "a:steel");
-        PowerData.state(original, "a:steel", 2); PowerData.reserve(original, "steel", 42);
+        PowerData.state(original, "a:steel", 3); PowerData.reserve(original, "steel", 42);
         OriginData.copy(original, clone); PowerData.clonePlayer(original, clone);
         helper.assertTrue(PowerData.available(clone).containsAll(java.util.List.of("a:iron", "a:steel", "f:steel")), "Natural and granted powers must survive cloning");
         helper.assertTrue(PowerData.selected(clone).equals("a:steel"), "Selection must survive cloning");

@@ -6,7 +6,7 @@ public final class PowerConfig {
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.BooleanValue ENABLED, IRON_STEEL, DETECTION_BLOCKS, DETECTION_ITEMS, DETECTION_GEAR, RECIPE_DETECTION, CONSUMPTION, FLARING, RECOIL, PLAYER_TARGETS, FALL_MITIGATION, BLOCK_RESISTANCE, STEEL_MOVEMENT, IRON_MOVEMENT, RESIST_WALKING;
     public static final ModConfigSpec.IntValue RANGE, MAX_TARGETS, SCAN_BUDGET, SYNC_INTERVAL, FERUCHEMY_LEVELS, NEAR_SCAN_RADIUS, URGENT_SCAN_BUDGET;
-    public static final ModConfigSpec.DoubleValue FORCE, FLARE_STRENGTH, FLARE_DRAIN, BURN_DRAIN, RESERVE_CAP, VIAL_RESERVE, MAX_SPEED, PLAYER_MASS, AIM_ANGLE, FALL_MITIGATION_STRENGTH, RESISTANCE_COST, RESISTANCE_HARDNESS_CAP, MOVEMENT_ANGLE, IRON_STRENGTH;
+    public static final ModConfigSpec.DoubleValue FORCE, FLARE_STRENGTH, FLARE_DRAIN, BURN_DRAIN, RESERVE_CAP, VIAL_RESERVE, MAX_SPEED, PLAYER_MASS, AIM_ANGLE, FALL_MITIGATION_STRENGTH, RESISTANCE_COST, RESISTANCE_HARDNESS_CAP, MOVEMENT_ANGLE, IRON_STRENGTH, LOW_STRENGTH, BURN_STRENGTH, LOW_DRAIN;
     static {
         var b = new ModConfigSpec.Builder();
         b.push("controls");
@@ -28,6 +28,9 @@ public final class PowerConfig {
         FALL_MITIGATION = b.comment("Upward iron/steel force reduces accumulated fall damage only when it actually slows a descent.").define("reduceFallDamageWhenBraking", true);
         FALL_MITIGATION_STRENGTH = b.comment("1: full speed-squared reduction; 0: vanilla fall distance.").defineInRange("fallDamageReductionStrength", 1.0, 0.0, 1.0);
         PLAYER_TARGETS = b.define("affectOtherPlayers", true);
+        LOW_STRENGTH = b.defineInRange("lowBurnStrengthMultiplier", 0.5, 0.01, 10.0);
+        BURN_STRENGTH = b.defineInRange("burningStrengthMultiplier", 1.0, 0.01, 10.0);
+        LOW_DRAIN = b.defineInRange("lowBurnDrainMultiplier", 0.5, 0.01, 20.0);
         FLARING = b.define("allowFlaring", true);
         FLARE_STRENGTH = b.defineInRange("flareStrengthMultiplier", 2.0, 1.0, 10.0);
         FLARE_DRAIN = b.defineInRange("flareDrainMultiplier", 3.0, 1.0, 20.0);

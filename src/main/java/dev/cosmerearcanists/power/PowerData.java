@@ -9,7 +9,16 @@ public final class PowerData {
     public static final String KEY = "cosmerearcanists_powers";
     public static CompoundTag data(ServerPlayer p) {
         if (!p.getPersistentData().contains(KEY)) p.getPersistentData().put(KEY, new CompoundTag());
-        return p.getPersistentData().getCompound(KEY);
+        var tag = p.getPersistentData().getCompound(KEY);
+        if (tag.getInt("burn_levels_schema") < 1) {
+            var states = tag.getCompound("states");
+            for (String power : states.getAllKeys()) if (power.startsWith("a:")) {
+                int old = states.getInt(power);
+                if (old == 1 || old == 2) states.putInt(power, old + 1);
+            }
+            tag.put("states", states); tag.putInt("burn_levels_schema", 1);
+        }
+        return tag;
     }
     private static boolean enabled(String power) {
         if (power.length() < 3) return false;
