@@ -4,9 +4,9 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class PowerConfig {
     public static final ModConfigSpec SPEC;
-    public static final ModConfigSpec.BooleanValue ENABLED, IRON_STEEL, DETECTION_BLOCKS, DETECTION_ITEMS, DETECTION_GEAR, RECIPE_DETECTION, CONSUMPTION, FLARING, RECOIL, PLAYER_TARGETS, FALL_MITIGATION, BLOCK_RESISTANCE, STEEL_MOVEMENT, RESIST_WALKING;
+    public static final ModConfigSpec.BooleanValue ENABLED, IRON_STEEL, DETECTION_BLOCKS, DETECTION_ITEMS, DETECTION_GEAR, RECIPE_DETECTION, CONSUMPTION, FLARING, RECOIL, PLAYER_TARGETS, FALL_MITIGATION, BLOCK_RESISTANCE, STEEL_MOVEMENT, IRON_MOVEMENT, RESIST_WALKING;
     public static final ModConfigSpec.IntValue RANGE, MAX_TARGETS, SCAN_BUDGET, SYNC_INTERVAL, FERUCHEMY_LEVELS, NEAR_SCAN_RADIUS, URGENT_SCAN_BUDGET;
-    public static final ModConfigSpec.DoubleValue FORCE, FLARE_STRENGTH, FLARE_DRAIN, BURN_DRAIN, RESERVE_CAP, VIAL_RESERVE, MAX_SPEED, PLAYER_MASS, AIM_ANGLE, FALL_MITIGATION_STRENGTH, RESISTANCE_COST, RESISTANCE_HARDNESS_CAP, MOVEMENT_ANGLE;
+    public static final ModConfigSpec.DoubleValue FORCE, FLARE_STRENGTH, FLARE_DRAIN, BURN_DRAIN, RESERVE_CAP, VIAL_RESERVE, MAX_SPEED, PLAYER_MASS, AIM_ANGLE, FALL_MITIGATION_STRENGTH, RESISTANCE_COST, RESISTANCE_HARDNESS_CAP, MOVEMENT_ANGLE, IRON_STRENGTH;
     static {
         var b = new ModConfigSpec.Builder();
         b.push("controls");
@@ -15,6 +15,8 @@ public final class PowerConfig {
         b.pop(); b.push("ironSteel");
         IRON_STEEL = b.define("enabled", true);
         RESIST_WALKING = b.comment("Remove vanilla walking acceleration opposing an active Allomantic impulse; retain sideways input and existing inertia.").define("preventWalkingAgainstForce", true);
+        IRON_STRENGTH = b.comment("Iron-only force multiplier, applied in addition to the power attribute and flaring. 2 gives base iron the previous strength of attribute 2.").defineInRange("ironStrengthMultiplier", 2.0, 0.1, 20.0);
+        IRON_MOVEMENT = b.define("ironAlternateMovement", true);
         STEEL_MOVEMENT = b.define("alternateMovement", true);
         MOVEMENT_ANGLE = b.comment("Anchors outside this angle from intended movement contribute no force; oblique anchors contribute less.").defineInRange("movementAnchorAngleDegrees", 60.0, 5.0, 80.0);
         RANGE = b.defineInRange("range", 16, 4, 32);

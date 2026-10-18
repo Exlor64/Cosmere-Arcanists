@@ -116,7 +116,7 @@ and burning/flaring. While holding G, WASD requests horizontal movement relative
 to player yaw, Space requests upward movement, and Shift requests downward movement.
 The alternate mode latches at activation; release G before changing modes.
 It shares the usual fuel, range, power strength, speed cap and fall braking rules.
-Iron currently retains its normal aimed pull in alternate mode.
+Iron uses the same alternate controls to pull toward anchors in the requested direction.
 
 Steel assistance uses up to four contributions from real detected metal anchors.
 Each push follows the chest-to-metal line, with one combined force budget so dense
@@ -154,3 +154,15 @@ Disable that input rule with `ironSteel.preventWalkingAgainstForce = false`.
 Actual momentum still takes force/time to reverse; this does not instantly stop
 a player already moving toward an anchor. Input filtering expires after impulses
 stop. Both client and server must update to this version (network protocol 2).
+
+0.6.0: iron force now defaults to twice the previous strength, equivalent to the
+old iron attribute value of 2 at a current attribute value of 1. The attribute
+itself remains unchanged. Tune `ironSteel.ironStrengthMultiplier` (default 2).
+This multiplier affects both aimed and assisted iron pulls and stacks with flaring.
+Steel strength and reserve drain rates are unchanged. Range falloff still applies.
+
+With iron selected and burning/flaring, hold Left Alt before G, then use WASD,
+Space or Shift to pull toward suitable metals. Space requires overhead metal;
+strafing left requires metal to the left. No suitable anchor means no force.
+It shares steel's angle limits and single combined force budget. Disable iron
+assistance separately with `ironSteel.ironAlternateMovement = false`.

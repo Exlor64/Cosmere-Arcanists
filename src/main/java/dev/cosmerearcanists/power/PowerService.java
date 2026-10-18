@@ -37,8 +37,8 @@ public final class PowerService {
         AbilityDispatcher.Handler<ServerPlayer, MetalTarget> ironSteel = (player, power, phase, targets) -> {
             if (phase == AbilityDispatcher.Phase.STOP || !PowerConfig.IRON_STEEL.get()) return;
             if (PowerConfig.CONSUMPTION.get() && PowerData.reserve(player, power.substring(2)) <= 0) return;
-            if (power.equals("a:steel") && session(player).alternate) {
-                if (PowerConfig.STEEL_MOVEMENT.get()) assistMovement(player, power, targets);
+            if (session(player).alternate) {
+                if ((power.equals("a:iron") ? PowerConfig.IRON_MOVEMENT : PowerConfig.STEEL_MOVEMENT).get()) assistMovement(player, power, targets);
             } else apply(player, power, targets);
         };
         ABILITIES.register("a:iron", ironSteel);
@@ -222,11 +222,11 @@ public final class PowerService {
         if (best == null) return;
         var point = best.position(p.level(), 1); var offset = point.subtract(chest(p)); double distance = offset.length();
         if (distance < .3) return;
-        Vec3 direction = offset.normalize().scale(power.equals("a:iron") ? 1 : -1);
+        Vec3 direction = anchorDirection(chest(p), point, power);
         accelerate(p, targetImpulse(p, best, direction, powerForce(p, power)));
     }
-    private static double powerForce(ServerPlayer p, String power) {
-        return PowerConfig.FORCE.get() * PowerAttributes.strength(p, power) * (PowerData.state(p, power) == 2 ? PowerConfig.FLARE_STRENGTH.get() : 1);
+    static double powerForce(ServerPlayer p, String power) {
+        return PowerConfig.FORCE.get() * (power.equals("a:iron") ? PowerConfig.IRON_STRENGTH.get() : 1) * PowerAttributes.strength(p, power) * (PowerData.state(p, power) == 2 ? PowerConfig.FLARE_STRENGTH.get() : 1);
     }
     private Vec3 targetImpulse(ServerPlayer p, MetalTarget best, Vec3 direction, double force) {
         var point = best.position(p.level(), 1); if (point == null) return Vec3.ZERO;
@@ -241,6 +241,9 @@ public final class PowerService {
             : entity instanceof ServerPlayer ? PowerConfig.PLAYER_MASS.get() : Math.max(10, entity.getBbWidth() * entity.getBbWidth() * entity.getBbHeight() * 100);
         accelerate(entity, direction.scale(-AllomanticPhysics.acceleration(force, distance, PowerConfig.RANGE.get(), mass)));
         return PowerConfig.RECOIL.get() ? direction.scale(accel) : Vec3.ZERO;
+    }
+    static Vec3 anchorDirection(Vec3 chest, Vec3 anchor, String power) {
+        return (power.equals("a:iron") ? anchor.subtract(chest) : chest.subtract(anchor)).normalize();
     }
     private void assistMovement(ServerPlayer p, String power, List<MetalTarget> targets) {
         int input = session(p).movementInputs;
@@ -257,7 +260,7 @@ public final class PowerService {
             // Multiple pieces of equipment on one entity are one physical anchor.
             if (target.entityId() >= 0 && (!PowerConfig.RECOIL.get() || !usedEntities.add(target.entityId()))) continue;
             var point = target.position(p.level(), 1); if (point == null || point.distanceTo(chest(p)) < .3) continue;
-            anchors.add(target); directions.add(chest(p).subtract(point).normalize());
+            anchors.add(target); directions.add(anchorDirection(chest(p), point, power));
             strengths.add(AllomanticPhysics.acceleration(1, point.distanceTo(chest(p)), PowerConfig.RANGE.get(), PowerConfig.PLAYER_MASS.get()));
         }
         double[][] vectors = directions.stream().map(v -> new double[]{v.x,v.y,v.z}).toArray(double[][]::new);

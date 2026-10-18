@@ -19,6 +19,28 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @PrefixGameTestTemplate(false)
 public final class PowerGameTests {
     @GameTest(template = "empty")
+    public static void ironStrengthAndPullAssistance(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var player = new ServerPlayer(level.getServer(), level, new GameProfile(UUID.randomUUID(), "IronAssist"), ClientInformation.createDefault());
+        PowerAttributes.set(player,"a:iron",1); PowerAttributes.set(player,"a:steel",1);
+        double steel = PowerService.powerForce(player,"a:steel");
+        helper.assertTrue(PowerService.powerForce(player,"a:iron") == steel * 2, "Default iron force must be doubled without increasing steel force");
+        PowerAttributes.set(player,"a:iron",2);
+        helper.assertTrue(PowerService.powerForce(player,"a:iron") == steel * 4, "Iron attribute strength must continue to scale");
+        var chest = net.minecraft.world.phys.Vec3.ZERO;
+        var above = new net.minecraft.world.phys.Vec3(0,4,0); var below = above.scale(-1);
+        var ironAbove = PowerService.anchorDirection(chest,above,"a:iron");
+        var ironBelow = PowerService.anchorDirection(chest,below,"a:iron");
+        var steelAbove = PowerService.anchorDirection(chest,above,"a:steel");
+        helper.assertTrue(ironAbove.y == 1 && ironBelow.y == -1 && steelAbove.y == -1, "Iron must pull toward anchors while steel pushes away");
+        double[] weights = SteelMovement.weights(new double[]{0,1,0},new double[][]{
+            {ironAbove.x,ironAbove.y,ironAbove.z},{ironBelow.x,ironBelow.y,ironBelow.z}},new double[]{1,1},.5);
+        helper.assertTrue(weights[0] == 1 && weights[1] == 0, "Jump assistance must pull on overhead metal only");
+        var right = PowerService.anchorDirection(chest,new net.minecraft.world.phys.Vec3(4,0,0),"a:iron");
+        helper.assertTrue(right.x == 1 && right.y == 0, "Lateral iron assistance must pull toward the lateral anchor");
+        helper.succeed();
+    }
+    @GameTest(template = "empty")
     public static void fallingDiscoversNewAnchorsImmediately(GameTestHelper helper) {
         var level = helper.getLevel();
         var player = new ServerPlayer(level.getServer(), level, new GameProfile(UUID.randomUUID(), "FallingScan"), ClientInformation.createDefault());
