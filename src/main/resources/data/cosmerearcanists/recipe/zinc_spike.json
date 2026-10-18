@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "I ",
+    " I"
+  ],
+  "key": {
+    "I": {
+      "item": "cosmerearcanists:zinc_ingot"
+    }
+  },
+  "result": {
+    "id": "cosmerearcanists:zinc_spike",
+    "count": 2
+  }
+}

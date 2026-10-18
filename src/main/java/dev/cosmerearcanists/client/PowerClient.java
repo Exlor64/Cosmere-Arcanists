@@ -25,6 +25,7 @@ public final class PowerClient {
     private static int lastSecondaryActivation;
     public static final KeyMapping ALTERNATE = new KeyMapping("key.cosmerearcanists.alternate", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_ALT, "key.categories.cosmerearcanists");
     private static int lastActivation;
+    private static boolean lastRopeJump;
     private static boolean alternateLatched, alternatePreviouslyHeld;
     private static PowerNetwork.Snapshot snapshot = new PowerNetwork.Snapshot("", "", "", 5, List.of(), List.of());
     private static boolean selecting, choosingState, applied, connected;
@@ -77,6 +78,7 @@ public final class PowerClient {
         if (!playing()) {
             if (applied) send(2, "", 0);
             if(secondaryApplied)send(7,"",0);
+            if(lastRopeJump)send(9,"",0);lastRopeJump=false;
             selecting = choosingState = applied = false; alternateLatched = alternatePreviouslyHeld = false; lastActivation = lastSecondaryActivation = 0; secondaryApplied=secondaryAlternate=false; return;
         }
         if (selectClick && !SELECT.isDown() && !selecting && !selected().isEmpty()) send(3, selected(), 0);
@@ -119,6 +121,9 @@ public final class PowerClient {
         if(secondaryActivation!=lastSecondaryActivation || secondaryDown && clock%2==0)send(7,"",secondaryActivation);
         lastSecondaryActivation=secondaryActivation; secondaryApplied=secondaryDown;
         if(!secondaryDown)secondaryAlternate=false;
+        boolean ropeJump=mc.options.keyJump.isDown() && dev.cosmerearcanists.equipment.TetherItem.hasActiveHook(mc.player);
+        if(ropeJump!=lastRopeJump || ropeJump && clock%2==0)send(9,"",ropeJump?1:0);
+        lastRopeJump=ropeJump;
         alternatePreviouslyHeld = ALTERNATE.isDown();
     }
     private static int movementInputs(Minecraft mc) {

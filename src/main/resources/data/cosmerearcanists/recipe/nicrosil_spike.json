@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "I ",
+    " I"
+  ],
+  "key": {
+    "I": {
+      "item": "cosmerearcanists:nicrosil_ingot"
+    }
+  },
+  "result": {
+    "id": "cosmerearcanists:nicrosil_spike",
+    "count": 2
+  }
+}

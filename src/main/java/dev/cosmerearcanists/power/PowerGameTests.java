@@ -19,6 +19,89 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @PrefixGameTestTemplate(false)
 public final class PowerGameTests {
     @GameTest(template = "empty")
+    public static void equipmentRecipesAndCrossbowAmmo(GameTestHelper helper) {
+        var level=helper.getLevel(); MetalDetector.rebuild(level.getServer());
+        var diagonal=net.minecraft.world.item.crafting.CraftingInput.of(2,2,java.util.List.of(new ItemStack(Items.IRON_INGOT),ItemStack.EMPTY,ItemStack.EMPTY,new ItemStack(Items.IRON_INGOT)));
+        var recipe=level.getRecipeManager().getRecipeFor(net.minecraft.world.item.crafting.RecipeType.CRAFTING,diagonal,level).orElseThrow();
+        var result=recipe.value().assemble(diagonal,level.registryAccess());
+        helper.assertTrue(result.is(dev.cosmerearcanists.equipment.EquipmentContent.SPIKES.get("iron").get()) && result.getCount()==2,"Two diagonal ingots must craft two metal spikes");
+        var crossbow=dev.cosmerearcanists.equipment.EquipmentContent.CROSSBOW.get();
+        helper.assertTrue(crossbow.getAllSupportedProjectiles().test(result) && !crossbow.getAllSupportedProjectiles().test(new ItemStack(Items.ARROW)),"Spike crossbow must accept spikes instead of arrows");
+        for(String metal:java.util.List.of("iron","copper","gold","steel","aluminum","duralumin")){
+            String namespace=java.util.List.of("iron","copper","gold").contains(metal)?"minecraft":CosmereArcanists.MOD_ID;
+            var ingot=new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(namespace,metal+"_ingot")));
+            var input=net.minecraft.world.item.crafting.CraftingInput.of(2,2,java.util.List.of(ingot,new ItemStack(Items.STRING),new ItemStack(Items.STRING),new ItemStack(Items.STRING)));
+            var matched=level.getRecipeManager().getRecipeFor(net.minecraft.world.item.crafting.RecipeType.CRAFTING,input,level);
+            boolean ball=matched.isPresent() && matched.get().value().getResultItem(level.registryAccess()).is(dev.cosmerearcanists.equipment.EquipmentContent.BALL.get());
+            helper.assertTrue(ball != (metal.equals("aluminum")||metal.equals("duralumin")),"Ball recipe metal policy failed for "+metal);
+        }
+        helper.assertTrue(MetalDetector.detects(level.getServer(),dev.cosmerearcanists.equipment.EquipmentContent.BALL.get().getDefaultInstance()),"Ball must be detectable metal");
+        helper.assertTrue(!MetalDetector.detects(level.getServer(),dev.cosmerearcanists.equipment.EquipmentContent.SPIKES.get("aluminum").get().getDefaultInstance()),"Aluminum spikes must be undetectable");
+        var owner=new net.neoforged.neoforge.common.util.FakePlayer(level,new GameProfile(UUID.randomUUID(),"SpikeShooter"));
+        var spike=crossbow.createProjectile(level,owner,crossbow.getDefaultInstance(),result.copyWithCount(1),false);
+        crossbow.shootProjectile(owner,spike,0,3.15f,0,0,null);
+        helper.assertTrue(spike instanceof dev.cosmerearcanists.equipment.EquipmentProjectile && spike.getDeltaMovement().length()>3,"Crossbow shooting must create a moving spike projectile");
+        helper.succeed();
+    }
+    @GameTest(template = "empty")
+    public static void embeddedSpikesAreMetalAnchors(GameTestHelper helper) {
+        var level=helper.getLevel(); MetalDetector.rebuild(level.getServer());
+        var anchor=helper.absolutePos(new net.minecraft.core.BlockPos(1,1,1)); level.setBlock(anchor,net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(),3);
+        var spike=new dev.cosmerearcanists.equipment.EquipmentProjectile(dev.cosmerearcanists.equipment.EquipmentContent.PROJECTILE.get(),level);
+        spike.configure(dev.cosmerearcanists.equipment.EquipmentProjectile.SPIKE,dev.cosmerearcanists.equipment.EquipmentContent.SPIKES.get("iron").get().getDefaultInstance(),9);
+        spike.setPos(net.minecraft.world.phys.Vec3.atCenterOf(anchor).add(0,0,-.6));
+        level.addFreshEntity(spike); spike.onHit(new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(anchor).add(0,0,-.5),net.minecraft.core.Direction.NORTH,anchor,false));
+        helper.assertTrue(spike.latched() && spike.fixedMetalAnchor() && spike.allomanticallyDetectable(level.getServer()),"Embedded iron spike must be a detectable fixed anchor");
+        var player=new net.neoforged.neoforge.common.util.FakePlayer(level,new GameProfile(UUID.randomUUID(),"SpikePuller"));
+        player.setPos(spike.getX(),spike.getY()-1,spike.getZ()-3);
+        var before=spike.position(); var target=MetalTarget.entity(spike,7);
+        var direction=PowerService.anchorDirection(PowerService.chest(player),target.position(level,1),"a:iron");
+        var impulse=PowerService.targetImpulse(player,target,direction,14);
+        helper.assertTrue(impulse.dot(direction)>0 && spike.position().equals(before) && spike.getDeltaMovement().lengthSqr()==0,"Pulling an embedded spike must move the user toward the anchor without moving the embedded spike");
+        var saved=new net.minecraft.nbt.CompoundTag();spike.addAdditionalSaveData(saved);
+        var restored=new dev.cosmerearcanists.equipment.EquipmentProjectile(dev.cosmerearcanists.equipment.EquipmentContent.PROJECTILE.get(),level);restored.readAdditionalSaveData(saved);
+        helper.assertTrue(restored.latched() && restored.fixedMetalAnchor(),"Anchored spike must survive save/load");
+        level.setBlock(anchor,net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),3);spike.tick();
+        helper.assertTrue(!spike.latched(),"Breaking the support must release an embedded spike");spike.discard();helper.succeed();
+    }
+    @GameTest(template = "empty")
+    public static void grappleTensionSpaceAndRecall(GameTestHelper helper) {
+        var level=helper.getLevel();MetalDetector.rebuild(level.getServer());
+        var player=new net.neoforged.neoforge.common.util.FakePlayer(level,new GameProfile(UUID.randomUUID(),"Grappler"));
+        var pos=helper.absolutePos(new net.minecraft.core.BlockPos(1,4,1));player.setPos(pos.getX()+.5,pos.getY(),pos.getZ()+.5);
+        var item=dev.cosmerearcanists.equipment.EquipmentContent.GRAPPLE.get(); var stack=item.getDefaultInstance();player.getInventory().setItem(0,stack);
+        helper.assertTrue(item.launch(player,stack,1),"Normal grappling must work without Allomancy");
+        var hook=(dev.cosmerearcanists.equipment.EquipmentProjectile)level.getEntity(dev.cosmerearcanists.equipment.TetherItem.active(stack));
+        var anchor=pos.above(6);level.setBlock(anchor,net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(),3);
+        hook.onHit(new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atBottomCenterOf(anchor),net.minecraft.core.Direction.DOWN,anchor,false));
+        helper.assertTrue(hook.latched() && hook.fixedMetalAnchor(),"Grapple must latch to a solid block as an iron anchor");
+        double length=hook.ropeLength();player.setDeltaMovement(.25,0,0);
+        PowerService.control(player,new PowerNetwork.Control(9,"",1));hook.tick();
+        helper.assertTrue(hook.ropeLength()<length && player.getDeltaMovement().y>0,"Space must shorten rope and pull upward slowly");
+        helper.assertTrue(Math.abs(player.getDeltaMovement().x-.25)<1e-6,"Rope tension must retain tangential swing momentum");
+        hook.reel();helper.assertTrue(hook.returning() && !hook.fixedMetalAnchor(),"Recall must unlatch the hook");
+        hook.setPos(player.getEyePosition());hook.tick();
+        helper.assertTrue(hook.isRemoved() && dev.cosmerearcanists.equipment.TetherItem.active(stack)==null && player.getInventory().getItem(0)==stack,"Recall must return use of the original item without duplicating it");
+        PowerService.control(player,new PowerNetwork.Control(9,"",0));helper.succeed();
+    }
+    @GameTest(template = "empty")
+    public static void reusableBallUsesSteelStrengthAndSingleItem(GameTestHelper helper) {
+        var level=helper.getLevel();MetalDetector.rebuild(level.getServer());
+        var player=new net.neoforged.neoforge.common.util.FakePlayer(level,new GameProfile(UUID.randomUUID(),"BallUser"));
+        var pos=helper.absolutePos(new net.minecraft.core.BlockPos(1,10,1));player.setPos(pos.getX()+.5,pos.getY(),pos.getZ()+.5);
+        var item=dev.cosmerearcanists.equipment.EquipmentContent.BALL.get();var stack=item.getDefaultInstance();player.getInventory().setItem(0,stack);
+        helper.assertTrue(!item.launch(player,stack,1),"Ball launch must require active steel");
+        PowerAttributes.set(player,"a:steel",1);PowerData.state(player,"a:steel",2);PowerData.reserve(player,"steel",10);PowerService.control(player,new PowerNetwork.Control(2,"",1));
+        helper.assertTrue(item.launch(player,stack,1),"Active steel must launch the reusable ball");
+        var ball=(dev.cosmerearcanists.equipment.EquipmentProjectile)level.getEntity(dev.cosmerearcanists.equipment.TetherItem.active(stack));
+        double speed=ball.getDeltaMovement().length();ball.reel();ball.setPos(player.getEyePosition());ball.tick();
+        PowerAttributes.set(player,"a:steel",2);
+        helper.assertTrue(item.launch(player,stack,1),"Reeled ball must be reusable");
+        var stronger=(dev.cosmerearcanists.equipment.EquipmentProjectile)level.getEntity(dev.cosmerearcanists.equipment.TetherItem.active(stack));
+        helper.assertTrue(stronger.getDeltaMovement().length()>speed*1.9 && player.getInventory().getItem(0)==stack,"Higher steel attribute must strengthen the same reusable weapon");
+        stronger.reel();stronger.setPos(player.getEyePosition());stronger.tick();PowerService.control(player,new PowerNetwork.Control(2,"",0));helper.succeed();
+    }
+    @GameTest(template = "empty")
     public static void secondaryAssignmentsAndIndependentHolds(GameTestHelper helper) {
         var level=helper.getLevel();
         var player=new ServerPlayer(level.getServer(),level,new GameProfile(UUID.randomUUID(),"DualPowers"),ClientInformation.createDefault());

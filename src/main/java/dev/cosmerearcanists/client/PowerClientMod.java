@@ -16,13 +16,22 @@ public final class PowerClientMod {
         container.registerConfig(ModConfig.Type.CLIENT, PowerClientConfig.SPEC);
         bus.addListener(this::keys);
         bus.addListener(this::renderers);
+        bus.addListener(this::setup);
         PowerNetwork.clientReceiver = PowerClient::receive;
         PowerNetwork.impulseReceiver = PowerClient::receiveImpulse;
         NeoForge.EVENT_BUS.register(new PowerClient());
+        NeoForge.EVENT_BUS.register(new EquipmentClient());
     }
     private void renderers(net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(dev.cosmerearcanists.equipment.EquipmentContent.PROJECTILE.get(),net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
         event.registerEntityRenderer(dev.cosmerearcanists.power.MetalProjectiles.STEEL.get(), net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
     }
+    private void setup(net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event){event.enqueueWork(()->{
+        var item=dev.cosmerearcanists.equipment.EquipmentContent.CROSSBOW.get();
+        net.minecraft.client.renderer.item.ItemProperties.register(item,net.minecraft.resources.ResourceLocation.withDefaultNamespace("charged"),(stack,level,entity,seed)->net.minecraft.world.item.CrossbowItem.isCharged(stack)?1:0);
+        net.minecraft.client.renderer.item.ItemProperties.register(item,net.minecraft.resources.ResourceLocation.withDefaultNamespace("pulling"),(stack,level,entity,seed)->entity!=null && entity.isUsingItem() && entity.getUseItem()==stack?1:0);
+        net.minecraft.client.renderer.item.ItemProperties.register(item,net.minecraft.resources.ResourceLocation.withDefaultNamespace("pull"),(stack,level,entity,seed)->entity!=null && entity.getUseItem()==stack?(float)(stack.getUseDuration(entity)-entity.getUseItemRemainingTicks())/net.minecraft.world.item.CrossbowItem.getChargeDuration(stack,entity):0);
+    });}
     private void keys(RegisterKeyMappingsEvent event) {
         event.register(PowerClient.SELECT); event.register(PowerClient.STATE); event.register(PowerClient.APPLY); event.register(PowerClient.SECONDARY); event.register(PowerClient.ALTERNATE);
     }

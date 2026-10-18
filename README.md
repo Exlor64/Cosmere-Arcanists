@@ -268,3 +268,29 @@ fires; Alt before that key + Q drops downward. The other key cannot authorize
 a steel shot. Separate hold heartbeats/release and lifecycle cleanup apply.
 Set `controls.secondaryActivation = false` to disable the secondary slot
 without deleting its saved assignment. Both sides must update: protocol 4.
+
+### Equipment (0.9.0)
+
+- **Spikes:** two ingots of the same metal diagonally craft two spikes. There
+  are 19 metal variants, including aluminum/duralumin (which Allomancy cannot
+  detect). These are physical ammunition, not charged Hemalurgic spikes yet.
+- **Spike crossbow:** craft a vanilla crossbow with two iron ingots. Load and
+  fire like a normal crossbow, using spikes instead of arrows. Spikes stick
+  into blocks, can be picked up nearby, and become iron/steel anchors.
+- **Metal ball and rope:** craft one non-aluminum ingot with three string.
+  Hold steel's assigned activation key while burning, then right-click to
+  launch. Damage/speed use steel strength and metal content. Right-click
+  again to reel it in for reuse. The weapon stays in inventory.
+- **Grappling hook:** craft iron + tripwire hook + three string in the supplied
+  shaped recipe. Right-click, charge and release (full charge in 10 ticks).
+  It latches to solid blocks; swing on its rope, hold Space to shorten it
+  slowly, or target it with Allomantic iron to pull yourself toward it.
+  Right-click again recalls it. No Allomantic power is required for normal
+  grapple use.
+
+Equipment feature gates, range, return speed, grapple launch/charge, Space
+shortening rate and spike damage/lifetime live in the equipment server config.
+Tethers have one active head per inventory item; lost ownership/items end the
+tether, and range overflow recalls it. Recipe choices beyond the user-specified
+spikes and ball ingredients are provisional. Current icons reuse vanilla item
+art; physical rope renders separately. Update both sides for protocol 5.

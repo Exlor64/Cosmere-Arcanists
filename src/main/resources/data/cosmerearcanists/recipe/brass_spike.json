@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "I ",
+    " I"
+  ],
+  "key": {
+    "I": {
+      "item": "cosmerearcanists:brass_ingot"
+    }
+  },
+  "result": {
+    "id": "cosmerearcanists:brass_spike",
+    "count": 2
+  }
+}

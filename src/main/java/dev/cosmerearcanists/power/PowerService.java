@@ -34,7 +34,7 @@ public final class PowerService {
         final Activation secondary=new Activation();
         BlockPos scanCenter,urgentCenter; boolean urgentApplying; int cursor,scanRadius;
         final Set<BlockPos> blocks=new HashSet<>(); List<MetalTarget> targets=List.of();
-        long packetTick=-1; int packets; String dimension="";
+        long packetTick=-1; int packets; String dimension=""; boolean ropeJump; long ropeInputTick=-100;
         Vec3 previousPosition,observedMovement; long sampledTick=-1,impulseTick=-1;
     }
     public PowerService() {
@@ -52,7 +52,7 @@ public final class PowerService {
     private static Activation activationForPower(ServerPlayer p,String power) {
         var s=session(p); return PowerData.secondary(p).equals(power)?s.secondary:s;
     }
-    static boolean holdingAbility(ServerPlayer player,String power) {
+    public static boolean holdingAbility(ServerPlayer player,String power) {
         if(!PowerData.selected(player).equals(power) && !PowerData.secondary(player).equals(power))return false;
         var a=activationForPower(player,power); long age=player.level().getGameTime()-a.lastApply;
         return a.applying && age>=0 && age<=15;
@@ -78,6 +78,7 @@ public final class PowerService {
             }
             a.lastApply=now; return;
         }
+        if(packet.action()==9){s.ropeJump=packet.value()!=0 && p.isAlive() && !p.isSpectator();s.ropeInputTick=now;return;}
         if (packet.action() == 4) { PowerNetwork.sync(p, s.targets); return; }
         if (!p.isAlive() || p.isSpectator() || !PowerData.available(p).contains(packet.power())) return;
         switch (packet.action()) {
@@ -216,7 +217,7 @@ public final class PowerService {
         // Gear/items are prioritized over dense collections of metal blocks.
         for (var e : p.level().getEntities(p, p.getBoundingBox().inflate(range))) {
             if (e instanceof ItemEntity item && PowerConfig.DETECTION_ITEMS.get() && MetalDetector.detects(p.server, item.getItem())) result.add(MetalTarget.entity(e, 6));
-            else if (e instanceof SteelProjectile projectile && projectile.allomanticallyDetectable(p.server)) result.add(MetalTarget.entity(e, 7));
+            else if (e instanceof AllomanticProjectile projectile && projectile.allomanticallyDetectable(p.server)) result.add(MetalTarget.entity(e, 7));
             else if (e instanceof LivingEntity living && PowerConfig.DETECTION_GEAR.get()) {
                 if (e instanceof ServerPlayer && !PowerConfig.PLAYER_TARGETS.get()) continue;
                 for (int i = 0; i < SLOTS.length; i++) if (MetalDetector.detects(p.server, living.getItemBySlot(SLOTS[i]))) result.add(MetalTarget.entity(e, i));
@@ -253,7 +254,7 @@ public final class PowerService {
         Vec3 direction = anchorDirection(chest(p), point, power);
         accelerate(p, targetImpulse(p, best, direction, powerForce(p, power)));
     }
-    static double powerForce(ServerPlayer p, String power) {
+    public static double powerForce(ServerPlayer p, String power) {
         return PowerConfig.FORCE.get() * (power.equals("a:iron") ? PowerConfig.IRON_STRENGTH.get() : 1) * PowerAttributes.strength(p, power) * PowerRules.levelMultiplier(PowerData.state(p, power), PowerConfig.LOW_STRENGTH.get(), PowerConfig.BURN_STRENGTH.get(), PowerConfig.FLARE_STRENGTH.get());
     }
     static Vec3 targetImpulse(ServerPlayer p, MetalTarget best, Vec3 direction, double force) {
@@ -264,9 +265,13 @@ public final class PowerService {
         if (best.entityId() < 0) return direction.scale(accel);
         Entity entity = p.level().getEntity(best.entityId()); if (entity == null) return Vec3.ZERO;
         if (entity instanceof ItemEntity item && !MetalDetector.detects(p.server, item.getItem())) return Vec3.ZERO;
-        if (entity instanceof SteelProjectile projectile && !projectile.allomanticallyDetectable(p.server)) return Vec3.ZERO;
+        if (entity instanceof AllomanticProjectile projectile && !projectile.allomanticallyDetectable(p.server)) return Vec3.ZERO;
         if (entity instanceof LivingEntity living && (best.slot() < 0 || best.slot() >= SLOTS.length || !MetalDetector.detects(p.server, living.getItemBySlot(SLOTS[best.slot()])))) return Vec3.ZERO;
-        double mass = entity instanceof SteelProjectile projectile ? projectile.allomanticMass() : entity instanceof ItemEntity item ? Math.max(.2, item.getItem().getCount() * .2)
+        if(entity instanceof AllomanticProjectile projectile){
+            if(projectile.fixedMetalAnchor())return direction.scale(accel);
+            projectile.beforeAllomanticForce();
+        }
+        double mass = entity instanceof AllomanticProjectile projectile ? projectile.allomanticMass() : entity instanceof ItemEntity item ? Math.max(.2, item.getItem().getCount() * .2)
             : entity instanceof ServerPlayer ? PowerConfig.PLAYER_MASS.get() : Math.max(10, entity.getBbWidth() * entity.getBbWidth() * entity.getBbHeight() * 100);
         accelerate(entity, direction.scale(-AllomanticPhysics.acceleration(force, distance, PowerConfig.RANGE.get(), mass)));
         return PowerConfig.RECOIL.get() ? direction.scale(accel) : Vec3.ZERO;
@@ -300,6 +305,13 @@ public final class PowerService {
             impulse = impulse.add(targetImpulse(p, anchors.get(i), directions.get(i), powerForce(p,power)*weights[i]));
         if (impulse.lengthSqr()>1e-12) accelerate(p,impulse);
     }
+    public static void externalImpulse(ServerPlayer player,Vec3 impulse){accelerate(player,impulse);}
+    public static Vec3 movementEstimate(ServerPlayer player){
+        var s=session(player);return usableMovement(s.observedMovement)?s.observedMovement:player.getDeltaMovement();
+    }
+    public static boolean ropeJump(ServerPlayer player){
+        var s=SESSIONS.get(player.getUUID());return s!=null && s.ropeJump && player.level().getGameTime()-s.ropeInputTick<=10;
+    }
     private static boolean usableMovement(Vec3 movement) {
         return movement != null && movement.lengthSqr() > 1e-8 && movement.lengthSqr() < 64;
     }
@@ -320,7 +332,7 @@ public final class PowerService {
         }
         Vec3 velocity = previous.add(impulse);
         // Existing fast falls are not instantly slowed to the ability's speed cap.
-        double speed = velocity.length(), cap = Math.max(e instanceof SteelProjectile ? PowerConfig.PROJECTILE_MAX_SPEED.get() : PowerConfig.MAX_SPEED.get(), previous.length());
+        double speed = velocity.length(), cap = Math.max(e instanceof AllomanticProjectile ? PowerConfig.PROJECTILE_MAX_SPEED.get() : PowerConfig.MAX_SPEED.get(), previous.length());
         if (speed > cap) velocity = velocity.scale(cap / speed);
         if (PowerConfig.FALL_MITIGATION.get()) e.fallDistance = AllomanticPhysics.brakedFallDistance(
                 e.fallDistance, previous.y, velocity.y, impulse.y, PowerConfig.FALL_MITIGATION_STRENGTH.get());

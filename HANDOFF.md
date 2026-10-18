@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-18**. Current mod version: **0.8.0-alpha**.
+Last updated: **2026-10-18**. Current mod version: **0.9.0-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -9,12 +9,12 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
-- User requested a secondary activation button and right-click menu assignment between two keys.
-- 0.8.0 adds H (rebindable) for the secondary slot. G and H have independent hold/pulse/Alt/heartbeat/lifecycle state and can activate together. Right-clicking the highlighted menu power toggles its slot, swapping existing assignments when needed. Left-click still cycles state; R release after assignment must not overwrite it.
-- HUD/menu display actual key bindings for both slots. V controls primary; menu left-click can set either power's state. Secondary assignment persists in PowerData `secondary`; only distinct available powers may occupy slots. No secondary is assigned automatically.
-- `controls.secondaryActivation` gates the secondary slot without deleting saved data. Protocol is now 4; update both client/server.
-- 0.8.0 build, 28 JUnit methods, 18 server GameTests and artifact upload passed (evidence below).
-- Next: playtest simultaneous G/H, right-click swaps, HUD and secondary steel projectile/Alt drop behavior; automated server checks do not replace client input/UI playtesting.
+- User requested a spike crossbow, diagonal-ingot metal spikes, reusable steel ball-and-rope, and a charged grappling hook with swing/Space reeling/iron anchor interaction.
+- Work in progress: new equipment items/entity, recipes, shared AllomanticProjectile interface, tether ownership/recovery, radial rope tension and visible rope. No Hemalurgic charge/steal mechanics are included.
+- Spike recipe interpretation: two same-metal ingots diagonally craft two spikes. Crossbow recipe is vanilla crossbow plus two iron ingots. Ball recipe is one non-aluminum ingot plus three string. Grapple recipe adds iron, tripwire hook and three string; these crossbow/hook recipes are provisional choices.
+- Ball launches on right-click only while actively holding steel's assigned activation key and burning; subsequent right-click reels in. Grapple charges like a bow in 10 ticks, latches to blocks, preserves tangential motion, and Space shortens rope. Right-click again recalls it. Both items stay in inventory rather than being duplicated as drops.
+- Build/server verification is pending; previous successful evidence remains below. Placeholder item icons reuse vanilla assets; rope rendering and real swinging need client playtesting.
+- Next: finish validation and tests, resolve any API/runtime issues, then record final status and playtest instructions.
 
 ## Vision and accepted constraints
 
@@ -31,7 +31,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - Metal ores, processing, ingots/nuggets and alloys; ore generation, creative tab, and recipe/generation gates.
 - Allomantic **iron and steel effects**, detection lines, aimed push/pull, movement assistance, metal reserves/vials, fall braking, and steel-thrown projectiles.
 - 16 Allomantic plus 16 Feruchemical attributes and selector entries. Other Allomantic effects are pending. Feruchemy has selector states only, no storing/tapping effects.
-- **Not implemented:** Scadrial dimension, other planets/dimensions, Cognitive Realm/perpendicularities/travel, origin GUI, expanded races/ancestry, other Allomancy effects, Feruchemy mechanics/metalminds, Hemalurgy/spikes, Compounding.
+- **Not implemented:** Scadrial dimension, other planets/dimensions, Cognitive Realm/perpendicularities/travel, origin GUI, expanded races/ancestry, other Allomancy effects, Feruchemy mechanics/metalminds, Hemalurgy power stealing/charging, Compounding.
 
 ## Metallurgy and detection decisions
 
@@ -110,7 +110,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - `metalDetection`: categories (including fired projectiles), recursive recipes, hardness cost/cap, range-related scanning budgets, target count and sync cadence.
 - `steelProjectiles`: enabled, reference/max speed, nugget damage, cap ≤100, recoil mass, unknown content fallback, per-shot reserve cost (default 1), lifetime, alternate straight-down drop.
 - Existing config files retain saved values. New fields obtain defaults. Datapacks can override generation and recipes. Feature disablement must not delete saved data or registry entries.
-- `PowerService`: validated inputs, ticks/sessions, dispatcher, target selection, forces, throw event. `PowerAttributes`/`PowerData`: powers/persistence. `PowerNetwork`: controls, snapshots, additive impulse; **current protocol 4**. Update both server and client, especially for new projectile registration/renderer.
+- `PowerService`: validated inputs, ticks/sessions, dispatcher, target selection, forces, throw event. `PowerAttributes`/`PowerData`: powers/persistence. `PowerNetwork`: controls, snapshots, additive impulse; **current protocol 5**. Update both server and client, especially for new projectile registration/renderer.
 - `PowerClient`/`PowerClientMod`: input, HUD, lines, impulse reception, renderer. Common classes must not reference client classes. Client supplies no target positions or force magnitudes.
 - `MetalDetector`/`MetalGraph`: classification/aluminum closure. `MetalAmounts`/`RecipeMetalAmounts`: quantities. `MetalProjectilePhysics`: pure scaling formulas. `MetalProjectiles`: registration/launch. `SteelProjectile`: collision, damage, persistence and recovery.
 - Session state clears on logout, dimension change, respawn, datapack reload and server stop. Keep migrations idempotent and configuration gates server-authoritative.
@@ -133,3 +133,19 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 0.7.4 passed regression: linear speed math, speed cap, and actual launches across five attribute/burn combinations.
 
 0.8.0 passed regression: distinct assignments/swapping, independent holds and Alt flags, secondary-authorized steel fire, clone persistence, snapshot round trip, and independent START/TICK/STOP dispatch.
+
+## Equipment architecture (0.9.0, pending validation)
+
+`equipment/EquipmentContent`, `EquipmentConfig`, `SpikeCrossbowItem`, `SpikeItem`,
+`TetherItem`, `EquipmentProjectile`, `TetherPhysics`, and client `EquipmentClient`.
+Equipment has a separate SERVER config `cosmerearcanists-equipment-server.toml`.
+19 metal spike variants preserve metal identity for future Hemalurgy. Aluminum
+and duralumin spikes are intentionally undetectable. Crossbow uses normal
+loading/charging/shooting; only its spike ammo is accepted. Grounded spikes
+and grapple hooks are fixed Allomantic anchors; a freed block releases them.
+Shared AllomanticProjectile keeps blue lines/forces consistent with steel shots.
+Tethers bind the original inventory item's custom-data UUID to one projectile.
+Recall returns the entity without dropping another inventory item; loss/death
+of owner or loss/replacement of the matching item ends it. No forced chunks.
+Control action 9 carries only Space input with a short timeout; server owns
+rope constraints and shortening. Protocol 5 requires both sides to update.

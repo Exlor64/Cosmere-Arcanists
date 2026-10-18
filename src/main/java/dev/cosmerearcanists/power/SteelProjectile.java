@@ -14,7 +14,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 
 /** One physical projectile carries the exact thrown stack, preventing merging and duplicate hits. */
-public final class SteelProjectile extends ThrowableItemProjectile {
+public final class SteelProjectile extends ThrowableItemProjectile implements AllomanticProjectile {
     private ItemStack cargo=ItemStack.EMPTY;
     private double metalUnits=1, referenceSpeed=3.5, nuggetDamage=2, damageCap=100;
     private int flightAge;
