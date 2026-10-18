@@ -192,12 +192,13 @@ public final class PowerService {
         });
     }
 
-    private List<MetalTarget> targets(ServerPlayer p, Session s) {
+    static List<MetalTarget> targets(ServerPlayer p, Session s) {
         int range = PowerConfig.RANGE.get(); double rangeSq = range * range; var chest = chest(p);
         var result = new ArrayList<MetalTarget>();
         // Gear/items are prioritized over dense collections of metal blocks.
         for (var e : p.level().getEntities(p, p.getBoundingBox().inflate(range))) {
             if (e instanceof ItemEntity item && PowerConfig.DETECTION_ITEMS.get() && MetalDetector.detects(p.server, item.getItem())) result.add(MetalTarget.entity(e, 6));
+            else if (e instanceof SteelProjectile projectile && projectile.allomanticallyDetectable(p.server)) result.add(MetalTarget.entity(e, 7));
             else if (e instanceof LivingEntity living && PowerConfig.DETECTION_GEAR.get()) {
                 if (e instanceof ServerPlayer && !PowerConfig.PLAYER_TARGETS.get()) continue;
                 for (int i = 0; i < SLOTS.length; i++) if (MetalDetector.detects(p.server, living.getItemBySlot(SLOTS[i]))) result.add(MetalTarget.entity(e, i));
@@ -237,7 +238,7 @@ public final class PowerService {
     static double powerForce(ServerPlayer p, String power) {
         return PowerConfig.FORCE.get() * (power.equals("a:iron") ? PowerConfig.IRON_STRENGTH.get() : 1) * PowerAttributes.strength(p, power) * PowerRules.levelMultiplier(PowerData.state(p, power), PowerConfig.LOW_STRENGTH.get(), PowerConfig.BURN_STRENGTH.get(), PowerConfig.FLARE_STRENGTH.get());
     }
-    private Vec3 targetImpulse(ServerPlayer p, MetalTarget best, Vec3 direction, double force) {
+    static Vec3 targetImpulse(ServerPlayer p, MetalTarget best, Vec3 direction, double force) {
         var point = best.position(p.level(), 1); if (point == null) return Vec3.ZERO;
         double distance = point.distanceTo(chest(p));
         double accel = AllomanticPhysics.acceleration(force, distance, PowerConfig.RANGE.get(), PowerConfig.PLAYER_MASS.get());
@@ -245,8 +246,9 @@ public final class PowerService {
         if (best.entityId() < 0) return direction.scale(accel);
         Entity entity = p.level().getEntity(best.entityId()); if (entity == null) return Vec3.ZERO;
         if (entity instanceof ItemEntity item && !MetalDetector.detects(p.server, item.getItem())) return Vec3.ZERO;
+        if (entity instanceof SteelProjectile projectile && !projectile.allomanticallyDetectable(p.server)) return Vec3.ZERO;
         if (entity instanceof LivingEntity living && (best.slot() < 0 || best.slot() >= SLOTS.length || !MetalDetector.detects(p.server, living.getItemBySlot(SLOTS[best.slot()])))) return Vec3.ZERO;
-        double mass = entity instanceof ItemEntity item ? Math.max(.2, item.getItem().getCount() * .2)
+        double mass = entity instanceof SteelProjectile projectile ? projectile.allomanticMass() : entity instanceof ItemEntity item ? Math.max(.2, item.getItem().getCount() * .2)
             : entity instanceof ServerPlayer ? PowerConfig.PLAYER_MASS.get() : Math.max(10, entity.getBbWidth() * entity.getBbWidth() * entity.getBbHeight() * 100);
         accelerate(entity, direction.scale(-AllomanticPhysics.acceleration(force, distance, PowerConfig.RANGE.get(), mass)));
         return PowerConfig.RECOIL.get() ? direction.scale(accel) : Vec3.ZERO;
@@ -283,7 +285,7 @@ public final class PowerService {
     private static boolean usableMovement(Vec3 movement) {
         return movement != null && movement.lengthSqr() > 1e-8 && movement.lengthSqr() < 64;
     }
-    private void accelerate(Entity e, Vec3 impulse) {
+    private static void accelerate(Entity e, Vec3 impulse) {
         if (impulse.lengthSqr() < 1e-12) return;
         Vec3 previous = e.getDeltaMovement();
         if (e instanceof ServerPlayer player) {
@@ -300,7 +302,7 @@ public final class PowerService {
         }
         Vec3 velocity = previous.add(impulse);
         // Existing fast falls are not instantly slowed to the ability's speed cap.
-        double speed = velocity.length(), cap = Math.max(PowerConfig.MAX_SPEED.get(), previous.length());
+        double speed = velocity.length(), cap = Math.max(e instanceof SteelProjectile ? PowerConfig.PROJECTILE_MAX_SPEED.get() : PowerConfig.MAX_SPEED.get(), previous.length());
         if (speed > cap) velocity = velocity.scale(cap / speed);
         if (PowerConfig.FALL_MITIGATION.get()) e.fallDistance = AllomanticPhysics.brakedFallDistance(
                 e.fallDistance, previous.y, velocity.y, impulse.y, PowerConfig.FALL_MITIGATION_STRENGTH.get());

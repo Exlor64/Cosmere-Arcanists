@@ -19,6 +19,40 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @PrefixGameTestTemplate(false)
 public final class PowerGameTests {
     @GameTest(template = "empty")
+    public static void otherAllomancerCanPushAndPullProjectiles(GameTestHelper helper) {
+        var level=helper.getLevel(); MetalDetector.rebuild(level.getServer());
+        var defender=new ServerPlayer(level.getServer(),level,new GameProfile(UUID.randomUUID(),"Deflector"),ClientInformation.createDefault());
+        var shooter=new ServerPlayer(level.getServer(),level,new GameProfile(UUID.randomUUID(),"Shooter"),ClientInformation.createDefault());
+        var pos=helper.absolutePos(new net.minecraft.core.BlockPos(1,10,1));
+        defender.setPos(pos.getX()+.5,pos.getY(),pos.getZ()+.5);
+        PowerAttributes.set(defender,"a:iron",1); PowerAttributes.set(defender,"a:steel",1);
+        PowerData.state(defender,"a:iron",2); PowerData.state(defender,"a:steel",2);
+        var shot=new SteelProjectile(MetalProjectiles.STEEL.get(),level); shot.setOwner(shooter);
+        var point=PowerService.chest(defender).add(0,0,4);
+        shot.setPos(point.x,point.y-shot.getBbHeight()*.5,point.z); shot.cargo(new ItemStack(Items.IRON_NUGGET),1);
+        shot.setDeltaMovement(0,0,-3.5); level.addFreshEntity(shot);
+        var target=MetalTarget.entity(shot,7);
+        helper.assertTrue(PowerService.targets(defender,new PowerService.Session()).contains(target),"Another player's fired metal must be included in blue-line targets");
+        var push=PowerService.anchorDirection(PowerService.chest(defender),target.position(level,1),"a:steel");
+        PowerService.targetImpulse(defender,target,push,PowerService.powerForce(defender,"a:steel"));
+        double lightChange=shot.getDeltaMovement().z+3.5;
+        helper.assertTrue(lightChange>0 && Math.abs(shot.getDeltaMovement().y)<1e-6,"Steel must deflect the incoming shot away along the real anchor line");
+        helper.assertTrue(shot.hurtMarked && shot.getOwner()==shooter,"Trajectory updates must sync without replacing the original shooter");
+        var heavy=new SteelProjectile(MetalProjectiles.STEEL.get(),level); heavy.cargo(new ItemStack(Items.ANVIL),279);
+        heavy.setPos(shot.position()); heavy.setDeltaMovement(0,0,-3.5); level.addFreshEntity(heavy);
+        PowerService.targetImpulse(defender,MetalTarget.entity(heavy,7),push,PowerService.powerForce(defender,"a:steel"));
+        helper.assertTrue(heavy.getDeltaMovement().z+3.5<lightChange,"Heavy shots must resist deflection more than nuggets");
+        shot.setDeltaMovement(0,0,3.5);
+        var pull=PowerService.anchorDirection(PowerService.chest(defender),target.position(level,1),"a:iron");
+        PowerService.targetImpulse(defender,target,pull,PowerService.powerForce(defender,"a:iron"));
+        helper.assertTrue(shot.getDeltaMovement().z<3.5,"Iron must pull the shot toward the Allomancer");
+        var aluminum=new SteelProjectile(MetalProjectiles.STEEL.get(),level);
+        aluminum.cargo(new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,"duralumin_ingot"))),9);
+        aluminum.setPos(shot.position()); level.addFreshEntity(aluminum);
+        helper.assertTrue(!PowerService.targets(defender,new PowerService.Session()).contains(MetalTarget.entity(aluminum,7)),"Aluminum exclusion must still apply to projectile cargo");
+        shot.discard(); heavy.discard(); aluminum.discard(); helper.succeed();
+    }
+    @GameTest(template = "empty")
     public static void alternateSteelDropsMetalDownward(GameTestHelper helper) {
         var level=helper.getLevel(); MetalDetector.rebuild(level.getServer());
         var player=new ServerPlayer(level.getServer(),level,new GameProfile(UUID.randomUUID(),"DownDropper"),ClientInformation.createDefault());

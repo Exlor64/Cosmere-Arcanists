@@ -24,6 +24,12 @@ public final class SteelProjectile extends ThrowableItemProjectile {
         cargo=stack.copy(); setItem(stack.copyWithCount(1)); metalUnits=units;
         referenceSpeed=PowerConfig.NUGGET_SPEED.get(); nuggetDamage=PowerConfig.NUGGET_DAMAGE.get(); damageCap=PowerConfig.PROJECTILE_DAMAGE_CAP.get();
     }
+    public boolean allomanticallyDetectable(net.minecraft.server.MinecraftServer server) {
+        return !isRemoved() && PowerConfig.DETECTION_PROJECTILES.get() && MetalDetector.detects(server,cargo);
+    }
+    public double allomanticMass() {
+        return Math.max(.001,metalUnits*PowerConfig.NUGGET_MASS.get());
+    }
     @Override public void tick() {
         super.tick();
         if(!level().isClientSide && !isRemoved() && ++flightAge>=PowerConfig.PROJECTILE_LIFETIME.get()) recover();

@@ -228,3 +228,14 @@ verification; automated tests cover content, damage, collision and recovery.
 0.7.1 corrects projectile activation: active steel pushing (G held, steel selected and burning) is required. Releasing G restores normal drops immediately on the server. Projectiles already fired continue their physical flight.
 
 0.7.2: Alt+G+Q drops metal straight down rather than firing. Normal G+Q still shoots. `steelProjectiles.alternateDropDownwards` controls repositioning; disabling it retains ordinary vanilla drops during alternate mode, never projectile fire.
+
+0.7.3: in-flight steel-launched metal is detectable, pushable and pullable by
+other iron/steel Allomancers (and the shooter) through normal targeting or
+alternate movement assistance. Blue lines follow the projectile center. Range,
+hardness, aluminum exclusion, burn level, attributes, fuel and reaction-force
+rules still apply. Configure `metalDetection.firedProjectiles` to disable this
+interaction separately. Mass uses the actual carried metal content, so anvils
+are harder to deflect than nuggets. Forces change existing flight velocity,
+without creating a second projectile or replacing its original shooter/cargo.
+Damage still depends on impact speed and remains capped at 100. Deflected
+projectiles use the projectile speed cap rather than the player movement cap.

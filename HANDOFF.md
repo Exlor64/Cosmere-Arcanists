@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-18**. Current mod version: **0.7.2-alpha**.
+Last updated: **2026-10-18**. Current mod version: **0.7.3-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -9,11 +9,11 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
-- User requested Alt + steel activation + item throw to drop straight down instead of firing a projectile.
-- 0.7.2 keeps normal G+Q fire, but latched Alt+G+Q retains the original ordinary ItemEntity, moves it to the player's feet and sets only downward velocity. Preserves stack/ownership/pickup delay; no projectile damage, shot reserve cost or launch recoil. Regular burning and later normal Allomantic forces still apply.
-- `steelProjectiles.alternateDropDownwards` defaults true. When disabled, alternate mode retains a vanilla drop instead of firing.
-- 0.7.2 build, 27 JUnit methods, 14 server GameTests and artifact upload passed (evidence below).
-- Next: collect normal G+Q versus Alt+G+Q playtest feedback. Alt mode is latched when G starts; release G before changing modes.
+- User requested fired metal projectiles to be pushable/pullable by other Allomancers.
+- 0.7.3 adds in-flight shots to metal targeting with centered interpolated blue lines. Both aimed and alternate force paths use cargo-based mass; heavy shots resist deflection more. Forces change the existing projectile, retain its original shooter/cargo, and sync velocity. Existing range, hardness, aluminum, fuel, power and reaction rules still apply.
+- New `metalDetection.firedProjectiles` toggle defaults true. Projectile velocity uses its own cap. Impact-speed damage and the hard 100 cap remain intact.
+- Build/server verification for 0.7.3 is pending at this commit. Prior successful evidence remains below until superseded.
+- Next: verify CI and record evidence, then collect multiplayer deflection/line playtest feedback. Normal G+Q and Alt+G+Q behavior remains as in 0.7.2.
 
 ## Vision and accepted constraints
 
@@ -90,6 +90,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 - Hold **G** with steel **selected and burning**, then throw with **Q**. Burning alone is insufficient. Server checks a fresh held-input heartbeat (up to 15 ticks); release, other selection, brief released taps, expired input, disabled/unavailable/unfueled steel, nonmetal and aluminum leave normal drops. Inventory drops only qualify if a valid held activation still exists; GUI opening normally releases it. Already-fired projectiles do not require continued G holding.
 - Alt held before G changes Q to a straight-down ordinary drop at the feet, independent of look direction. No shot fuel or recoil; stack data/pickup delay retained. Disabling `alternateDropDownwards` leaves a vanilla alternate-mode drop, never a projectile. Normal G+Q behavior remains unchanged.
+- In-flight shots are detectable and can be pushed/pulled by other Allomancers or the shooter, with centered blue lines and cargo-based mass. `metalDetection.firedProjectiles` controls this independently. Trajectories update in place; original ownership/cargo persist. Impact-speed damage stays capped at 100.
 - One normally fired thrown stack becomes one `SteelProjectile`; it cannot merge in flight. The exact stack/components/count are stored separately from the rendered single item and persist through save/load.
 - `MetalAmounts` / `RecipeMetalAmounts` count nugget-equivalent content: nugget 1, ingot 9, iron block 81, anvil 279. Repeated ingredients and output counts matter; nonmetal ingredients add zero. Ingredient/recipe alternatives use the minimum resolvable amount.
 - Primitive ore/raw items use 9 units as a balance approximation; unresolved detectable items default to 9 units per item (configurable). Multiply by thrown stack count. This is not a real-world mass/metallurgy claim.
@@ -103,7 +104,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 - Origin/per-art/per-metal SERVER config: `ServerConfig`. Powers SERVER config: `cosmerearcanists-powers-server.toml` (world/server config location follows NeoForge). Metallurgy COMMON config: `MetallurgyConfig`. Client HUD/line config: `PowerClientConfig`.
 - `ironSteel`: force, iron multiplier, burn strength/drain, speed/mass, reaction/fall braking, player targets, separate iron/steel alternate toggles, angle limit, input filtering, reserves.
-- `metalDetection`: categories, recursive recipes, hardness cost/cap, range-related scanning budgets, target count and sync cadence.
+- `metalDetection`: categories (including fired projectiles), recursive recipes, hardness cost/cap, range-related scanning budgets, target count and sync cadence.
 - `steelProjectiles`: enabled, reference/max speed, nugget damage, cap ≤100, recoil mass, unknown content fallback, per-shot reserve cost (default 1), lifetime, alternate straight-down drop.
 - Existing config files retain saved values. New fields obtain defaults. Datapacks can override generation and recipes. Feature disablement must not delete saved data or registry entries.
 - `PowerService`: validated inputs, ticks/sessions, dispatcher, target selection, forces, throw event. `PowerAttributes`/`PowerData`: powers/persistence. `PowerNetwork`: controls, snapshots, additive impulse; **current protocol 3**. Update both server and client, especially for new projectile registration/renderer.
@@ -123,3 +124,5 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - Passed 0.7.1 checks add regression coverage for burning without G, iron selected, pulse-only input, G release, stale heartbeat, fuel preservation and valid held steel launch.
 
 0.7.2 passed regression: downward position/velocity despite upward/sideways aim, exact stack/pickup-delay retention, no shot cost, and unchanged normal launch.
+
+0.7.3 pending regression: another Allomancer detects a shot, steel/iron alter its velocity in opposite directions, heavy cargo resists more, velocity sync is flagged, and aluminum cargo remains excluded.
