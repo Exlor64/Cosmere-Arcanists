@@ -13,8 +13,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - 0.8.0 adds H (rebindable) for the secondary slot. G and H have independent hold/pulse/Alt/heartbeat/lifecycle state and can activate together. Right-clicking the highlighted menu power toggles its slot, swapping existing assignments when needed. Left-click still cycles state; R release after assignment must not overwrite it.
 - HUD/menu display actual key bindings for both slots. V controls primary; menu left-click can set either power's state. Secondary assignment persists in PowerData `secondary`; only distinct available powers may occupy slots. No secondary is assigned automatically.
 - `controls.secondaryActivation` gates the secondary slot without deleting saved data. Protocol is now 4; update both client/server.
-- Build/server checks are pending at this commit; prior validated evidence remains below until superseded.
-- Next: verify CI, record evidence, then playtest simultaneous G/H, right-click swaps, HUD and secondary steel projectile/Alt drop behavior.
+- 0.8.0 build, 28 JUnit methods, 18 server GameTests and artifact upload passed (evidence below).
+- Next: playtest simultaneous G/H, right-click swaps, HUD and secondary steel projectile/Alt drop behavior; automated server checks do not replace client input/UI playtesting.
 
 ## Vision and accepted constraints
 
@@ -117,8 +117,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Verification, evidence and limits
 
-- Latest gameplay commit validated: `74d4a1a53f78d53317792d055ba3c8305a98c2f6`.
-- [Successful GitHub Actions checks 39151077040](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39151077040): build, **28 JUnit methods**, **16 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
+- Latest gameplay commit validated: `5149688b74bf837dbf00cb043d6f4ed1e55b64bb`.
+- [Successful GitHub Actions checks 39153475748](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39153475748): build, **28 JUnit methods**, **18 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
 - Tests cover metal/aluminum/cycles, ingredient quantities, power states/migrations/attributes/cloning, ability phases, scanning/falling discovery, hardness, impulse/input math, movement solver, burn/iron scaling, projectile scaling/cap, actual launch/fuel/recoil, save/load/recovery, and swept mob collision with ~2-damage nugget.
 - Collision-test pitfall: the small empty template is encased by GameTest barriers. Clear an airborne corridor before projectile tests; otherwise the shot can hit the barrier roof instead of its target. Temporary collision diagnostic logs were removed.
 - User reported steel movement working perfectly and iron working well before requesting its doubled baseline and alternate mode. Do not treat those later additions or projectile visuals as user-confirmed.
@@ -132,4 +132,4 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 0.7.4 passed regression: linear speed math, speed cap, and actual launches across five attribute/burn combinations.
 
-0.8.0 pending regression: distinct assignments/swapping, independent holds and Alt flags, secondary-authorized steel fire, clone persistence, snapshot round trip, and independent START/TICK/STOP dispatch.
+0.8.0 passed regression: distinct assignments/swapping, independent holds and Alt flags, secondary-authorized steel fire, clone persistence, snapshot round trip, and independent START/TICK/STOP dispatch.
