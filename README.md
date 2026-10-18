@@ -180,3 +180,38 @@ Configure `lowBurnStrengthMultiplier`, `burningStrengthMultiplier`,
 `flareDrainMultiplier` under `ironSteel`. Existing saved Burning/Flaring states
 migrate once to retain their meanings. Disabling flaring falls back to Burning.
 Both client and server must update (network protocol 3).
+
+### Steel projectiles (0.7.0)
+
+While steel is burning at any active level, throw a metal item with Q (or drop a
+stack from the inventory). It launches along your aim without needing G.
+Nonmetal and aluminum-containing drops remain ordinary items. Steel must be
+available/enabled, with enough reserves when consumption is enabled. The shot
+uses normal power attributes and Low burn/Burning/Flaring multipliers.
+
+Content is measured in nugget-equivalents: nugget 1, ingot 9, iron block 81,
+anvil 279. Crafting/smithing/stonecutting ingredient counts and output counts
+are traced recursively; nonmetal ingredients add no metal. Ingredient/recipe
+alternatives use the smallest resolvable amount. Primitive raw metals/ores use
+one ingot-equivalent as a balance approximation. Unresolved detectable items
+use the configurable fallback. The entire thrown stack is one projectile.
+
+At normal strength a nugget launches at 3.5 blocks/tick and deals about 2 damage
+before armor. Launch speed scales with sqrt(power) divided by the fourth root
+of metal content. A baseline anvil launches at about 0.86 blocks/tick and gives
+a substantial backward recoil, versus almost no recoil for a nugget.
+Impact energy sets damage through an exponential saturation curve approaching
+100; no hit can exceed 100 raw damage. Higher impact speed/power and more metal
+increase damage smoothly. Armor and normal hurt immunity still apply.
+
+Shots use swept projectile collision, have gravity/drag, and recover the exact
+original stack on their first impact or after five seconds in flight. They do
+not destroy terrain. Normal pickup delay applies. Player hits respect the
+existing player-target toggle, team restrictions, and vanilla damage rules.
+
+The `steelProjectiles` server config controls enablement, reference speed,
+maximum speed, nugget damage, damage ceiling (at most 100), recoil mass, unknown
+metal fallback, lifetime, and extra reserve cost per shot (default 1).
+`ironSteel.reactionForce` also controls launch recoil. Update both sides for
+the new projectile entity and renderer. Client appearance still needs in-game
+verification; automated tests cover content, damage, collision and recovery.

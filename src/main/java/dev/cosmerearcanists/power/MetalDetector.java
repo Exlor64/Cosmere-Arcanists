@@ -51,12 +51,13 @@ public final class MetalDetector {
             for (var ingredient : recipe.getIngredients()) for (var stack : ingredient.getItems()) if (!stack.isEmpty()) inputs.add(id(stack.getItem()));
         }
         classification = MetalGraph.resolve(recipes, metals, aluminum); excluded = Set.copyOf(deny);
+        MetalAmounts.rebuild(server);
     }
     public static boolean detects(MinecraftServer server, ItemStack stack) {
         if (owner != server) rebuild(server);
         return !stack.isEmpty() && classification.detectable(id(stack.getItem())) && !excluded.contains(id(stack.getItem()));
     }
-    public static void clear() { owner = null; classification = new MetalGraph.Result(Set.of(), Set.of()); excluded = Set.of(); }
+    public static void clear() { owner = null; classification = new MetalGraph.Result(Set.of(), Set.of()); excluded = Set.of(); MetalAmounts.clear(); }
     private static String id(Item item) { return BuiltInRegistries.ITEM.getKey(item).toString(); }
     private MetalDetector() { }
 }

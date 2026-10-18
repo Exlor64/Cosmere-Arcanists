@@ -305,6 +305,13 @@ public final class PowerService {
                 PowerConfig.MAX_SPEED.get(), PowerConfig.RESIST_WALKING.get()));
         } else e.hurtMarked = true;
     }
+    @SubscribeEvent public void toss(net.neoforged.neoforge.event.entity.item.ItemTossEvent event) {
+        if(!(event.getPlayer() instanceof ServerPlayer player))return;
+        var recoil=MetalProjectiles.launch(player,event.getEntity());
+        if(recoil==null)return;
+        event.setCanceled(true);
+        if(recoil.lengthSqr()>1e-12)accelerate(player,recoil);
+    }
     @SubscribeEvent public void commands(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("cosmere").then(Commands.literal("power").requires(s -> s.hasPermission(2))
             .then(Commands.literal("grant").then(Commands.argument("player", EntityArgument.player()).then(Commands.argument("power", ResourceLocationArgument.id())

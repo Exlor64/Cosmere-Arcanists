@@ -19,6 +19,47 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @PrefixGameTestTemplate(false)
 public final class PowerGameTests {
     @GameTest(template = "empty")
+    public static void metalProjectileContentAndRecovery(GameTestHelper helper) {
+        var level=helper.getLevel(); var server=level.getServer(); MetalDetector.rebuild(server);
+        helper.assertTrue(MetalAmounts.units(server,new ItemStack(Items.IRON_NUGGET))==1,"Nugget must contain one unit");
+        helper.assertTrue(MetalAmounts.units(server,new ItemStack(Items.IRON_INGOT))==9,"Ingot must contain nine nugget units");
+        helper.assertTrue(MetalAmounts.units(server,new ItemStack(Items.ANVIL))==279,"Anvil must include three iron blocks and four ingots");
+        helper.assertTrue(MetalAmounts.units(server,new ItemStack(Items.IRON_NUGGET,16))==16,"Stack count must affect total metal");
+        var aluminum=new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,"duralumin_ingot")));
+        helper.assertTrue(MetalAmounts.units(server,aluminum)==0,"Aluminum-containing objects must not launch");
+        var pos=helper.absolutePos(new net.minecraft.core.BlockPos(1,3,1));
+        var projectile=new SteelProjectile(MetalProjectiles.STEEL.get(),level);
+        projectile.setPos(pos.getX()+.5,pos.getY()+.5,pos.getZ()+.5);
+        projectile.cargo(new ItemStack(Items.IRON_NUGGET,16),16);
+        var saved=new net.minecraft.nbt.CompoundTag(); projectile.addAdditionalSaveData(saved);
+        var restored=new SteelProjectile(MetalProjectiles.STEEL.get(),level); restored.readAdditionalSaveData(saved);
+        var savedAgain=new net.minecraft.nbt.CompoundTag(); restored.addAdditionalSaveData(savedAgain);
+        helper.assertTrue(ItemStack.parseOptional(level.registryAccess(),savedAgain.getCompound("Cargo")).getCount()==16,"Projectile must retain the exact carried stack across save/load");
+        projectile.onHit(new net.minecraft.world.phys.BlockHitResult(projectile.position(),net.minecraft.core.Direction.UP,pos,false));
+        helper.assertTrue(projectile.isRemoved(),"Impact must end the projectile");
+        var drops=level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,new net.minecraft.world.phys.AABB(pos).inflate(1),e->e.getItem().is(Items.IRON_NUGGET)&&e.getItem().getCount()==16);
+        helper.assertTrue(drops.size()==1,"Impact must recover exactly one original stack");
+        projectile.onHit(new net.minecraft.world.phys.BlockHitResult(projectile.position(),net.minecraft.core.Direction.UP,pos,false));
+        helper.assertTrue(level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,new net.minecraft.world.phys.AABB(pos).inflate(1),e->e.getItem().is(Items.IRON_NUGGET)&&e.getItem().getCount()==16).size()==1,"Repeated impact must not duplicate cargo");
+        drops.forEach(net.minecraft.world.entity.Entity::discard);
+        helper.succeed();
+    }
+    @GameTest(template = "empty", timeoutTicks = 30)
+    public static void metalProjectileSweptCollision(GameTestHelper helper) {
+        var level=helper.getLevel(); var start=helper.absolutePos(new net.minecraft.core.BlockPos(1,4,1));
+        var cow=net.minecraft.world.entity.EntityType.COW.create(level);
+        cow.setNoAi(true); cow.setNoGravity(true); cow.setPos(start.getX()+3.5,start.getY(),start.getZ()+.5); level.addFreshEntity(cow);
+        float health=cow.getHealth();
+        var projectile=new SteelProjectile(MetalProjectiles.STEEL.get(),level);
+        projectile.setPos(start.getX()+.5,start.getY()+.5,start.getZ()+.5);
+        projectile.cargo(new ItemStack(Items.IRON_NUGGET),1); projectile.setDeltaMovement(new net.minecraft.world.phys.Vec3(3.5,0,0)); level.addFreshEntity(projectile);
+        helper.runAfterDelay(5,()->{
+            helper.assertTrue(projectile.isRemoved(),"Fast shot must collide instead of tunneling through a mob");
+            helper.assertTrue(Math.abs((health-cow.getHealth())-2)<.2,"Baseline nugget must deal about two damage before armor");
+            cow.discard(); helper.succeed();
+        });
+    }
+    @GameTest(template = "empty")
     public static void threeBurnLevelsAndLegacyMigration(GameTestHelper helper) {
         var level = helper.getLevel();
         var player = new ServerPlayer(level.getServer(), level, new GameProfile(UUID.randomUUID(), "BurnLevels"), ClientInformation.createDefault());
