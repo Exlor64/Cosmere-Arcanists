@@ -12,8 +12,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - User requested fired metal projectiles to be pushable/pullable by other Allomancers.
 - 0.7.3 adds in-flight shots to metal targeting with centered interpolated blue lines. Both aimed and alternate force paths use cargo-based mass; heavy shots resist deflection more. Forces change the existing projectile, retain its original shooter/cargo, and sync velocity. Existing range, hardness, aluminum, fuel, power and reaction rules still apply.
 - New `metalDetection.firedProjectiles` toggle defaults true. Projectile velocity uses its own cap. Impact-speed damage and the hard 100 cap remain intact.
-- Build/server verification for 0.7.3 is pending at this commit. Prior successful evidence remains below until superseded.
-- Next: verify CI and record evidence, then collect multiplayer deflection/line playtest feedback. Normal G+Q and Alt+G+Q behavior remains as in 0.7.2.
+- 0.7.3 build, 27 JUnit methods, 15 server GameTests and artifact upload passed (evidence below).
+- Next: collect multiplayer deflection/line playtest feedback. Normal G+Q and Alt+G+Q behavior remains as in 0.7.2.
 
 ## Vision and accepted constraints
 
@@ -114,8 +114,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Verification, evidence and limits
 
-- Latest gameplay commit validated: `8b78ca088f70af8c1cc17bc03f5510cca56b743d`.
-- [Successful GitHub Actions checks 39149904737](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39149904737): build, **27 JUnit methods**, **14 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
+- Latest gameplay commit validated: `e4ba967f44ade5239aa1a6e0eef2a224ce50b8c7`.
+- [Successful GitHub Actions checks 39150210751](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39150210751): build, **27 JUnit methods**, **15 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
 - Tests cover metal/aluminum/cycles, ingredient quantities, power states/migrations/attributes/cloning, ability phases, scanning/falling discovery, hardness, impulse/input math, movement solver, burn/iron scaling, projectile scaling/cap, actual launch/fuel/recoil, save/load/recovery, and swept mob collision with ~2-damage nugget.
 - Collision-test pitfall: the small empty template is encased by GameTest barriers. Clear an airborne corridor before projectile tests; otherwise the shot can hit the barrier roof instead of its target. Temporary collision diagnostic logs were removed.
 - User reported steel movement working perfectly and iron working well before requesting its doubled baseline and alternate mode. Do not treat those later additions or projectile visuals as user-confirmed.
@@ -125,4 +125,4 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 0.7.2 passed regression: downward position/velocity despite upward/sideways aim, exact stack/pickup-delay retention, no shot cost, and unchanged normal launch.
 
-0.7.3 pending regression: another Allomancer detects a shot, steel/iron alter its velocity in opposite directions, heavy cargo resists more, velocity sync is flagged, and aluminum cargo remains excluded.
+0.7.3 passed regression: another Allomancer detects a shot, steel/iron alter its velocity in opposite directions, heavy cargo resists more, velocity sync is flagged, and aluminum cargo remains excluded.
