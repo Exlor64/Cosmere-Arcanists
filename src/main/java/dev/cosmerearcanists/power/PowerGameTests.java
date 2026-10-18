@@ -18,6 +18,20 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @GameTestHolder(CosmereArcanists.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class PowerGameTests {
+    @GameTest(template = "empty", timeoutTicks = 30)
+    public static void projectileActivationHeartbeatExpires(GameTestHelper helper) {
+        var level=helper.getLevel();
+        var player=new ServerPlayer(level.getServer(),level,new GameProfile(UUID.randomUUID(),"StaleThrower"),ClientInformation.createDefault());
+        PowerAttributes.set(player,"a:steel",1); PowerData.state(player,"a:steel",2); PowerData.reserve(player,"steel",10);
+        PowerService.control(player,new PowerNetwork.Control(2,"",1));
+        helper.assertTrue(PowerService.holdingAbility(player,"a:steel"),"Fresh hold must authorize a steel activation");
+        helper.runAfterDelay(16,()->{
+            var dropped=new net.minecraft.world.entity.item.ItemEntity(level,player.getX(),player.getY(),player.getZ(),new ItemStack(Items.IRON_NUGGET));
+            helper.assertTrue(!PowerService.holdingAbility(player,"a:steel") && MetalProjectiles.launch(player,dropped)==null,"Missing hold heartbeats must disable launches");
+            helper.assertTrue(PowerData.reserve(player,"steel")==10,"Expired holds must not spend reserves");
+            PowerService.control(player,new PowerNetwork.Control(2,"",0)); helper.succeed();
+        });
+    }
     @GameTest(template = "empty")
     public static void thrownMetalLaunchAndRecoil(GameTestHelper helper) {
         var level=helper.getLevel(); var server=level.getServer(); MetalDetector.rebuild(server);
@@ -27,6 +41,14 @@ public final class PowerGameTests {
         PowerAttributes.set(player,"a:steel",1); PowerData.state(player,"a:steel",2); PowerData.reserve(player,"steel",10);
         var nugget=new net.minecraft.world.entity.item.ItemEntity(level,player.getX(),player.getY(),player.getZ(),new ItemStack(Items.IRON_NUGGET));
         var anvil=new net.minecraft.world.entity.item.ItemEntity(level,player.getX(),player.getY(),player.getZ(),new ItemStack(Items.ANVIL));
+        helper.assertTrue(MetalProjectiles.launch(player,nugget)==null,"Burning without holding activate must leave an ordinary drop");
+        helper.assertTrue(PowerData.reserve(player,"steel")==10,"Ordinary drops must not consume shot reserves");
+        PowerService.control(player,new PowerNetwork.Control(5,"",0));
+        helper.assertTrue(MetalProjectiles.launch(player,nugget)==null,"A brief activation tap must not count as holding G");
+        PowerAttributes.set(player,"a:iron",1); PowerData.data(player).putString("selected","a:iron");
+        PowerService.control(player,new PowerNetwork.Control(2,"",1));
+        helper.assertTrue(MetalProjectiles.launch(player,nugget)==null,"Holding activate for iron must not launch steel shots");
+        PowerData.data(player).putString("selected","a:steel");
         var light=MetalProjectiles.launch(player,nugget); var heavy=MetalProjectiles.launch(player,anvil);
         helper.assertTrue(light!=null && heavy!=null && heavy.length()>light.length()*50,"Anvil launch must apply much greater recoil than nugget launch");
         helper.assertTrue(PowerData.reserve(player,"steel")==8,"Each successful launch must deduct its extra reserve cost");
@@ -34,6 +56,10 @@ public final class PowerGameTests {
         helper.assertTrue(shots.size()==2,"Each thrown stack must launch exactly one shot");
         var speeds=shots.stream().mapToDouble(e->e.getDeltaMovement().length()).sorted().toArray();
         helper.assertTrue(speeds[0]<speeds[1]*.3,"Anvil must fly much slower than nugget");
+        PowerService.control(player,new PowerNetwork.Control(2,"",0));
+        helper.assertTrue(MetalProjectiles.launch(player,nugget)==null,"Releasing G must immediately restore ordinary drops");
+        helper.assertTrue(PowerData.reserve(player,"steel")==8,"Rejected launches must not deduct fuel");
+        PowerService.control(player,new PowerNetwork.Control(2,"",1));
         PowerData.state(player,"a:steel",0);
         helper.assertTrue(MetalProjectiles.launch(player,nugget)==null,"Throwing without burning must remain an ordinary drop");
         shots.forEach(net.minecraft.world.entity.Entity::discard); helper.succeed();

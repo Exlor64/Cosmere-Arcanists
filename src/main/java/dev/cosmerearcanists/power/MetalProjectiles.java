@@ -18,7 +18,7 @@ public final class MetalProjectiles {
     /** Null leaves the normal drop intact; a recoil vector means the projectile replaced it successfully. */
     public static Vec3 launch(ServerPlayer player,ItemEntity dropped) {
         if(!PowerConfig.STEEL_PROJECTILES.get() || !PowerConfig.IRON_STEEL.get() || !player.isAlive() || player.isSpectator()
-            || !PowerData.available(player).contains("a:steel") || PowerData.state(player,"a:steel")==0)return null;
+            || !PowerService.holdingAbility(player,"a:steel") || !PowerData.available(player).contains("a:steel") || PowerData.state(player,"a:steel")==0)return null;
         double units=MetalAmounts.units(player.server,dropped.getItem()); if(units<=0)return null;
         double cost=PowerConfig.PROJECTILE_RESERVE_COST.get();
         if(PowerConfig.CONSUMPTION.get() && PowerData.reserve(player,"steel")<cost)return null;

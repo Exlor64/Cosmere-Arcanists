@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-18**. Current mod version: **0.7.0-alpha**.
+Last updated: **2026-10-18**. Current mod version: **0.7.1-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -9,10 +9,10 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
-- The latest feature is steel-launched thrown metal, implemented and validated in 0.7.0-alpha. User has not yet reported in-game results for projectiles.
-- This session refreshes the previously stale 0.3.1 handoff and adds `AGENTS.md` to make handoff maintenance part of future repository work.
-- No new gameplay change is requested in this handoff-maintenance session.
-- Next: collect projectile playtest feedback, especially Q activation, item appearance, anvil recoil, collision, and recovery. Then follow the user's chosen next feature; do not invent a next Metallic Art or redesign movement without their direction.
+- User reports the projectile concept works, but clarified it must fire only while **actively pushing with steel**, not merely burning steel.
+- 0.7.1 adds a server-side held-input gate: steel selected, burning, fresh G-held heartbeat. Releasing G, selecting another power, brief taps and stale input prevent launches without spending fuel or replacing ordinary drops. Already-fired projectiles continue in flight.
+- Source and tests updated; build/server verification for 0.7.1 is pending at this commit. The prior successful 0.7.0 evidence remains below until superseded.
+- Next: verify 0.7.1 CI and update the evidence, then collect G+Q versus ordinary Q playtest feedback. Do not restore automatic fire on burning alone.
 
 ## Vision and accepted constraints
 
@@ -87,7 +87,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Steel-thrown projectiles — 0.7.0
 
-- Throw with **Q** or inventory drop while steel is active at any burn level. No G requirement; steel need not be selected if it is already burning. Disabled/unavailable/unfueled steel, nonmetal, and aluminum-containing items remain ordinary drops.
+- Hold **G** with steel **selected and burning**, then throw with **Q**. Burning alone is insufficient. Server checks a fresh held-input heartbeat (up to 15 ticks); release, other selection, brief released taps, expired input, disabled/unavailable/unfueled steel, nonmetal and aluminum leave normal drops. Inventory drops only qualify if a valid held activation still exists; GUI opening normally releases it. Already-fired projectiles do not require continued G holding.
 - One thrown stack becomes one `SteelProjectile`; it cannot merge in flight. The exact stack/components/count are stored separately from the rendered single item and persist through save/load.
 - `MetalAmounts` / `RecipeMetalAmounts` count nugget-equivalent content: nugget 1, ingot 9, iron block 81, anvil 279. Repeated ingredients and output counts matter; nonmetal ingredients add zero. Ingredient/recipe alternatives use the minimum resolvable amount.
 - Primitive ore/raw items use 9 units as a balance approximation; unresolved detectable items default to 9 units per item (configurable). Multiply by thrown stack count. This is not a real-world mass/metallurgy claim.
@@ -116,6 +116,6 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - Tests cover metal/aluminum/cycles, ingredient quantities, power states/migrations/attributes/cloning, ability phases, scanning/falling discovery, hardness, impulse/input math, movement solver, burn/iron scaling, projectile scaling/cap, actual launch/fuel/recoil, save/load/recovery, and swept mob collision with ~2-damage nugget.
 - Collision-test pitfall: the small empty template is encased by GameTest barriers. Clear an airborne corridor before projectile tests; otherwise the shot can hit the barrier roof instead of its target. Temporary collision diagnostic logs were removed.
 - User reported steel movement working perfectly and iron working well before requesting its doubled baseline and alternate mode. Do not treat those later additions or projectile visuals as user-confirmed.
-- No manual client/multiplayer visual playtest has been performed by the assistant. Projectile appearance, movement feel/balance, real network latency, and modded/dynamic recipe edge cases still need playtesting.
+- User reports the projectile concept works in game; this does not independently validate every projectile behavior or balance setting. No manual client/multiplayer visual playtest has been performed by the assistant. Projectile appearance, movement feel/balance, real network latency, and modded/dynamic recipe edge cases still need playtesting.
 - Java **21** required. Commands: `./gradlew build --no-daemon`, `./gradlew runGameTestServer --no-daemon`; on Windows use `gradlew.bat`. CI installs Java 21 and uploads `build/libs/*.jar` as `Cosmere-Arcanists`. In this session local builds were unavailable because of local runtime/download constraints; CI is the verification evidence.
-- This handoff-only update is checked for consistency and clean diffs; it does not claim a separate gameplay test run on the documentation commit.
+- Pending 0.7.1 checks add regression coverage for burning without G, iron selected, pulse-only input, G release, stale heartbeat, fuel preservation and valid held steel launch.

@@ -185,8 +185,12 @@ Both client and server must update (network protocol 3).
 
 ### Steel projectiles (0.7.0)
 
-While steel is burning at any active level, throw a metal item with Q (or drop a
-stack from the inventory). It launches along your aim without needing G.
+While steel is selected and burning at any active level, hold **G** (Activate
+ability) and throw a metal item with **Q**. It launches along your aim only while
+the server has a fresh held-activation input. Burning alone, activating another
+power, a brief released tap, and expired hold inputs leave ordinary drops.
+Inventory drops also require that held activation; opening a GUI normally
+releases activation.
 Nonmetal and aluminum-containing drops remain ordinary items. Steel must be
 available/enabled, with enough reserves when consumption is enabled. The shot
 uses normal power attributes and Low burn/Burning/Flaring multipliers.
@@ -217,3 +221,5 @@ metal fallback, lifetime, and extra reserve cost per shot (default 1).
 `ironSteel.reactionForce` also controls launch recoil. Update both sides for
 the new projectile entity and renderer. Client appearance still needs in-game
 verification; automated tests cover content, damage, collision and recovery.
+
+0.7.1 corrects projectile activation: active steel pushing (G held, steel selected and burning) is required. Releasing G restores normal drops immediately on the server. Projectiles already fired continue their physical flight.

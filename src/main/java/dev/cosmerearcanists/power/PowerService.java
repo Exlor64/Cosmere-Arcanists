@@ -45,6 +45,12 @@ public final class PowerService {
         ABILITIES.register("a:steel", ironSteel);
     }
     private static Session session(ServerPlayer p) { return SESSIONS.computeIfAbsent(p.getUUID(), id -> new Session()); }
+    static boolean holdingAbility(ServerPlayer player, String power) {
+        var s = SESSIONS.get(player.getUUID());
+        if (s == null || !s.applying || !PowerData.selected(player).equals(power)) return false;
+        long age = player.level().getGameTime() - s.lastApply;
+        return age >= 0 && age <= 15;
+    }
     public static void control(ServerPlayer p, PowerNetwork.Control packet) {
         var s = session(p); long now = p.level().getGameTime();
         if (s.packetTick != now) { s.packetTick = now; s.packets = 0; }
