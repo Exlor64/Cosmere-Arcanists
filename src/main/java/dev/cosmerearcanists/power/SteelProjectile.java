@@ -36,7 +36,6 @@ public final class SteelProjectile extends ThrowableItemProjectile {
         double speed=getDeltaMovement().length();
         float damage=(float)MetalProjectilePhysics.damage(metalUnits,speed,referenceSpeed,nuggetDamage,damageCap);
         boolean accepted=target.hurt(damageSources().thrown(this,getOwner()),damage);
-        System.getLogger("cosmerearcanists.projectile-test").log(System.Logger.Level.INFO,"Impact target="+target.getType()+" speed="+speed+" damage="+damage+" accepted="+accepted+" client="+level().isClientSide);
         if(accepted && target instanceof LivingEntity living) {
             double knockback=Math.min(2,Math.sqrt(metalUnits)*speed*.05);
             var motion=getDeltaMovement(); living.knockback(knockback,-motion.x,-motion.z);
@@ -44,7 +43,6 @@ public final class SteelProjectile extends ThrowableItemProjectile {
     }
     @Override protected void onHit(HitResult hit) {
         if(isRemoved())return;
-        System.getLogger("cosmerearcanists.projectile-test").log(System.Logger.Level.INFO,"Hit type="+hit.getType()+" position="+hit.getLocation());
         super.onHit(hit);
         if(!level().isClientSide && hit.getType()!=HitResult.Type.MISS) {
             setPos(hit.getLocation().subtract(getDeltaMovement().normalize().scale(.05)));

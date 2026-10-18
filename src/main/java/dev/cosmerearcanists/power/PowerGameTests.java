@@ -67,6 +67,9 @@ public final class PowerGameTests {
     @GameTest(template = "empty", timeoutTicks = 30)
     public static void metalProjectileSweptCollision(GameTestHelper helper) {
         var level=helper.getLevel(); var start=helper.absolutePos(new net.minecraft.core.BlockPos(1,4,1));
+        // The small empty template is encased by the harness; clear a real airborne corridor.
+        for(var block:net.minecraft.core.BlockPos.betweenClosed(start.offset(0,-1,-1),start.offset(5,3,1)))
+            level.setBlock(block,net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),3);
         var cow=net.minecraft.world.entity.EntityType.COW.create(level);
         cow.setNoAi(true); cow.setNoGravity(true); cow.setPos(start.getX()+3.5,start.getY(),start.getZ()+.5); level.addFreshEntity(cow);
         float health=cow.getHealth();
