@@ -10,6 +10,15 @@ class MetalProjectilePhysicsTest {
         assertTrue(MetalProjectilePhysics.damage(1,MetalProjectilePhysics.speed(1,.5,3.5,8),3.5,2,100)<2);
         assertTrue(MetalProjectilePhysics.damage(1,MetalProjectilePhysics.speed(1,2,3.5,8),3.5,2,100)>2);
     }
+    @Test void launchSpeedScalesDirectlyWithEffectivePushStrength() {
+        assertEquals(1.75,MetalProjectilePhysics.speed(1,.5,3.5,8),1e-9);
+        assertEquals(3.5,MetalProjectilePhysics.speed(1,1,3.5,8),1e-9);
+        assertEquals(7,MetalProjectilePhysics.speed(1,2,3.5,8),1e-9);
+        assertEquals(8,MetalProjectilePhysics.speed(1,4,3.5,8),1e-9);
+        double heavy=MetalProjectilePhysics.speed(279,1,3.5,8);
+        assertEquals(heavy*2,MetalProjectilePhysics.speed(279,2,3.5,8),1e-9);
+        assertEquals(0,MetalProjectilePhysics.speed(1,0,3.5,8));
+    }
     @Test void anvilIsSlowerAndHasFarMoreRecoilThanNugget() {
         double light=MetalProjectilePhysics.speed(1,1,3.5,8), heavy=MetalProjectilePhysics.speed(279,1,3.5,8);
         assertTrue(heavy<light*.3);

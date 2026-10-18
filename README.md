@@ -206,7 +206,7 @@ one ingot-equivalent as a balance approximation. Unresolved detectable items
 use the configurable fallback. The entire thrown stack is one projectile.
 
 At normal strength a nugget launches at 3.5 blocks/tick and deals about 2 damage
-before armor. Launch speed scales with sqrt(power) divided by the fourth root
+before armor. Launch speed scales with effective push strength divided by the fourth root
 of metal content. A baseline anvil launches at about 0.86 blocks/tick and gives
 a substantial backward recoil, versus almost no recoil for a nugget.
 Impact energy sets damage through an exponential saturation curve approaching
@@ -239,3 +239,12 @@ are harder to deflect than nuggets. Forces change existing flight velocity,
 without creating a second projectile or replacing its original shooter/cargo.
 Damage still depends on impact speed and remains capped at 100. Deflected
 projectiles use the projectile speed cap rather than the player movement cap.
+
+0.7.4: projectile launch velocity now scales **linearly** with effective steel
+push strength (force setting × effective attribute × burn multiplier), rather
+than its square root. At default settings one nugget travels 1.75 blocks/tick on
+Low burn, 3.5 on Burning and 7 on Flaring at attribute 1. Attribute 2 doubles
+those speeds until the configured projectile maxSpeed (default 8) is reached.
+Heavy cargo still reduces speed. Recoil and impact damage follow the resulting
+velocity; the damage ceiling remains 100. Existing in-flight push/pull also
+uses effective Allomantic force and cargo mass.

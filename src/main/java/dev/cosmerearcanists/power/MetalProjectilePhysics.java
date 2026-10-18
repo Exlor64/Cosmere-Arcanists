@@ -2,7 +2,7 @@ package dev.cosmerearcanists.power;
 
 public final class MetalProjectilePhysics {
     public static double speed(double metalUnits,double power,double nuggetSpeed,double maximumSpeed) {
-        return Math.min(maximumSpeed,nuggetSpeed*Math.sqrt(Math.max(0,power))/Math.pow(Math.max(.001,metalUnits),.25));
+        return Math.min(maximumSpeed,nuggetSpeed*Math.max(0,power)/Math.pow(Math.max(.001,metalUnits),.25));
     }
     public static double damage(double metalUnits,double speed,double nuggetSpeed,double nuggetDamage,double maximumDamage) {
         double cap=Math.min(100,Math.max(.001,maximumDamage));

@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-18**. Current mod version: **0.7.3-alpha**.
+Last updated: **2026-10-18**. Current mod version: **0.7.4-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -9,11 +9,11 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
-- User requested fired metal projectiles to be pushable/pullable by other Allomancers.
-- 0.7.3 adds in-flight shots to metal targeting with centered interpolated blue lines. Both aimed and alternate force paths use cargo-based mass; heavy shots resist deflection more. Forces change the existing projectile, retain its original shooter/cargo, and sync velocity. Existing range, hardness, aluminum, fuel, power and reaction rules still apply.
-- New `metalDetection.firedProjectiles` toggle defaults true. Projectile velocity uses its own cap. Impact-speed damage and the hard 100 cap remain intact.
-- 0.7.3 build, 27 JUnit methods, 15 server GameTests and artifact upload passed (evidence below).
-- Next: collect multiplayer deflection/line playtest feedback. Normal G+Q and Alt+G+Q behavior remains as in 0.7.2.
+- User requested projectile velocity to follow actual push strength, with weaker Low burn and stronger attributes.
+- Launch speed already included those inputs via sqrt(power). 0.7.4 changes it to direct linear power scaling, making variations more pronounced while preserving cargo slowdown and the configurable speed cap.
+- Default nugget speeds at attribute 1: Low burn 1.75, Burning 3.5, Flaring 7 blocks/tick. Attribute 2 doubles these up to maxSpeed (default 8). Recoil/damage still derive from actual speed; raw damage cap stays 100.
+- Build/server checks are pending at this commit; previous successful evidence remains below until superseded.
+- Next: verify CI and record evidence, then collect burn-level/attribute speed playtest feedback.
 
 ## Vision and accepted constraints
 
@@ -95,7 +95,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - `MetalAmounts` / `RecipeMetalAmounts` count nugget-equivalent content: nugget 1, ingot 9, iron block 81, anvil 279. Repeated ingredients and output counts matter; nonmetal ingredients add zero. Ingredient/recipe alternatives use the minimum resolvable amount.
 - Primitive ore/raw items use 9 units as a balance approximation; unresolved detectable items default to 9 units per item (configurable). Multiply by thrown stack count. This is not a real-world mass/metallurgy claim.
 - At baseline steel Burning: one nugget launches at 3.5 blocks/tick and deals about **2 raw damage**; armor and hurt immunity still apply. Power is effective steel force divided by 7, so attributes, force config and burn levels scale it.
-- Speed = `min(maxSpeed, nuggetSpeed * sqrt(power) / metalUnits^0.25)`. Default max speed 8. A baseline anvil launches about 0.86 blocks/tick.
+- Speed = `min(maxSpeed, nuggetSpeed * power / metalUnits^0.25)`. Default max speed 8. A baseline anvil launches about 0.86 blocks/tick.
 - Recoil = `metalUnits * nuggetMass * speed / playerMass` opposite aim; default nugget mass 0.2. Anvils kick much harder than nuggets. Existing reaction-force toggle applies.
 - Damage = `cap * -expm1(log1p(-nuggetDamage/cap) * energy)` where `energy = metalUnits * (impactSpeed/nuggetSpeed)^2`. Calibrated at 2 per baseline nugget; smooth saturation approaches **100**, with a hard raw damage ceiling of 100 regardless of metal/power. Config can lower the cap.
 - Vanilla swept projectile collision, gravity and drag; bounded knockback. Respect player-target/team/vanilla damage rules. No terrain destruction or piercing. Recover original stack at first impact, or after 100 flight ticks (default), with normal pickup delay. No automatic relaunch of recovered drops.
@@ -126,3 +126,5 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 0.7.2 passed regression: downward position/velocity despite upward/sideways aim, exact stack/pickup-delay retention, no shot cost, and unchanged normal launch.
 
 0.7.3 passed regression: another Allomancer detects a shot, steel/iron alter its velocity in opposite directions, heavy cargo resists more, velocity sync is flagged, and aluminum cargo remains excluded.
+
+0.7.4 pending regression: linear speed math, speed cap, and actual launches across five attribute/burn combinations.

@@ -19,6 +19,24 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @PrefixGameTestTemplate(false)
 public final class PowerGameTests {
     @GameTest(template = "empty")
+    public static void projectileLaunchUsesBurnLevelAndAttribute(GameTestHelper helper) {
+        var level=helper.getLevel(); MetalDetector.rebuild(level.getServer());
+        var player=new ServerPlayer(level.getServer(),level,new GameProfile(UUID.randomUUID(),"ScaledShooter"),ClientInformation.createDefault());
+        var pos=helper.absolutePos(new net.minecraft.core.BlockPos(1,10,1)); player.setPos(pos.getX()+.5,pos.getY(),pos.getZ()+.5);
+        PowerData.reserve(player,"steel",10); PowerService.control(player,new PowerNetwork.Control(2,"",1));
+        int[][] cases={{1,1},{1,2},{2,2},{1,3},{2,1}};
+        double[] expected={1.75,3.5,7,7,3.5};
+        for(int i=0;i<cases.length;i++) {
+            PowerAttributes.set(player,"a:steel",cases[i][0]); PowerData.state(player,"a:steel",cases[i][1]);
+            var drop=new net.minecraft.world.entity.item.ItemEntity(level,player.getX(),player.getY(),player.getZ(),new ItemStack(Items.IRON_NUGGET));
+            helper.assertTrue(MetalProjectiles.launch(player,drop)!=null,"Valid held steel must launch at each tested strength");
+            var shots=level.getEntitiesOfClass(SteelProjectile.class,player.getBoundingBox().inflate(3),e->e.getOwner()==player);
+            helper.assertTrue(shots.size()==1 && Math.abs(shots.getFirst().getDeltaMovement().length()-expected[i])<1e-6,"Actual shot speed must follow attribute and burn level: case "+i);
+            shots.forEach(net.minecraft.world.entity.Entity::discard);
+        }
+        PowerService.control(player,new PowerNetwork.Control(2,"",0)); helper.succeed();
+    }
+    @GameTest(template = "empty")
     public static void otherAllomancerCanPushAndPullProjectiles(GameTestHelper helper) {
         var level=helper.getLevel(); MetalDetector.rebuild(level.getServer());
         var defender=new ServerPlayer(level.getServer(),level,new GameProfile(UUID.randomUUID(),"Deflector"),ClientInformation.createDefault());
