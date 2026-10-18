@@ -10,11 +10,11 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 ## Latest session and next action
 
 - User requested a spike crossbow, diagonal-ingot metal spikes, reusable steel ball-and-rope, and a charged grappling hook with swing/Space reeling/iron anchor interaction.
-- Work in progress: new equipment items/entity, recipes, shared AllomanticProjectile interface, tether ownership/recovery, radial rope tension and visible rope. No Hemalurgic charge/steal mechanics are included.
+- Implemented equipment items/entity, recipes, shared AllomanticProjectile interface, tether ownership/recovery, radial rope tension and visible rope. No Hemalurgic charge/steal mechanics are included.
 - Spike recipe interpretation: two same-metal ingots diagonally craft two spikes. Crossbow recipe is vanilla crossbow plus two iron ingots. Ball recipe is one non-aluminum ingot plus three string. Grapple recipe adds iron, tripwire hook and three string; these crossbow/hook recipes are provisional choices.
 - Ball launches on right-click only while actively holding steel's assigned activation key and burning; subsequent right-click reels in. Grapple charges like a bow in 10 ticks, latches to blocks, preserves tangential motion, and Space shortens rope. Right-click again recalls it. Both items stay in inventory rather than being duplicated as drops.
-- Initial build passed; latching, rope tension/Space recall, and reusable ball tests passed. Crafting exposed missing common ingot aggregation; added `c:ingots` entries for the mod metals. Final verification pending. Placeholder item icons reuse vanilla assets; rope rendering and real swinging need client playtesting.
-- Next: finish validation and tests, resolve any API/runtime issues, then record final status and playtest instructions.
+- Final build, 30 JUnit methods, 22 server GameTests and artifact upload passed. Crafting exposed missing common ingot aggregation; `c:ingots` now includes all mod ingot groups. Placeholder item icons reuse vanilla assets; rope rendering and real swinging need client playtesting.
+- Next: playtest actual crossbow loading/firing, ball right-click launch/recall, hook charge/latch/swing/Space shortening/recall, rope rendering and iron anchor targeting with updated client/server jars. Tune balance and replace temporary icons based on user feedback.
 
 ## Vision and accepted constraints
 
@@ -29,6 +29,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 - Command-based origins for Scadrial and separate Overworld; human race only. Assignment probabilities, Twinborn, rerolls and per-art/per-metal gates are configurable.
 - Metal ores, processing, ingots/nuggets and alloys; ore generation, creative tab, and recipe/generation gates.
+- Spike crossbow with 19 metal spike variants, embedded anchors, reusable steel ball-and-rope, and a charged/swinging/recallable grappling hook.
 - Allomantic **iron and steel effects**, detection lines, aimed push/pull, movement assistance, metal reserves/vials, fall braking, and steel-thrown projectiles.
 - 16 Allomantic plus 16 Feruchemical attributes and selector entries. Other Allomantic effects are pending. Feruchemy has selector states only, no storing/tapping effects.
 - **Not implemented:** Scadrial dimension, other planets/dimensions, Cognitive Realm/perpendicularities/travel, origin GUI, expanded races/ancestry, other Allomancy effects, Feruchemy mechanics/metalminds, Hemalurgy power stealing/charging, Compounding.
@@ -117,8 +118,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Verification, evidence and limits
 
-- Latest gameplay commit validated: `5149688b74bf837dbf00cb043d6f4ed1e55b64bb`.
-- [Successful GitHub Actions checks 39153475748](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39153475748): build, **28 JUnit methods**, **18 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
+- Latest gameplay commit validated: `d10d408bc0b155dd8becd11e5ee0460537035a4e`.
+- [Successful GitHub Actions checks 39154946782](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39154946782): build, **30 JUnit methods**, **22 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
 - Tests cover metal/aluminum/cycles, ingredient quantities, power states/migrations/attributes/cloning, ability phases, scanning/falling discovery, hardness, impulse/input math, movement solver, burn/iron scaling, projectile scaling/cap, actual launch/fuel/recoil, save/load/recovery, and swept mob collision with ~2-damage nugget.
 - Collision-test pitfall: the small empty template is encased by GameTest barriers. Clear an airborne corridor before projectile tests; otherwise the shot can hit the barrier roof instead of its target. Temporary collision diagnostic logs were removed.
 - User reported steel movement working perfectly and iron working well before requesting its doubled baseline and alternate mode. Do not treat those later additions or projectile visuals as user-confirmed.
@@ -134,7 +135,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 0.8.0 passed regression: distinct assignments/swapping, independent holds and Alt flags, secondary-authorized steel fire, clone persistence, snapshot round trip, and independent START/TICK/STOP dispatch.
 
-## Equipment architecture (0.9.0, pending validation)
+## Equipment architecture (0.9.0)
 
 `equipment/EquipmentContent`, `EquipmentConfig`, `SpikeCrossbowItem`, `SpikeItem`,
 `TetherItem`, `EquipmentProjectile`, `TetherPhysics`, and client `EquipmentClient`.
@@ -151,3 +152,5 @@ Control action 9 carries only Space input with a short timeout; server owns
 rope constraints and shortening. Protocol 5 requires both sides to update.
 
 Recall temporarily removes returning equipment heads from Allomantic targeting so a still-held steel key does not fight the reel-in. Custom spike ammunition supports standard crossbow loading, Quick Charge and spread; arrow-only Piercing behavior is not implemented.
+
+0.9.0 passed regression: diagonal spike crafting, multi-metal/aluminum-excluded ball recipes, custom crossbow spike creation and shooting, anchored spike save/load/support loss/iron interaction, grapple charge and radial tension, Space shortening while retaining tangent velocity, no-power grappling, reusable ball steel requirements and attribute scaling, and recall without item duplication. Actual rope/weapon rendering and player input still require client playtesting.
