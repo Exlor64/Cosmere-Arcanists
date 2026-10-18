@@ -11,8 +11,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 - User reports the projectile concept works, but clarified it must fire only while **actively pushing with steel**, not merely burning steel.
 - 0.7.1 adds a server-side held-input gate: steel selected, burning, fresh G-held heartbeat. Releasing G, selecting another power, brief taps and stale input prevent launches without spending fuel or replacing ordinary drops. Already-fired projectiles continue in flight.
-- Source and tests updated; build/server verification for 0.7.1 is pending at this commit. The prior successful 0.7.0 evidence remains below until superseded.
-- Next: verify 0.7.1 CI and update the evidence, then collect G+Q versus ordinary Q playtest feedback. Do not restore automatic fire on burning alone.
+- 0.7.1 build, 27 JUnit methods, 13 server GameTests and artifact upload passed in CI (evidence below).
+- Next: collect G+Q versus ordinary Q playtest feedback. Do not restore automatic fire on burning alone.
 
 ## Vision and accepted constraints
 
@@ -111,11 +111,11 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Verification, evidence and limits
 
-- Latest gameplay commit validated: `5976ac0d8844fb5863e429b931b85bdfb311a8a9`.
-- [Successful GitHub Actions run 39148485215](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39148485215): build, **27 JUnit methods**, **12 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
+- Latest gameplay commit validated: `944eadea0747c85d2ee70bef4b03e63c7d9e7c5a`.
+- [Successful GitHub Actions checks 39149645187](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39149645187): build, **27 JUnit methods**, **13 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
 - Tests cover metal/aluminum/cycles, ingredient quantities, power states/migrations/attributes/cloning, ability phases, scanning/falling discovery, hardness, impulse/input math, movement solver, burn/iron scaling, projectile scaling/cap, actual launch/fuel/recoil, save/load/recovery, and swept mob collision with ~2-damage nugget.
 - Collision-test pitfall: the small empty template is encased by GameTest barriers. Clear an airborne corridor before projectile tests; otherwise the shot can hit the barrier roof instead of its target. Temporary collision diagnostic logs were removed.
 - User reported steel movement working perfectly and iron working well before requesting its doubled baseline and alternate mode. Do not treat those later additions or projectile visuals as user-confirmed.
 - User reports the projectile concept works in game; this does not independently validate every projectile behavior or balance setting. No manual client/multiplayer visual playtest has been performed by the assistant. Projectile appearance, movement feel/balance, real network latency, and modded/dynamic recipe edge cases still need playtesting.
 - Java **21** required. Commands: `./gradlew build --no-daemon`, `./gradlew runGameTestServer --no-daemon`; on Windows use `gradlew.bat`. CI installs Java 21 and uploads `build/libs/*.jar` as `Cosmere-Arcanists`. In this session local builds were unavailable because of local runtime/download constraints; CI is the verification evidence.
-- Pending 0.7.1 checks add regression coverage for burning without G, iron selected, pulse-only input, G release, stale heartbeat, fuel preservation and valid held steel launch.
+- Passed 0.7.1 checks add regression coverage for burning without G, iron selected, pulse-only input, G release, stale heartbeat, fuel preservation and valid held steel launch.
