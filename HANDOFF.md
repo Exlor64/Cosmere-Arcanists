@@ -12,8 +12,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - User requested projectile velocity to follow actual push strength, with weaker Low burn and stronger attributes.
 - Launch speed already included those inputs via sqrt(power). 0.7.4 changes it to direct linear power scaling, making variations more pronounced while preserving cargo slowdown and the configurable speed cap.
 - Default nugget speeds at attribute 1: Low burn 1.75, Burning 3.5, Flaring 7 blocks/tick. Attribute 2 doubles these up to maxSpeed (default 8). Recoil/damage still derive from actual speed; raw damage cap stays 100.
-- Build/server checks are pending at this commit; previous successful evidence remains below until superseded.
-- Next: verify CI and record evidence, then collect burn-level/attribute speed playtest feedback.
+- 0.7.4 build, 28 JUnit methods, 16 server GameTests and artifact upload passed (evidence below).
+- Next: collect burn-level/attribute speed playtest feedback.
 
 ## Vision and accepted constraints
 
@@ -114,8 +114,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Verification, evidence and limits
 
-- Latest gameplay commit validated: `e4ba967f44ade5239aa1a6e0eef2a224ce50b8c7`.
-- [Successful GitHub Actions checks 39150210751](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39150210751): build, **27 JUnit methods**, **15 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
+- Latest gameplay commit validated: `74d4a1a53f78d53317792d055ba3c8305a98c2f6`.
+- [Successful GitHub Actions checks 39151077040](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39151077040): build, **28 JUnit methods**, **16 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
 - Tests cover metal/aluminum/cycles, ingredient quantities, power states/migrations/attributes/cloning, ability phases, scanning/falling discovery, hardness, impulse/input math, movement solver, burn/iron scaling, projectile scaling/cap, actual launch/fuel/recoil, save/load/recovery, and swept mob collision with ~2-damage nugget.
 - Collision-test pitfall: the small empty template is encased by GameTest barriers. Clear an airborne corridor before projectile tests; otherwise the shot can hit the barrier roof instead of its target. Temporary collision diagnostic logs were removed.
 - User reported steel movement working perfectly and iron working well before requesting its doubled baseline and alternate mode. Do not treat those later additions or projectile visuals as user-confirmed.
@@ -127,4 +127,4 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 0.7.3 passed regression: another Allomancer detects a shot, steel/iron alter its velocity in opposite directions, heavy cargo resists more, velocity sync is flagged, and aluminum cargo remains excluded.
 
-0.7.4 pending regression: linear speed math, speed cap, and actual launches across five attribute/burn combinations.
+0.7.4 passed regression: linear speed math, speed cap, and actual launches across five attribute/burn combinations.
