@@ -12,8 +12,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - User requested Alt + steel activation + item throw to drop straight down instead of firing a projectile.
 - 0.7.2 keeps normal G+Q fire, but latched Alt+G+Q retains the original ordinary ItemEntity, moves it to the player's feet and sets only downward velocity. Preserves stack/ownership/pickup delay; no projectile damage, shot reserve cost or launch recoil. Regular burning and later normal Allomantic forces still apply.
 - `steelProjectiles.alternateDropDownwards` defaults true. When disabled, alternate mode retains a vanilla drop instead of firing.
-- Build/server verification for 0.7.2 is pending at this commit; prior successful evidence remains below until superseded.
-- Next: verify CI, record evidence, and collect normal G+Q versus Alt+G+Q playtest feedback. Alt mode is latched when G starts; release G before changing modes.
+- 0.7.2 build, 27 JUnit methods, 14 server GameTests and artifact upload passed (evidence below).
+- Next: collect normal G+Q versus Alt+G+Q playtest feedback. Alt mode is latched when G starts; release G before changing modes.
 
 ## Vision and accepted constraints
 
@@ -113,8 +113,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Verification, evidence and limits
 
-- Latest gameplay commit validated: `944eadea0747c85d2ee70bef4b03e63c7d9e7c5a`.
-- [Successful GitHub Actions checks 39149645187](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39149645187): build, **27 JUnit methods**, **13 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
+- Latest gameplay commit validated: `8b78ca088f70af8c1cc17bc03f5510cca56b743d`.
+- [Successful GitHub Actions checks 39149904737](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39149904737): build, **27 JUnit methods**, **14 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
 - Tests cover metal/aluminum/cycles, ingredient quantities, power states/migrations/attributes/cloning, ability phases, scanning/falling discovery, hardness, impulse/input math, movement solver, burn/iron scaling, projectile scaling/cap, actual launch/fuel/recoil, save/load/recovery, and swept mob collision with ~2-damage nugget.
 - Collision-test pitfall: the small empty template is encased by GameTest barriers. Clear an airborne corridor before projectile tests; otherwise the shot can hit the barrier roof instead of its target. Temporary collision diagnostic logs were removed.
 - User reported steel movement working perfectly and iron working well before requesting its doubled baseline and alternate mode. Do not treat those later additions or projectile visuals as user-confirmed.
@@ -122,4 +122,4 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - Java **21** required. Commands: `./gradlew build --no-daemon`, `./gradlew runGameTestServer --no-daemon`; on Windows use `gradlew.bat`. CI installs Java 21 and uploads `build/libs/*.jar` as `Cosmere-Arcanists`. In this session local builds were unavailable because of local runtime/download constraints; CI is the verification evidence.
 - Passed 0.7.1 checks add regression coverage for burning without G, iron selected, pulse-only input, G release, stale heartbeat, fuel preservation and valid held steel launch.
 
-0.7.2 pending regression: downward position/velocity despite upward/sideways aim, exact stack/pickup-delay retention, no shot cost, and unchanged normal launch.
+0.7.2 passed regression: downward position/velocity despite upward/sideways aim, exact stack/pickup-delay retention, no shot cost, and unchanged normal launch.
