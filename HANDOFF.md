@@ -12,8 +12,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - User chose pewter: speed/strength/endurance, mitigation capped 50% at baseline and 70% for stronger attributes, slight healing, persistent gray-heart injury debt, recovery through rest and saturation, payout on stop/depletion.
 - Implemented passive pewter burning, transient speed/attack modifiers, pre-food exhaustion scaling via a narrow Player mixin, post-armor mitigation/deferred injury, gray debt-heart HUD/private status packet, persistent debt and recovery, payout/death handling, refill vial/recipe and command integration.
 - Interpretation stated to user: 10% of post-mitigation/post-absorption health damage is deferred (not added on top); resting clears 1% of remaining debt each continuous five seconds at normal strength. Deferred fraction stays 10%; buffs/healing/recovery scale by effective attribute × burn strength. Other balance values are provisional and configurable.
-- Build/34 JUnit methods pass. Damage split and burn caps now pass after bypassing fixture spawn protection. Remaining absorption fixtures needed Minecraft 1.21 MAX_ABSORPTION capacity set before granting test absorption; corrected, rerun pending. Exhaustion hook now explicitly preserves inactive/nonpositive input. Prior verified iron/steel baseline remains documented below. Network protocol now 6; both sides must update.
-- Next: validate CI, then client-playtest pewter buffs, exhaustion, gray-heart rendering, healing/recovery and payout including lethal drag. Iron/steel basics now work well according to user.
+- Build, 34 JUnit methods, all 27 server GameTests and artifact upload passed on the final gameplay commit linked below. Both client and server must update for network protocol 6.
+- Next: client-playtest pewter buffs, exhaustion, gray-heart rendering, healing/recovery and payout including lethal drag. Iron/steel basics now work well according to user.
 
 ## Vision and accepted constraints
 
@@ -118,8 +118,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Verification, evidence and limits
 
-- Latest gameplay commit validated: `6a3af20322c91209b2dcfaf9f4789e3333fd7e82`.
-- [Successful GitHub Actions checks 39194704623](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39194704623): build, **30 JUnit methods**, **23 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
+- Latest gameplay commit validated: `cfd4427b5bcbeaf08a647ccc2b4e74a797b778a5`.
+- [Successful GitHub Actions checks 39261375936](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39261375936): build, **34 JUnit methods**, **27 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
 - Tests cover metal/aluminum/cycles, ingredient quantities, power states/migrations/attributes/cloning, ability phases, scanning/falling discovery, hardness, impulse/input math, movement solver, sustained iron assistance in both slots, burn/iron/steel scaling, projectile scaling/cap, actual launch/fuel/recoil, save/load/recovery, and swept mob collision with ~2-damage nugget.
 - Collision-test pitfall: the small empty template is encased by GameTest barriers. Clear an airborne corridor before projectile tests; otherwise the shot can hit the barrier roof instead of its target. Temporary collision diagnostic logs were removed.
 - User reported steel movement working perfectly and iron working well before requesting its doubled baseline and alternate mode. Do not treat those later additions or projectile visuals as user-confirmed.
@@ -168,3 +168,5 @@ Recall temporarily removes returning equipment heads from Allomantic targeting s
 - `PewterStatus` private packet sends dimension/debt/active strength with snapshots. Client `PewterClient` renders a separate gray heart row + numeric debt, capped at ten visible hearts while numeric value retains larger debt. No bonus health implied. Client `pewterDragHearts` toggle. Protocol 6.
 - Added pewter vial (bottle+nugget), existing reserve capacity/refill rules, implemented selector label. Tin and other powers still pending.
 - Added regressions: burn/attribute caps, real damage split/absorption, modifiers cleanup and once-only payout, actual exhaustion mixin, fuel depletion, stationary/moving rest, saturation spending, scaled healing, disabled-feature debt retention, persistent NBT copy and status codec. Manual client HUD/network playtesting remains outstanding.
+
+Pewter test-fixture details: use out_of_world damage to bypass ServerPlayer spawn protection (FakePlayer.tick does not decrement it). Set MAX_ABSORPTION capacity before granting absorption hearts in 1.21; otherwise setAbsorptionAmount is clamped to zero. Final suite validates real Pre/Post health damage and real causeFoodExhaustion injection.
