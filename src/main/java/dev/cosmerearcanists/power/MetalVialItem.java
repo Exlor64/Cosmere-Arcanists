@@ -15,7 +15,7 @@ public final class MetalVialItem extends Item {
     @Override public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         var stack = player.getItemInHand(hand);
         if (!(player instanceof ServerPlayer server)) return InteractionResultHolder.success(stack);
-        if (!PowerConfig.ENABLED.get() || !PowerConfig.IRON_STEEL.get() || PowerData.reserve(server, metal) >= PowerConfig.RESERVE_CAP.get()) return InteractionResultHolder.fail(stack);
+        if (!PowerConfig.ENABLED.get() || (metal.equals("pewter") ? !PewterService.configured() : !PowerConfig.IRON_STEEL.get()) || PowerData.reserve(server, metal) >= PowerConfig.RESERVE_CAP.get()) return InteractionResultHolder.fail(stack);
         PowerData.reserve(server, metal, PowerData.reserve(server, metal) + PowerConfig.VIAL_RESERVE.get());
         if (!player.getAbilities().instabuild) {
             stack.shrink(1); var bottle = new ItemStack(Items.GLASS_BOTTLE);

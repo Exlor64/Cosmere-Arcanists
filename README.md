@@ -11,7 +11,7 @@ For current project status, accepted design decisions, verification and continua
 - Data survives death and relogging. Config changes do not reroll saved origins.
 - Hemalurgy is acquired rather than a birth power; its switch reserves the future feature gate.
 
-**Iron/steel Allomancy and the power selector are implemented. Other magic effects, custom dimensions, planetary travel, and the origin selection screen remain in development.** Scadrial will be Era 2 with an Overworld-like environment. The ancestry mode currently uses only a Scadrian-human probability multiplier; family inheritance and additional races are future work.
+**Iron/steel/pewter Allomancy and the power selector are implemented. Other magic effects, custom dimensions, planetary travel, and the origin selection screen remain in development.** Scadrial will be Era 2 with an Overworld-like environment. The ancestry mode currently uses only a Scadrian-human probability multiplier; family inheritance and additional races are future work.
 
 ## Build and run
 Install JDK 21 and import the root Gradle project into IntelliJ.
@@ -50,7 +50,7 @@ Ores require an iron-tier pickaxe, support Silk Touch/Fortune, and smelt/blast i
 The Cosmere Metals creative tab contains the new materials. Textures are initial distinct pixel palettes. `cosmerearcanists:metals` and `cosmerearcanists:aluminum_containing` item tags seed iron/steel detection. Duralumin is included in the aluminum exclusion tag.
 
 ## Iron/steel and power controls (0.3.0)
-Only iron and steel Allomantic effects are implemented. Other assigned powers appear in the selector with **effects pending**; Feruchemical state levels are controls only, with no storage/tapping mechanics yet.
+Iron, steel and pewter Allomantic effects are implemented. Other assigned powers appear in the selector with **effects pending**; Feruchemical state levels are controls only, with no storage/tapping mechanics yet.
 
 Default keys (all rebindable):
 - Hold **R**, scroll to a power, then release R to select it. Tap R to cycle that power's state. Left-click while the menu is open also cycles the highlighted power's state.
@@ -70,7 +70,7 @@ Operator testing commands:
 - `/cosmere power grant <player> a:steel`
 - `/cosmere power grant <player> f:iron` (selector test only)
 - `/cosmere power revoke <player> <power>` sets the power’s base attribute to zero, including natural origin powers.
-- `/cosmere power refill <player>` fills iron and steel reserves.
+- `/cosmere power refill <player>` fills iron, steel and pewter reserves.
 
 `./gradlew build` runs tests for recursive metal/aluminum classification, cyclic recipes, power states, and mass/distance/flaring force rules. CI also runs the GameTest server to validate runtime recipe detection and player data cloning. Multiplayer input, blue-line appearance, and hands-on movement still require client playtesting.
 
@@ -82,7 +82,7 @@ All 16 Allomantic and 16 Feruchemical powers have player attributes named
 `cosmerearcanists:allomancy_<metal>` and `cosmerearcanists:feruchemy_<metal>`.
 Zero means no power; 1 is normal strength. Positive effective values grant access,
 and iron/steel force scales with the effective value (including attribute modifiers).
-Other powers still have selection/state support only. Config switches still gate access.
+Powers other than iron, steel and pewter still have selection/state support only. Config switches still gate access.
 
 Operator examples:
 ```mcfunction
@@ -320,3 +320,53 @@ direction (Space needs overhead metal); steel pushes from metal opposite it.
 Hold the activation key while changing WASD/Space/Shift. Release G/H to change
 between normal and alternate use. Iron assistance must be enabled via
 `ironSteel.ironAlternateMovement` in the powers server config.
+
+
+### Allomantic pewter (0.10.0)
+
+Grant with `/attribute @s cosmerearcanists:allomancy_pewter base set 1`, then
+`/cosmere power refill @s`. Select pewter with R and use V to choose Low burn,
+Burning, or Flaring. Pewter works passively while burning, with no G/H hold
+required, even if another power is selected. A glass bottle plus a pewter nugget
+crafts a Pewter Vial (60 reserve units by default).
+
+At attribute 1, Low/Burning/Flaring provide:
+
+| Effect | Low burn | Burning | Flaring |
+| --- | --- | --- | --- |
+| Movement speed bonus | 10% | 20% | 40% |
+| Melee damage bonus (health points) | 1.5 | 3 | 6 |
+| Exhaustion prevented | 25% | 50% | 90% |
+| Damage mitigation | 12.5% | 25% | 50% |
+| Healing per 10 seconds (health points) | 0.5 | 1 | 2 |
+
+Effects multiply by the effective pewter attribute. Mitigation is capped at 50%
+for attributes <=1 and 70% for stronger attributes; speed, melee and endurance
+also have configurable caps. The exhaustion reduction applies before vanilla
+spends saturation or food, including sprinting, jumping, mining and attacking.
+
+After armor, pewter mitigation and absorption, 10% of health damage is **deferred**
+as pewter drag; the remaining 90% is taken immediately. For example, a 10-point
+unarmored hit while Burning at attribute 1 deals 6.75 now and stores 0.75. A
+separate row of gray hearts above the health/armor HUD shows this debt, with an
+exact numeric amount (2 points = one heart). These hearts are not bonus health.
+
+Stopping pewter, losing its attribute, or exhausting the reserve charges all
+remaining debt once. This is already mitigated injury: the payout directly lowers
+health, bypasses armor, absorption, invulnerability frames and totems, and can
+kill. Debt persists across saves, relogging and dimension travel. Death clears it.
+
+While burning and stationary on the ground or sleeping, each continuous 5-second
+rest interval clears 1% of remaining debt per effective strength. Moving resets
+the rest timer. Saturation also clears debt passively: default 0.2 saturation per
+second per strength, clearing one damage point per saturation spent. It spends
+nothing without debt and cannot spend more than needed. Healing, recovery,
+bonuses and mitigation scale with burn strength; the deferred injury fraction
+stays 10% across levels.
+
+Tune/disable individual effects in `cosmerearcanists-pewter-server.toml`; zero
+rates disable their effect. Disabling pewter, its per-metal/art gate, or drag
+freezes saved debt rather than deleting or charging it. Re-enabling resumes
+normal behavior. Client `pewterDragHearts` controls the debt HUD independently.
+Reserve drain uses the shared burn-level consumption multipliers. Both client
+and server must update (network protocol 6).

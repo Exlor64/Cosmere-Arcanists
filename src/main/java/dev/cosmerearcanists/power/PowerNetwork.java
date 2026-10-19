@@ -36,6 +36,16 @@ public final class PowerNetwork {
         };
         @Override public Type<Snapshot> type() { return TYPE; }
     }
+    /** Private debt status, synchronized only to the affected player. */
+    public static Consumer<PewterStatus> pewterReceiver = packet -> { };
+    public record PewterStatus(String dimension, double debt, boolean burning, double strength) implements CustomPacketPayload {
+        public static final Type<PewterStatus> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,"pewter_status"));
+        public static final StreamCodec<RegistryFriendlyByteBuf,PewterStatus> CODEC = new StreamCodec<>() {
+            public PewterStatus decode(RegistryFriendlyByteBuf b){return new PewterStatus(b.readUtf(128),b.readDouble(),b.readBoolean(),b.readDouble());}
+            public void encode(RegistryFriendlyByteBuf b,PewterStatus p){b.writeUtf(p.dimension,128);b.writeDouble(p.debt);b.writeBoolean(p.burning);b.writeDouble(p.strength);}
+        };
+        @Override public Type<PewterStatus> type(){return TYPE;}
+    }
     /** action: 0 select, 1 set state, 2 activate selected ability hold, 3 cycle state, 4 request snapshot, 5 primary pulse, 6 toggle highlighted power slot, 7 secondary hold, 8 secondary pulse, 9 grapple Space input. Activation value bits: held=1, alternate=2, forward=4, back=8, left=16, right=32, jump=64, descend=128. */
     public record Control(int action, String power, int value) implements CustomPacketPayload {
         public static final Type<Control> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID, "power_control"));
@@ -55,7 +65,8 @@ public final class PowerNetwork {
         @Override public Type<Impulse> type() { return TYPE; }
     }
     public static void register(RegisterPayloadHandlersEvent event) {
-        var r = event.registrar("5");
+        var r = event.registrar("6");
+        r.playToClient(PewterStatus.TYPE, PewterStatus.CODEC, (packet, context) -> context.enqueueWork(() -> pewterReceiver.accept(packet)));
         r.playToClient(Impulse.TYPE, Impulse.CODEC, (packet, context) -> context.enqueueWork(() -> impulseReceiver.accept(packet)));
         r.playToClient(Snapshot.TYPE, Snapshot.CODEC, (packet, context) -> context.enqueueWork(() -> clientReceiver.accept(packet)));
         r.playToServer(Control.TYPE, Control.CODEC, (packet, context) -> context.enqueueWork(() -> {
@@ -63,6 +74,8 @@ public final class PowerNetwork {
         }));
     }
     public static void sync(ServerPlayer p, List<MetalTarget> targets) {
+        double pewter=PewterService.strength(p);
+        PacketDistributor.sendToPlayer(p,new PewterStatus(p.level().dimension().location().toString(),PewterService.debt(p),pewter>0,pewter));
         var list = PowerData.available(p).stream().map(power -> new Entry(power, PowerData.state(p, power), power.startsWith("a:") ? PowerData.reserve(p, power.substring(2)) : 0)).toList();
         PacketDistributor.sendToPlayer(p, new Snapshot(p.level().dimension().location().toString(), PowerData.selected(p), PowerData.secondary(p), PowerConfig.FERUCHEMY_LEVELS.get(), list, targets));
     }

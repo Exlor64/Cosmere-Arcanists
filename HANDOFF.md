@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-19 UTC**. Current mod version: **0.9.2-alpha**.
+Last updated: **2026-10-19 UTC**. Current mod version: **0.10.0-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -9,10 +9,11 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
-- User now reports the basics of iron and steel work quite well and wants to move on to other Allomantic powers.
-- Proposed next pair: tin (enhanced senses) and pewter (physical enhancement). These are suggestions awaiting user selection and mechanic design; no new power effects implemented in this discussion.
-- Next: choose the next metal and agree on burn effects, active/alternate functions, scaling and configuration before implementation. Existing attribute/selector infrastructure supports additional powers.
-- Previous 0.9.2 timing fix and five-second iron movement regression remain verified below. User's general positive report does not establish every equipment/visual edge case as tested.
+- User chose pewter: speed/strength/endurance, mitigation capped 50% at baseline and 70% for stronger attributes, slight healing, persistent gray-heart injury debt, recovery through rest and saturation, payout on stop/depletion.
+- Implemented passive pewter burning, transient speed/attack modifiers, pre-food exhaustion scaling via a narrow Player mixin, post-armor mitigation/deferred injury, gray debt-heart HUD/private status packet, persistent debt and recovery, payout/death handling, refill vial/recipe and command integration.
+- Interpretation stated to user: 10% of post-mitigation/post-absorption health damage is deferred (not added on top); resting clears 1% of remaining debt each continuous five seconds at normal strength. Deferred fraction stays 10%; buffs/healing/recovery scale by effective attribute × burn strength. Other balance values are provisional and configurable.
+- Build, JUnit and server GameTests pending for this change. Prior verified iron/steel baseline remains documented below. Network protocol now 6; both sides must update.
+- Next: validate CI, then client-playtest pewter buffs, exhaustion, gray-heart rendering, healing/recovery and payout including lethal drag. Iron/steel basics now work well according to user.
 
 ## Vision and accepted constraints
 
@@ -29,7 +30,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - Metal ores, processing, ingots/nuggets and alloys; ore generation, creative tab, and recipe/generation gates.
 - Spike crossbow with 19 metal spike variants, embedded anchors, reusable steel ball-and-rope, and a charged/swinging/recallable grappling hook.
 - Allomantic **iron and steel effects**, detection lines, aimed push/pull, movement assistance, metal reserves/vials, fall braking, and steel-thrown projectiles.
-- 16 Allomantic plus 16 Feruchemical attributes and selector entries. Other Allomantic effects are pending. Feruchemy has selector states only, no storing/tapping effects.
+- Allomantic **pewter effects**: passive burn, speed/melee/endurance, capped mitigation, slow healing, deferred injury, rest/saturation recovery, gray-heart HUD and fuel vial.
+- 16 Allomantic plus 16 Feruchemical attributes and selector entries. Other Allomantic effects besides iron/steel/pewter are pending. Feruchemy has selector states only, no storing/tapping effects.
 - **Not implemented:** Scadrial dimension, other planets/dimensions, Cognitive Realm/perpendicularities/travel, origin GUI, expanded races/ancestry, other Allomancy effects, Feruchemy mechanics/metalminds, Hemalurgy power stealing/charging, Compounding.
 
 ## Metallurgy and detection decisions
@@ -50,7 +52,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - `PowerData.KEY = cosmerearcanists_powers`: states, reserves, primary `selected` and `secondary` assignments, migration markers. Origin metadata remains under `cosmerearcanists_origin` (schema 1).
 - `burn_levels_schema = 1` migrates old active states 1/2 to current 2/3 once; Off and Feruchemy states retain their meanings.
 - `/attribute @s cosmerearcanists:allomancy_steel base set 1` grants baseline steel. Replace `steel` with `iron` as needed; 0 removes the base power.
-- `/cosmere power grant <player> a:steel` sets at least baseline strength. `revoke` sets the base to zero, including a natural origin power; a positive modifier can still grant access. `/cosmere power refill <player>` refills iron/steel reserves.
+- `/cosmere power grant <player> a:steel` sets at least baseline strength. `revoke` sets the base to zero, including a natural origin power; a positive modifier can still grant access. `/cosmere power refill <player>` refills iron/steel/pewter reserves.
 - Grant/revoke use `ResourceLocationArgument`, accepting IDs such as `a:steel` and `f:iron` without the old trailing-data parser error.
 - `/cosmere origin <scadrial|overworld>` in random/ancestry modes; CHOICE adds `<allomancy metal or none> <feruchemy metal or none>`. `/cosmere reset <player>` clears origin, powers data, and power attributes/modifiers. Rerolls replace previous origin base powers while retaining other attribute powers.
 
@@ -109,7 +111,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - `metalDetection`: categories (including fired projectiles), recursive recipes, hardness cost/cap, range-related scanning budgets, target count and sync cadence.
 - `steelProjectiles`: enabled, reference/max speed, nugget damage, cap ≤100, recoil mass, unknown content fallback, per-shot reserve cost (default 1), lifetime, alternate straight-down drop.
 - Existing config files retain saved values. New fields obtain defaults. Datapacks can override generation and recipes. Feature disablement must not delete saved data or registry entries.
-- `PowerService`: validated inputs, ticks/sessions, dispatcher, target selection, forces, throw event. `PowerAttributes`/`PowerData`: powers/persistence. `PowerNetwork`: controls, snapshots, additive impulse; **current protocol 5**. Update both server and client, especially for new projectile registration/renderer.
+- `PowerService`: validated inputs, ticks/sessions, dispatcher, target selection, forces, throw event. `PowerAttributes`/`PowerData`: powers/persistence. `PowerNetwork`: controls, snapshots, additive impulse; **current protocol 6**. Update both server and client, especially for new projectile registration/renderer.
 - `PowerClient`/`PowerClientMod`: input, HUD, lines, impulse reception, renderer. Common classes must not reference client classes. Client supplies no target positions or force magnitudes.
 - `MetalDetector`/`MetalGraph`: classification/aluminum closure. `MetalAmounts`/`RecipeMetalAmounts`: quantities. `MetalProjectilePhysics`: pure scaling formulas. `MetalProjectiles`: registration/launch. `SteelProjectile`: collision, damage, persistence and recovery.
 - Session state clears on logout, dimension change, respawn, datapack reload and server stop. Keep migrations idempotent and configuration gates server-authoritative.
@@ -147,8 +149,22 @@ Tethers bind the original inventory item's custom-data UUID to one projectile.
 Recall returns the entity without dropping another inventory item; loss/death
 of owner or loss/replacement of the matching item ends it. No forced chunks.
 Control action 9 carries only Space input with a short timeout; server owns
-rope constraints and shortening. Protocol 5 requires both sides to update.
+rope constraints and shortening. Current protocol 6 requires both sides to update.
 
 Recall temporarily removes returning equipment heads from Allomantic targeting so a still-held steel key does not fight the reel-in. Custom spike ammunition supports standard crossbow loading, Quick Charge and spread; arrow-only Piercing behavior is not implemented.
 
 0.9.0 passed regression: diagonal spike crafting, multi-metal/aluminum-excluded ball recipes, custom crossbow spike creation and shooting, anchored spike save/load/support loss/iron interaction, grapple charge and radial tension, Space shortening while retaining tangent velocity, no-power grappling, reusable ball steel requirements and attribute scaling, and recall without item duplication. Actual rope/weapon rendering and player input still require client playtesting.
+
+
+## Pewter architecture and balance (0.10.0)
+
+- `PewterConfig`: separate SERVER `cosmerearcanists-pewter-server.toml`, enabled and per-effect zero rates, drag/rest/saturation toggles, caps/intervals/rates. Standard per-metal/art/global gates remain authoritative. Disabling any pewter feature preserves saved debt; no forced settlement on administrative disablement.
+- `PewterService` runs before power snapshots, independent of selected slots or G/H. Effective strength = attribute × existing burn multiplier. Transient namespaced MOVEMENT_SPEED multiplier and ATTACK_DAMAGE flat modifier are removed when inactive. No max-health boost.
+- Defaults at attribute 1: Low/Burning/Flaring movement +10/20/40%, melee +1.5/3/6 HP, exhaustion prevention 25/50/90%, mitigation 12.5/25/50%, healing .5/1/2 HP per 200 ticks. Mitigation hard caps 50% for attribute <=1, 70% for >1. Other effect caps configurable. Reserve drain base 1/sec × existing burn consumption multiplier.
+- `PlayerExhaustionMixin` modifies only the causeFoodExhaustion argument before FoodData receives it, on the logical server; avoids tick-refund errors when hunger thresholds are crossed. Mixin required by config and exercised by a real entry-point GameTest.
+- LivingDamageEvent.Pre applies mitigation after armor/effects, then defers 10% of nonabsorbed injury. Post accrues actual health-loss × fraction/(1-fraction), so fully absorbed hits create no debt. Fixed 10% fraction intentionally stays constant across strength; recovery scales instead.
+- Persistent `PowerData.data(player).pewter_drag` stores HP. Logout/dimension travel preserve it; death clears it. Stopping, revoking attribute or running out of fuel settles once on the next player tick, before recovery/healing. Direct health charge with custom `pewter_drag` death source prevents armor/absorption/i-frame discounts and can kill; it bypasses totems. This is provisional payout behavior to review with user if desired.
+- Rest requires stationary grounded/sleeping player (position delta <.02/tick, no passenger). Every 100 continuous rest ticks clears 1% remaining debt × strength, capped at full clearance. Saturation spends up to .2/sec × strength, recovers 1 HP debt per saturation, and spends only while debt exists and never more than needed.
+- `PewterStatus` private packet sends dimension/debt/active strength with snapshots. Client `PewterClient` renders a separate gray heart row + numeric debt, capped at ten visible hearts while numeric value retains larger debt. No bonus health implied. Client `pewterDragHearts` toggle. Protocol 6.
+- Added pewter vial (bottle+nugget), existing reserve capacity/refill rules, implemented selector label. Tin and other powers still pending.
+- Added regressions: burn/attribute caps, real damage split/absorption, modifiers cleanup and once-only payout, actual exhaustion mixin, fuel depletion, stationary/moving rest, saturation spending, scaled healing, disabled-feature debt retention, persistent NBT copy and status codec. Manual client HUD/network playtesting remains outstanding.

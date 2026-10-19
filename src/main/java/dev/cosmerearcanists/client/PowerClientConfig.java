@@ -4,12 +4,13 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class PowerClientConfig {
     public static final ModConfigSpec SPEC;
-    public static final ModConfigSpec.BooleanValue HUD, LINES, THROUGH_WALLS;
+    public static final ModConfigSpec.BooleanValue HUD, LINES, THROUGH_WALLS, PEWTER_HEARTS;
     public static final ModConfigSpec.IntValue HUD_X, HUD_Y, HOLD_TICKS;
     public static final ModConfigSpec.DoubleValue LINE_WIDTH;
     static {
         var b = new ModConfigSpec.Builder();
         HUD = b.define("selectedPowerIcon", true); LINES = b.define("blueLines", true);
+        PEWTER_HEARTS = b.define("pewterDragHearts", true);
         THROUGH_WALLS = b.define("linesThroughWalls", true);
         HUD_X = b.comment("HUD coordinates in scaled pixels; -1 uses the default.").defineInRange("hudX", -1, -1, 8192);
         HUD_Y = b.defineInRange("hudY", -1, -1, 8192);

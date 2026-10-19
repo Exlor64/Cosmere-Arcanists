@@ -18,6 +18,85 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @GameTestHolder(CosmereArcanists.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class PowerGameTests {
+    private static ServerPlayer pewterPlayer(GameTestHelper helper,String name) {
+        var p=new net.neoforged.neoforge.common.util.FakePlayer(helper.getLevel(),new GameProfile(UUID.randomUUID(),name)) {
+            @Override public boolean isInvulnerableTo(net.minecraft.world.damagesource.DamageSource source){return false;}
+        };
+        p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+        p.setPos(net.minecraft.world.phys.Vec3.atCenterOf(helper.absolutePos(new net.minecraft.core.BlockPos(1,10,1))));
+        p.getAbilities().invulnerable=false;
+        PowerAttributes.set(p,"a:pewter",1);PowerData.state(p,"a:pewter",2);PowerData.reserve(p,"pewter",300);
+        return p;
+    }
+    @GameTest(template = "empty")
+    public static void pewterDamageDebtAndStopping(GameTestHelper helper) {
+        var p=pewterPlayer(helper,"PewterDamage");PewterService.tick(p);
+        double speed=p.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
+        double attack=p.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        helper.assertTrue(speed>.1 && attack>=4,"Burning pewter must enhance movement and melee attacks without holding activation");
+        p.setHealth(20);p.invulnerableTime=0;p.hurt(p.damageSources().generic(),10);
+        helper.assertTrue(Math.abs(p.getHealth()-13.25)<.01 && Math.abs(PewterService.debt(p)-.75)<.01,"10 damage must become 6.75 immediate + .75 deferred after 25% mitigation; health="+p.getHealth()+", debt="+PewterService.debt(p));
+        p.setAbsorptionAmount(4);p.invulnerableTime=20;
+        PowerData.state(p,"a:pewter",0);PewterService.tick(p);
+        helper.assertTrue(Math.abs(p.getHealth()-12.5)<.01 && PewterService.debt(p)==0 && p.getAbsorptionAmount()==4,"Stopping must settle once without absorption or hurt-immunity discounts");
+        helper.assertTrue(Math.abs(p.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED)-.1)<1e-6 && p.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)==1,"Pewter modifiers must be removed on stop");
+        PewterService.tick(p);helper.assertTrue(Math.abs(p.getHealth()-12.5)<.01,"Settled debt cannot be charged twice");
+        helper.succeed();
+    }
+    @GameTest(template = "empty")
+    public static void pewterBurnScalingExhaustionAndAbsorption(GameTestHelper helper) {
+        var p=pewterPlayer(helper,"PewterScaling");
+        double[] immediate={7.875,6.75,4.5};
+        for(int level=1;level<=3;level++) {
+            PowerData.state(p,"a:pewter",level);PewterService.debt(p,0);p.setHealth(20);p.invulnerableTime=0;
+            p.hurt(p.damageSources().generic(),10);
+            helper.assertTrue(Math.abs((20-p.getHealth())-immediate[level-1])<.01,"Pewter health damage must scale by burn level "+level);
+        }
+        PowerAttributes.set(p,"a:pewter",2);PowerData.state(p,"a:pewter",3);p.setHealth(20);p.invulnerableTime=0;PewterService.debt(p,0);
+        p.hurt(p.damageSources().generic(),10);
+        helper.assertTrue(Math.abs(p.getHealth()-17.3)<.01 && Math.abs(PewterService.debt(p)-.3)<.01,"Stronger Flaring must cap mitigation at 70%");
+        PowerAttributes.set(p,"a:pewter",1);PowerData.state(p,"a:pewter",2);p.setHealth(20);p.setAbsorptionAmount(10);p.invulnerableTime=0;PewterService.debt(p,0);
+        p.hurt(p.damageSources().generic(),10);
+        helper.assertTrue(PewterService.debt(p)==0 && p.getHealth()==20,"Absorbed hits cannot create deferred injury");
+        p.getFoodData().setExhaustion(0);p.causeFoodExhaustion(4);
+        helper.assertTrue(Math.abs(p.getFoodData().getExhaustionLevel()-2)<.01,"Actual exhaustion entry point must apply pewter endurance before hunger thresholds");
+        helper.succeed();
+    }
+    @GameTest(template = "empty")
+    public static void pewterRestSaturationAndHealing(GameTestHelper helper) {
+        var rest=pewterPlayer(helper,"PewterRest");rest.setOnGround(true);rest.getFoodData().setSaturation(0);PewterService.debt(rest,10);
+        for(int i=0;i<101;i++)PewterService.tick(rest);
+        helper.assertTrue(Math.abs(PewterService.debt(rest)-9.9)<.001,"Five seconds standing still must clear 1% of current debt");
+        var moving=pewterPlayer(helper,"PewterMoving");moving.setOnGround(true);moving.getFoodData().setSaturation(0);PewterService.debt(moving,10);
+        for(int i=0;i<101;i++){moving.setPos(moving.position().add(.1,0,0));PewterService.tick(moving);}
+        helper.assertTrue(PewterService.debt(moving)==10,"Continuous movement must not earn rest recovery");
+        var fed=pewterPlayer(helper,"PewterFed");fed.getFoodData().setSaturation(2);PewterService.debt(fed,2);
+        for(int i=0;i<20;i++)PewterService.tick(fed);
+        helper.assertTrue(Math.abs(PewterService.debt(fed)-1.8)<.001 && Math.abs(fed.getFoodData().getSaturationLevel()-1.8)<.001,"Passive drag recovery must consume saturation proportionally");
+        var healing=pewterPlayer(helper,"PewterHealing");healing.setHealth(10);PowerData.state(healing,"a:pewter",3);
+        for(int i=0;i<200;i++)PewterService.tick(healing);
+        helper.assertTrue(Math.abs(healing.getHealth()-12)<.01,"Slight healing must scale with Flaring strength");
+        helper.succeed();
+    }
+    @GameTest(template = "empty")
+    public static void pewterDepletionPersistenceAndConfigGates(GameTestHelper helper) {
+        var p=pewterPlayer(helper,"PewterPersistence");PewterService.debt(p,2);PewterService.tick(p);
+        double configured=PewterConfig.ENABLED.get()?1:0;
+        try {
+            PewterConfig.ENABLED.set(false);PewterService.tick(p);
+            helper.assertTrue(PewterService.debt(p)==2 && p.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)==1,"Disabled pewter must remove effects while preserving debt");
+        } finally {PewterConfig.ENABLED.set(configured==1);}
+        var restored=pewterPlayer(helper,"PewterRestored");restored.getPersistentData().put(PowerData.KEY,PowerData.data(p).copy());
+        helper.assertTrue(PewterService.debt(restored)==2,"Persistent power data must retain debt");
+        PowerData.reserve(restored,"pewter",.001);restored.setHealth(20);PewterService.tick(restored);
+        helper.assertTrue(PowerData.state(restored,"a:pewter")==0 && Math.abs(restored.getHealth()-18)<.01 && PewterService.debt(restored)==0,"Empty reserve must turn off pewter and settle injury immediately");
+        var status=new PowerNetwork.PewterStatus(helper.getLevel().dimension().location().toString(),2.75,true,2);
+        var buffer=new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(),helper.getLevel().registryAccess());
+        try {PowerNetwork.PewterStatus.CODEC.encode(buffer,status);helper.assertTrue(PowerNetwork.PewterStatus.CODEC.decode(buffer).equals(status),"Gray-heart status must round-trip dimension, debt and strength");}finally{buffer.release();}
+        var vial=BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,"pewter_vial"));
+        helper.assertTrue(vial instanceof MetalVialItem,"Pewter must have a refill vial");
+        helper.succeed();
+    }
     @GameTest(template = "empty")
     public static void equipmentRecipesAndCrossbowAmmo(GameTestHelper helper) {
         var level=helper.getLevel(); MetalDetector.rebuild(level.getServer());

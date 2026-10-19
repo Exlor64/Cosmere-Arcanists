@@ -29,6 +29,7 @@ public final class ModMetals {
         }
         ITEMS.registerSimpleItem("copper_nugget", new Item.Properties());
         ITEMS.register("iron_vial", () -> new dev.cosmerearcanists.power.MetalVialItem("iron"));
+        ITEMS.register("pewter_vial", () -> new dev.cosmerearcanists.power.MetalVialItem("pewter"));
         ITEMS.register("steel_vial", () -> new dev.cosmerearcanists.power.MetalVialItem("steel"));
         TABS.register("metals", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.cosmerearcanists.metals"))

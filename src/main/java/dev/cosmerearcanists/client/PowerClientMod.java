@@ -18,6 +18,8 @@ public final class PowerClientMod {
         bus.addListener(this::renderers);
         bus.addListener(this::setup);
         PowerNetwork.clientReceiver = PowerClient::receive;
+        PowerNetwork.pewterReceiver = PewterClient::receive;
+        NeoForge.EVENT_BUS.register(new PewterClient());
         PowerNetwork.impulseReceiver = PowerClient::receiveImpulse;
         NeoForge.EVENT_BUS.register(new PowerClient());
         NeoForge.EVENT_BUS.register(new EquipmentClient());

@@ -1,0 +1,8 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.cosmerearcanists.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": ["PlayerExhaustionMixin"],
+  "injectors": {"defaultRequire": 1}
+}
