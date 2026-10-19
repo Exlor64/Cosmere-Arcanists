@@ -80,7 +80,7 @@ public final class EmotionService {
         var state=STATES.get(target.getUUID());if(state==null){if(STATES.size()>=EmotionConfig.AFFECTED.get())return false;state=new State(target);STATES.put(target.getUUID(),state);}
         state.influences.put(new Key(source.getUUID(),power,emotion),new Influence(source,power,emotion,(power.equals("a:zinc")?1:-1)*amount,strength,target.level().getGameTime()+EmotionConfig.DURATION.get()));
         refresh(state);if(target instanceof Mob mob && angerSuppressed(state))pacify(mob);
-        if(state.dominant==Emotion.COMPLIANCE && state.source==source && amount>0 && power.equals("a:zinc"))DominationService.attempt(source,target,power,state.complianceStrength,strength);
+        if(emotion==Emotion.COMPLIANCE && state.dominant==Emotion.COMPLIANCE && state.source==source && amount>0 && power.equals("a:zinc"))DominationService.attempt(source,target,power,state.complianceStrength,strength);
         return true;
     }
     private static void refresh(State state) {

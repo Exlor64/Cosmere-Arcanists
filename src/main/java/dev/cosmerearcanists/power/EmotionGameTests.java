@@ -30,7 +30,7 @@ public final class EmotionGameTests {
         EmotionService.clear(target);target.setPos(source.position());PowerData.state(target,"a:copper",2);PowerAttributes.set(target,"a:copper",3.2);PowerAttributes.set(source,"a:zinc",4);SpiritualIntegrity.set(target,.25);
         h.assertTrue(EmotionService.apply(source,target,"a:zinc",Emotion.COMPLIANCE) && DominationService.owner(target)==source,"Exact25percent edge can establish minion control");
         PowerAttributes.set(target,"a:copper",3.200001);DominationService.tick();h.assertTrue(DominationService.owner(target)==null,"Copper becoming strong enough releases existing control");
-        PowerData.state(target,"a:copper",0);PowerAttributes.set(source,"a:zinc",1);h.assertTrue(EmotionService.apply(source,target,"a:zinc",Emotion.FEAR),"Inactive copper gives no emotional immunity");h.succeed();
+        PowerData.state(target,"a:copper",0);PowerAttributes.set(source,"a:zinc",1);h.assertTrue(EmotionService.apply(source,target,"a:zinc",Emotion.FEAR),"Inactive copper gives no emotional immunity");h.assertTrue(DominationService.owner(target)==null,"Applying fear cannot refresh old lingering compliance into a new minion bond");h.succeed();
     }
     @GameTest(template="empty") public static void dominationRequiresSpiritualDamageAndOverwhelmingCompliance(GameTestHelper h){
         var source=caster(h);var target=mob(h,EntityType.ZOMBIE,source.position());PowerAttributes.set(source,"a:zinc",4);
