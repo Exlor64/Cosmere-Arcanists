@@ -27,10 +27,11 @@ public final class SeekingService {
         if(!PowerConfig.ENABLED.get() || !ServerConfig.ALLOMANCY.enabled().get() || !p.isAlive() || p.isSpectator() || !ServerConfig.ALLOMANCY.metals().get(Metal.valueOf(metal.toUpperCase(Locale.ROOT))).get()
             || PowerConfig.CONSUMPTION.get() && PowerData.reserve(p,metal)<=0)return 0;
         int state=PowerData.state(p,"a:"+metal);if(state==3&&!PowerConfig.FLARING.get())state=2;
-        return PowerAttributes.strength(p,"a:"+metal)*PowerRules.levelMultiplier(state,PowerConfig.LOW_STRENGTH.get(),PowerConfig.BURN_STRENGTH.get(),PowerConfig.FLARE_STRENGTH.get());
+        return PowerAttributes.effectiveStrength(p,"a:"+metal)*PowerRules.levelMultiplier(state,PowerConfig.LOW_STRENGTH.get(),PowerConfig.BURN_STRENGTH.get(),PowerConfig.FLARE_STRENGTH.get());
     }
     public static double activeStrength(ServerPlayer p,String power) {
         return switch(power) {
+            case "a:aluminum","a:duralumin" -> EnhancementService.strength(p,power.substring(2));
             case "a:zinc","a:brass" -> EmotionService.strength(p,power);
             case "a:iron","a:steel" -> PowerConfig.IRON_STEEL.get()?ordinaryStrength(p,power.substring(2)):0;
             case "a:tin" -> TinService.strength(p);
@@ -87,7 +88,7 @@ public final class SeekingService {
             if(strength(p,metal)>0 && PowerConfig.CONSUMPTION.get()) {
                 int state=PowerData.state(p,"a:"+metal);if(state==3&&!PowerConfig.FLARING.get()){state=2;PowerData.state(p,"a:"+metal,2);}
                 double rate=metal.equals("bronze")?SeekingConfig.BRONZE_DRAIN.get():SeekingConfig.COPPER_DRAIN.get();
-                PowerData.reserve(p,metal,PowerData.reserve(p,metal)-rate/20*PowerRules.levelMultiplier(state,PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get()));
+                EnhancementService.consume(p,metal,rate/20*PowerRules.levelMultiplier(state,PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get()));
             }
             if(PowerConfig.CONSUMPTION.get() && PowerData.reserve(p,metal)<=0 && PowerData.state(p,"a:"+metal)>0)PowerData.state(p,"a:"+metal,0);
         }

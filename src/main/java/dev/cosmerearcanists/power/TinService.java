@@ -33,7 +33,7 @@ public final class TinService {
         if(!PowerConfig.ENABLED.get() || !TinConfig.ENABLED.get() || !ServerConfig.ALLOMANCY.enabled().get() || !ServerConfig.ALLOMANCY.metals().get(Metal.TIN).get()
             || !p.isAlive() || p.isSpectator() || PowerConfig.CONSUMPTION.get() && PowerData.reserve(p,"tin")<=0)return 0;
         int state=PowerData.state(p,"a:tin");if(state==3&&!PowerConfig.FLARING.get())state=2;
-        return PowerAttributes.strength(p,"a:tin")*PowerRules.levelMultiplier(state,PowerConfig.LOW_STRENGTH.get(),PowerConfig.BURN_STRENGTH.get(),PowerConfig.FLARE_STRENGTH.get());
+        return PowerAttributes.effectiveStrength(p,"a:tin")*PowerRules.levelMultiplier(state,PowerConfig.LOW_STRENGTH.get(),PowerConfig.BURN_STRENGTH.get(),PowerConfig.FLARE_STRENGTH.get());
     }
     public static double revealStrength(ServerPlayer p){return TinMath.reveal(strength(p),TinConfig.REVEAL_THRESHOLD.get(),TinConfig.FULL_REVEAL.get());}
     private static boolean looksOwned(MobEffectInstance effect){return effect!=null && effect.getAmplifier()==0 && effect.isAmbient() && !effect.isVisible() && !effect.showIcon() && effect.getDuration()<=320;}
@@ -41,7 +41,7 @@ public final class TinService {
         double power=strength(p);
         if(power>0 && PowerConfig.CONSUMPTION.get()) {
             int state=PowerData.state(p,"a:tin");if(state==3&&!PowerConfig.FLARING.get()){state=2;PowerData.state(p,"a:tin",2);}
-            PowerData.reserve(p,"tin",PowerData.reserve(p,"tin")-TinConfig.DRAIN.get()/20*PowerRules.levelMultiplier(state,PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get()));
+            EnhancementService.consume(p,"tin",TinConfig.DRAIN.get()/20*PowerRules.levelMultiplier(state,PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get()));
             power=strength(p);
         }
         if(PowerConfig.CONSUMPTION.get() && PowerData.state(p,"a:tin")>0 && PowerData.reserve(p,"tin")<=0)PowerData.state(p,"a:tin",0);

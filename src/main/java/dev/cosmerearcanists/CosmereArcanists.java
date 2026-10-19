@@ -33,6 +33,7 @@ public final class CosmereArcanists {
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.power.SeekingService());
         container.registerConfig(ModConfig.Type.SERVER, dev.cosmerearcanists.power.EmotionConfig.SPEC, "cosmerearcanists-emotions-server.toml");
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.power.EmotionService());
+        container.registerConfig(ModConfig.Type.SERVER, dev.cosmerearcanists.power.EnhancementConfig.SPEC, "cosmerearcanists-enhancement-server.toml");
         bus.addListener(dev.cosmerearcanists.power.PowerNetwork::register);
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.power.PowerService());
     }

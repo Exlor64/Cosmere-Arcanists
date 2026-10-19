@@ -705,8 +705,7 @@ Tune `domination` in the server emotions config. Operators can test spiritual
 damage with `/cosmere integrity <targets> <value>` (0..1), grant zinc, increase
 `cosmerearcanists:allomancy_zinc` with vanilla `/attribute`, refill, and apply
 compliance. Spiritual integrity persists through saves and player respawns;
-control does not survive restart. Hemalurgy spike effects and duralumin burning
-remain future work; integration APIs/data are ready for them.
+control does not survive restart. Hemalurgy spike effects remain future work; duralumin is implemented below.
 
 Copper emotional protection uses `copper.minimumEmotionalStrengthRatio` (default
 1.25) in the seeking server config, replacing the old `emotionalPiercingRatio`
@@ -714,3 +713,39 @@ key so existing default4 settings do not override the new rule. Disabling
 emotional piercing makes active copper fully protective. An attack's sampled
 metal strength is retained during its linger/control duration; copper protection
 is rechecked against the defender's current active strength.
+
+### Aluminum and duralumin (0.18.0)
+
+Enable their burn state with the existing power controls; neither requires holding
+G/H. Aluminum immediately empties all personal metal reserves and stops burning.
+It also posts `InvestitureCleanseEvent` so future worlds can remove their own
+foreign Investiture influences. Ordinary potion effects, powers and spiritual
+integrity are preserved.
+
+At duralumin attribute1:
+
+| Duralumin state | Other active power strength | Metal consumption |
+|---|---|---|
+| Low burn |1.75x|5x normal burn rate|
+| Burning |2.5x|10x normal burn rate|
+| Flaring |5x|Captured reserves consumed over their flare window|
+
+Each already-burning metal gets `5 seconds * current reserves / max reserves`
+of flare time: full reserves5seconds, half2.5seconds. Each has its own timer.
+The flare commits its captured fuel even if toggled off; new metals do not join
+mid-burst. Additional fuel does not extend the timer. Duralumin consumes its own
+captured reserve over the longest window. Powers stop at their window end.
+
+Higher duralumin attributes chiefly improve efficiency. Per attribute doubling,
+the bonus strength grows10percent and efficiency grows50percent. Attribute2
+gives low-burn1.825x power at5/1.5x drain, or flare5.4x with a full-reserve
+window7.5seconds. Both curves are configurable. Low/normal drain never falls
+below ordinary consumption. Boosts apply to existing Allomantic effects without
+changing saved attributes; their existing effect caps remain in force.
+
+Configure `cosmerearcanists-enhancement-server.toml` for feature gates, purge and
+cleansing behavior, multipliers, durations, own-metal drain and attribute curves.
+Future Invested Arts can query `EnhancementService.profile(player)` for a
+resource-independent boost profile and apply its duration to their own budgets;
+those integrations are still future work. Existing vials support both metals.
+Use `/cosmere power grant @s a:aluminum` or `a:duralumin`, then refill.

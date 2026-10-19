@@ -16,6 +16,6 @@ public final class PowerRules {
     public static double levelMultiplier(int state, double low, double burning, double flaring) {
         return switch (state) { case 1 -> low; case 2 -> burning; case 3 -> flaring; default -> 0; };
     }
-    public static boolean implemented(String power) { return power.equals("a:iron") || power.equals("a:steel") || power.equals("a:pewter") || power.equals("a:tin") || power.equals("a:atium") || power.equals("a:electrum") || power.equals("a:bronze") || power.equals("a:copper") || power.equals("a:zinc") || power.equals("a:brass"); }
+    public static boolean implemented(String power) { return power.equals("a:aluminum") || power.equals("a:duralumin") || power.equals("a:iron") || power.equals("a:steel") || power.equals("a:pewter") || power.equals("a:tin") || power.equals("a:atium") || power.equals("a:electrum") || power.equals("a:bronze") || power.equals("a:copper") || power.equals("a:zinc") || power.equals("a:brass"); }
     private PowerRules() { }
 }

@@ -44,14 +44,14 @@ public final class EmotionService {
     public static double strength(ServerPlayer p,String power) {
         if(!configured(power)||!p.isAlive()||p.isSpectator()||PowerConfig.CONSUMPTION.get() && PowerData.reserve(p,power.substring(2))<=0)return 0;
         int state=PowerData.state(p,power);if(state==3&&!PowerConfig.FLARING.get())state=2;
-        return PowerAttributes.strength(p,power)*PowerRules.levelMultiplier(state,PowerConfig.LOW_STRENGTH.get(),PowerConfig.BURN_STRENGTH.get(),PowerConfig.FLARE_STRENGTH.get());
+        return PowerAttributes.effectiveStrength(p,power)*PowerRules.levelMultiplier(state,PowerConfig.LOW_STRENGTH.get(),PowerConfig.BURN_STRENGTH.get(),PowerConfig.FLARE_STRENGTH.get());
     }
     public static int mode(ServerPlayer p,String power){return Math.floorMod(PowerData.data(p).getInt("emotion_"+power.substring(2)),5);}
     public static void mode(ServerPlayer p,String power,int value){if(Emotion.power(power) && value>=0 && value<5)PowerData.data(p).putInt("emotion_"+power.substring(2),value);}
     public static void tickFuel(ServerPlayer p){for(String power:List.of("a:zinc","a:brass")) {
         if(strength(p,power)>0 && PowerConfig.CONSUMPTION.get()) {
             int state=PowerData.state(p,power);if(state==3&&!PowerConfig.FLARING.get()){state=2;PowerData.state(p,power,2);}
-            PowerData.reserve(p,power.substring(2),PowerData.reserve(p,power.substring(2))-EmotionConfig.DRAIN.get()/20*PowerRules.levelMultiplier(state,PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get()));
+            EnhancementService.consume(p,power.substring(2),EmotionConfig.DRAIN.get()/20*PowerRules.levelMultiplier(state,PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get()));
         }
         if(PowerConfig.CONSUMPTION.get() && PowerData.reserve(p,power.substring(2))<=0 && PowerData.state(p,power)>0)PowerData.state(p,power,0);
     }}

@@ -42,6 +42,7 @@ public final class PowerAttributes {
         var holder = POWERS.get(power);
         return holder == null ? 0 : player.getAttributeValue(holder);
     }
+    public static double effectiveStrength(ServerPlayer player,String power){return strength(player,power)*EnhancementService.multiplier(player,power);}
     public static void set(ServerPlayer player, String power, double strength) {
         migrate(player);
         setBase(player, power, strength);

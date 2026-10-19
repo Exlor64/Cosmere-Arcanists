@@ -98,7 +98,7 @@ public final class PowerService {
         event.getRelevantPlayers().forEach(p -> PowerNetwork.sync(p, List.of()));
     }
     @SubscribeEvent public void login(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer p) { stopActivation(p); SESSIONS.remove(p.getUUID()); PowerNetwork.sync(p, List.of()); }
+        if (event.getEntity() instanceof ServerPlayer p) { EnhancementService.clear(p);stopActivation(p); SESSIONS.remove(p.getUUID()); PowerNetwork.sync(p, List.of()); }
     }
     private static void stopActivation(ServerPlayer p) {
         var s = SESSIONS.get(p.getUUID());
@@ -108,21 +108,22 @@ public final class PowerService {
         }
     }
     @SubscribeEvent public void logout(PlayerEvent.PlayerLoggedOutEvent event) {
-        if (event.getEntity() instanceof ServerPlayer p) stopActivation(p);
+        if (event.getEntity() instanceof ServerPlayer p) {stopActivation(p);EnhancementService.clear(p);}
         SESSIONS.remove(event.getEntity().getUUID());
     }
     @SubscribeEvent public void clonePlayer(PlayerEvent.Clone event) {
         if (event.getOriginal() instanceof ServerPlayer old && event.getEntity() instanceof ServerPlayer p) {
-            stopActivation(old); PowerData.clonePlayer(old, p); SESSIONS.remove(p.getUUID());
+            EnhancementService.clear(old); stopActivation(old); PowerData.clonePlayer(old, p); SESSIONS.remove(p.getUUID());
         }
     }
     @SubscribeEvent public void respawn(PlayerEvent.PlayerRespawnEvent event) { if (event.getEntity() instanceof ServerPlayer p) PowerNetwork.sync(p, List.of()); }
     @SubscribeEvent public void dimension(PlayerEvent.PlayerChangedDimensionEvent event) {
-        if (event.getEntity() instanceof ServerPlayer p) { stopActivation(p); SESSIONS.remove(p.getUUID()); PowerNetwork.sync(p, List.of()); }
+        if (event.getEntity() instanceof ServerPlayer p) { EnhancementService.clear(p);stopActivation(p); SESSIONS.remove(p.getUUID()); PowerNetwork.sync(p, List.of()); }
     }
-    @SubscribeEvent public void stopped(ServerStoppedEvent event) { event.getServer().getPlayerList().getPlayers().forEach(PowerService::stopActivation); SESSIONS.clear(); MetalDetector.clear(); }
+    @SubscribeEvent public void stopped(ServerStoppedEvent event) { event.getServer().getPlayerList().getPlayers().forEach(PowerService::stopActivation); SESSIONS.clear(); EnhancementService.clear();MetalDetector.clear(); }
     @SubscribeEvent public void tick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer p)) return;
+        EnhancementService.begin(p);
         PewterService.tick(p);
         TinService.tick(p);
         TemporalService.tick(p);
@@ -142,7 +143,7 @@ public final class PowerService {
             active = true;
             if (PowerConfig.CONSUMPTION.get()) {
                 double drain = PowerConfig.BURN_DRAIN.get() / 20.0 * PowerRules.levelMultiplier(state, PowerConfig.LOW_DRAIN.get(), 1, PowerConfig.FLARE_DRAIN.get());
-                PowerData.reserve(p, metal, fuel - drain);
+                EnhancementService.consume(p,metal,drain);
             }
         }
         var previousTargets = s.targets;
@@ -150,6 +151,7 @@ public final class PowerService {
         else { s.targets = List.of(); s.scanCenter = s.urgentCenter = null; s.urgentApplying = false; s.blocks.clear(); }
         advanceActivation(p,s,s,PowerData.selected(p),available);
         advanceActivation(p,s,s.secondary,PowerData.secondary(p),available);
+        EnhancementService.finish(p);
         if (!s.targets.equals(previousTargets) || p.tickCount % PowerConfig.SYNC_INTERVAL.get() == 0) PowerNetwork.sync(p, s.targets);
     }
     static void advanceActivation(ServerPlayer p,Session s,Activation a,String power,List<String> available) {
@@ -263,7 +265,7 @@ public final class PowerService {
         accelerate(p, targetImpulse(p, best, direction, powerForce(p, power)));
     }
     public static double powerForce(ServerPlayer p, String power) {
-        return PowerConfig.FORCE.get() * (power.equals("a:iron") ? PowerConfig.IRON_STRENGTH.get() : power.equals("a:steel") ? PowerConfig.STEEL_STRENGTH.get() : 1) * PowerAttributes.strength(p, power) * PowerRules.levelMultiplier(PowerData.state(p, power), PowerConfig.LOW_STRENGTH.get(), PowerConfig.BURN_STRENGTH.get(), PowerConfig.FLARE_STRENGTH.get());
+        return PowerConfig.FORCE.get() * (power.equals("a:iron") ? PowerConfig.IRON_STRENGTH.get() : power.equals("a:steel") ? PowerConfig.STEEL_STRENGTH.get() : 1) * PowerAttributes.effectiveStrength(p, power) * PowerRules.levelMultiplier(PowerData.state(p, power), PowerConfig.LOW_STRENGTH.get(), PowerConfig.BURN_STRENGTH.get(), PowerConfig.FLARE_STRENGTH.get());
     }
     static Vec3 targetImpulse(ServerPlayer p, MetalTarget best, Vec3 direction, double force) {
         var point = best.position(p.level(), 1); if (point == null) return Vec3.ZERO;
@@ -379,7 +381,7 @@ public final class PowerService {
             }))))
             .then(Commands.literal("refill").then(Commands.argument("player", EntityArgument.player()).executes(ctx -> {
                 var p = EntityArgument.getPlayer(ctx, "player");
-                PowerData.reserve(p, "iron", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "steel", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "pewter", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "tin", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"zinc",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"brass",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"bronze",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"copper",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"atium",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"electrum",PowerConfig.RESERVE_CAP.get()); PowerNetwork.sync(p, List.of()); return 1;
+                PowerData.reserve(p,"aluminum",PowerConfig.RESERVE_CAP.get());PowerData.reserve(p,"duralumin",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "iron", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "steel", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "pewter", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "tin", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"zinc",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"brass",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"bronze",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"copper",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"atium",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"electrum",PowerConfig.RESERVE_CAP.get()); PowerNetwork.sync(p, List.of()); return 1;
             })))));
     }
     private boolean validPower(String key) {

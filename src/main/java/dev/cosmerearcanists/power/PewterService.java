@@ -32,7 +32,7 @@ public final class PewterService {
             || PowerConfig.CONSUMPTION.get() && PowerData.reserve(p,"pewter")<=0)return 0;
         int state=PowerData.state(p,"a:pewter");
         if(state==3 && !PowerConfig.FLARING.get())state=2;
-        return PowerAttributes.strength(p,"a:pewter")*PowerRules.levelMultiplier(state,PowerConfig.LOW_STRENGTH.get(),PowerConfig.BURN_STRENGTH.get(),PowerConfig.FLARE_STRENGTH.get());
+        return PowerAttributes.effectiveStrength(p,"a:pewter")*PowerRules.levelMultiplier(state,PowerConfig.LOW_STRENGTH.get(),PowerConfig.BURN_STRENGTH.get(),PowerConfig.FLARE_STRENGTH.get());
     }
     public static double debt(ServerPlayer p){return Math.max(0,PowerData.data(p).getDouble("pewter_drag"));}
     static void debt(ServerPlayer p,double amount){PowerData.data(p).putDouble("pewter_drag",Double.isFinite(amount)?Math.max(0,amount):0);}
@@ -61,7 +61,7 @@ public final class PewterService {
         if(power>0 && PowerConfig.CONSUMPTION.get()) {
             int state=PowerData.state(p,"a:pewter"); if(state==3&&!PowerConfig.FLARING.get()){state=2;PowerData.state(p,"a:pewter",2);}
             double drain=PewterConfig.DRAIN.get()/20*PowerRules.levelMultiplier(state,PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get());
-            PowerData.reserve(p,"pewter",PowerData.reserve(p,"pewter")-drain);
+            EnhancementService.consume(p,"pewter",drain);
             if(PowerData.reserve(p,"pewter")<=0){PowerData.state(p,"a:pewter",0);power=0;}
         }
         modifier(p,Attributes.MOVEMENT_SPEED,SPEED,Math.min(PewterConfig.MAX_SPEED_BONUS.get(),power*PewterConfig.SPEED.get()),AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);

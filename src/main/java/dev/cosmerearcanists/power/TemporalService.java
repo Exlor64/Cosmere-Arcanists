@@ -28,7 +28,7 @@ public final class TemporalService {
         if(metal.equals("atium")?!TemporalConfig.ATIUM.get():!metal.equals("electrum") || !TemporalConfig.ELECTRUM.get() || !ServerConfig.ALLOMANCY.metals().get(Metal.ELECTRUM).get())return 0;
         if(PowerConfig.CONSUMPTION.get() && PowerData.reserve(p,metal)<=0)return 0;
         int state=PowerData.state(p,"a:"+metal);if(state==3&&!PowerConfig.FLARING.get())state=2;
-        return PowerAttributes.strength(p,"a:"+metal)*PowerRules.levelMultiplier(state,PowerConfig.LOW_STRENGTH.get(),PowerConfig.BURN_STRENGTH.get(),PowerConfig.FLARE_STRENGTH.get());
+        return PowerAttributes.effectiveStrength(p,"a:"+metal)*PowerRules.levelMultiplier(state,PowerConfig.LOW_STRENGTH.get(),PowerConfig.BURN_STRENGTH.get(),PowerConfig.FLARE_STRENGTH.get());
     }
     public static boolean interferes(Entity e) {return TemporalConfig.COUNTERS.get() && e instanceof ServerPlayer p && (strength(p,"atium")>0 || strength(p,"electrum")>0);}
     public static int horizon(double strength){return TemporalMath.horizon(strength,TemporalConfig.BASE_HORIZON.get(),TemporalConfig.MAX_HORIZON.get());}
@@ -50,7 +50,7 @@ public final class TemporalService {
             if(strength(p,metal)>0 && PowerConfig.CONSUMPTION.get()) {
                 int state=PowerData.state(p,"a:"+metal);if(state==3&&!PowerConfig.FLARING.get()){state=2;PowerData.state(p,"a:"+metal,2);}
                 double rate=metal.equals("atium")?TemporalConfig.ATIUM_DRAIN.get():TemporalConfig.ELECTRUM_DRAIN.get();
-                PowerData.reserve(p,metal,PowerData.reserve(p,metal)-rate/20*PowerRules.levelMultiplier(state,PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get()));
+                EnhancementService.consume(p,metal,rate/20*PowerRules.levelMultiplier(state,PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get()));
             }
             if(PowerConfig.CONSUMPTION.get() && PowerData.reserve(p,metal)<=0 && PowerData.state(p,"a:"+metal)>0)PowerData.state(p,"a:"+metal,0);
         }
