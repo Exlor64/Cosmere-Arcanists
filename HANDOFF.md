@@ -9,6 +9,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
+- Follow-up inventory confirmation: ingots and nuggets already exist for all sixteen added metals/alloys; vanilla iron/copper/gold ingots are reused. No gameplay change requested in this clarification.
+
 - User requested dynamic mixed-metal vials, filing ingots/nuggets/blocks, four filings per nugget, sixteen filings per vial, potion-style drinking, wear bars/crafting exclusion for filed material, fifty reserve per filing.
 - Implemented Metal File + loose metal filings + generic metal vial, per-piece persistent progress/stack splitting, potion-duration use, mixed contents, overflow retention, tooltips/wear bars, recipe/placement guards, remaining-metal detection/projectile mass and aluminum exclusion. Defaults: nugget 4 / ingot 36 / block 324 filings, vial total 16, reserve 50 each.
 - UX choice stated to user: file mainhand + source offhand; filings + vial/glass bottle in opposite hands loads one per right-click. Unfiled stack remainder returns to inventory while partial piece stays offhand. Overflow filings stay in vial instead of being wasted at the existing reserve cap.
