@@ -78,8 +78,9 @@ Activation uses START/TICK/STOP phases, allowing future instant abilities to act
 
 ### Persistent power attributes
 
-All 16 Allomantic and 16 Feruchemical powers have player attributes named
+All 16 ordinary Allomantic and 16 Feruchemical powers have player attributes named
 `cosmerearcanists:allomancy_<metal>` and `cosmerearcanists:feruchemy_<metal>`.
+The atium–electrum alloy additionally has `cosmerearcanists:allomancy_atium`.
 Zero means no power; 1 is normal strength. Positive effective values grant access,
 and iron/steel force scales with the effective value (including attribute modifiers).
 Powers other than iron, steel, tin, pewter, electrum and atium still have selection/state support only. Config switches still gate access.
