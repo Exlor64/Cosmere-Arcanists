@@ -15,7 +15,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - Updated unit boundary tests, seeking integration assertion and added a full emotional server case covering all five modes/both metals just below and exactly at threshold, distance independence, burn multipliers, live removal, minion acquisition/release and inactive copper.
 - Java21 GitHub Actions run39314353493 passed build, required server GameTests and artifact upload for final0.17.1 gameplay. Registered suites46 unit/59 server test methods; individual log totals not retrieved. Local Java17/Gradle bootstrap limitation remains. No manual PvP/client playtest claimed.
 - Domination from0.17.0 remains: damaged spirit integrity<=.5, positive dominant compliance>=4;1200ticks at threshold scaling to12000 cap. Held application refreshes. Mobs follow/assist combat; players receive additive steering and automatic melee with camera/inventory retained. Bond ends on protections, config, integrity recovery, death/logout/dimension/expiry/restart. SpiritualIntegrity API persistent0..1 intactdefault1 and OP `/cosmere integrity <targets> <value>` available. Hemalurgy equipment and duralumin remain pending.
-- Next: automated verification then manual PvP/copper timing, minion custom-AI and balance playtests.
+- Latest discussion: user asked which metals to implement next. Recommendation only (not yet user-approved implementation): aluminum+duralumin first to support reserve-clearing/boost integration and emotional domination; chromium+nicrosil afterward using related external-target mechanics; gold, then cadmium+bendalloy afterward. Seven ordinary Allomantic effects remain: aluminum, duralumin, chromium, nicrosil, gold, cadmium, bendalloy. No gameplay changes this chat.
+- Next: await user choice; manual PvP/copper timing, minion custom-AI and balance playtests remain outstanding.
 
 ## Vision and accepted constraints
 
