@@ -18,6 +18,33 @@ import net.neoforged.neoforge.gametest.*;
 public final class EmotionGameTests {
     private static FakePlayer caster(GameTestHelper h){var p=new FakePlayer(h.getLevel(),new GameProfile(UUID.randomUUID(),"EmotionTest"));p.setPos(Vec3.atCenterOf(h.absolutePos(new BlockPos(1,20,1))));for(String m:List.of("zinc","brass")){PowerAttributes.set(p,"a:"+m,1);PowerData.state(p,"a:"+m,2);PowerData.reserve(p,m,100);}return p;}
     private static <T extends Mob> T mob(GameTestHelper h,EntityType<T> type,Vec3 pos){var m=type.create(h.getLevel());m.setPos(pos);h.getLevel().addFreshEntity(m);return m;}
+    @GameTest(template="empty",timeoutTicks=120) public static void soothingHostileAngerClearsEveryVictimAndAllowsRecovery(GameTestHelper h){
+        var source=caster(h);var victim=caster(h);var stranger=caster(h);var zombie=mob(h,EntityType.ZOMBIE,source.position().add(1,0,0));
+        zombie.setNoAi(true);zombie.setNoGravity(true);zombie.setItemSlot(EquipmentSlot.HEAD,new ItemStack(Items.IRON_HELMET));zombie.setTarget(victim);
+        PowerAttributes.set(source,"a:brass",.01);EmotionService.apply(source,zombie,"a:brass",Emotion.ANGER);
+        h.assertTrue(!EmotionService.pacified(zombie) && zombie.getTarget()==victim && !EmotionService.forcesBehavior(zombie),"Insufficient soothing must preserve native aggression, not turn it into magically forced mob infighting");
+        PowerAttributes.set(source,"a:brass",1);EmotionService.apply(source,zombie,"a:brass",Emotion.ANGER);
+        h.assertTrue(EmotionService.pacified(zombie) && zombie.getTarget()==null,"Enough anger soothing immediately calms a hostile mob even when its victim is not the Allomancer");
+        zombie.setTarget(victim);h.assertTrue(zombie.getTarget()==null,"Native AI may not reacquire the old victim while pacified");
+        zombie.setTarget(stranger);h.assertTrue(zombie.getTarget()==null,"Pacification also blocks choosing a new victim");
+        h.runAfterDelay(EmotionConfig.DURATION.get()+2,()->{h.assertTrue(!EmotionService.pacified(zombie),"Pacification expires instead of permanently taming the mob");zombie.setTarget(victim);h.assertTrue(zombie.getTarget()==victim,"Vanilla target acquisition resumes after the influence fades");h.succeed();});
+    }
+    @GameTest(template="empty") public static void soothingTrustCanExposeAngerAndSoothingLoveCancelsBreeding(GameTestHelper h){
+        var source=caster(h);var cow=mob(h,EntityType.COW,source.position().add(1,0,0));var sheep=mob(h,EntityType.SHEEP,cow.position().add(1,0,0));
+        EmotionService.apply(source,cow,"a:brass",Emotion.TRUST);cow.tickCount=20;EmotionService.behave(cow);
+        h.assertTrue(EmotionService.dominant(cow)==Emotion.ANGER && cow.getTarget()==sheep,"Inverse effects follow the strongest remaining emotion: soothing trust can expose anger in a passive mob");
+        EmotionService.clear(cow);cow.setTarget(null);EmotionService.apply(source,cow,"a:zinc",Emotion.LOVE);EmotionService.behave(cow);h.assertTrue(cow.isInLove(),"Rioting love prepares breeding");
+        EmotionService.apply(source,cow,"a:brass",Emotion.LOVE);h.assertTrue(!cow.isInLove(),"Counter-soothing removes induced breeding readiness once love loses dominance");
+        EmotionService.clear(cow);cow.setInLove(source);EmotionService.apply(source,cow,"a:brass",Emotion.LOVE);h.assertTrue(!cow.isInLove(),"Sufficient Soothing also reduces naturally present love rather than only countering a Rioter");h.succeed();
+    }
+    @GameTest(template="empty") public static void angerRiotingOverridesSoothingAndCalmStopsAutonomousCreeperSwelling(GameTestHelper h){
+        var source=caster(h);var rioter=caster(h);var victim=caster(h);var creeper=mob(h,EntityType.CREEPER,source.position().add(1,0,0));creeper.setNoGravity(true);creeper.setTarget(victim);creeper.setSwellDir(1);
+        EmotionService.apply(source,creeper,"a:brass",Emotion.ANGER);var swelling=new net.minecraft.world.entity.ai.goal.SwellGoal(creeper);
+        h.assertTrue(creeper.getTarget()==null && creeper.getSwellDir()== -1 && !swelling.canUse(),"Soothing anger stops an autonomous creeper attack and its swelling goal");
+        PowerAttributes.set(rioter,"a:zinc",4);EmotionService.apply(rioter,creeper,"a:zinc",Emotion.ANGER);
+        h.assertTrue(!EmotionService.pacified(creeper),"A stronger Rioter can make anger dominant again");creeper.setTarget(victim);h.assertTrue(creeper.getTarget()==victim,"A winning anger signal permits aggression again");
+        EmotionService.clear(creeper);EmotionService.apply(source,creeper,"a:brass",Emotion.ANGER);creeper.ignite();creeper.setSwellDir(1);h.assertTrue(swelling.canUse(),"Emotions do not reverse deliberate ignition");h.succeed();
+    }
     @GameTest(template="empty") public static void fiveEmotionsCompeteAnimalsAreWeakerAndBrassSuppresses(GameTestHelper h){
         var source=caster(h);var p=caster(h);p.setPos(source.position());var cow=mob(h,EntityType.COW,source.position());
         h.assertTrue(EmotionService.apply(source,p,"a:zinc",Emotion.ANGER),"Zinc can riot anger");

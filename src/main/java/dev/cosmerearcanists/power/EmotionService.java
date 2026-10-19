@@ -36,8 +36,8 @@ public final class EmotionService {
     private record Influence(ServerPlayer source,String power,Emotion emotion,double amount,long expires) { }
     private static final class State {
         final LivingEntity target;final double[] baseline={.20,.20,.30,.20,.20},levels=new double[5];
-        final Map<Key,Influence> influences=new HashMap<>();Emotion dominant;ServerPlayer source;double intensity;long burstUntil,burstCooldown;
-        State(LivingEntity target){this.target=target;if(target instanceof Mob mob && mob.getTarget()!=null)baseline[0]=.6;}
+        final Map<Key,Influence> influences=new HashMap<>();Emotion dominant;ServerPlayer source;double intensity;long burstUntil,burstCooldown;boolean inducedLove;
+        State(LivingEntity target){this.target=target;if(target instanceof Mob mob && (mob.getTarget()!=null || mob instanceof net.minecraft.world.entity.monster.Enemy))baseline[0]=.6;if(target instanceof Animal animal && animal.isInLove())baseline[Emotion.LOVE.ordinal()]=.6;}
     }
     private static ResourceLocation id(String path){return ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,path);}
     public static boolean configured(String power){return Emotion.power(power) && EmotionConfig.ENABLED.get() && (power.equals("a:zinc")?EmotionConfig.ZINC.get():EmotionConfig.BRASS.get()) && PowerConfig.ENABLED.get() && ServerConfig.ALLOMANCY.enabled().get() && ServerConfig.ALLOMANCY.metals().get(power.equals("a:zinc")?Metal.ZINC:Metal.BRASS).get();}
@@ -79,7 +79,7 @@ public final class EmotionService {
         if(!EmotionalInfluenceEvent.allowed(target,amount))return false;
         var state=STATES.get(target.getUUID());if(state==null){if(STATES.size()>=EmotionConfig.AFFECTED.get())return false;state=new State(target);STATES.put(target.getUUID(),state);}
         state.influences.put(new Key(source.getUUID(),power,emotion),new Influence(source,power,emotion,(power.equals("a:zinc")?1:-1)*amount,target.level().getGameTime()+EmotionConfig.DURATION.get()));
-        refresh(state);return true;
+        refresh(state);if(target instanceof Mob mob && angerSuppressed(state))pacify(mob);return true;
     }
     private static void refresh(State state) {
         long now=state.target.level().getGameTime();
@@ -97,9 +97,23 @@ public final class EmotionService {
         int n=state.dominant==null?0:state.dominant.ordinal();state.source=owners[n]==null?fallback:owners[n];state.intensity=state.dominant==null?0:Math.max(0,state.levels[n]-state.baseline[n]);
         if(state.dominant==Emotion.FEAR && old!=Emotion.FEAR && now>=state.burstCooldown){state.burstUntil=now+EmotionConfig.FEAR_BURST.get();state.burstCooldown=now+EmotionConfig.FEAR_COOLDOWN.get();}
         if(state.dominant!=Emotion.FEAR)state.burstUntil=0;
+        if(state.target instanceof Animal animal && state.dominant!=Emotion.LOVE && (state.inducedLove || !state.influences.isEmpty() && state.levels[Emotion.LOVE.ordinal()]<state.baseline[Emotion.LOVE.ordinal()]-1e-6)) {
+            animal.resetLove();state.inducedLove=false;
+        }
     }
     public static Emotion dominant(LivingEntity target){var s=STATES.get(target.getUUID());if(s==null)return null;refresh(s);return s.dominant;}
     public static double intensity(LivingEntity target){var s=STATES.get(target.getUUID());if(s==null)return 0;refresh(s);return s.intensity;}
+    /** Soothing natural anger is behavioral suppression, not a source-only truce. */
+    private static boolean angerSuppressed(State s){return s.dominant!=Emotion.ANGER && !s.influences.isEmpty() && s.levels[Emotion.ANGER.ordinal()]<s.baseline[Emotion.ANGER.ordinal()]-1e-6;}
+    public static boolean pacified(LivingEntity target){var s=STATES.get(target.getUUID());if(s==null)return false;refresh(s);return angerSuppressed(s);}
+    private static boolean inducedAggression(State s){return s.dominant==Emotion.ANGER && (s.intensity>1e-6 || s.baseline[Emotion.ANGER.ordinal()]<.6-1e-6);}
+    public static boolean forcesBehavior(Mob mob){var s=STATES.get(mob.getUUID());if(s==null)return false;refresh(s);return inducedAggression(s) || s.intensity>1e-6 && (s.dominant==Emotion.FEAR||s.dominant==Emotion.COMPLIANCE);}
+    private static void pacify(Mob mob){
+        boolean attacking=mob.getTarget()!=null || mob.getBrain().hasMemoryValue(MemoryModuleType.ATTACK_TARGET);
+        mob.setTarget(null);mob.getBrain().eraseMemory(MemoryModuleType.ATTACK_TARGET);
+        if(attacking){mob.getNavigation().stop();mob.getBrain().eraseMemory(MemoryModuleType.WALK_TARGET);}
+        if(mob instanceof net.minecraft.world.entity.monster.Creeper creeper && !creeper.isIgnited())creeper.setSwellDir(-1);
+    }
     public static boolean trusts(LivingEntity target,LivingEntity other){var s=STATES.get(target.getUUID());return s!=null && dominant(target)==Emotion.TRUST && s.source==other;}
     public static boolean calmPanic(Mob target){var s=STATES.get(target.getUUID());return s!=null && dominant(target)==Emotion.TRUST && !target.isOnFire();}
     private static void modifier(ServerPlayer p,net.minecraft.core.Holder<Attribute> attribute,String name,double amount){var a=p.getAttribute(attribute);if(a==null)return;var key=id("emotion_"+name);var old=a.getModifier(key);if(old!=null && old.amount()==amount)return;a.removeModifier(key);if(amount!=0)a.addTransientModifier(new AttributeModifier(key,amount,AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));}
@@ -121,8 +135,10 @@ public final class EmotionService {
         if(mob.level().hasChunksAt(pos.offset(-padding,-8,-padding),pos.offset(padding,8,padding)) && mob.level().hasChunkAt(BlockPos.containing(target)))mob.getNavigation().moveTo(target.x,target.y,target.z,speed);
     }
     public static void behave(Mob mob) {
-        var state=STATES.get(mob.getUUID());if(state==null)return;refresh(state);var source=state.source;var emotion=state.dominant;if(source==null||emotion==null||mob.isNoAi())return;
-        if(emotion==Emotion.ANGER) {
+        var state=STATES.get(mob.getUUID());if(state==null)return;refresh(state);var source=state.source;var emotion=state.dominant;if(mob.isNoAi())return;
+        if(angerSuppressed(state))pacify(mob);
+        if(source==null||emotion==null)return;
+        if(inducedAggression(state)) {
             var candidates=mob.level().getEntitiesOfClass(Mob.class,mob.getBoundingBox().inflate(8),e->e!=mob && e.isAlive() && !e.isAlliedTo(mob));
             candidates.sort(Comparator.comparingDouble(e->e.distanceToSqr(mob)));if(candidates.isEmpty())return;var target=candidates.getFirst();mob.setTarget(target);mob.getLookControl().setLookAt(target,30,30);
             if(mob.distanceToSqr(target)>4)navigate(mob,target.position(),1);else if(mob.tickCount%20==0){if(mob.getAttribute(Attributes.ATTACK_DAMAGE)!=null)mob.doHurtTarget(target);else target.hurt(mob.damageSources().mobAttack(mob),(float)(2*(mob instanceof Animal?EmotionConfig.ANIMAL_FACTOR.get():1)));}
@@ -132,14 +148,14 @@ public final class EmotionService {
         else if(emotion==Emotion.TRUST) {
             if(mob.getTarget()==source)mob.setTarget(null);
             if(mob instanceof Villager){mob.getBrain().eraseMemory(MemoryModuleType.HURT_BY);mob.getBrain().eraseMemory(MemoryModuleType.HURT_BY_ENTITY);mob.getBrain().eraseMemory(MemoryModuleType.AVOID_TARGET);}
-        } else if(emotion==Emotion.LOVE && EmotionConfig.BREEDING.get() && mob instanceof Animal animal && !animal.isBaby() && animal.getAge()==0 && state.intensity>=.25 && !animal.isInLove())animal.setInLove(source);
+        } else if(emotion==Emotion.LOVE && EmotionConfig.BREEDING.get() && mob instanceof Animal animal && !animal.isBaby() && animal.getAge()==0 && state.intensity>=.25 && !animal.isInLove()){animal.setInLove(source);state.inducedLove=true;}
         else if(emotion==Emotion.LOVE && EmotionConfig.BREEDING.get() && mob instanceof Villager villager && villager.canBreed()) {
             var mates=mob.level().getEntitiesOfClass(Villager.class,mob.getBoundingBox().inflate(8),v->v!=villager && v.canBreed() && dominant(v)==Emotion.LOVE);
             if(!mates.isEmpty()){villager.getBrain().setMemory(MemoryModuleType.BREED_TARGET,mates.getFirst());villager.getBrain().setMemory(MemoryModuleType.INTERACTION_TARGET,mates.getFirst());}
         }
     }
     public static void discount(Villager villager,Player customer){var s=STATES.get(villager.getUUID());if(!EmotionConfig.TRADES.get()||!trusts(villager,customer)||s==null)return;double fraction=EmotionMath.capped(Math.max(s.intensity,.1),EmotionConfig.DISCOUNT.get(),.5);for(var offer:villager.getOffers())offer.addToSpecialPriceDiff(-(int)Math.floor(offer.getBaseCostA().getCount()*fraction));}
-    @SubscribeEvent public void targeting(LivingChangeTargetEvent event){var s=STATES.get(event.getEntity().getUUID());if(s==null)return;refresh(s);if(s.dominant==Emotion.FEAR||s.dominant==Emotion.COMPLIANCE || (s.dominant==Emotion.TRUST||s.dominant==Emotion.LOVE) && event.getNewAboutToBeSetTarget()==s.source)event.setNewAboutToBeSetTarget(null);}
+    @SubscribeEvent public void targeting(LivingChangeTargetEvent event){var s=STATES.get(event.getEntity().getUUID());if(s==null)return;refresh(s);if(angerSuppressed(s) || s.dominant==Emotion.FEAR||s.dominant==Emotion.COMPLIANCE || (s.dominant==Emotion.TRUST||s.dominant==Emotion.LOVE) && event.getNewAboutToBeSetTarget()==s.source)event.setNewAboutToBeSetTarget(null);}
     @SubscribeEvent(priority=EventPriority.HIGH) public void loveDamage(LivingDamageEvent.Pre event){if(event.getSource().getEntity() instanceof ServerPlayer attacker)event.setNewDamage((float)(event.getNewDamage()*(1-loveReduction(attacker,event.getEntity()))));}
     @SubscribeEvent public void join(EntityJoinLevelEvent event){if(!event.getLevel().isClientSide && event.getEntity() instanceof Mob mob && GOALS.add(mob))((dev.cosmerearcanists.mixin.MobGoalsAccessor)mob).cosmerearcanists$goals().addGoal(0,new EmotionalGoal(mob));}
     @SubscribeEvent public void tick(ServerTickEvent.Post event) {

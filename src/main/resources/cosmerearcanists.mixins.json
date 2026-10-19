@@ -12,7 +12,8 @@
     "MobGoalsAccessor",
     "EmotionAvoidGoalMixin",
     "EmotionPanicGoalMixin",
-    "EmotionVillagerMixin"
+    "EmotionVillagerMixin",
+    "EmotionSwellGoalMixin"
   ],
   "injectors": {
     "defaultRequire": 1

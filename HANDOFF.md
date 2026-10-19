@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-19 UTC**. Current mod version: **0.16.0-alpha**.
+Last updated: **2026-10-19 UTC**. Current mod version: **0.16.1-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -9,11 +9,11 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
-- User specified emotional Allomancy: most mobs, weaker animals;5 emotions anger/fear/trust/love/compliance; highest emotion controls behavior. Explicit player combat/speed, villager prices, breeding and weak compliance effects supersede assistant's earlier tentative design.
-- Implemented the five-mode influence engine, aimed/Alt-area held activation, ability+scroll mode selection, persistent mode NBT, dominant-state mechanics, mob goal/avoidance/panic and villager trade hooks, transient player modifiers, source-specific love defense and weak additive compliance pull. Bronze sees both powers; copper gateway and aluminum headwear protect.
-- Version0.16.0-alpha/protocol10. Existing33 power attributes and filing/vial IDs unchanged. Added SERVER emotions config and client status HUD switch, entity/item datapack tags. No migration needed.
-- Local build attempt blocked before compilation by unavailable Gradle download. Java21 GitHub Actions passed build,all46 JUnit tests,all53 required server GameTests and artifact upload on c9ef1f32bba0d377b6d48e2d6cc88ef745beeef7 in run39309714199. Added3 unit methods and6 server tests.
-- Next: manual UI, mob pathfinding/trading and multiplayer balance checks.
+- User clarified inverse emotions: brass can soothe native hostility, and changing the strongest emotion can make hostile mobs passive or passive mobs aggressive.
+- Version 0.16.1-alpha/protocol10: natural hostile anger is seeded even before acquiring a target. Sufficient anger suppression clears current combat targets and blocks reacquisition against any victim. Weak Soothing that leaves anger dominant preserves native AI rather than forcing infighting. Suppressing passive trust can expose anger. Losing love clears breeding readiness. Calmed creepers stop autonomous swelling; deliberate ignition remains effective.
+- Added three server regressions for weak/strong Soothing, arbitrary victims, expiry/recovery, inverse trust/love, competing Rioting and creeper swelling. No config, network or save migration changes.
+- Validation pending Java21 GitHub Actions. Prior 0.16.0 gameplay passed46 unit/53 server tests in run39309714199. Local Gradle bootstrap remains unavailable; installed Java is17.
+- Next: finish automated verification, then manual UI, mob pathfinding/trading and multiplayer balance checks.
 
 ## Vision and accepted constraints
 

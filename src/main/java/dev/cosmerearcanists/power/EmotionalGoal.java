@@ -8,7 +8,7 @@ import net.minecraft.world.entity.ai.goal.Goal;
 public final class EmotionalGoal extends Goal {
     private final Mob mob;
     public EmotionalGoal(Mob mob){this.mob=mob;setFlags(EnumSet.of(Flag.MOVE,Flag.LOOK,Flag.TARGET));}
-    @Override public boolean canUse(){var e=EmotionService.dominant(mob);return e==Emotion.ANGER||e==Emotion.FEAR||e==Emotion.COMPLIANCE;}
+    @Override public boolean canUse(){return EmotionService.forcesBehavior(mob);}
     @Override public boolean canContinueToUse(){return canUse();}
     @Override public void tick(){EmotionService.behave(mob);}
     @Override public void stop(){mob.getNavigation().stop();mob.setTarget(null);}
