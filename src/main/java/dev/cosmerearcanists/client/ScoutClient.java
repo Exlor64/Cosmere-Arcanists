@@ -22,8 +22,10 @@ public final class ScoutClient {
         double x=state.position().x,y=state.position().y+mc.player.getEyeHeight()-camera.getEyeHeight(),z=state.position().z;
         camera.xo=fresh?x:camera.getX();camera.yo=fresh?y:camera.getY();camera.zo=fresh?z:camera.getZ();
         camera.setPos(x,y,z);camera.setYRot(mc.player.getYRot());camera.setXRot(mc.player.getXRot());camera.yRotO=mc.player.yRotO;camera.xRotO=mc.player.xRotO;
+        net.neoforged.neoforge.network.PacketDistributor.sendToServer(new dev.cosmerearcanists.power.ScoutLook(mc.player.getYRot(),mc.player.getXRot()));
         mc.player.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);if(mc.getCameraEntity()!=camera)mc.setCameraEntity(camera);
     }
+    @SubscribeEvent public void angles(ViewportEvent.ComputeCameraAngles e){if(active()){var p=Minecraft.getInstance().player;e.setYaw(p.getYRot());e.setPitch(p.getXRot());}}
     @SubscribeEvent public void interaction(InputEvent.InteractionKeyMappingTriggered e){if(active())e.setCanceled(true);}
     @SubscribeEvent public void render(RenderLevelStageEvent e){
         var mc=Minecraft.getInstance();if(!active() || e.getStage()!=RenderLevelStageEvent.Stage.AFTER_PARTICLES || mc.options.getCameraType().isFirstPerson())return;

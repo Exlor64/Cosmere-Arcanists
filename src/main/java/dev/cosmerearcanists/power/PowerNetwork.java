@@ -99,6 +99,7 @@ public final class PowerNetwork {
         r.playToClient(PewterStatus.TYPE, PewterStatus.CODEC, (packet, context) -> context.enqueueWork(() -> pewterReceiver.accept(packet)));
         r.playToClient(Impulse.TYPE, Impulse.CODEC, (packet, context) -> context.enqueueWork(() -> impulseReceiver.accept(packet)));
         r.playToClient(Snapshot.TYPE, Snapshot.CODEC, (packet, context) -> context.enqueueWork(() -> clientReceiver.accept(packet)));
+        r.playToServer(ScoutLook.TYPE,ScoutLook.CODEC,(packet,context)->context.enqueueWork(()->{if(context.player() instanceof ServerPlayer p)ScoutService.look(p,packet);}));
         r.playToServer(Control.TYPE, Control.CODEC, (packet, context) -> context.enqueueWork(() -> {
             if (context.player() instanceof ServerPlayer player) PowerService.control(player, packet);
         }));

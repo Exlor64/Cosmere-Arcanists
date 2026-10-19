@@ -12,11 +12,12 @@ import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 /** A stationary, vulnerable real body and a collision-constrained private future viewpoint. */
 public final class ScoutService {
     private static final class Scout {
-        final Vec3 anchor;final String dimension;Vec3 position;double vertical;boolean grounded=true;
+        final Vec3 anchor;final String dimension;Vec3 position;double vertical;boolean grounded=true;long lastLook=Long.MIN_VALUE;
         Scout(ServerPlayer p){anchor=position=p.position();dimension=p.level().dimension().location().toString();}
     }
     private static final Map<UUID,Scout> SCOUTS=new HashMap<>();
     private static final Set<UUID> INTERRUPTED=new HashSet<>();
+    public static void look(ServerPlayer p,ScoutLook look){var s=SCOUTS.get(p.getUUID());if(s==null || s.lastLook==p.level().getGameTime() || !Float.isFinite(look.yaw()) || !Float.isFinite(look.pitch()))return;s.lastLook=p.level().getGameTime();p.setYRot(net.minecraft.util.Mth.wrapDegrees(look.yaw()));p.setXRot(Math.clamp(look.pitch(),-90,90));}
     public static boolean active(ServerPlayer p){return SCOUTS.containsKey(p.getUUID());}
     public static Vec3 position(ServerPlayer p){var s=SCOUTS.get(p.getUUID());return s==null?p.position():s.position;}
     public static double radius(ServerPlayer p){return Math.min(TemporalConfig.SCOUT_CAP.get(),TemporalConfig.SCOUT_RANGE.get()*Math.sqrt(TemporalService.sightStrength(p,"electrum")/Math.max(.0001,PowerConfig.FLARE_STRENGTH.get())));}
