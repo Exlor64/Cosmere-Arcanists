@@ -824,7 +824,7 @@ public final class PowerGameTests {
         helper.assertTrue(!PowerData.available(original).contains("a:steel"), "Origin metadata must not restore a zero attribute");
         PowerData.clonePlayer(original, clone);
         helper.assertTrue(!PowerData.available(clone).contains("a:steel"), "Revocation must survive respawn");
-        helper.assertTrue(PowerAttributes.keys().size() == 32, "All Metallic Art attributes must be registered");
+        helper.assertTrue(PowerAttributes.keys().size() == 33, "All Metallic Art attributes must be registered");
         helper.succeed();
     }
     @GameTest(template = "empty")

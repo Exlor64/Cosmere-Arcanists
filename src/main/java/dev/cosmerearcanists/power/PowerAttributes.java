@@ -26,6 +26,8 @@ public final class PowerAttributes {
             POWERS.put(art + ":" + metal.id(), REGISTER.register(name,
                 () -> new RangedAttribute("attribute.cosmerearcanists." + name, 0, 0, 1024).setSyncable(true)));
         }
+        POWERS.put("a:atium", REGISTER.register("allomancy_atium",
+            () -> new RangedAttribute("attribute.cosmerearcanists.allomancy_atium",0,0,1024).setSyncable(true)));
     }
     public static void register(IEventBus bus) {
         REGISTER.register(bus);

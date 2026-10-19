@@ -11,7 +11,7 @@ For current project status, accepted design decisions, verification and continua
 - Data survives death and relogging. Config changes do not reroll saved origins.
 - Hemalurgy is acquired rather than a birth power; its switch reserves the future feature gate.
 
-**Iron/steel/tin/pewter Allomancy and the power selector are implemented. Other magic effects, custom dimensions, planetary travel, and the origin selection screen remain in development.** Scadrial will be Era 2 with an Overworld-like environment. The ancestry mode currently uses only a Scadrian-human probability multiplier; family inheritance and additional races are future work.
+**Iron/steel/tin/pewter/electrum/atium Allomancy and the power selector are implemented. Other magic effects, custom dimensions, planetary travel, and the origin selection screen remain in development.** Scadrial will be Era 2 with an Overworld-like environment. The ancestry mode currently uses only a Scadrian-human probability multiplier; family inheritance and additional races are future work.
 
 ## Build and run
 Install JDK 21 and import the root Gradle project into IntelliJ.
@@ -50,7 +50,7 @@ Ores require an iron-tier pickaxe, support Silk Touch/Fortune, and smelt/blast i
 The Cosmere Metals creative tab contains the new materials. Textures are initial distinct pixel palettes. `cosmerearcanists:metals` and `cosmerearcanists:aluminum_containing` item tags seed iron/steel detection. Duralumin is included in the aluminum exclusion tag.
 
 ## Iron/steel and power controls (0.3.0)
-Iron, steel, tin and pewter Allomantic effects are implemented. Other assigned powers appear in the selector with **effects pending**; Feruchemical state levels are controls only, with no storage/tapping mechanics yet.
+Iron, steel, tin, pewter, electrum and atium-alloy Allomantic effects are implemented. Other assigned powers appear in the selector with **effects pending**; Feruchemical state levels are controls only, with no storage/tapping mechanics yet.
 
 Default keys (all rebindable):
 - Hold **R**, scroll to a power, then release R to select it. Tap R to cycle that power's state. Left-click while the menu is open also cycles the highlighted power's state.
@@ -70,7 +70,7 @@ Operator testing commands:
 - `/cosmere power grant <player> a:steel`
 - `/cosmere power grant <player> f:iron` (selector test only)
 - `/cosmere power revoke <player> <power>` sets the power’s base attribute to zero, including natural origin powers.
-- `/cosmere power refill <player>` fills iron, steel, tin and pewter reserves.
+- `/cosmere power refill <player>` fills iron, steel, tin, pewter, electrum and atium reserves.
 
 `./gradlew build` runs tests for recursive metal/aluminum classification, cyclic recipes, power states, and mass/distance/flaring force rules. CI also runs the GameTest server to validate runtime recipe detection and player data cloning. Multiplayer input, blue-line appearance, and hands-on movement still require client playtesting.
 
@@ -82,7 +82,7 @@ All 16 Allomantic and 16 Feruchemical powers have player attributes named
 `cosmerearcanists:allomancy_<metal>` and `cosmerearcanists:feruchemy_<metal>`.
 Zero means no power; 1 is normal strength. Positive effective values grant access,
 and iron/steel force scales with the effective value (including attribute modifiers).
-Powers other than iron, steel, tin and pewter still have selection/state support only. Config switches still gate access.
+Powers other than iron, steel, tin, pewter, electrum and atium still have selection/state support only. Config switches still gate access.
 
 Operator examples:
 ```mcfunction
@@ -489,7 +489,58 @@ blocks and saved vial contents remain registered. Common ingot/nugget/storage
 block tags support recipe compatibility. Current visuals reuse vanilla iron
 for atium and gold for lerasium as temporary assets.
 
-This adds the materials and conversions; natural acquisition/world generation
-and god-metal power effects are future work. The existing 32 ordinary Metallic
-Arts power attributes are unchanged. Network protocol remains 7; update both jars
-for the new registered blocks/items.
+Natural acquisition/world generation and lerasium powers remain future work.
+As of 0.14.0, existing atium IDs explicitly represent the atium–electrum alloy;
+no pure-atium recipe, material, or effect is implied. No alloy ratio is invented.
+The existing 32 ordinary Metallic Arts attributes remain; alloy Allomancy adds
+one separate attribute. Current network protocol is 8; update both jars.
+
+
+### Atium-alloy and electrum future sight (0.14.0)
+
+Both work passively while burning, even when another power is selected. Atium
+means the familiar **atium–electrum alloy**, including existing nuggets, ingots,
+blocks, filings and reserve IDs. Old stacks/vials need no migration. There is
+no pure-atium power or new alloy recipe; natural acquisition remains pending.
+
+- **Atium:** silver-blue future silhouettes and paths for visible living entities,
+  moving projectiles and dropped items. Threats are prioritized within the target
+  budget. Likely projectile hits and aggressive mobs approaching melee range
+  produce red warnings with ahead/behind/left/right labels, including threats
+  outside the camera view. This is a mental aid, not automatic dodging or buffs.
+- **Electrum:** gold silhouettes of your own projected movement, red for likely
+  falls, lava/fire/contact hazards, projectile hits and possible nearby mob attacks.
+  The attacker's identity/path is never sent for electrum alone. Hold its assigned
+  G/H activation key while grounded to compare a hypothetical normal jump path.
+  This previews an option without moving or jumping for you.
+- An active atium or electrum burner causes another atium user's shadow of them
+  to split into divergent purple possibilities. No precise central path or reliable
+  hit warning is sent for that target. Possessing a dormant power is insufficient.
+
+Use `/cosmere power grant @s a:atium` or `a:electrum`, then
+`/cosmere power refill @s` and select a burn state. Atium uses persistent attribute
+`cosmerearcanists:allomancy_atium`; electrum uses its existing attribute. The alloy
+is deliberately outside the ordinary sixteen-metal origin/Feruchemy lists and is
+currently granted by operators. No natural-origin probability silently changes.
+
+Default horizon at attribute 1: Low 15, Burning 20, Flaring 25 ticks. Attribute
+strength extends this modestly, capped at 40 ticks (two seconds). Baseline atium
+range is 24 blocks, capped at 48. Updates are every 2 ticks, at most 12 targets
+and 6 samples per shadow. Normal burn drains 4 atium or 1 electrum reserve/sec,
+modified by shared burn consumption settings. Filings restore 50 as usual.
+
+`cosmerearcanists-temporal-server.toml` controls each power, shadows, warnings,
+interference, jump previews, projectile/attack forecasts, horizons, range, fuel,
+update cadence and geometry budgets. Disabling preserves attributes/reserves.
+Existing global/art/electrum gates apply; atium's per-metal gate is in this file.
+Client `futureSight` controls paths, model silhouettes, warning HUD and opacity.
+
+Forecasts extrapolate current movement and physics against loaded block collision
+shapes. They cannot know future player inputs or fully simulate mob AI. Mob intent
+warnings mean a possible attack, not a guaranteed scheduled strike. Jump previews
+assume a normal .42 vertical launch, not every potion/mod/terrain combination.
+No forced chunks, wall/invisibility detection, world slow-motion, extra damage,
+or invulnerability. Models use the entity's current pose at future positions;
+box outlines remain available if model rendering is disabled. Modded physics,
+fluids, mounts and complex AI can diverge. Hands-on client/PvP rendering and
+balance playtesting remain necessary. Both sides must update to protocol **8**.

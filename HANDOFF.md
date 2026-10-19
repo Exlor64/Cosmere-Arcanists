@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-19 UTC**. Current mod version: **0.13.0-alpha**.
+Last updated: **2026-10-19 UTC**. Current mod version: **0.14.0-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -9,12 +9,11 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
-- User requested atium and lerasium nuggets, ingots and blocks.
-- Added six registered forms, two placeable storage blocks/self-drop loot tables, reversible 9:1 conversions, creative entries/localization/models, metal/common tags, pickaxe/iron-tool tags and configurable conversion conditions.
-- Integrated both into filing/mixed vials (21 supported metals), independent fifty-per-filing reserves and iron/steel detection/mass. Storage blocks explicitly retain 81 nugget units even when conversion recipes are disabled. No new power attributes/effects or worldgen/acquisition were requested/added.
-- God-metal conversion recipes have global and per-metal common-config gates; disabling preserves registered content and saved data. Temporary assets reuse iron (atium) and gold (lerasium). Protocol remains7, but both sides need registry updates.
-- Build, 38 JUnit methods, all 37 server GameTests and artifact upload passed on the gameplay commit linked below. New tests cover god-metal conversions, filing/vials, block loot and tool tags.
-- Next: client-check block placement/mining and temporary item/block visuals; continue god-metal effects/acquisition design only when requested.
+- User authorized atium/electrum implementation with additional useful lore-consistent effects and confirmed atium is the atium-electrum alloy.
+- Implemented bounded passive future forecasts, client silhouettes/paths and injury warnings. Atium sees visible others/projectiles/items; electrum sees only self consequences and held jump preview. Future-sight burners split opposing atium shadows. Details below.
+- Existing atium material/filing/reserve IDs now explicitly mean the alloy. No pure-metal recipe or speculative canonical alloy ratio. Allomancy adds a separate persistent atium attribute (33 total); sixteen-metal natural origins and Feruchemy remain unchanged. Protocol8 requires matching jars.
+- Local build attempt blocked before compilation by unavailable Gradle download network; host Java17 also differs from required Java21. Validation will run in existing GitHub Actions Java21 build/GameTest workflow; current session result pending. Previous 0.13.0 evidence remains below.
+- Next: finish automated checks, then manual client/multiplayer visual and balance checks. No claim of guaranteed prediction of future player decisions.
 
 ## Vision and accepted constraints
 
@@ -28,13 +27,13 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 ## Implemented scope
 
 - Command-based origins for Scadrial and separate Overworld; human race only. Assignment probabilities, Twinborn, rerolls and per-art/per-metal gates are configurable.
-- Atium/lerasium nuggets, ingots and storage blocks with reversible conversions and filing/vial support. God-metal powers/acquisition remain pending.
+- Atium/lerasium nuggets, ingots and storage blocks with reversible conversions and filing/vial support. Atium now means the atium-electrum alloy with effects described below; lerasium powers and acquisition remain pending.
 - Metal ores, processing, ingots/nuggets and alloys; ore generation, creative tab, and recipe/generation gates.
 - Spike crossbow with 19 metal spike variants, embedded anchors, reusable steel ball-and-rope, and a charged/swinging/recallable grappling hook.
 - Allomantic **iron and steel effects**, detection lines, aimed push/pull, movement assistance, metal reserves/vials, fall braking, and steel-thrown projectiles.
 - Allomantic **tin effects**: passive night vision, held zoom, sound-triggered mesh/surface wireframe echoes with per-block obstruction, fading and audibility/geometry budgets.
 - Allomantic **pewter effects**: passive burn, speed/melee/endurance, capped mitigation, slow healing, deferred injury, rest/saturation recovery, gray-heart HUD and fuel vial.
-- 16 Allomantic plus 16 Feruchemical attributes and selector entries. Other Allomantic effects besides iron/steel/tin/pewter are pending. Feruchemy has selector states only, no storing/tapping effects.
+- 16 Allomantic plus 16 Feruchemical attributes and selector entries. One additional atium-alloy attribute plus electrum effects are implemented; other Allomantic effects besides iron/steel/tin/pewter/electrum/atium are pending. Feruchemy has selector states only, no storing/tapping effects.
 - **Not implemented:** Scadrial dimension, other planets/dimensions, Cognitive Realm/perpendicularities/travel, origin GUI, expanded races/ancestry, other Allomancy effects, Feruchemy mechanics/metalminds, Hemalurgy power stealing/charging, Compounding.
 
 ## Metallurgy and detection decisions
@@ -55,7 +54,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - `PowerData.KEY = cosmerearcanists_powers`: states, reserves, primary `selected` and `secondary` assignments, migration markers. Origin metadata remains under `cosmerearcanists_origin` (schema 1).
 - `burn_levels_schema = 1` migrates old active states 1/2 to current 2/3 once; Off and Feruchemy states retain their meanings.
 - `/attribute @s cosmerearcanists:allomancy_steel base set 1` grants baseline steel. Replace `steel` with `iron` as needed; 0 removes the base power.
-- `/cosmere power grant <player> a:steel` sets at least baseline strength. `revoke` sets the base to zero, including a natural origin power; a positive modifier can still grant access. `/cosmere power refill <player>` refills iron/steel/tin/pewter reserves.
+- `/cosmere power grant <player> a:steel` sets at least baseline strength. `revoke` sets the base to zero, including a natural origin power; a positive modifier can still grant access. `/cosmere power refill <player>` refills iron/steel/tin/pewter/electrum/atium reserves.
 - Grant/revoke use `ResourceLocationArgument`, accepting IDs such as `a:steel` and `f:iron` without the old trailing-data parser error.
 - `/cosmere origin <scadrial|overworld>` in random/ancestry modes; CHOICE adds `<allomancy metal or none> <feruchemy metal or none>`. `/cosmere reset <player>` clears origin, powers data, and power attributes/modifiers. Rerolls replace previous origin base powers while retaining other attribute powers.
 
@@ -209,12 +208,14 @@ Pewter test-fixture details: use out_of_world damage to bypass ServerPlayer spaw
 - Models reference vanilla iron and gold textures as provisional visuals; no bespoke textures yet. Tests cover all four conversion directions, registry/placement/tool tags/loot, exact filing capacity, detection/mass, disabled conversion predicate/content retention and mixed vial reserves without accidental power grants.
 
 
-## Atium/electrum design discussion (2026-10-19; proposals only)
+## Atium-alloy/electrum implementation (0.14.0)
 
-- User asked how these powers could work; no implementation requested or accepted yet. Version remains 0.13.0-alpha; no gameplay, config, protocol, or save changes. Existing verification remains applicable.
-- Proposed shared bounded server forecasting: projectile physics/collisions, mob movement and available attack intent; player movement extrapolation cannot predict future player input. Predictions should fade/change or branch with uncertainty, never claim guaranteed foresight.
-- Proposed atium: future silhouettes of other entities/projectiles, probable attack/hit warnings, short horizon scaling with burn state and persistent attributes. No global time slowing or automatic invulnerability.
-- Proposed electrum: own future silhouettes along projected movement, warnings for foreseeable falls, hazards and incoming collisions; useful independently and potentially splits an atium observer's prediction when both use future sight. Exact combat-counter mechanics remain undecided.
-- Proposed config: independent toggles for silhouettes/warnings/counters, horizons, range, target and sampling budgets, reserve drain and scaling. Suggested build order: own-trajectory/projectile forecasting for electrum, then expand shared system to atium. All values and mechanics are tentative.
-- Lore naming decision pending: familiar Mistborn atium future shadows are associated with atium-electrum alloy; do not silently assign that behavior to pure god metal or invent an accepted alloy recipe.
-- Documentation-only chat update; validated with git diff --check. No new runtime tests required.
+- User accepted the future-shadow approach and atium-electrum alloy identity. Existing atium IDs/reserves are the alloy; no renamed registry IDs, pure atium content, recipe ratio or migration. Display names state alloy identity. Lerasium remains material-only.
+- `PowerAttributes` adds only a:atium / allomancy_atium. Ordinary Metal enum remains sixteen; origins and Feruchemy are unchanged. Selector/grant/revoke/refill support alloy; snapshot decoder now allows up to64 entries, with33 registered. Network protocol8 adds private `TemporalPacket`, <=52 shadows, <=8 samples, bounded lifetime and finite values.
+- `TemporalConfig` SERVER cosmerearcanists-temporal-server.toml: enabled/atium/electrum, futureShadows, injuryWarnings, futureSightInterference, heldElectrumJumpPreview, projectileForecasts, mobAttackIntentWarnings; per-metal drain, range/cap, horizon/cap, update interval, target/sample budgets. Existing global/art/electrum gates honored. Disabled content preserves attribute/reserves. Separate atium gate intentionally outside ordinary origins.
+- `TemporalService` passively drains per tick independent of selected slot. Baseline drain4 atium/1 electrum per second times burn drain multiplier. Stop/death/depletion/revocation clears forecasts. Existing filing/vial50-point restoration works unchanged. FutureSight positive attribute times low/burn/flare strengths; horizon=base20*(1+.25*log2(strength)), min4/max40 ticks. Baseline .5/1/2 =>15/20/25 ticks. Normal range24, cap48; 2tick updates,12 targets,6 samples default. Power scaling intentionally modest for short-term foresight.
+- Maintains observed server-player displacement only for forecasting; never changes actual motion or iron/steel impulse handling. At most60 trace ticks with bounded <=216 collision voxels per step and existing loaded chunks only. Axis-clipped block-shape trajectories; no world/AI/entity mutation, chunk loading or slowed world. Projectile gravity/drag approximations, fall accumulation and sampled lava/fire/magma/cactus/berry/wither rose/powder snow risks. Physics and future decisions can diverge; not an exact simulation.
+- Atium silver-blue shadows for visible living entities, moving projectiles, dropped items; prioritizes projectiles then hostile mobs. Potential hit/attack warnings and directional HUD, including outside current camera view. Line-of-sight/invisibility gates prevent hidden-target scanning. Electrum sends own gold path only, with potential hazard/fall/hit/attack consequences. Hold assigned G/H while grounded previews a hypothetical .42 jump; no forced movement. Extra model rendering uses current pose, not predicted animation. Boxes/paths remain fallback.
+- Active atium/electrum targets replace a reliable atium line with two divergent purple branches, without central exact path or reliable hit warning. Dormant/no-fuel/disabled powers do not interfere. Player future input remains unknowable; branching is a gameplay representation. No invulnerability, free damage, automatic dodge or blanket resistance.
+- `TemporalClient` dimension/lifetime/death/disconnect clears forecasts; client futureSight shadows/models/warnings/opacity switches, depth-tested paths/flat translucent models and red potential-injury samples. Renderer restores shader tint in finally. Third-party renderers and actual first-person/PvP appearance require manual playtesting.
+- Added2 JUnit methods for capped horizon and relative projectile sweeps;5 runtime GameTests for attribute/fuel/config/clone, wall/fall/lava trajectories, private self hit warnings, interference/LOS/invisibility and codec/33-power bounds. Verification pending CI; do not mark passed yet.

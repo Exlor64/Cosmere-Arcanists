@@ -21,6 +21,8 @@ public final class PowerData {
         return tag;
     }
     private static boolean enabled(String power) {
+        if (power.equals("a:atium")) return ServerConfig.ALLOMANCY.enabled().get() && TemporalConfig.ENABLED.get() && TemporalConfig.ATIUM.get();
+        if (power.equals("a:electrum") && (!TemporalConfig.ENABLED.get() || !TemporalConfig.ELECTRUM.get())) return false;
         if (power.length() < 3) return false;
         var art = power.startsWith("a:") ? ServerConfig.ALLOMANCY : ServerConfig.FERUCHEMY;
         try { return art.enabled().get() && art.metals().get(Metal.valueOf(power.substring(2).toUpperCase(Locale.ROOT))).get(); }

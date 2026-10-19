@@ -22,7 +22,7 @@ public final class PowerNetwork {
         public static final StreamCodec<RegistryFriendlyByteBuf, Snapshot> CODEC = new StreamCodec<>() {
             public Snapshot decode(RegistryFriendlyByteBuf b) {
                 String dimension = b.readUtf(128), selected = b.readUtf(32), secondary=b.readUtf(32); int levels = b.readVarInt();
-                int n = b.readVarInt(); if (n < 0 || n > 32) throw new IllegalArgumentException("Invalid powers");
+                int n = b.readVarInt(); if (n < 0 || n > 64) throw new IllegalArgumentException("Invalid powers");
                 var powers = new ArrayList<Entry>(); for (int i = 0; i < n; i++) powers.add(new Entry(b.readUtf(32), b.readInt(), b.readDouble()));
                 n = b.readVarInt(); if (n < 0 || n > 256) throw new IllegalArgumentException("Invalid targets");
                 var targets = new ArrayList<MetalTarget>(); for (int i = 0; i < n; i++) targets.add(new MetalTarget(b.readInt(), b.readInt(), b.readBlockPos()));
@@ -89,7 +89,8 @@ public final class PowerNetwork {
         @Override public Type<Impulse> type() { return TYPE; }
     }
     public static void register(RegisterPayloadHandlersEvent event) {
-        var r = event.registrar("7");
+        var r = event.registrar("8");
+        r.playToClient(TemporalPacket.TYPE,TemporalPacket.CODEC,(packet,context)->context.enqueueWork(()->TemporalPacket.receiver.accept(packet)));
         r.playToClient(TinStatus.TYPE,TinStatus.CODEC,(packet,context)->context.enqueueWork(()->tinReceiver.accept(packet)));
         r.playToClient(TinEcho.TYPE,TinEcho.CODEC,(packet,context)->context.enqueueWork(()->echoReceiver.accept(packet)));
         r.playToClient(PewterStatus.TYPE, PewterStatus.CODEC, (packet, context) -> context.enqueueWork(() -> pewterReceiver.accept(packet)));

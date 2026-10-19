@@ -126,10 +126,11 @@
   "item.cosmerearcanists.metal_file": "Metal File",
   "item.cosmerearcanists.metal_filing": "Metal Filing",
   "item.cosmerearcanists.metal_vial": "Metal Vial",
-  "item.cosmerearcanists.atium_nugget": "Atium Nugget",
-  "item.cosmerearcanists.atium_ingot": "Atium Ingot",
-  "block.cosmerearcanists.atium_block": "Block of Atium",
+  "item.cosmerearcanists.atium_nugget": "Atium Nugget (Atium–Electrum Alloy)",
+  "item.cosmerearcanists.atium_ingot": "Atium Ingot (Atium–Electrum Alloy)",
+  "block.cosmerearcanists.atium_block": "Block of Atium (Atium–Electrum Alloy)",
   "item.cosmerearcanists.lerasium_nugget": "Lerasium Nugget",
   "item.cosmerearcanists.lerasium_ingot": "Lerasium Ingot",
-  "block.cosmerearcanists.lerasium_block": "Block of Lerasium"
+  "block.cosmerearcanists.lerasium_block": "Block of Lerasium",
+  "attribute.cosmerearcanists.allomancy_atium": "Atium Allomancy (Atium–Electrum Alloy)"
 }
