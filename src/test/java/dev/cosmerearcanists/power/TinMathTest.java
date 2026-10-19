@@ -4,6 +4,17 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TinMathTest {
+    @Test void visionContinuouslyScalesWithBurningAndStrengthAndStaysBounded(){
+        double low=TinMath.nightVision(.5,.6,.95),normal=TinMath.nightVision(1,.6,.95),flare=TinMath.nightVision(2,.6,.95);
+        assertTrue(low>0 && low<normal && normal<flare && flare<TinMath.nightVision(4,.6,.95));
+        assertEquals(.95*(1-Math.exp(-.6)),normal,1e-9);assertEquals(.95,TinMath.nightVision(1024,.6,.95),1e-9);
+        assertEquals(0,TinMath.nightVision(0,.6,.95));assertEquals(0,TinMath.nightVision(Double.NaN,.6,.95));assertEquals(0,TinMath.nightVision(1,0,.95));assertEquals(0,TinMath.nightVision(1,.6,0));
+    }
+    @Test void lightmapLiftPreservesAlphaAndNeverDimsBrightPixels(){
+        int color=0x7F804020;assertEquals(color,TinMath.liftLightmap(color,0));assertEquals(0x7FFFFFFF,TinMath.liftLightmap(color,1));
+        assertEquals(0x7FC0A090,TinMath.liftLightmap(color,.5));assertEquals(0xFFFFFFFF,TinMath.liftLightmap(0xFFFFFFFF,.7));
+        assertEquals(color,TinMath.liftLightmap(color,Double.NaN));assertEquals(0xFF808080,TinMath.liftLightmap(0xFF000000,.5));
+    }
     @Test void hearingRangeScalesWithBurnStrengthAndVolumeButStaysBounded() {
         assertEquals(24,TinMath.range(1,1,24,64));
         assertTrue(TinMath.range(.5,1,24,64)<24);

@@ -23,7 +23,6 @@ import net.neoforged.neoforge.network.PacketDistributor;
 public final class TinService {
     private static final String OWN_NIGHT="tin_night_vision";
     private static final ThreadLocal<Entity> SOUND_SOURCE=new ThreadLocal<>();
-    private static final Set<UUID> NIGHT_WRITES=new HashSet<>();
     private static final Map<UUID,Budget> BUDGETS=new HashMap<>();
     private static final class Budget { long tick=-1;int count;final Map<Long,Long> recent=new HashMap<>(); }
     /** Source identity is scoped around the actual sound call, never guessed from nearby silent entities. */
@@ -36,6 +35,7 @@ public final class TinService {
         return PowerAttributes.effectiveStrength(p,"a:tin")*PowerRules.levelMultiplier(state,PowerConfig.LOW_STRENGTH.get(),PowerConfig.BURN_STRENGTH.get(),PowerConfig.FLARE_STRENGTH.get());
     }
     public static double revealStrength(ServerPlayer p){return TinConfig.REQUIRE_FLARING.get() && (PowerData.state(p,"a:tin")!=3 || !PowerConfig.FLARING.get())?0:TinMath.reveal(strength(p),TinConfig.REVEAL_THRESHOLD.get(),TinConfig.FULL_REVEAL.get());}
+    public static double nightVision(ServerPlayer p){return TinConfig.NIGHT_VISION.get()?TinMath.nightVision(strength(p),TinConfig.VISION_RESPONSE.get(),TinConfig.VISION_CAP.get()):0;}
     private static boolean looksOwned(MobEffectInstance effect){return effect!=null && effect.getAmplifier()==0 && effect.isAmbient() && !effect.isVisible() && !effect.showIcon() && effect.getDuration()<=320;}
     public static void tick(ServerPlayer p) {
         double power=strength(p);
@@ -46,15 +46,8 @@ public final class TinService {
         }
         if(PowerConfig.CONSUMPTION.get() && PowerData.state(p,"a:tin")>0 && PowerData.reserve(p,"tin")<=0)PowerData.state(p,"a:tin",0);
         var data=PowerData.data(p);var effect=p.getEffect(MobEffects.NIGHT_VISION);boolean owned=data.getBoolean(OWN_NIGHT) && looksOwned(effect);
-        if(power>0 && TinConfig.NIGHT_VISION.get()) {
-            if(effect==null || owned && effect.getDuration()<300){
-                NIGHT_WRITES.add(p.getUUID());try{p.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION,320,0,true,false,false));}finally{NIGHT_WRITES.remove(p.getUUID());}
-                data.putBoolean(OWN_NIGHT,true);
-            }
-            else if(!owned)data.putBoolean(OWN_NIGHT,false);
-        } else {
-            if(owned)p.removeEffect(MobEffects.NIGHT_VISION);data.putBoolean(OWN_NIGHT,false);
-        }
+        // Migrate old tin-owned potion effects; independent potions remain entirely vanilla.
+        if(owned)p.removeEffect(MobEffects.NIGHT_VISION);data.remove(OWN_NIGHT);
     }
     /** Direct ray only: no chunk loads or speculative paths around walls. Endpoint voxels do not block their own sounds. */
     public static double obstruction(ServerLevel level,Vec3 from,Vec3 to) {
@@ -118,8 +111,8 @@ public final class TinService {
         if(event.getSound()!=null && !event.isCanceled() && !event.getEntity().isSilent())emit(event.getLevel(),event.getEntity().position(),event.getEntity(),event.getNewVolume(),event.getSource());
     }
     @SubscribeEvent public void externalNightVision(net.neoforged.neoforge.event.entity.living.MobEffectEvent.Added event) {
-        if(event.getEntity() instanceof ServerPlayer p && event.getEffectInstance().getEffect().equals(MobEffects.NIGHT_VISION) && !NIGHT_WRITES.contains(p.getUUID()))PowerData.data(p).putBoolean(OWN_NIGHT,false);
+        if(event.getEntity() instanceof ServerPlayer p && event.getEffectInstance().getEffect().equals(MobEffects.NIGHT_VISION))PowerData.data(p).putBoolean(OWN_NIGHT,false);
     }
     @SubscribeEvent public void logout(PlayerEvent.PlayerLoggedOutEvent event){BUDGETS.remove(event.getEntity().getUUID());}
-    @SubscribeEvent public void stopped(ServerStoppedEvent event){BUDGETS.clear();NIGHT_WRITES.clear();SOUND_SOURCE.remove();}
+    @SubscribeEvent public void stopped(ServerStoppedEvent event){BUDGETS.clear();SOUND_SOURCE.remove();}
 }

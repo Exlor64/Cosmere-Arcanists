@@ -5,11 +5,14 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 public final class TinConfig {
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.BooleanValue ENABLED, NIGHT_VISION, ZOOM, HEARING, OBSTRUCTION, REQUIRE_FLARING;
-    public static final ModConfigSpec.DoubleValue DRAIN, RANGE, MAX_RANGE, RADIUS, MAX_RADIUS, BLOCK_COST, HARDNESS_COST, HARDNESS_CAP, WOOL_COST, MIN_AUDIBILITY, ZOOM_STRENGTH, MAX_ZOOM, REVEAL_THRESHOLD, FULL_REVEAL, PERSISTENCE, ECHO_RANGE;
+    public static final ModConfigSpec.DoubleValue DRAIN, RANGE, MAX_RANGE, RADIUS, MAX_RADIUS, BLOCK_COST, HARDNESS_COST, HARDNESS_CAP, WOOL_COST, MIN_AUDIBILITY, ZOOM_STRENGTH, MAX_ZOOM, REVEAL_THRESHOLD, FULL_REVEAL, PERSISTENCE, ECHO_RANGE, VISION_RESPONSE, VISION_CAP;
     public static final ModConfigSpec.IntValue FADE, MAX_FADE, SHAPES, EVENTS_PER_TICK, SOURCE_INTERVAL;
     static {
         var b=new ModConfigSpec.Builder();
         ENABLED=b.define("enabled",true);NIGHT_VISION=b.define("nightVision",true);ZOOM=b.define("heldZoom",true);HEARING=b.define("soundWireframes",true);
+        b.push("vision");
+        VISION_RESPONSE=b.comment("Continuous lightmap enhancement curve: maxBrightness * (1 - exp(-effectiveStrength * strengthResponse)). Includes burn level and duralumin.").defineInRange("strengthResponse",.6,0.0,10.0);
+        VISION_CAP=b.defineInRange("maxBrightness",.95,0.0,1.0);b.pop();
         DRAIN=b.defineInRange("reserveDrainPerSecond",1.0,0.0,100.0);
         ZOOM_STRENGTH=b.defineInRange("zoomPerStrength",1.5,0.0,10.0);MAX_ZOOM=b.defineInRange("maxZoom",8.0,1.0,20.0);
         b.push("hearing");

@@ -465,8 +465,8 @@ Each listener has sound budgets/cooldowns; it is not a continuous X-ray scan.
 Configure `cosmerearcanists-tin-server.toml` for enablement, sight/hearing/zoom,
 unlock/full-strength thresholds, range, obstruction/hardness/wool costs, audibility cutoff, shape/network budgets,
 fade and fuel drain. Client `tin` options control wireframe/model rendering,
-opacity, line width, visible echo count and zoom. Night vision supplied by tin
-is removed on stop; independent potion effects are preserved. Sensory overload
+opacity, line width, visible echo count and zoom. Tin now supplies graded lightmap vision; legacy tin potion effects
+are cleaned up; independent potion effects are preserved. Sensory overload
 is not included in this release.
 
 Both client and server must update for **protocol 7**. Model wireframe appearance,
@@ -873,3 +873,23 @@ without revealing a privileged true path. `atiumAlternateShadows` disables the
 extra paths. Alt can be pressed/released while either temporal activation is held;
 other powers retain their existing Alt latch behavior. Both sides need protocol
 **15**. No persistent player-data migration.
+
+### Graded tin vision (0.24.0)
+
+Tin brightens Minecraft's lightmap according to **effective strength**, including
+burn level, attributes and duralumin. It no longer grants a fixed night-vision
+potion. Default enhancement is approximately **25% low burning, 43% burning and
+66% flaring** at attribute1, smoothly approaching95% at very high power. These
+percentages describe the lightmap lift toward full brightness, not a vision range.
+Already bright areas change less; actual world/block light levels stay unchanged.
+Ordinary night-vision potions retain their full vanilla effect.
+
+In `cosmerearcanists-tin-server.toml`, existing `nightVision` toggles the feature;
+`vision.strengthResponse` (default0.6) controls the curve and
+`vision.maxBrightness` (default0.95) sets its ceiling. In the client config,
+`tin.variableNightVision`, `tin.visionBrightnessMultiplier` and
+`tin.visionTransitionTicks` control display and the smooth transition. Old
+tin-owned hidden potion effects are cleaned up; other potions are preserved.
+Client and server need protocol **16**. This uses the vanilla lightmap sampled by
+world shaders; shader packs replacing that pipeline need separate compatibility
+testing. Tin's hearing, flaring-only echoes and held zoom are unchanged.

@@ -22,9 +22,11 @@ import org.lwjgl.opengl.GL11;
 
 public final class TinClient {
     private static PowerNetwork.TinStatus status=new PowerNetwork.TinStatus("",0,1,false);
+    private static long statusReceived;
+    private static float vision,previousVision;
     private record Echo(PowerNetwork.TinEcho packet,long started,Vec3 from) { }
     private static final List<Echo> ECHOES=new ArrayList<>();
-    public static void status(PowerNetwork.TinStatus packet){status=packet;if(!packet.wireframes())ECHOES.clear();}
+    public static void status(PowerNetwork.TinStatus packet){var mc=Minecraft.getInstance();if(mc.level==null || !packet.dimension().equals(mc.level.dimension().location().toString()))return;statusReceived=mc.level.getGameTime();status=packet;if(!packet.wireframes())ECHOES.clear();}
     public static void echo(PowerNetwork.TinEcho packet){
         var mc=Minecraft.getInstance();if(mc.level==null || !PowerClientConfig.TIN_ECHOES.get() || !packet.dimension().equals(mc.level.dimension().location().toString()))return;
         // Keep independent waves, but render each mob once using its strongest active echo.
@@ -33,10 +35,18 @@ public final class TinClient {
         ECHOES.add(new Echo(packet,mc.level.getGameTime(),from));
         while(ECHOES.size()>PowerClientConfig.TIN_ECHO_LIMIT.get())ECHOES.removeFirst();
     }
-    private static boolean active(){var mc=Minecraft.getInstance();return mc.level!=null && mc.player!=null && status.strength()>0 && status.dimension().equals(mc.level.dimension().location().toString());}
+    private static boolean active(){var mc=Minecraft.getInstance();return mc.level!=null && mc.player!=null && mc.player.isAlive() && !mc.player.isSpectator() && mc.level.getGameTime()-statusReceived>=0 && mc.level.getGameTime()-statusReceived<40 && status.strength()>0 && status.dimension().equals(mc.level.dimension().location().toString());}
+    /** Fraction sampled by Minecraft's lightmap shader; potion night vision is left untouched. */
+    public static double nightVision(float partial){return Mth.lerp(Math.clamp(partial,0,1),previousVision,vision);}
     private static boolean wireActive(){return active() && status.wireframes();}
     @SubscribeEvent public void tick(ClientTickEvent.Post event){
         var mc=Minecraft.getInstance();
+        previousVision=vision;
+        if(mc.level==null || mc.player==null || !mc.player.isAlive() || mc.player.isSpectator() || !status.dimension().equals(mc.level.dimension().location().toString()) || !PowerClientConfig.TIN_LIGHTMAP.get())vision=previousVision=0;
+        else{
+            double target=active()?Math.clamp(status.vision()*PowerClientConfig.TIN_VISION_SCALE.get(),0,1):0;
+            vision+=(float)((target-vision)*-Math.expm1(-1/PowerClientConfig.TIN_VISION_FADE.get()));if(Math.abs(vision-target)<.0001)vision=(float)target;
+        }
         if(!active()){ECHOES.clear();if(mc.level==null)status=new PowerNetwork.TinStatus("",0,1,false);return;}
         if(!wireActive())ECHOES.clear();
         ECHOES.removeIf(e->!e.packet.dimension().equals(status.dimension()) || mc.level.getGameTime()-e.started>=e.packet.ticks());

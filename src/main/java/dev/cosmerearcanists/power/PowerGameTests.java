@@ -70,9 +70,9 @@ public final class PowerGameTests {
     @GameTest(template = "empty")
     public static void tinBurnFuelVisionAndHeldZoom(GameTestHelper helper) {
         var p=tinPlayer(helper,"TinBurn");TinService.tick(p);
-        helper.assertTrue(p.hasEffect(net.minecraft.world.effect.MobEffects.NIGHT_VISION) && Math.abs(PowerData.reserve(p,"tin")-299.95)<1e-6,"Passive tin must provide night vision and consume normal burn fuel");
+        helper.assertTrue(!p.hasEffect(net.minecraft.world.effect.MobEffects.NIGHT_VISION) && TinService.nightVision(p)>0 && Math.abs(PowerData.reserve(p,"tin")-299.95)<1e-6,"Passive tin provides variable vision without a potion and consumes normal burn fuel");
         PowerData.state(p,"a:tin",0);TinService.tick(p);
-        helper.assertTrue(!p.hasEffect(net.minecraft.world.effect.MobEffects.NIGHT_VISION),"Stopping must remove tin-owned night vision");
+        helper.assertTrue(!p.hasEffect(net.minecraft.world.effect.MobEffects.NIGHT_VISION),"Stopping leaves no tin potion effect");
         p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.NIGHT_VISION,1000));
         PowerData.state(p,"a:tin",3);TinService.tick(p);
         helper.assertTrue(TinService.strength(p)==2,"Tin Flaring must scale effective strength");
@@ -85,6 +85,16 @@ public final class PowerGameTests {
         PowerService.control(p,new PowerNetwork.Control(7,"",0));PowerData.reserve(p,"tin",.001);TinService.tick(p);
         helper.assertTrue(PowerData.state(p,"a:tin")==0 && TinService.strength(p)==0,"Depletion must disable tin immediately");
         helper.succeed();
+    }
+    @GameTest(template="empty") public static void tinVisionScalingMigrationAndFeatureGates(GameTestHelper h){
+        var p=tinPlayer(h,"TinVision");PowerData.state(p,"a:tin",1);double low=TinService.nightVision(p);PowerData.state(p,"a:tin",2);double normal=TinService.nightVision(p);PowerData.state(p,"a:tin",3);double flare=TinService.nightVision(p);
+        h.assertTrue(low>0 && low<normal && normal<flare,"All three burns have distinct graded vision");PowerAttributes.set(p,"a:tin",2);h.assertTrue(TinService.nightVision(p)>flare,"Higher effective attribute improves vision beyond baseline flare");
+        p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.NIGHT_VISION,320,0,true,false,false));PowerData.data(p).putBoolean("tin_night_vision",true);TinService.tick(p);
+        h.assertTrue(!p.hasEffect(net.minecraft.world.effect.MobEffects.NIGHT_VISION) && !PowerData.data(p).contains("tin_night_vision"),"Old tin-owned hidden potion is removed on migration");
+        p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.NIGHT_VISION,1000));TinService.tick(p);h.assertTrue(p.hasEffect(net.minecraft.world.effect.MobEffects.NIGHT_VISION),"Independent night vision remains intact while burning");
+        boolean enabled=TinConfig.NIGHT_VISION.get();try{TinConfig.NIGHT_VISION.set(false);h.assertTrue(TinService.nightVision(p)==0 && TinService.strength(p)>0,"Vision toggle leaves other tin senses enabled");}finally{TinConfig.NIGHT_VISION.set(enabled);}
+        PowerData.reserve(p,"tin",0);h.assertTrue(TinService.nightVision(p)==0,"Empty fuel grants no vision");PowerData.reserve(p,"tin",100);PowerData.state(p,"a:tin",0);h.assertTrue(TinService.nightVision(p)==0,"Off grants no vision");
+        var packet=new PowerNetwork.TinStatus(p.level().dimension().location().toString(),2,1,true,(float)flare);var buffer=new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(),h.getLevel().registryAccess());try{PowerNetwork.TinStatus.CODEC.encode(buffer,packet);h.assertTrue(PowerNetwork.TinStatus.CODEC.decode(buffer).equals(packet),"Graded server-approved vision is transmitted exactly");}finally{buffer.release();}h.succeed();
     }
     @GameTest(template = "empty")
     public static void tinWallsMuffleAndBlockRealEchoes(GameTestHelper helper) {
