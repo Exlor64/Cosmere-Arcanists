@@ -13,8 +13,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - Implemented Metal File + loose metal filings + generic metal vial, per-piece persistent progress/stack splitting, potion-duration use, mixed contents, overflow retention, tooltips/wear bars, recipe/placement guards, remaining-metal detection/projectile mass and aluminum exclusion. Defaults: nugget 4 / ingot 36 / block 324 filings, vial total 16, reserve 50 each.
 - UX choice stated to user: file mainhand + source offhand; filings + vial/glass bottle in opposite hands loads one per right-click. Unfiled stack remainder returns to inventory while partial piece stays offhand. Overflow filings stay in vial instead of being wasted at the existing reserve cap.
 - Legacy vial IDs remain valid as one filing each; old bottle+nugget recipes replaced. New filing configuration preserves existing contents/progress when disabled. No protocol schema changes (still 6), but both jars must update for registry/mixins/items.
-- Initial compile found an ambiguous overloaded constructor reference for vial registration; changed to explicit supplier. Placement guard now denies block-item use while retaining normal chest/block interaction. Build/server GameTest rerun pending. Previous pewter validation remains below.
-- Next: verify CI and then client-playtest filing/offhand/loading/drinking, tooltips and durability bars; temporary icons reuse vanilla assets.
+- Final build, 34 JUnit methods, all 31 server GameTests and artifact upload passed on the gameplay commit linked below. Placement guard denies only filed block-item use, preserving normal chest/block interaction.
+- Next: client-playtest filing/offhand/loading/drinking, tooltips and durability bars; temporary icons reuse vanilla assets.
 
 ## Vision and accepted constraints
 
@@ -119,8 +119,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Verification, evidence and limits
 
-- Latest gameplay commit validated: `cfd4427b5bcbeaf08a647ccc2b4e74a797b778a5`.
-- [Successful GitHub Actions checks 39261375936](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39261375936): build, **34 JUnit methods**, **27 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
+- Latest gameplay commit validated: `56b38a1893b0407c4d62cc570e48ee5b0a66f962`.
+- [Successful GitHub Actions checks 39292992026](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39292992026): build, **34 JUnit methods**, **31 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
 - Tests cover metal/aluminum/cycles, ingredient quantities, power states/migrations/attributes/cloning, ability phases, scanning/falling discovery, hardness, impulse/input math, movement solver, sustained iron assistance in both slots, burn/iron/steel scaling, projectile scaling/cap, actual launch/fuel/recoil, save/load/recovery, and swept mob collision with ~2-damage nugget.
 - Collision-test pitfall: the small empty template is encased by GameTest barriers. Clear an airborne corridor before projectile tests; otherwise the shot can hit the barrier roof instead of its target. Temporary collision diagnostic logs were removed.
 - User reported steel movement working perfectly and iron working well before requesting its doubled baseline and alternate mode. Do not treat those later additions or projectile visuals as user-confirmed.
