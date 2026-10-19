@@ -1,7 +1,8 @@
 package dev.cosmerearcanists.filing;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.BlockItem;
+import net.neoforged.neoforge.common.util.TriState;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
@@ -15,6 +16,6 @@ public final class FilingEvents {
     }
     @SubscribeEvent public void useBlock(PlayerInteractEvent.RightClickBlock event) {
         // Placing and rebreaking a filed storage block must never regenerate a full block of metal.
-        if(Filings.filed(event.getItemStack())){event.setCanceled(true);event.setCancellationResult(InteractionResult.FAIL);}
+        if(event.getItemStack().getItem() instanceof BlockItem && Filings.filed(event.getItemStack()))event.setUseItem(TriState.FALSE);
     }
 }

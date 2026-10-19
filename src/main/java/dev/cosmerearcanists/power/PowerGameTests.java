@@ -43,6 +43,12 @@ public final class PowerGameTests {
             p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND,test.getKey().getDefaultInstance());
             helper.assertTrue(dev.cosmerearcanists.filing.Filings.file(p),"Ingots and blocks must be fileable");
             helper.assertTrue(dev.cosmerearcanists.filing.Filings.capacity(p.getOffhandItem())==test.getValue(),"Filing capacity must follow nugget equivalents");
+            if(test.getKey()==Items.IRON_BLOCK){
+                var pos=helper.absolutePos(net.minecraft.core.BlockPos.ZERO);
+                var event=new net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock(p,net.minecraft.world.InteractionHand.OFF_HAND,pos,new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(pos),net.minecraft.core.Direction.UP,pos,false));
+                new dev.cosmerearcanists.filing.FilingEvents().useBlock(event);
+                helper.assertTrue(event.getUseItem()==net.neoforged.neoforge.common.util.TriState.FALSE && !event.isCanceled(),"Filed block placement must be blocked while chest/block interaction stays available");
+            }
         }
         helper.succeed();
     }

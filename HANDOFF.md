@@ -13,7 +13,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - Implemented Metal File + loose metal filings + generic metal vial, per-piece persistent progress/stack splitting, potion-duration use, mixed contents, overflow retention, tooltips/wear bars, recipe/placement guards, remaining-metal detection/projectile mass and aluminum exclusion. Defaults: nugget 4 / ingot 36 / block 324 filings, vial total 16, reserve 50 each.
 - UX choice stated to user: file mainhand + source offhand; filings + vial/glass bottle in opposite hands loads one per right-click. Unfiled stack remainder returns to inventory while partial piece stays offhand. Overflow filings stay in vial instead of being wasted at the existing reserve cap.
 - Legacy vial IDs remain valid as one filing each; old bottle+nugget recipes replaced. New filing configuration preserves existing contents/progress when disabled. No protocol schema changes (still 6), but both jars must update for registry/mixins/items.
-- Build and server GameTests pending for this change. Previous pewter validation remains below.
+- Initial compile found an ambiguous overloaded constructor reference for vial registration; changed to explicit supplier. Placement guard now denies block-item use while retaining normal chest/block interaction. Build/server GameTest rerun pending. Previous pewter validation remains below.
 - Next: verify CI and then client-playtest filing/offhand/loading/drinking, tooltips and durability bars; temporary icons reuse vanilla assets.
 
 ## Vision and accepted constraints

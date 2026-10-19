@@ -15,7 +15,7 @@ public final class ModMetals {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(CosmereArcanists.MOD_ID);
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(CosmereArcanists.MOD_ID);
     public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, CosmereArcanists.MOD_ID);
-    public static final net.neoforged.neoforge.registries.DeferredItem<dev.cosmerearcanists.power.MetalVialItem> METAL_VIAL=ITEMS.register("metal_vial",dev.cosmerearcanists.power.MetalVialItem::new);
+    public static final net.neoforged.neoforge.registries.DeferredItem<dev.cosmerearcanists.power.MetalVialItem> METAL_VIAL=ITEMS.register("metal_vial",()->new dev.cosmerearcanists.power.MetalVialItem());
     public static final net.neoforged.neoforge.registries.DeferredItem<dev.cosmerearcanists.filing.MetalFilingItem> METAL_FILING=ITEMS.register("metal_filing",dev.cosmerearcanists.filing.MetalFilingItem::new);
     public static final net.neoforged.neoforge.registries.DeferredItem<dev.cosmerearcanists.filing.MetalFileItem> METAL_FILE=ITEMS.register("metal_file",dev.cosmerearcanists.filing.MetalFileItem::new);
     public static final String[] BASE = {"tin", "zinc", "aluminum", "chromium", "cadmium", "lead", "silver", "nickel"};
