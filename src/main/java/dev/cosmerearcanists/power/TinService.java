@@ -94,7 +94,7 @@ public final class TinService {
         double audible=TinMath.audibility(distance,obstruction(listener.serverLevel(),listener.getEyePosition(),position),range);
         if(audible<TinConfig.MIN_AUDIBILITY.get())return null;
         double radius=Math.min(TinConfig.MAX_RADIUS.get(),TinConfig.RADIUS.get()*Math.sqrt(power)*Math.sqrt(Math.min(4,volume)))*Math.sqrt(audible*potential);
-        int ticks=(int)Math.clamp(TinConfig.FADE.get()*(.75+.25*Math.sqrt(power))*Math.sqrt(audible)*(.35+.65*potential),4,TinConfig.MAX_FADE.get());
+        int ticks=(int)Math.clamp(TinConfig.FADE.get()*(.75+.25*Math.sqrt(power))*Math.sqrt(audible)*(.35+.65*potential)*TinConfig.PERSISTENCE.get(),4,Math.max(4,Math.min(200,TinConfig.MAX_FADE.get()*TinConfig.PERSISTENCE.get())));
         int detail=Math.max(4,(int)(TinConfig.SHAPES.get()*potential*Math.sqrt(audible)));
         boolean identified=source!=null && source.level()==listener.level() && !source.isSilent() && source.position().distanceToSqr(position)<9;
         return new PowerNetwork.TinEcho(listener.level().dimension().location().toString(),position,identified?source.getId():-1,

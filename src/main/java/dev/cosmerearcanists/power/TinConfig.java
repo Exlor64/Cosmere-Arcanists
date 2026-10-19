@@ -5,7 +5,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 public final class TinConfig {
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.BooleanValue ENABLED, NIGHT_VISION, ZOOM, HEARING, OBSTRUCTION;
-    public static final ModConfigSpec.DoubleValue DRAIN, RANGE, MAX_RANGE, RADIUS, MAX_RADIUS, BLOCK_COST, HARDNESS_COST, HARDNESS_CAP, WOOL_COST, MIN_AUDIBILITY, ZOOM_STRENGTH, MAX_ZOOM, REVEAL_THRESHOLD, FULL_REVEAL;
+    public static final ModConfigSpec.DoubleValue DRAIN, RANGE, MAX_RANGE, RADIUS, MAX_RADIUS, BLOCK_COST, HARDNESS_COST, HARDNESS_CAP, WOOL_COST, MIN_AUDIBILITY, ZOOM_STRENGTH, MAX_ZOOM, REVEAL_THRESHOLD, FULL_REVEAL, PERSISTENCE;
     public static final ModConfigSpec.IntValue FADE, MAX_FADE, SHAPES, EVENTS_PER_TICK, SOURCE_INTERVAL;
     static {
         var b=new ModConfigSpec.Builder();
@@ -18,6 +18,7 @@ public final class TinConfig {
         RANGE=b.comment("Base hearing distance at normal strength and volume. Scales with square roots of strength and volume.").defineInRange("range",24.0,1.0,128.0);
         MAX_RANGE=b.defineInRange("maxRange",64.0,1.0,128.0);
         RADIUS=b.defineInRange("surfaceRadius",3.0,.5,8.0);MAX_RADIUS=b.defineInRange("maxSurfaceRadius",6.0,1.0,8.0);
+        PERSISTENCE=b.comment("Multiply sound echo lifetime and its cap; packets remain bounded to200ticks. Applies to existing fadeTicks settings too.").defineInRange("echoPersistenceMultiplier",1.4,.25,4.0);
         FADE=b.defineInRange("fadeTicks",24,4,100);MAX_FADE=b.defineInRange("maxFadeTicks",60,4,200);
         SHAPES=b.comment("Maximum exposed collision-shape boxes per sound; scales down at low strength. Loaded chunks only.").defineInRange("maxShapes",96,8,256);
         EVENTS_PER_TICK=b.defineInRange("maxEventsPerPlayerPerTick",2,1,8);SOURCE_INTERVAL=b.defineInRange("sameSourceIntervalTicks",4,1,40);

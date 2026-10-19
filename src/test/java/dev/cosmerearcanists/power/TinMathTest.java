@@ -28,6 +28,11 @@ class TinMathTest {
         assertEquals(1,TinMath.reveal(6,1.5,6));
         assertEquals(1,TinMath.reveal(1024,1.5,6));
     }
+    @Test void echoesHoldThenFadeSmoothlyWithoutOutlivingTheirLifetime(){
+        assertEquals(1,TinMath.echoFade(0,100,.2));assertEquals(1,TinMath.echoFade(20,100,.2));
+        assertTrue(TinMath.echoFade(50,100,.2)>.5);assertTrue(TinMath.echoFade(80,100,.2)<TinMath.echoFade(50,100,.2));
+        assertEquals(0,TinMath.echoFade(100,100,.2));assertEquals(0,TinMath.echoFade(120,100,.2));assertEquals(0,TinMath.echoFade(0,0,.2));
+    }
     @Test void heldZoomScalesAndCapsWithoutAffectingInactiveVision() {
         assertEquals(1,TinMath.zoom(0,1.5,8));
         assertEquals(2.5,TinMath.zoom(1,1.5,8));

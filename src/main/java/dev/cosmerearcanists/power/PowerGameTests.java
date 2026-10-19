@@ -128,6 +128,16 @@ public final class PowerGameTests {
         helper.succeed();
     }
     @GameTest(template = "empty")
+    public static void tinPersistenceExtendsEchoesWithoutBypassingPowerGateOrPacketBounds(GameTestHelper helper){
+        var p=tinPlayer(helper,"TinPersistence");PowerAttributes.set(p,"a:tin",6);var sound=p.getEyePosition().add(2,0,0);
+        double persistence=TinConfig.PERSISTENCE.get();int fade=TinConfig.FADE.get(),cap=TinConfig.MAX_FADE.get();
+        try{TinConfig.PERSISTENCE.set(1.0);var shorter=TinService.echo(p,sound,null,1);TinConfig.PERSISTENCE.set(1.4);var longer=TinService.echo(p,sound,null,1);
+            helper.assertTrue(shorter!=null && longer!=null && longer.ticks()>shorter.ticks() && longer.audible()==shorter.audible(),"Persistence extends the same approved echo without weakening obstruction or changing its audibility");
+            TinConfig.PERSISTENCE.set(4.0);TinConfig.FADE.set(100);TinConfig.MAX_FADE.set(200);PowerAttributes.set(p,"a:tin",1024);helper.assertTrue(TinService.echo(p,sound,null,1).ticks()<=200,"Long echoes remain within packet lifetime bounds");
+            PowerAttributes.set(p,"a:tin",1);helper.assertTrue(TinService.echo(p,sound,null,1)==null,"Longer persistence cannot unlock wireframes below the Tin threshold");
+        }finally{TinConfig.PERSISTENCE.set(persistence);TinConfig.FADE.set(fade);TinConfig.MAX_FADE.set(cap);}helper.succeed();
+    }
+    @GameTest(template = "empty")
     public static void highTinIdentifiesANoisyMobBehindAStoneWall(GameTestHelper helper){
         var p=tinPlayer(helper,"TinWallMob");PowerAttributes.set(p,"a:tin",6);var level=helper.getLevel();var origin=net.minecraft.core.BlockPos.containing(p.position());
         for(int x=1;x<=5;x++)for(int y=0;y<4;y++)level.setBlock(origin.offset(x,y,0),net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),3);

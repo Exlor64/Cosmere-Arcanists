@@ -8,7 +8,7 @@ public final class PowerClientConfig {
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.BooleanValue HUD, LINES, THROUGH_WALLS, PEWTER_HEARTS, TIN_ECHOES, TIN_MODELS, TIN_ZOOM, FUTURES, FUTURE_MODELS, FUTURE_WARNINGS, SEEKING_HUD, SEEKING_SOUNDS, EMOTION_HUD;
     public static final ModConfigSpec.IntValue HUD_X, HUD_Y, HOLD_TICKS, TIN_ECHO_LIMIT, SEEKING_LIMIT;
-    public static final ModConfigSpec.DoubleValue LINE_WIDTH, TIN_WIDTH, TIN_OPACITY, FUTURE_OPACITY, SEEKING_VOLUME;
+    public static final ModConfigSpec.DoubleValue LINE_WIDTH, TIN_WIDTH, TIN_OPACITY, FUTURE_OPACITY, SEEKING_VOLUME, TIN_BRIGHTNESS, TIN_WIDTH_SCALE, TIN_HOLD;
     static {
         var b = new ModConfigSpec.Builder();
         HUD = b.define("selectedPowerIcon", true); LINES = b.define("blueLines", true);
@@ -21,6 +21,8 @@ public final class PowerClientConfig {
         b.push("tin");
         TIN_ECHOES=b.define("soundWireframes",true);TIN_MODELS=b.define("entityModelWireframes",true);TIN_ZOOM=b.define("heldZoom",true);
         TIN_ECHO_LIMIT=b.defineInRange("maxVisibleEchoes",12,1,32);TIN_WIDTH=b.defineInRange("lineWidth",1.2,1.0,3.0);TIN_OPACITY=b.defineInRange("opacity",.65,.05,1.0);
+        TIN_BRIGHTNESS=b.defineInRange("echoBrightnessMultiplier",1.35,.25,3.0);TIN_WIDTH_SCALE=b.defineInRange("echoLineWidthMultiplier",1.25,.5,3.0);
+        TIN_HOLD=b.comment("Keep full echo brightness for this fraction of its lifetime, then smoothly fade.").defineInRange("echoHoldFraction",.2,0.0,.75);
         b.pop();b.push("futureSight");
         FUTURES=b.define("shadows",true);FUTURE_MODELS=b.define("entitySilhouettes",true);FUTURE_WARNINGS=b.define("injuryWarnings",true);
         FUTURE_OPACITY=b.defineInRange("opacity",.5,.05,1.0);

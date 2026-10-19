@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-19 UTC**. Current mod version: **0.18.1-alpha**.
+Last updated: **2026-10-19 UTC**. Current mod version: **0.18.2-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -9,13 +9,11 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
-- User playtest: likes pewter; requests gray debt hearts directly above health or armor with no "Pewter drag" label. Tin mob/block echoes render in open air but disappear behind blocks even at high strength; user explicitly confirms both passes are occluded.
-- Version0.18.1-alpha/protocol10: PewterClient now renders immediately after NeoForge ARMOR_LEVEL using actual gui.leftHeight, reserves another10pixels and removes the label. Tracks armor/extra health/absorption rows and respects HUD/survival/spectator gates. Mechanics/debt unchanged.
-- TinClient explicitly disables inherited OpenGL depth testing at both line and model batch flushes, restores prior depth state afterward, preserves existing shader/polygon cleanup, and adds a box fallback for renderers that provide no NEW_ENTITY mesh. Existing server sound obstruction, high-power gate, attenuation, lifetime and data budgets unchanged; this fixes visibility of already-approved echoes rather than removing sound blocking.
-- New server regression creates a real noisy cow behind a stone wall at high Tin strength and checks exact sound source identity, source bounds, audibility and surrounding geometry; off-state still produces no reveal. Existing source/silence and thick-wall tests retained.
-- Java21 GitHub Actions run39324424539 passed build/JUnit, required server GameTests and artifact upload for gameplay commitcffcee0152dd834fd30cda92b6dc6fd1130b664b. Registered suites now49 unit/64 server methods. Local build attempt again blocked before compilation by Gradle download/network. Prior0.18.0 gameplay passed49 unit/63 server tests in run39316581066. No graphical client/GL playtest is available here: compilation/server checks cannot visually prove the renderer/HUD changes; user testing remains necessary. NeoForge official1.21.1 Gui patch confirms leftHeight and health/armor layering API.
-- Aluminum/duralumin0.18.0 behavior is unchanged: enhancement config/API, reserve-scaled committed bursts and efficiency curves remain as documented below/README. Remaining ordinary metals chromium,nicrosil,gold,cadmium,bendalloy; other arts pending.
-- Next: user visual confirmation of armored/unarmored HUD and sound-triggered Tin echoes behind a thin wall versus a thick muffling barrier.
+- User requests Tin pulses last a bit longer and be easier to see. Version0.18.2-alpha/protocol10: server persistence multiplier1.4 extends existing duration/cap settings; lifetime stays4..200ticks. Client brighter pale cyan, brightness multiplier1.35, line-width multiplier1.25 for source/block/model outlines, full-brightness hold first20percent followed by softer square-root fade. Near full-strength default peak opacity~.88 (old.65); base line width1.2 becomes1.5.
+- New knobs apply to existing installations without overwriting old personal settings: Tin server hearing.echoPersistenceMultiplier; client tin.echoBrightnessMultiplier, echoLineWidthMultiplier and echoHoldFraction. Existing opacity/lineWidth and fadeTicks/maxFadeTicks remain respected.
+- Sound obstruction, power threshold/progression scaling, silent-mob rules, source identity, geometry/budget bounds and explicit through-wall depth pass are unchanged. Low baseline Flaring remains a weak glimpse. Pewter HUD remains above health/armor without label from0.18.1.
+- Added pure fade-curve unit regression plus server persistence regression covering longer same-source echoes, unchanged audibility,200tick cap and low-power gate. Java21 CI pending. Prior0.18.1 build/server/artifact passed run39324424539. No graphical client/GL visual test is available here; appearance still needs user playtesting.
+- Next: automated verification, then user visual pulse duration/brightness checks; all accepted later mechanics remain documented below.
 
 ## Vision and accepted constraints
 

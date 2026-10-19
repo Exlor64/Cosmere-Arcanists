@@ -57,7 +57,7 @@ public final class TinClient {
         finally{if(depth)RenderSystem.enableDepthTest();else RenderSystem.disableDepthTest();}
     }
     private static void sourceBox(com.mojang.blaze3d.vertex.PoseStack pose,MultiBufferSource.BufferSource buffers,PowerNetwork.TinEcho packet,Vec3 camera,float alpha){
-        var lines=TinRenderTypes.lines();LevelRenderer.renderLineBox(pose,buffers.getBuffer(lines),packet.sourceBox().move(camera.scale(-1)),.65f,.8f,.85f,alpha);flushThroughWalls(buffers,lines);
+        var lines=TinRenderTypes.lines();LevelRenderer.renderLineBox(pose,buffers.getBuffer(lines),packet.sourceBox().move(camera.scale(-1)),.85f,.97f,1f,alpha);flushThroughWalls(buffers,lines);
     }
     @SubscribeEvent public void render(RenderLevelStageEvent event) {
         var mc=Minecraft.getInstance();
@@ -65,12 +65,12 @@ public final class TinClient {
         var camera=event.getCamera().getPosition();var pose=event.getPoseStack();var buffers=mc.renderBuffers().bufferSource();
         float partial=event.getPartialTick().getGameTimeDeltaPartialTick(false);
         for(var echo:ECHOES) {
-            float fade=(float)Math.clamp(1-(mc.level.getGameTime()-echo.started+partial)/echo.packet.ticks(),0,1);
-            float alpha=(float)(fade*echo.packet.audible()*PowerClientConfig.TIN_OPACITY.get());if(alpha<.01)continue;
+            float fade=(float)TinMath.echoFade(mc.level.getGameTime()-echo.started+partial,echo.packet.ticks(),PowerClientConfig.TIN_HOLD.get());
+            float alpha=(float)Math.clamp(fade*echo.packet.audible()*PowerClientConfig.TIN_OPACITY.get()*PowerClientConfig.TIN_BRIGHTNESS.get(),0,1);if(alpha<.01)continue;
             var lines=TinRenderTypes.lines();var vertices=buffers.getBuffer(lines);
-            for(var box:echo.packet.surfaces())LevelRenderer.renderLineBox(pose,vertices,box.move(camera.scale(-1)),.55f,.72f,.78f,alpha);
+            for(var box:echo.packet.surfaces())LevelRenderer.renderLineBox(pose,vertices,box.move(camera.scale(-1)),.78f,.93f,1f,alpha);
             var entity=echo.packet.entityId()<0?null:mc.level.getEntity(echo.packet.entityId());
-            if(echo.packet.entityId()>=0 && (entity==null || !PowerClientConfig.TIN_MODELS.get()))LevelRenderer.renderLineBox(pose,vertices,echo.packet.sourceBox().move(camera.scale(-1)),.65f,.8f,.85f,alpha);
+            if(echo.packet.entityId()>=0 && (entity==null || !PowerClientConfig.TIN_MODELS.get()))LevelRenderer.renderLineBox(pose,vertices,echo.packet.sourceBox().move(camera.scale(-1)),.85f,.97f,1f,alpha);
             flushThroughWalls(buffers,lines);
             if(entity==null || entity==mc.player || !PowerClientConfig.TIN_MODELS.get())continue;
             var type=TinRenderTypes.models();
@@ -80,7 +80,7 @@ public final class TinClient {
             var box=echo.packet.sourceBox();pose.translate((box.minX+box.maxX)*.5-camera.x,box.minY-camera.y,(box.minZ+box.maxZ)*.5-camera.z);
             try {
                 RenderSystem.polygonMode(GL11.GL_FRONT_AND_BACK,GL11.GL_LINE);
-                RenderSystem.setShaderColor(.55f,.72f,.78f,alpha);
+                RenderSystem.setShaderColor(.78f,.93f,1f,alpha);
                 mc.getEntityRenderDispatcher().getRenderer(entity).render(entity,entity.getYRot(),partial,pose,wire,LightTexture.FULL_BRIGHT);
                 flushThroughWalls(buffers,type);
             } finally {

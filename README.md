@@ -761,3 +761,13 @@ and block/source outlines. The renderer explicitly bypasses inherited world
 depth testing and restores it after drawing. High-strength requirements and
 sound obstruction still apply: thick/hard barriers or wool can mute or entirely
 suppress a reveal. This does not continuously reveal silent mobs.
+
+### Clearer Tin echoes (0.18.2)
+
+Sound echoes last40percent longer by default, hold their brightness briefly, then
+fade more gently. Wireframes use brighter pale cyan,35percent greater opacity
+and25percent wider lines. Strength and sound obstruction still limit visibility.
+Tune server `hearing.echoPersistenceMultiplier` and client
+`tin.echoBrightnessMultiplier`, `tin.echoLineWidthMultiplier`, and
+`tin.echoHoldFraction`. They multiply existing lifetime/opacity/width settings,
+so existing installations receive the improvement without resetting preferences.
