@@ -11,8 +11,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 - User requested the same baseline strength boost for steel as iron because lower levels cannot provide useful movement.
 - Added `ironSteel.steelStrengthMultiplier` (default 2, range 0.1–20). Attribute 1 now matches former steel attribute 2. Aimed and assisted pushes, projectile/ball launches and deflection share effective force; reserve drain is unchanged.
-- Updated runtime regressions for equal iron/steel baseline, steel burn/attribute scaling and launch speeds. Build and server GameTests pending for this change; previous equipment build remains verified below.
-- Next: verify CI, then client-playtest lower-level steel traversal and equipment interactions. Placeholder equipment icons and rope/swing rendering still require playtesting.
+- Updated runtime regressions for equal iron/steel baseline, steel burn/attribute scaling and launch speeds. Build, 30 JUnit methods, 22 server GameTests and artifact upload passed on the gameplay commit linked below.
+- Next: client-playtest lower-level steel traversal and equipment interactions. Placeholder equipment icons and rope/swing rendering still require playtesting.
 
 ## Vision and accepted constraints
 
@@ -105,7 +105,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 - Origin/per-art/per-metal SERVER config: `ServerConfig`. Powers SERVER config: `cosmerearcanists-powers-server.toml` (world/server config location follows NeoForge). Metallurgy COMMON config: `MetallurgyConfig`. Client HUD/line config: `PowerClientConfig`.
 - `controls.secondaryActivation`: enable secondary slot while preserving saved assignment.
-- `ironSteel`: force, iron multiplier, burn strength/drain, speed/mass, reaction/fall braking, player targets, separate iron/steel alternate toggles, angle limit, input filtering, reserves.
+- `ironSteel`: force, independent iron/steel multipliers, burn strength/drain, speed/mass, reaction/fall braking, player targets, separate iron/steel alternate toggles, angle limit, input filtering, reserves.
 - `metalDetection`: categories (including fired projectiles), recursive recipes, hardness cost/cap, range-related scanning budgets, target count and sync cadence.
 - `steelProjectiles`: enabled, reference/max speed, nugget damage, cap ≤100, recoil mass, unknown content fallback, per-shot reserve cost (default 1), lifetime, alternate straight-down drop.
 - Existing config files retain saved values. New fields obtain defaults. Datapacks can override generation and recipes. Feature disablement must not delete saved data or registry entries.
@@ -116,8 +116,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Verification, evidence and limits
 
-- Latest gameplay commit validated: `d10d408bc0b155dd8becd11e5ee0460537035a4e`.
-- [Successful GitHub Actions checks 39154946782](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39154946782): build, **30 JUnit methods**, **22 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
+- Latest gameplay commit validated: `32b9cdc5e9838b69d350e72de59721ade7fec643`.
+- [Successful GitHub Actions checks 39193475519](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39193475519): build, **30 JUnit methods**, **22 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
 - Tests cover metal/aluminum/cycles, ingredient quantities, power states/migrations/attributes/cloning, ability phases, scanning/falling discovery, hardness, impulse/input math, movement solver, burn/iron scaling, projectile scaling/cap, actual launch/fuel/recoil, save/load/recovery, and swept mob collision with ~2-damage nugget.
 - Collision-test pitfall: the small empty template is encased by GameTest barriers. Clear an airborne corridor before projectile tests; otherwise the shot can hit the barrier roof instead of its target. Temporary collision diagnostic logs were removed.
 - User reported steel movement working perfectly and iron working well before requesting its doubled baseline and alternate mode. Do not treat those later additions or projectile visuals as user-confirmed.
