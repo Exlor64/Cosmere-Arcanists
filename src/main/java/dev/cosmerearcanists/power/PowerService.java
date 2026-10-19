@@ -94,7 +94,7 @@ public final class PowerService {
         PowerNetwork.sync(p, s.targets);EmotionService.sync(p);
     }
     @SubscribeEvent public void syncDatapack(OnDatapackSyncEvent event) {
-        if (event.getPlayer() == null) { event.getPlayerList().getPlayers().forEach(PowerService::stopActivation); MetalDetector.rebuild(event.getPlayerList().getServer()); SESSIONS.clear(); }
+        if (event.getPlayer() == null) { event.getPlayerList().getPlayers().forEach(PowerService::stopActivation); EnhancementService.clear();MetalDetector.rebuild(event.getPlayerList().getServer()); SESSIONS.clear(); }
         event.getRelevantPlayers().forEach(p -> PowerNetwork.sync(p, List.of()));
     }
     @SubscribeEvent public void login(PlayerEvent.PlayerLoggedInEvent event) {
