@@ -162,7 +162,7 @@ public final class PowerGameTests {
         var pos=helper.absolutePos(new net.minecraft.core.BlockPos(1,10,1)); player.setPos(pos.getX()+.5,pos.getY(),pos.getZ()+.5);
         PowerData.reserve(player,"steel",10); PowerService.control(player,new PowerNetwork.Control(2,"",1));
         int[][] cases={{1,1},{1,2},{2,2},{1,3},{2,1}};
-        double[] expected={1.75,3.5,7,7,3.5};
+        double[] expected={3.5,7,8,8,7};
         for(int i=0;i<cases.length;i++) {
             PowerAttributes.set(player,"a:steel",cases[i][0]); PowerData.state(player,"a:steel",cases[i][1]);
             var drop=new net.minecraft.world.entity.item.ItemEntity(level,player.getX(),player.getY(),player.getZ(),new ItemStack(Items.IRON_NUGGET));
@@ -316,7 +316,7 @@ public final class PowerGameTests {
         projectile.cargo(new ItemStack(Items.IRON_NUGGET),1); projectile.setDeltaMovement(new net.minecraft.world.phys.Vec3(3.5,0,0)); level.addFreshEntity(projectile);
         helper.runAfterDelay(5,()->{
             helper.assertTrue(projectile.isRemoved(),"Fast shot must collide instead of tunneling through a mob");
-            helper.assertTrue(Math.abs((health-cow.getHealth())-2)<.2,"Baseline nugget must deal about two damage before armor; before="+health+", after="+cow.getHealth()+", impact="+projectile.position());
+            helper.assertTrue(Math.abs((health-cow.getHealth())-2)<.2,"Reference-speed nugget must deal about two damage before armor; before="+health+", after="+cow.getHealth()+", impact="+projectile.position());
             cow.discard(); helper.succeed();
         });
     }
@@ -347,9 +347,17 @@ public final class PowerGameTests {
         PowerAttributes.set(player,"a:iron",1); PowerAttributes.set(player,"a:steel",1);
         PowerData.state(player,"a:iron",2); PowerData.state(player,"a:steel",2);
         double steel = PowerService.powerForce(player,"a:steel");
-        helper.assertTrue(PowerService.powerForce(player,"a:iron") == steel * 2, "Default iron force must be doubled without increasing steel force");
+        helper.assertTrue(steel == PowerConfig.FORCE.get() * 2, "Default steel Burning must match the previous attribute 2 force");
+        PowerData.state(player,"a:steel",1);
+        helper.assertTrue(PowerService.powerForce(player,"a:steel") == steel * .5, "Steel Low burn must retain half Burning force");
+        PowerData.state(player,"a:steel",3);
+        helper.assertTrue(PowerService.powerForce(player,"a:steel") == steel * 2, "Steel Flaring must retain twice Burning force");
+        PowerData.state(player,"a:steel",2); PowerAttributes.set(player,"a:steel",2);
+        helper.assertTrue(PowerService.powerForce(player,"a:steel") == steel * 2, "Steel attributes must stack with the base multiplier");
+        PowerAttributes.set(player,"a:steel",1);
+        helper.assertTrue(PowerService.powerForce(player,"a:iron") == steel, "Default iron and steel must have matching doubled base force");
         PowerAttributes.set(player,"a:iron",2);
-        helper.assertTrue(PowerService.powerForce(player,"a:iron") == steel * 4, "Iron attribute strength must continue to scale");
+        helper.assertTrue(PowerService.powerForce(player,"a:iron") == steel * 2, "Iron attribute strength must continue to scale");
         var chest = net.minecraft.world.phys.Vec3.ZERO;
         var above = new net.minecraft.world.phys.Vec3(0,4,0); var below = above.scale(-1);
         var ironAbove = PowerService.anchorDirection(chest,above,"a:iron");

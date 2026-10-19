@@ -255,7 +255,7 @@ public final class PowerService {
         accelerate(p, targetImpulse(p, best, direction, powerForce(p, power)));
     }
     public static double powerForce(ServerPlayer p, String power) {
-        return PowerConfig.FORCE.get() * (power.equals("a:iron") ? PowerConfig.IRON_STRENGTH.get() : 1) * PowerAttributes.strength(p, power) * PowerRules.levelMultiplier(PowerData.state(p, power), PowerConfig.LOW_STRENGTH.get(), PowerConfig.BURN_STRENGTH.get(), PowerConfig.FLARE_STRENGTH.get());
+        return PowerConfig.FORCE.get() * (power.equals("a:iron") ? PowerConfig.IRON_STRENGTH.get() : power.equals("a:steel") ? PowerConfig.STEEL_STRENGTH.get() : 1) * PowerAttributes.strength(p, power) * PowerRules.levelMultiplier(PowerData.state(p, power), PowerConfig.LOW_STRENGTH.get(), PowerConfig.BURN_STRENGTH.get(), PowerConfig.FLARE_STRENGTH.get());
     }
     static Vec3 targetImpulse(ServerPlayer p, MetalTarget best, Vec3 direction, double force) {
         var point = best.position(p.level(), 1); if (point == null) return Vec3.ZERO;

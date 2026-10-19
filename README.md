@@ -205,7 +205,7 @@ alternatives use the smallest resolvable amount. Primitive raw metals/ores use
 one ingot-equivalent as a balance approximation. Unresolved detectable items
 use the configurable fallback. The entire thrown stack is one projectile.
 
-At normal strength a nugget launches at 3.5 blocks/tick and deals about 2 damage
+At reference push force 7 a nugget launches at 3.5 blocks/tick and deals about 2 damage
 before armor. Launch speed scales with effective push strength divided by the fourth root
 of metal content. A baseline anvil launches at about 0.86 blocks/tick and gives
 a substantial backward recoil, versus almost no recoil for a nugget.
@@ -242,7 +242,7 @@ projectiles use the projectile speed cap rather than the player movement cap.
 
 0.7.4: projectile launch velocity now scales **linearly** with effective steel
 push strength (force setting × effective attribute × burn multiplier), rather
-than its square root. At default settings one nugget travels 1.75 blocks/tick on
+than its square root. At the original 0.7.4 defaults one nugget traveled 1.75 blocks/tick on
 Low burn, 3.5 on Burning and 7 on Flaring at attribute 1. Attribute 2 doubles
 those speeds until the configured projectile maxSpeed (default 8) is reached.
 Heavy cargo still reduces speed. Recoil and impact damage follow the resulting
@@ -296,3 +296,18 @@ spikes and ball ingredients are provisional. Current icons reuse vanilla item
 art; physical rope renders separately. Update both sides for protocol 5.
 
 Returning tether heads temporarily leave Allomantic targeting until reused, so holding steel does not fight recall. Spike ammunition currently does not implement arrow-only Piercing behavior.
+
+
+### Steel strength (0.9.1)
+
+Steel now defaults to twice its previous force, matching the iron boost. Attribute
+1 now applies the former attribute 2 force at each burn level. Both aimed pushes
+and Alt movement assistance use this boost; attributes, burn levels and range
+falloff still scale force normally. Tune `ironSteel.steelStrengthMultiplier`
+(default 2) in the powers server config; set it to 1 for the previous balance.
+Reserve drain is unchanged.
+
+Projectile and reusable ball launch speeds also follow the increased push
+strength. At default steel attribute 1, a nugget launches at 3.5 blocks/tick on
+Low burn, 7 on Burning and the configured cap of 8 on Flaring. Impact damage and
+recoil follow actual velocity; the damage ceiling remains 100.

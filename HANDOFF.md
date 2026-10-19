@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-18**. Current mod version: **0.9.0-alpha**.
+Last updated: **2026-10-19 UTC**. Current mod version: **0.9.1-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -9,12 +9,10 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
-- User requested a spike crossbow, diagonal-ingot metal spikes, reusable steel ball-and-rope, and a charged grappling hook with swing/Space reeling/iron anchor interaction.
-- Implemented equipment items/entity, recipes, shared AllomanticProjectile interface, tether ownership/recovery, radial rope tension and visible rope. No Hemalurgic charge/steal mechanics are included.
-- Spike recipe interpretation: two same-metal ingots diagonally craft two spikes. Crossbow recipe is vanilla crossbow plus two iron ingots. Ball recipe is one non-aluminum ingot plus three string. Grapple recipe adds iron, tripwire hook and three string; these crossbow/hook recipes are provisional choices.
-- Ball launches on right-click only while actively holding steel's assigned activation key and burning; subsequent right-click reels in. Grapple charges like a bow in 10 ticks, latches to blocks, preserves tangential motion, and Space shortens rope. Right-click again recalls it. Both items stay in inventory rather than being duplicated as drops.
-- Final build, 30 JUnit methods, 22 server GameTests and artifact upload passed. Crafting exposed missing common ingot aggregation; `c:ingots` now includes all mod ingot groups. Placeholder item icons reuse vanilla assets; rope rendering and real swinging need client playtesting.
-- Next: playtest actual crossbow loading/firing, ball right-click launch/recall, hook charge/latch/swing/Space shortening/recall, rope rendering and iron anchor targeting with updated client/server jars. Tune balance and replace temporary icons based on user feedback.
+- User requested the same baseline strength boost for steel as iron because lower levels cannot provide useful movement.
+- Added `ironSteel.steelStrengthMultiplier` (default 2, range 0.1–20). Attribute 1 now matches former steel attribute 2. Aimed and assisted pushes, projectile/ball launches and deflection share effective force; reserve drain is unchanged.
+- Updated runtime regressions for equal iron/steel baseline, steel burn/attribute scaling and launch speeds. Build and server GameTests pending for this change; previous equipment build remains verified below.
+- Next: verify CI, then client-playtest lower-level steel traversal and equipment interactions. Placeholder equipment icons and rope/swing rendering still require playtesting.
 
 ## Vision and accepted constraints
 
@@ -65,7 +63,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - **Left Alt:** hold **before** pressing the relevant activation key to latch the alternate mode for that activation. Release that key before changing modes. All keys are rebindable.
 - Allomancy states: **0 Off, 1 Low burn, 2 Burning, 3 Flaring**. Default force multipliers: 0 / 0.5 / 1 / 2. Consumption multipliers: 0 / 0.5 / 1 / 3. Disabling flaring falls back to Burning.
 - Feruchemy: zero Off, negative Storing levels, positive Tapping levels (default 1–5); no effects yet.
-- Iron baseline multiplier is **2** on top of the global force, attributes and burn level. At Burning, attribute 1 equals pre-0.6.0 iron attribute 2. Low burn intentionally gives a weaker pull. Steel's baseline was not increased.
+- Iron baseline multiplier is **2** on top of the global force, attributes and burn level. At Burning, attribute 1 equals pre-0.6.0 iron attribute 2. Low burn intentionally gives a weaker pull. Steel now also defaults to multiplier 2 (0.9.1), independently configurable with `ironSteel.steelStrengthMultiplier`.
 - Glass bottle + iron/steel nugget crafts its vial. Drinking adds 60 reserve units by default (cap 300), returns the bottle. Normal Burning costs 1 unit/second. Sensing also consumes reserves. Switching selection does not turn off other burning metals.
 
 ## Iron/steel targeting, movement and lines
@@ -97,7 +95,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - One normally fired thrown stack becomes one `SteelProjectile`; it cannot merge in flight. The exact stack/components/count are stored separately from the rendered single item and persist through save/load.
 - `MetalAmounts` / `RecipeMetalAmounts` count nugget-equivalent content: nugget 1, ingot 9, iron block 81, anvil 279. Repeated ingredients and output counts matter; nonmetal ingredients add zero. Ingredient/recipe alternatives use the minimum resolvable amount.
 - Primitive ore/raw items use 9 units as a balance approximation; unresolved detectable items default to 9 units per item (configurable). Multiply by thrown stack count. This is not a real-world mass/metallurgy claim.
-- At baseline steel Burning: one nugget launches at 3.5 blocks/tick and deals about **2 raw damage**; armor and hurt immunity still apply. Power is effective steel force divided by 7, so attributes, force config and burn levels scale it.
+- At default steel attribute 1: nugget launch speed is 3.5/7/8 blocks per tick for Low/Burning/Flaring (speed cap 8). The reference damage calibration remains 2 raw damage at speed 3.5; Burning speed 7 yields about 7.76 raw damage. Armor and hurt immunity still apply. Power is effective steel force divided by 7, so attributes, force config and burn levels scale it.
 - Speed = `min(maxSpeed, nuggetSpeed * power / metalUnits^0.25)`. Default max speed 8. A baseline anvil launches about 0.86 blocks/tick.
 - Recoil = `metalUnits * nuggetMass * speed / playerMass` opposite aim; default nugget mass 0.2. Anvils kick much harder than nuggets. Existing reaction-force toggle applies.
 - Damage = `cap * -expm1(log1p(-nuggetDamage/cap) * energy)` where `energy = metalUnits * (impactSpeed/nuggetSpeed)^2`. Calibrated at 2 per baseline nugget; smooth saturation approaches **100**, with a hard raw damage ceiling of 100 regardless of metal/power. Config can lower the cap.

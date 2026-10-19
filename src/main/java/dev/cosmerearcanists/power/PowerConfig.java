@@ -6,7 +6,7 @@ public final class PowerConfig {
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.BooleanValue ENABLED, IRON_STEEL, DETECTION_BLOCKS, DETECTION_ITEMS, DETECTION_GEAR, RECIPE_DETECTION, CONSUMPTION, FLARING, RECOIL, PLAYER_TARGETS, FALL_MITIGATION, BLOCK_RESISTANCE, STEEL_MOVEMENT, IRON_MOVEMENT, RESIST_WALKING, STEEL_PROJECTILES, ALTERNATE_DROP_DOWN, DETECTION_PROJECTILES, SECONDARY_ENABLED;
     public static final ModConfigSpec.IntValue RANGE, MAX_TARGETS, SCAN_BUDGET, SYNC_INTERVAL, FERUCHEMY_LEVELS, NEAR_SCAN_RADIUS, URGENT_SCAN_BUDGET, PROJECTILE_LIFETIME;
-    public static final ModConfigSpec.DoubleValue FORCE, FLARE_STRENGTH, FLARE_DRAIN, BURN_DRAIN, RESERVE_CAP, VIAL_RESERVE, MAX_SPEED, PLAYER_MASS, AIM_ANGLE, FALL_MITIGATION_STRENGTH, RESISTANCE_COST, RESISTANCE_HARDNESS_CAP, MOVEMENT_ANGLE, IRON_STRENGTH, LOW_STRENGTH, BURN_STRENGTH, LOW_DRAIN, NUGGET_SPEED, PROJECTILE_MAX_SPEED, NUGGET_DAMAGE, PROJECTILE_DAMAGE_CAP, NUGGET_MASS, UNKNOWN_METAL_UNITS, PROJECTILE_RESERVE_COST;
+    public static final ModConfigSpec.DoubleValue FORCE, FLARE_STRENGTH, FLARE_DRAIN, BURN_DRAIN, RESERVE_CAP, VIAL_RESERVE, MAX_SPEED, PLAYER_MASS, AIM_ANGLE, FALL_MITIGATION_STRENGTH, RESISTANCE_COST, RESISTANCE_HARDNESS_CAP, MOVEMENT_ANGLE, IRON_STRENGTH, STEEL_STRENGTH, LOW_STRENGTH, BURN_STRENGTH, LOW_DRAIN, NUGGET_SPEED, PROJECTILE_MAX_SPEED, NUGGET_DAMAGE, PROJECTILE_DAMAGE_CAP, NUGGET_MASS, UNKNOWN_METAL_UNITS, PROJECTILE_RESERVE_COST;
     static {
         var b = new ModConfigSpec.Builder();
         b.push("controls");
@@ -17,6 +17,7 @@ public final class PowerConfig {
         IRON_STEEL = b.define("enabled", true);
         RESIST_WALKING = b.comment("Remove vanilla walking acceleration opposing an active Allomantic impulse; retain sideways input and existing inertia.").define("preventWalkingAgainstForce", true);
         IRON_STRENGTH = b.comment("Iron-only force multiplier, applied in addition to the power attribute and flaring. 2 gives base iron the previous strength of attribute 2.").defineInRange("ironStrengthMultiplier", 2.0, 0.1, 20.0);
+        STEEL_STRENGTH = b.comment("Steel-only force multiplier, applied in addition to the power attribute and burn level. 2 gives base steel the previous strength of attribute 2.").defineInRange("steelStrengthMultiplier", 2.0, 0.1, 20.0);
         IRON_MOVEMENT = b.define("ironAlternateMovement", true);
         STEEL_MOVEMENT = b.define("alternateMovement", true);
         MOVEMENT_ANGLE = b.comment("Anchors outside this angle from intended movement contribute no force; oblique anchors contribute less.").defineInRange("movementAnchorAngleDegrees", 60.0, 5.0, 80.0);
@@ -54,7 +55,7 @@ public final class PowerConfig {
         b.pop(); b.push("steelProjectiles");
         STEEL_PROJECTILES=b.define("enabled",true);
         ALTERNATE_DROP_DOWN=b.comment("Alt + held steel activation drops metal at the feet, moving straight down instead of firing. Disabling keeps an ordinary vanilla drop in alternate mode.").define("alternateDropDownwards",true);
-        NUGGET_SPEED=b.comment("Blocks per tick for one nugget at normal steel strength.").defineInRange("nuggetSpeed",3.5,.1,8.0);
+        NUGGET_SPEED=b.comment("Blocks per tick for one nugget at reference push force 7, before the steel strength multiplier.").defineInRange("nuggetSpeed",3.5,.1,8.0);
         PROJECTILE_MAX_SPEED=b.defineInRange("maxSpeed",8.0,.1,16.0);
         NUGGET_DAMAGE=b.comment("Damage before armor at the reference nugget speed.").defineInRange("nuggetDamage",2.0,.01,99.0);
         PROJECTILE_DAMAGE_CAP=b.comment("Smooth damage ceiling; never exceeds 100 even if configured higher externally.").defineInRange("damageCap",100.0,1.0,100.0);
