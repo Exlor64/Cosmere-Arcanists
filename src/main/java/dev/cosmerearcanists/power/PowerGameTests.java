@@ -340,6 +340,46 @@ public final class PowerGameTests {
         helper.assertTrue(PowerService.powerForce(player,"a:iron")==0, "Off must apply no force");
         helper.succeed();
     }
+    @GameTest(template = "empty", timeoutTicks = 140)
+    public static void ironAlternateHoldsAndChangesDirection(GameTestHelper helper) {
+        var level=helper.getLevel();
+        var player=new net.neoforged.neoforge.common.util.FakePlayer(level,new GameProfile(UUID.randomUUID(),"IronMovement"));
+        var pos=helper.absolutePos(new net.minecraft.core.BlockPos(1,10,1));
+        player.setPos(pos.getX()+.5,pos.getY(),pos.getZ()+.5); player.setYRot(0);
+        PowerAttributes.set(player,"a:iron",1); PowerData.state(player,"a:iron",2); PowerData.reserve(player,"iron",100);
+        var session=new PowerService.Session();
+        // Route each slot through the real control handler and registered ability.
+        PowerData.assignSlot(player,"a:iron",0);
+        var above=MetalTarget.block(pos.above(4));
+        var ahead=MetalTarget.block(pos.offset(0,1,4));
+        int[] elapsed={0};
+        helper.onEachTick(()->{
+            int tick=elapsed[0]++;
+            if(tick>=100)return;
+            boolean secondary=tick>=50;
+            if(tick==50) {
+                PowerService.control(player,new PowerNetwork.Control(2,"",0));
+                PowerData.assignSlot(player,"a:iron",1);
+            }
+            int direction=tick%20<10?64:4;
+            // Keep activation held for five seconds, including direction changes and heartbeat refresh.
+            PowerService.control(player,new PowerNetwork.Control(secondary?7:2,"",1|2|direction));
+            session.targets=java.util.List.of(above,ahead);
+            player.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+            PowerService.ABILITIES.activate(player,"a:iron",tick==0?AbilityDispatcher.Phase.START:AbilityDispatcher.Phase.TICK,session.targets);
+            var motion=player.getDeltaMovement();
+            helper.assertTrue(direction==64?motion.y>0 && Math.abs(motion.z)<1e-6:motion.z>0,
+                "Held iron alternate must pull toward the requested anchor in either slot, tick "+tick);
+            player.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+            PowerService.control(player,new PowerNetwork.Control(secondary?7:2,"",1|2|8));
+            PowerService.ABILITIES.activate(player,"a:iron",AbilityDispatcher.Phase.TICK,session.targets);
+            helper.assertTrue(player.getDeltaMovement().lengthSqr()<1e-12,"Iron must not invent backward thrust without metal behind");
+            if(tick==99) {
+                PowerService.control(player,new PowerNetwork.Control(7,"",0));
+                helper.succeed();
+            }
+        });
+    }
     @GameTest(template = "empty")
     public static void ironStrengthAndPullAssistance(GameTestHelper helper) {
         var level = helper.getLevel();

@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-19 UTC**. Current mod version: **0.9.1-alpha**.
+Last updated: **2026-10-19 UTC**. Current mod version: **0.9.2-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -9,10 +9,10 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
-- User requested the same baseline strength boost for steel as iron because lower levels cannot provide useful movement.
-- Added `ironSteel.steelStrengthMultiplier` (default 2, range 0.1–20). Attribute 1 now matches former steel attribute 2. Aimed and assisted pushes, projectile/ball launches and deflection share effective force; reserve drain is unchanged.
-- Updated runtime regressions for equal iron/steel baseline, steel burn/attribute scaling and launch speeds. Build, 30 JUnit methods, 22 server GameTests and artifact upload passed on the gameplay commit linked below.
-- Next: client-playtest lower-level steel traversal and equipment interactions. Placeholder equipment icons and rope/swing rendering still require playtesting.
+- User reports iron Alt movement starts inconsistently unless Alt/pull/direction are pressed slowly and can stop after seconds.
+- Found client Alt gating required the key already down in the previous tick. Removed this extra-tick requirement for both activation slots; alternate still latches on activation press. Same-tick Alt + G/H now works when Alt is down at sampling.
+- Added a five-second runtime regression for iron assistance in both slots, changing upward/forward input and rejecting backward input without a viable anchor. Build/GameTests pending. No force/solver change; the reported mid-hold stoppage is not yet reproduced.
+- Next: verify CI and have user retest quick activation and sustained iron movement with suitable anchors, available fuel and range. Investigate any remaining stoppage with exact anchor/input setup.
 
 ## Vision and accepted constraints
 
@@ -60,7 +60,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - **V:** hold and scroll to select state; release applies. Tap cycles states.
 - **G:** primary Activate ability. **H:** secondary Activate power (rebindable). Both can run simultaneously with independent START/TICK/STOP, hold/pulse/Alt and heartbeat state.
 - In R menu, **right-click** toggles highlighted power between primary and secondary (swaps occupied slots); left-click cycles state. Release after right-click does not revert the assignment. Ordinary scroll/release chooses primary. V targets primary. HUD/menu show both assigned keys.
-- **Left Alt:** hold **before** pressing the relevant activation key to latch the alternate mode for that activation. Release that key before changing modes. All keys are rebindable.
+- **Left Alt:** hold **before** pressing the relevant activation key to latch the alternate mode for that activation. Release that key before changing modes. Alt no longer needs a full prior client tick (0.9.2). All keys are rebindable.
 - Allomancy states: **0 Off, 1 Low burn, 2 Burning, 3 Flaring**. Default force multipliers: 0 / 0.5 / 1 / 2. Consumption multipliers: 0 / 0.5 / 1 / 3. Disabling flaring falls back to Burning.
 - Feruchemy: zero Off, negative Storing levels, positive Tapping levels (default 1–5); no effects yet.
 - Iron baseline multiplier is **2** on top of the global force, attributes and burn level. At Burning, attribute 1 equals pre-0.6.0 iron attribute 2. Low burn intentionally gives a weaker pull. Steel now also defaults to multiplier 2 (0.9.1), independently configurable with `ironSteel.steelStrengthMultiplier`.
@@ -96,9 +96,9 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - `MetalAmounts` / `RecipeMetalAmounts` count nugget-equivalent content: nugget 1, ingot 9, iron block 81, anvil 279. Repeated ingredients and output counts matter; nonmetal ingredients add zero. Ingredient/recipe alternatives use the minimum resolvable amount.
 - Primitive ore/raw items use 9 units as a balance approximation; unresolved detectable items default to 9 units per item (configurable). Multiply by thrown stack count. This is not a real-world mass/metallurgy claim.
 - At default steel attribute 1: nugget launch speed is 3.5/7/8 blocks per tick for Low/Burning/Flaring (speed cap 8). The reference damage calibration remains 2 raw damage at speed 3.5; Burning speed 7 yields about 7.76 raw damage. Armor and hurt immunity still apply. Power is effective steel force divided by 7, so attributes, force config and burn levels scale it.
-- Speed = `min(maxSpeed, nuggetSpeed * power / metalUnits^0.25)`. Default max speed 8. A baseline anvil launches about 0.86 blocks/tick.
+- Speed = `min(maxSpeed, nuggetSpeed * power / metalUnits^0.25)`. Default max speed 8. At default attribute 1 Burning an anvil launches about 1.71 blocks/tick.
 - Recoil = `metalUnits * nuggetMass * speed / playerMass` opposite aim; default nugget mass 0.2. Anvils kick much harder than nuggets. Existing reaction-force toggle applies.
-- Damage = `cap * -expm1(log1p(-nuggetDamage/cap) * energy)` where `energy = metalUnits * (impactSpeed/nuggetSpeed)^2`. Calibrated at 2 per baseline nugget; smooth saturation approaches **100**, with a hard raw damage ceiling of 100 regardless of metal/power. Config can lower the cap.
+- Damage = `cap * -expm1(log1p(-nuggetDamage/cap) * energy)` where `energy = metalUnits * (impactSpeed/nuggetSpeed)^2`. Calibrated at 2 per reference-speed nugget; smooth saturation approaches **100**, with a hard raw damage ceiling of 100 regardless of metal/power. Config can lower the cap.
 - Vanilla swept projectile collision, gravity and drag; bounded knockback. Respect player-target/team/vanilla damage rules. No terrain destruction or piercing. Recover original stack at first impact, or after 100 flight ticks (default), with normal pickup delay. No automatic relaunch of recovered drops.
 
 ## Configuration and architecture map

@@ -26,7 +26,7 @@ public final class PowerClient {
     public static final KeyMapping ALTERNATE = new KeyMapping("key.cosmerearcanists.alternate", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_ALT, "key.categories.cosmerearcanists");
     private static int lastActivation;
     private static boolean lastRopeJump;
-    private static boolean alternateLatched, alternatePreviouslyHeld;
+    private static boolean alternateLatched;
     private static PowerNetwork.Snapshot snapshot = new PowerNetwork.Snapshot("", "", "", 5, List.of(), List.of());
     private static boolean selecting, choosingState, applied, connected;
     private static int selectTicks, stateTicks, clock, previewIndex, previewState;
@@ -72,14 +72,14 @@ public final class PowerClient {
         boolean secondaryClick=false; while(SECONDARY.consumeClick())secondaryClick=true;
         while (ALTERNATE.consumeClick()) { }
         if (mc.player == null || mc.level == null) {
-            snapshot = new PowerNetwork.Snapshot("", "", "", 5, List.of(), List.of()); connected = false; walkingForce = Vec3.ZERO; impulseClock = -100; selecting = choosingState = applied = false; alternateLatched = alternatePreviouslyHeld = false; lastActivation = lastSecondaryActivation = 0; secondaryApplied=secondaryAlternate=false; return;
+            snapshot = new PowerNetwork.Snapshot("", "", "", 5, List.of(), List.of()); connected = false; walkingForce = Vec3.ZERO; impulseClock = -100; selecting = choosingState = applied = false; alternateLatched = false; lastActivation = lastSecondaryActivation = 0; secondaryApplied=secondaryAlternate=false; return;
         }
         if (!connected) { connected = true; send(4, "", 0); }
         if (!playing()) {
             if (applied) send(2, "", 0);
             if(secondaryApplied)send(7,"",0);
             if(lastRopeJump)send(9,"",0);lastRopeJump=false;
-            selecting = choosingState = applied = false; alternateLatched = alternatePreviouslyHeld = false; lastActivation = lastSecondaryActivation = 0; secondaryApplied=secondaryAlternate=false; return;
+            selecting = choosingState = applied = false; alternateLatched = false; lastActivation = lastSecondaryActivation = 0; secondaryApplied=secondaryAlternate=false; return;
         }
         if (selectClick && !SELECT.isDown() && !selecting && !selected().isEmpty()) send(3, selected(), 0);
         if (stateClick && !STATE.isDown() && !choosingState && !SELECT.isDown() && !selected().isEmpty()) send(3, selected(), 0);
@@ -106,7 +106,7 @@ public final class PowerClient {
             choosingState = false;
         }
         down = APPLY.isDown() && !selecting && !choosingState;
-        boolean alternateReady = ALTERNATE.isDown() && alternatePreviouslyHeld;
+        boolean alternateReady = ALTERNATE.isDown();
         if (down && !applied) alternateLatched = alternateReady;
         int inputs = movementInputs(mc);
         if (activateClick && !APPLY.isDown() && !selecting && !choosingState) send(5, "", (alternateReady ? 2 : 0) | inputs);
@@ -124,7 +124,6 @@ public final class PowerClient {
         boolean ropeJump=mc.options.keyJump.isDown() && dev.cosmerearcanists.equipment.TetherItem.hasActiveHook(mc.player);
         if(ropeJump!=lastRopeJump || ropeJump && clock%2==0)send(9,"",ropeJump?1:0);
         lastRopeJump=ropeJump;
-        alternatePreviouslyHeld = ALTERNATE.isDown();
     }
     private static int movementInputs(Minecraft mc) {
         return (mc.options.keyUp.isDown() ? 4 : 0) | (mc.options.keyDown.isDown() ? 8 : 0)

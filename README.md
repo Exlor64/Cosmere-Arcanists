@@ -311,3 +311,12 @@ Projectile and reusable ball launch speeds also follow the increased push
 strength. At default steel attribute 1, a nugget launches at 3.5 blocks/tick on
 Low burn, 7 on Burning and the configured cap of 8 on Flaring. Impact damage and
 recoil follow actual velocity; the damage ceiling remains 100.
+
+
+0.9.2: Alt can now be pressed immediately before activation, within the same
+client tick; no extra tick of waiting is required. The alternate mode still
+latches when G/H is pressed. Iron movement pulls toward metal in the requested
+direction (Space needs overhead metal); steel pushes from metal opposite it.
+Hold the activation key while changing WASD/Space/Shift. Release G/H to change
+between normal and alternate use. Iron assistance must be enabled via
+`ironSteel.ironAlternateMovement` in the powers server config.
