@@ -30,8 +30,8 @@ class PowerRulesTest {
         assertEquals("Tapping 3", PowerRules.label("f:iron", 3));
         assertEquals("Off", PowerRules.label("f:iron", 0));
     }
-    @Test void onlyIronSteelAndPewterClaimImplementedEffects() {
+    @Test void onlyFourPhysicalMetalsClaimImplementedEffects() {
         assertTrue(PowerRules.implemented("a:iron")); assertTrue(PowerRules.implemented("a:steel"));
-        assertFalse(PowerRules.implemented("f:iron")); assertTrue(PowerRules.implemented("a:pewter")); assertFalse(PowerRules.implemented("a:tin"));
+        assertFalse(PowerRules.implemented("f:iron")); assertTrue(PowerRules.implemented("a:pewter")); assertTrue(PowerRules.implemented("a:tin")); assertFalse(PowerRules.implemented("a:bronze"));
     }
 }

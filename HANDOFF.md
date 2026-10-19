@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-19 UTC**. Current mod version: **0.11.0-alpha**.
+Last updated: **2026-10-19 UTC**. Current mod version: **0.12.0-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -9,14 +9,11 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
-- Follow-up inventory confirmation: ingots and nuggets already exist for all sixteen added metals/alloys; vanilla iron/copper/gold ingots are reused. No gameplay change requested in this clarification.
-
-- User requested dynamic mixed-metal vials, filing ingots/nuggets/blocks, four filings per nugget, sixteen filings per vial, potion-style drinking, wear bars/crafting exclusion for filed material, fifty reserve per filing.
-- Implemented Metal File + loose metal filings + generic metal vial, per-piece persistent progress/stack splitting, potion-duration use, mixed contents, overflow retention, tooltips/wear bars, recipe/placement guards, remaining-metal detection/projectile mass and aluminum exclusion. Defaults: nugget 4 / ingot 36 / block 324 filings, vial total 16, reserve 50 each.
-- UX choice stated to user: file mainhand + source offhand; filings + vial/glass bottle in opposite hands loads one per right-click. Unfiled stack remainder returns to inventory while partial piece stays offhand. Overflow filings stay in vial instead of being wasted at the existing reserve cap.
-- Legacy vial IDs remain valid as one filing each; old bottle+nugget recipes replaced. New filing configuration preserves existing contents/progress when disabled. No protocol schema changes (still 6), but both jars must update for registry/mixins/items.
-- Final build, 34 JUnit methods, all 31 server GameTests and artifact upload passed on the gameplay commit linked below. Placement guard denies only filed block-item use, preserving normal chest/block interaction.
-- Next: client-playtest filing/offhand/loading/drinking, tooltips and durability bars; temporary icons reuse vanilla assets.
+- User approved tin sight/zoom and sound-driven wireframe hearing, then requested attenuation or complete blocking through too many intervening blocks.
+- Implemented passive tin burn/fuel/night vision, held G/H zoom, server sound events with actual entity-source identity, bounded collision geometry echoes and wireframe model rendering through walls. Silent entities near noises are never guessed as sources. Echoes are transient and remain at heard positions.
+- Dedicated sound obstruction adds per-block/hardness/wool cost to hearing distance, reducing opacity/radius/detail/fade and suppressing inaudible echoes. It does not modify vanilla audio playback. Direct-path approximation; no forced chunk loading or acoustic reflection search.
+- Build/JUnit/server GameTests pending. Protocol now 7 with private tin status and echo packets; both client/server need update. Sensory overload remains deferred.
+- Next: verify CI, then client-playtest real mob/step/block sounds, muted/blocked walls, entity mesh wireframes, night vision and zoom. Third-party renderer compatibility and purely client-local sounds remain limitations to assess.
 
 ## Vision and accepted constraints
 
@@ -33,8 +30,9 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - Metal ores, processing, ingots/nuggets and alloys; ore generation, creative tab, and recipe/generation gates.
 - Spike crossbow with 19 metal spike variants, embedded anchors, reusable steel ball-and-rope, and a charged/swinging/recallable grappling hook.
 - Allomantic **iron and steel effects**, detection lines, aimed push/pull, movement assistance, metal reserves/vials, fall braking, and steel-thrown projectiles.
+- Allomantic **tin effects**: passive night vision, held zoom, sound-triggered mesh/surface wireframe echoes with per-block obstruction, fading and audibility/geometry budgets.
 - Allomantic **pewter effects**: passive burn, speed/melee/endurance, capped mitigation, slow healing, deferred injury, rest/saturation recovery, gray-heart HUD and fuel vial.
-- 16 Allomantic plus 16 Feruchemical attributes and selector entries. Other Allomantic effects besides iron/steel/pewter are pending. Feruchemy has selector states only, no storing/tapping effects.
+- 16 Allomantic plus 16 Feruchemical attributes and selector entries. Other Allomantic effects besides iron/steel/tin/pewter are pending. Feruchemy has selector states only, no storing/tapping effects.
 - **Not implemented:** Scadrial dimension, other planets/dimensions, Cognitive Realm/perpendicularities/travel, origin GUI, expanded races/ancestry, other Allomancy effects, Feruchemy mechanics/metalminds, Hemalurgy power stealing/charging, Compounding.
 
 ## Metallurgy and detection decisions
@@ -55,7 +53,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - `PowerData.KEY = cosmerearcanists_powers`: states, reserves, primary `selected` and `secondary` assignments, migration markers. Origin metadata remains under `cosmerearcanists_origin` (schema 1).
 - `burn_levels_schema = 1` migrates old active states 1/2 to current 2/3 once; Off and Feruchemy states retain their meanings.
 - `/attribute @s cosmerearcanists:allomancy_steel base set 1` grants baseline steel. Replace `steel` with `iron` as needed; 0 removes the base power.
-- `/cosmere power grant <player> a:steel` sets at least baseline strength. `revoke` sets the base to zero, including a natural origin power; a positive modifier can still grant access. `/cosmere power refill <player>` refills iron/steel/pewter reserves.
+- `/cosmere power grant <player> a:steel` sets at least baseline strength. `revoke` sets the base to zero, including a natural origin power; a positive modifier can still grant access. `/cosmere power refill <player>` refills iron/steel/tin/pewter reserves.
 - Grant/revoke use `ResourceLocationArgument`, accepting IDs such as `a:steel` and `f:iron` without the old trailing-data parser error.
 - `/cosmere origin <scadrial|overworld>` in random/ancestry modes; CHOICE adds `<allomancy metal or none> <feruchemy metal or none>`. `/cosmere reset <player>` clears origin, powers data, and power attributes/modifiers. Rerolls replace previous origin base powers while retaining other attribute powers.
 
@@ -114,7 +112,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - `metalDetection`: categories (including fired projectiles), recursive recipes, hardness cost/cap, range-related scanning budgets, target count and sync cadence.
 - `steelProjectiles`: enabled, reference/max speed, nugget damage, cap ≤100, recoil mass, unknown content fallback, per-shot reserve cost (default 1), lifetime, alternate straight-down drop.
 - Existing config files retain saved values. New fields obtain defaults. Datapacks can override generation and recipes. Feature disablement must not delete saved data or registry entries.
-- `PowerService`: validated inputs, ticks/sessions, dispatcher, target selection, forces, throw event. `PowerAttributes`/`PowerData`: powers/persistence. `PowerNetwork`: controls, snapshots, additive impulse; **current protocol 6**. Update both server and client, especially for new projectile registration/renderer.
+- `PowerService`: validated inputs, ticks/sessions, dispatcher, target selection, forces, throw event. `PowerAttributes`/`PowerData`: powers/persistence. `PowerNetwork`: controls, snapshots, additive impulse; **current protocol 7**. Update both server and client, especially for new projectile registration/renderer.
 - `PowerClient`/`PowerClientMod`: input, HUD, lines, impulse reception, renderer. Common classes must not reference client classes. Client supplies no target positions or force magnitudes.
 - `MetalDetector`/`MetalGraph`: classification/aluminum closure. `MetalAmounts`/`RecipeMetalAmounts`: quantities. `MetalProjectilePhysics`: pure scaling formulas. `MetalProjectiles`: registration/launch. `SteelProjectile`: collision, damage, persistence and recovery.
 - Session state clears on logout, dimension change, respawn, datapack reload and server stop. Keep migrations idempotent and configuration gates server-authoritative.
@@ -152,7 +150,7 @@ Tethers bind the original inventory item's custom-data UUID to one projectile.
 Recall returns the entity without dropping another inventory item; loss/death
 of owner or loss/replacement of the matching item ends it. No forced chunks.
 Control action 9 carries only Space input with a short timeout; server owns
-rope constraints and shortening. Current protocol 6 requires both sides to update.
+rope constraints and shortening. Current protocol 7 requires both sides to update.
 
 Recall temporarily removes returning equipment heads from Allomantic targeting so a still-held steel key does not fight the reel-in. Custom spike ammunition supports standard crossbow loading, Quick Charge and spread; arrow-only Piercing behavior is not implemented.
 
@@ -169,7 +167,7 @@ Recall temporarily removes returning equipment heads from Allomantic targeting s
 - Persistent `PowerData.data(player).pewter_drag` stores HP. Logout/dimension travel preserve it; death clears it. Stopping, revoking attribute or running out of fuel settles once on the next player tick, before recovery/healing. Direct health charge with custom `pewter_drag` death source prevents armor/absorption/i-frame discounts and can kill; it bypasses totems. This is provisional payout behavior to review with user if desired.
 - Rest requires stationary grounded/sleeping player (position delta <.02/tick, no passenger). Every 100 continuous rest ticks clears 1% remaining debt × strength, capped at full clearance. Saturation spends up to .2/sec × strength, recovers 1 HP debt per saturation, and spends only while debt exists and never more than needed.
 - `PewterStatus` private packet sends dimension/debt/active strength with snapshots. Client `PewterClient` renders a separate gray heart row + numeric debt, capped at ten visible hearts while numeric value retains larger debt. No bonus health implied. Client `pewterDragHearts` toggle. Protocol 6.
-- Added pewter reserve support and implemented selector label. The original bottle+nugget vial workflow is superseded by mixed filings in 0.11.0; legacy registered IDs remain valid. Tin and other powers still pending.
+- Added pewter reserve support and implemented selector label. The original bottle+nugget vial workflow is superseded by mixed filings in 0.11.0; legacy registered IDs remain valid. Tin was added in 0.12.0; other nonphysical Allomantic powers remain pending.
 - Added regressions: burn/attribute caps, real damage split/absorption, modifiers cleanup and once-only payout, actual exhaustion mixin, fuel depletion, stationary/moving rest, saturation spending, scaled healing, disabled-feature debt retention, persistent NBT copy and status codec. Manual client HUD/network playtesting remains outstanding.
 
 Pewter test-fixture details: use out_of_world damage to bypass ServerPlayer spawn protection (FakePlayer.tick does not decrement it). Set MAX_ABSORPTION capacity before granting absorption hearts in 1.21; otherwise setAbsorptionAmount is clamped to zero. Final suite validates real Pre/Post health damage and real causeFoodExhaustion injection.
@@ -185,3 +183,16 @@ Pewter test-fixture details: use out_of_world damage to bypass ServerPlayer spaw
 - `MetalDetector` classifies filing/vial contents dynamically, excluding any aluminum/duralumin mixture. `MetalAmounts` uses remaining filing metal and partial-piece mass for projectile/recoil balance.
 - Old iron/steel/pewter vial registrations and saved stacks remain, interpreted as one filing per old vial; hidden from creative catalog, old crafting recipes removed. Generic vial and all filing variants appear in creative tab. Empty glass bottle may be loaded directly or crafted into an empty vial. File recipe: diagonal iron ingot (upper right) + stick (lower left).
 - Added runtime regressions for exact nugget extraction, original-stack conservation, tool wear and capacities, direct/cached recipe exclusions, component round trip, 3 iron + 13 steel mixtures and capacity rejection, delayed potion use, fifty-per-filing restoration, overflow retention, legacy items, reduced mass and aluminum exclusion. Client animation/bar/icon appearance remains untested manually.
+
+
+## Tin architecture (0.12.0)
+
+- `TinConfig` SERVER `cosmerearcanists-tin-server.toml`: per-effect enablement, drain, zoom/cap, hearing range/cap, surface radius/cap, shape/event budgets, same-source interval, fade/cap, obstruction toggle/per-block/hardness/wool costs and minimum audibility. Client settings in PowerClientConfig.tin. Standard global/art/metal attribute gates remain.
+- `TinService.tick` runs before snapshots independent of selected power; drains 1 reserve/sec × shared burn consumption and turns off on depletion. Owned hidden/ambient night vision refreshes at >300 ticks and is removed on stop; an external Added effect clears ownership to preserve other potions. Ownership persists in PowerData for relog cleanup. Shared activation heartbeat on either slot authorizes zoom; no force handler or extra keybind is needed.
+- Effective strength = attribute × burn multiplier. Hearing range = min(64,24×sqrt(strength)×sqrt(volume capped at 4)); audibility = clamp(1-(distance+obstruction)/range,0,1), cutoff .08. Defaults radius 3×sqrt(strength)×sqrt(volume), cap 6, further scaled by sqrt(audibility). Base fade 24 with strength scaling, cap 60, similarly attenuated. Geometry budget max96 boxes and 2 events/player/tick; same source updates at most every4 ticks. Client max12 visible echoes.
+- Direct ray samples at quarter-block intervals, each colliding voxel counted once if its collision shape intersects the path. Skip endpoint cells, never load chunks. Cost = 2 + .75×hardness capped at10; wool +12. Enough cost suppresses packets entirely. No acoustic diffraction/room simulation; vanilla audio untouched.
+- `EntitySoundSourceMixin` uses MixinExtras WrapMethod around Entity.playSound, scoping a ThreadLocal source with try/finally. PlayLevelSoundEvent handlers respect cancellation/new volume; block-position events without source context never guess a nearby entity. AtEntity has explicit source identity. Silent/no-volume events do not reveal mobs. Only server sound events participate; client-local ambient and unsupported mod sounds can be absent.
+- Surfaces: bounded near-first exposed collision-shape AABBs around sound, loaded chunks only. No ore IDs, silent-entity lists or distant terrain. Source entity box/ID plus remembered location allow mesh reveal when tracked and fallback outline otherwise.
+- Protocol7 `TinStatus` (strength/held zoom) and `TinEcho` (dimension, sound point, actual source ID/box, opacity/lifetime, <=256 shape boxes). Server sends only to valid tin listeners in that dimension with range/obstruction and rate checks.
+- `TinClient` fades/caps/clears echoes on deactivation/dimension/disconnect, draws terrain lines through walls, rerenders only source entity mesh with a dedicated flat wireframe render type at remembered sound position. Uses world pose/camera-relative doubles. Polygon mode/shader tint restore in finally. Non-entity-format layers/nameplates discarded. Other mod renderer compatibility and actual visuals are not manually verified. Held zoom modifies configured world FOV only. No sensory overload or audio amplification yet.
+- Added pure balance and runtime regressions for range/zoom/obstruction, real source scoping/silence, night-vision ownership and fuel, both zoom slots, thin/thick/hard/wool obstruction, bounded nearby surfaces and echo packet round trip. CI pending for this revision.

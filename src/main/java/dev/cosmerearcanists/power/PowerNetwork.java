@@ -46,6 +46,30 @@ public final class PowerNetwork {
         };
         @Override public Type<PewterStatus> type(){return TYPE;}
     }
+    public static Consumer<TinStatus> tinReceiver = packet -> { };
+    public static Consumer<TinEcho> echoReceiver = packet -> { };
+    public record TinStatus(String dimension,double strength,double zoom) implements CustomPacketPayload {
+        public static final Type<TinStatus> TYPE=new Type<>(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,"tin_status"));
+        public static final StreamCodec<RegistryFriendlyByteBuf,TinStatus> CODEC=new StreamCodec<>() {
+            public TinStatus decode(RegistryFriendlyByteBuf b){return new TinStatus(b.readUtf(128),b.readDouble(),b.readDouble());}
+            public void encode(RegistryFriendlyByteBuf b,TinStatus p){b.writeUtf(p.dimension,128);b.writeDouble(p.strength);b.writeDouble(p.zoom);}
+        };
+        @Override public Type<TinStatus> type(){return TYPE;}
+    }
+    public record TinEcho(String dimension,net.minecraft.world.phys.Vec3 position,int entityId,net.minecraft.world.phys.AABB sourceBox,int ticks,float audible,List<net.minecraft.world.phys.AABB> surfaces) implements CustomPacketPayload {
+        public static final Type<TinEcho> TYPE=new Type<>(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,"tin_echo"));
+        private static net.minecraft.world.phys.AABB box(RegistryFriendlyByteBuf b){return new net.minecraft.world.phys.AABB(b.readDouble(),b.readDouble(),b.readDouble(),b.readDouble(),b.readDouble(),b.readDouble());}
+        private static void box(RegistryFriendlyByteBuf b,net.minecraft.world.phys.AABB a){b.writeDouble(a.minX);b.writeDouble(a.minY);b.writeDouble(a.minZ);b.writeDouble(a.maxX);b.writeDouble(a.maxY);b.writeDouble(a.maxZ);}
+        public static final StreamCodec<RegistryFriendlyByteBuf,TinEcho> CODEC=new StreamCodec<>() {
+            public TinEcho decode(RegistryFriendlyByteBuf b){
+                String d=b.readUtf(128);var p=new net.minecraft.world.phys.Vec3(b.readDouble(),b.readDouble(),b.readDouble());int id=b.readInt();var source=box(b);int ticks=b.readVarInt();float audible=b.readFloat();int count=b.readVarInt();
+                if(count<0 || count>256 || ticks<1 || ticks>200 || !Float.isFinite(audible))throw new IllegalArgumentException("Invalid tin echo");
+                var boxes=new ArrayList<net.minecraft.world.phys.AABB>();for(int i=0;i<count;i++)boxes.add(box(b));return new TinEcho(d,p,id,source,ticks,audible,List.copyOf(boxes));
+            }
+            public void encode(RegistryFriendlyByteBuf b,TinEcho p){b.writeUtf(p.dimension,128);b.writeDouble(p.position.x);b.writeDouble(p.position.y);b.writeDouble(p.position.z);b.writeInt(p.entityId);box(b,p.sourceBox);b.writeVarInt(p.ticks);b.writeFloat(p.audible);b.writeVarInt(p.surfaces.size());for(var a:p.surfaces)box(b,a);}
+        };
+        @Override public Type<TinEcho> type(){return TYPE;}
+    }
     /** action: 0 select, 1 set state, 2 activate selected ability hold, 3 cycle state, 4 request snapshot, 5 primary pulse, 6 toggle highlighted power slot, 7 secondary hold, 8 secondary pulse, 9 grapple Space input. Activation value bits: held=1, alternate=2, forward=4, back=8, left=16, right=32, jump=64, descend=128. */
     public record Control(int action, String power, int value) implements CustomPacketPayload {
         public static final Type<Control> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID, "power_control"));
@@ -65,7 +89,9 @@ public final class PowerNetwork {
         @Override public Type<Impulse> type() { return TYPE; }
     }
     public static void register(RegisterPayloadHandlersEvent event) {
-        var r = event.registrar("6");
+        var r = event.registrar("7");
+        r.playToClient(TinStatus.TYPE,TinStatus.CODEC,(packet,context)->context.enqueueWork(()->tinReceiver.accept(packet)));
+        r.playToClient(TinEcho.TYPE,TinEcho.CODEC,(packet,context)->context.enqueueWork(()->echoReceiver.accept(packet)));
         r.playToClient(PewterStatus.TYPE, PewterStatus.CODEC, (packet, context) -> context.enqueueWork(() -> pewterReceiver.accept(packet)));
         r.playToClient(Impulse.TYPE, Impulse.CODEC, (packet, context) -> context.enqueueWork(() -> impulseReceiver.accept(packet)));
         r.playToClient(Snapshot.TYPE, Snapshot.CODEC, (packet, context) -> context.enqueueWork(() -> clientReceiver.accept(packet)));
@@ -74,6 +100,8 @@ public final class PowerNetwork {
         }));
     }
     public static void sync(ServerPlayer p, List<MetalTarget> targets) {
+        double tin=TinService.strength(p);
+        PacketDistributor.sendToPlayer(p,new TinStatus(p.level().dimension().location().toString(),tin,tin>0 && TinConfig.ZOOM.get() && PowerService.holdingAbility(p,"a:tin")?TinMath.zoom(tin,TinConfig.ZOOM_STRENGTH.get(),TinConfig.MAX_ZOOM.get()):1));
         double pewter=PewterService.strength(p);
         PacketDistributor.sendToPlayer(p,new PewterStatus(p.level().dimension().location().toString(),PewterService.debt(p),pewter>0,pewter));
         var list = PowerData.available(p).stream().map(power -> new Entry(power, PowerData.state(p, power), power.startsWith("a:") ? PowerData.reserve(p, power.substring(2)) : 0)).toList();

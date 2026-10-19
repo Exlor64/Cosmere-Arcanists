@@ -11,7 +11,7 @@ For current project status, accepted design decisions, verification and continua
 - Data survives death and relogging. Config changes do not reroll saved origins.
 - Hemalurgy is acquired rather than a birth power; its switch reserves the future feature gate.
 
-**Iron/steel/pewter Allomancy and the power selector are implemented. Other magic effects, custom dimensions, planetary travel, and the origin selection screen remain in development.** Scadrial will be Era 2 with an Overworld-like environment. The ancestry mode currently uses only a Scadrian-human probability multiplier; family inheritance and additional races are future work.
+**Iron/steel/tin/pewter Allomancy and the power selector are implemented. Other magic effects, custom dimensions, planetary travel, and the origin selection screen remain in development.** Scadrial will be Era 2 with an Overworld-like environment. The ancestry mode currently uses only a Scadrian-human probability multiplier; family inheritance and additional races are future work.
 
 ## Build and run
 Install JDK 21 and import the root Gradle project into IntelliJ.
@@ -50,7 +50,7 @@ Ores require an iron-tier pickaxe, support Silk Touch/Fortune, and smelt/blast i
 The Cosmere Metals creative tab contains the new materials. Textures are initial distinct pixel palettes. `cosmerearcanists:metals` and `cosmerearcanists:aluminum_containing` item tags seed iron/steel detection. Duralumin is included in the aluminum exclusion tag.
 
 ## Iron/steel and power controls (0.3.0)
-Iron, steel and pewter Allomantic effects are implemented. Other assigned powers appear in the selector with **effects pending**; Feruchemical state levels are controls only, with no storage/tapping mechanics yet.
+Iron, steel, tin and pewter Allomantic effects are implemented. Other assigned powers appear in the selector with **effects pending**; Feruchemical state levels are controls only, with no storage/tapping mechanics yet.
 
 Default keys (all rebindable):
 - Hold **R**, scroll to a power, then release R to select it. Tap R to cycle that power's state. Left-click while the menu is open also cycles the highlighted power's state.
@@ -70,7 +70,7 @@ Operator testing commands:
 - `/cosmere power grant <player> a:steel`
 - `/cosmere power grant <player> f:iron` (selector test only)
 - `/cosmere power revoke <player> <power>` sets the power’s base attribute to zero, including natural origin powers.
-- `/cosmere power refill <player>` fills iron, steel and pewter reserves.
+- `/cosmere power refill <player>` fills iron, steel, tin and pewter reserves.
 
 `./gradlew build` runs tests for recursive metal/aluminum classification, cyclic recipes, power states, and mass/distance/flaring force rules. CI also runs the GameTest server to validate runtime recipe detection and player data cloning. Multiplayer input, blue-line appearance, and hands-on movement still require client playtesting.
 
@@ -82,7 +82,7 @@ All 16 Allomantic and 16 Feruchemical powers have player attributes named
 `cosmerearcanists:allomancy_<metal>` and `cosmerearcanists:feruchemy_<metal>`.
 Zero means no power; 1 is normal strength. Positive effective values grant access,
 and iron/steel force scales with the effective value (including attribute modifiers).
-Powers other than iron, steel and pewter still have selection/state support only. Config switches still gate access.
+Powers other than iron, steel, tin and pewter still have selection/state support only. Config switches still gate access.
 
 Operator examples:
 ```mcfunction
@@ -420,3 +420,46 @@ Old iron/steel/pewter vial IDs remain loadable and drinkable as one filing each
 (50 reserve); their old bottle+nugget recipes are replaced by the filing workflow.
 File/filing/vial icons currently reuse vanilla assets. Both client and server
 need the update; protocol remains 6 (no payload changes).
+
+
+### Allomantic tin (0.12.0)
+
+Tin works passively while burning, even when another power is selected. It grants
+night vision and reveals actual audible events as brief **wireframes through
+walls**: the noisy entity's mesh, plus nearby exposed collision shapes such as
+floors, walls, stairs and doors. Silent entities are not scanned or revealed merely
+because they stand near a sound. Block-only noises reveal terrain, not a guessed
+nearby mob. Echoes fade and remember the sound's location, not a continuously
+tracked silent entity. Untracked entity models fall back to a source outline.
+
+Hold tin's assigned activation key (G or H) for zoom. At attribute 1 Burning the
+default is 2.5×; higher burn/attribute strength increases zoom up to 8×. Tin uses
+the shared burn levels and drain multipliers, with base drain 1 reserve/sec.
+Tin filings restore its reserve; `/cosmere power refill @s` includes tin.
+
+**Sound blocking:** intervening collision geometry adds effective hearing
+distance. Default per block is 2 + 0.75 × hardness (hardness capped at 10), with
+12 additional distance for wool. More thickness/harder blocks muffle wireframes;
+enough obstruction hides them completely. Attenuation reduces opacity, revealed
+area, detail and persistence. This is a direct-path approximation, not acoustic
+reflection/diffraction simulation. It affects tin's visual hearing effect; vanilla
+audio playback is unchanged.
+
+Base hearing range is 24 blocks at normal strength/volume, scaling with square
+roots of attribute × burn strength and sound volume, capped at 64 blocks. Base
+surface radius is 3, capped at 6; base fade is 24 ticks, with a 60-tick cap. All
+are further reduced by distance/obstruction. The server sends only validated,
+bounded geometry from loaded chunks to active tin users in the same dimension.
+Each listener has sound budgets/cooldowns; it is not a continuous X-ray scan.
+
+Configure `cosmerearcanists-tin-server.toml` for enablement, sight/hearing/zoom,
+range, obstruction/hardness/wool costs, audibility cutoff, shape/network budgets,
+fade and fuel drain. Client `tin` options control wireframe/model rendering,
+opacity, line width, visible echo count and zoom. Night vision supplied by tin
+is removed on stop; independent potion effects are preserved. Sensory overload
+is not included in this release.
+
+Both client and server must update for **protocol 7**. Model wireframe appearance,
+compatibility with third-party entity renderers, and in-game sound coverage still
+need client playtesting. Some purely client-local/mod-specific sounds that do not
+emit a server sound event cannot generate a server-authorized reveal.

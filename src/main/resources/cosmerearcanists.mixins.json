@@ -7,7 +7,8 @@
     "PlayerExhaustionMixin",
     "FiledIngredientMixin",
     "FiledShapelessMixin",
-    "FiledRecipeManagerMixin"
+    "FiledRecipeManagerMixin",
+    "EntitySoundSourceMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -25,6 +25,8 @@ public final class CosmereArcanists {
         container.registerConfig(ModConfig.Type.SERVER, dev.cosmerearcanists.power.PowerConfig.SPEC, "cosmerearcanists-powers-server.toml");
         container.registerConfig(ModConfig.Type.SERVER, dev.cosmerearcanists.power.PewterConfig.SPEC, "cosmerearcanists-pewter-server.toml");
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.power.PewterService());
+        container.registerConfig(ModConfig.Type.SERVER, dev.cosmerearcanists.power.TinConfig.SPEC, "cosmerearcanists-tin-server.toml");
+        NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.power.TinService());
         bus.addListener(dev.cosmerearcanists.power.PowerNetwork::register);
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.power.PowerService());
     }

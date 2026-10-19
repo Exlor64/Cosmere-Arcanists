@@ -121,6 +121,7 @@ public final class PowerService {
     @SubscribeEvent public void tick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer p)) return;
         PewterService.tick(p);
+        TinService.tick(p);
         var s = session(p); var available = PowerData.available(p);
         Vec3 displacement = s.previousPosition == null ? null : p.position().subtract(s.previousPosition);
         s.observedMovement = usableMovement(displacement) ? displacement : null;
@@ -369,7 +370,7 @@ public final class PowerService {
             }))))
             .then(Commands.literal("refill").then(Commands.argument("player", EntityArgument.player()).executes(ctx -> {
                 var p = EntityArgument.getPlayer(ctx, "player");
-                PowerData.reserve(p, "iron", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "steel", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "pewter", PowerConfig.RESERVE_CAP.get()); PowerNetwork.sync(p, List.of()); return 1;
+                PowerData.reserve(p, "iron", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "steel", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "pewter", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "tin", PowerConfig.RESERVE_CAP.get()); PowerNetwork.sync(p, List.of()); return 1;
             })))));
     }
     private boolean validPower(String key) {

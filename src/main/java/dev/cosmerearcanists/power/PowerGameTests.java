@@ -18,6 +18,85 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @GameTestHolder(CosmereArcanists.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class PowerGameTests {
+    private static ServerPlayer tinPlayer(GameTestHelper helper,String name) {
+        var p=new net.neoforged.neoforge.common.util.FakePlayer(helper.getLevel(),new GameProfile(UUID.randomUUID(),name));
+        var pos=helper.absolutePos(new net.minecraft.core.BlockPos(1,20,1));p.setPos(pos.getX()+.5,pos.getY(),pos.getZ()+.5);
+        PowerAttributes.set(p,"a:tin",1);PowerData.state(p,"a:tin",2);PowerData.reserve(p,"tin",300);return p;
+    }
+    @GameTest(template = "empty")
+    public static void tinBurnFuelVisionAndHeldZoom(GameTestHelper helper) {
+        var p=tinPlayer(helper,"TinBurn");TinService.tick(p);
+        helper.assertTrue(p.hasEffect(net.minecraft.world.effect.MobEffects.NIGHT_VISION) && Math.abs(PowerData.reserve(p,"tin")-299.95)<1e-6,"Passive tin must provide night vision and consume normal burn fuel");
+        PowerData.state(p,"a:tin",0);TinService.tick(p);
+        helper.assertTrue(!p.hasEffect(net.minecraft.world.effect.MobEffects.NIGHT_VISION),"Stopping must remove tin-owned night vision");
+        p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.NIGHT_VISION,1000));
+        PowerData.state(p,"a:tin",3);TinService.tick(p);
+        helper.assertTrue(TinService.strength(p)==2,"Tin Flaring must scale effective strength");
+        PowerData.state(p,"a:tin",0);TinService.tick(p);
+        helper.assertTrue(p.hasEffect(net.minecraft.world.effect.MobEffects.NIGHT_VISION) && p.getEffect(net.minecraft.world.effect.MobEffects.NIGHT_VISION).getDuration()==1000,"Tin must never remove an independent night-vision potion");
+        PowerData.state(p,"a:tin",2);PowerData.assignSlot(p,"a:tin",0);PowerService.control(p,new PowerNetwork.Control(2,"",1));
+        helper.assertTrue(PowerService.holdingAbility(p,"a:tin") && TinMath.zoom(TinService.strength(p),1.5,8)==2.5,"Tin uses the shared primary activation channel for held zoom");
+        PowerService.control(p,new PowerNetwork.Control(2,"",0));PowerData.assignSlot(p,"a:tin",1);PowerService.control(p,new PowerNetwork.Control(7,"",1));
+        helper.assertTrue(PowerService.holdingAbility(p,"a:tin"),"Secondary activation must also support tin zoom");
+        PowerService.control(p,new PowerNetwork.Control(7,"",0));PowerData.reserve(p,"tin",.001);TinService.tick(p);
+        helper.assertTrue(PowerData.state(p,"a:tin")==0 && TinService.strength(p)==0,"Depletion must disable tin immediately");
+        helper.succeed();
+    }
+    @GameTest(template = "empty")
+    public static void tinWallsMuffleAndBlockRealEchoes(GameTestHelper helper) {
+        var p=tinPlayer(helper,"TinWalls");var level=helper.getLevel();
+        var from=p.getEyePosition();var target=from.add(8,0,0);var first=net.minecraft.core.BlockPos.containing(from);
+        for(int x=0;x<=8;x++)level.setBlock(first.offset(x,0,0),net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),3);
+        var clear=TinService.echo(p,target,null,1);helper.assertTrue(clear!=null,"Unblocked nearby sound must be heard");
+        var wall=first.offset(4,0,0);level.setBlock(wall,net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(),3);
+        double stone=TinService.obstruction(level,from,target);var muted=TinService.echo(p,target,null,1);
+        helper.assertTrue(stone>0 && muted!=null && muted.audible()<clear.audible() && muted.ticks()<clear.ticks(),"One wall must mute and shorten the sound reveal");
+        level.setBlock(wall,net.minecraft.world.level.block.Blocks.OBSIDIAN.defaultBlockState(),3);
+        helper.assertTrue(TinService.obstruction(level,from,target)>stone,"Harder blocks must attenuate more");
+        level.setBlock(wall,net.minecraft.world.level.block.Blocks.WHITE_WOOL.defaultBlockState(),3);
+        helper.assertTrue(TinService.obstruction(level,from,target)>stone,"Wool must strongly muffle sound");
+        for(int x=1;x<=7;x++)level.setBlock(first.offset(x,0,0),net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(),3);
+        helper.assertTrue(TinService.echo(p,target,null,1)==null,"Enough intervening blocks must entirely suppress wireframes");
+        helper.assertTrue(TinService.echo(p,target,null,0)==null,"Zero-volume sound must reveal nothing");
+        PowerData.state(p,"a:tin",0);helper.assertTrue(TinService.echo(p,target,null,1)==null,"Inactive players must receive no sound geometry");helper.succeed();
+    }
+    public static final class TinSoundProbe {
+        net.minecraft.world.entity.Entity heard;
+        @net.neoforged.bus.api.SubscribeEvent public void sound(net.neoforged.neoforge.event.PlayLevelSoundEvent event) {
+            heard=event instanceof net.neoforged.neoforge.event.PlayLevelSoundEvent.AtEntity at?at.getEntity():TinService.soundSource();
+        }
+    }
+    @GameTest(template = "empty")
+    public static void tinEntitySoundsIdentifyOnlyTheActualEmitter(GameTestHelper helper) {
+        var p=tinPlayer(helper,"TinSource");var level=helper.getLevel();
+        var cow=net.minecraft.world.entity.EntityType.COW.create(level);cow.setPos(p.position().add(4,0,0));cow.setNoAi(true);level.addFreshEntity(cow);
+        var probe=new TinSoundProbe();net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(probe);
+        try {
+            cow.playSound(net.minecraft.sounds.SoundEvents.COW_AMBIENT,1,1);
+            helper.assertTrue(probe.heard==cow && TinService.soundSource()==null,"Real entity sound calls must scope source identity and restore it afterward");
+            var echo=TinService.echo(p,cow.position(),probe.heard,1);
+            helper.assertTrue(echo!=null && echo.entityId()==cow.getId(),"A noisy mob must be included in its sound reveal");
+            var blockEcho=TinService.echo(p,cow.position(),null,1);
+            helper.assertTrue(blockEcho!=null && blockEcho.entityId()==-1,"Position-only noise must not guess and expose a nearby silent mob");
+            cow.setSilent(true);probe.heard=null;cow.playSound(net.minecraft.sounds.SoundEvents.COW_AMBIENT,1,1);
+            helper.assertTrue(probe.heard==null,"Silent entities must emit no audible reveal events");
+        } finally {net.neoforged.neoforge.common.NeoForge.EVENT_BUS.unregister(probe);cow.discard();}
+        helper.succeed();
+    }
+    @GameTest(template = "empty")
+    public static void tinSurfaceShapesAndPacketsStayBounded(GameTestHelper helper) {
+        var p=tinPlayer(helper,"TinShapes");var level=helper.getLevel();var center=p.position().add(3,0,0);var floor=net.minecraft.core.BlockPos.containing(center).below();
+        for(int x=-2;x<=2;x++)for(int z=-2;z<=2;z++)level.setBlock(floor.offset(x,0,z),net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(),3);
+        var boxes=TinService.surfaces(level,center,3,8);
+        helper.assertTrue(!boxes.isEmpty() && boxes.size()<=8,"Sound wireframes must contain nearby collision surfaces within the shape budget");
+        for(var box:boxes)helper.assertTrue(box.getCenter().distanceTo(center)<4,"Echo cannot reveal distant terrain");
+        var packet=new PowerNetwork.TinEcho(level.dimension().location().toString(),center,-1,new net.minecraft.world.phys.AABB(center,center),24,.5f,boxes);
+        var buffer=new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(),level.registryAccess());
+        try {PowerNetwork.TinEcho.CODEC.encode(buffer,packet);helper.assertTrue(PowerNetwork.TinEcho.CODEC.decode(buffer).equals(packet),"Echo packet must preserve source, lifetime, obstruction intensity and shapes");}finally{buffer.release();}
+        var normal=TinService.echo(p,center,null,1);PowerAttributes.set(p,"a:tin",2);var stronger=TinService.echo(p,center,null,1);
+        helper.assertTrue(normal!=null && stronger!=null && stronger.audible()>normal.audible() && stronger.ticks()>=normal.ticks(),"Greater attributes must improve hearing and persistence");
+        helper.succeed();
+    }
     private static net.neoforged.neoforge.common.util.FakePlayer filingPlayer(GameTestHelper helper,String name) {
         var p=new net.neoforged.neoforge.common.util.FakePlayer(helper.getLevel(),new GameProfile(UUID.randomUUID(),name));
         p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);p.getAbilities().instabuild=false;return p;
