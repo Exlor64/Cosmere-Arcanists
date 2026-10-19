@@ -55,6 +55,7 @@ public final class PowerService {
         var s=session(p); return PowerData.secondary(p).equals(power)?s.secondary:s;
     }
     public static boolean holdingAbility(ServerPlayer player,String power) {
+        if(ScoutService.active(player) && !power.matches("a:(atium|electrum)"))return false;
         if(!PowerData.selected(player).equals(power) && !PowerData.secondary(player).equals(power))return false;
         var a=activationForPower(player,power); long age=player.level().getGameTime()-a.lastApply;
         return a.applying && age>=0 && age<=15;

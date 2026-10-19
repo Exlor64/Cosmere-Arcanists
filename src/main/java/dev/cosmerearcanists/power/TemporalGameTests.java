@@ -70,6 +70,9 @@ public final class TemporalGameTests {
             PowerService.control(p,new PowerNetwork.Control(2,"",1));ScoutService.tick(p);h.assertTrue(!ScoutService.active(p),"Releasing Alt while holding activation returns to body");
             PowerService.control(p,new PowerNetwork.Control(2,"",3));ScoutService.tick(p);h.assertTrue(ScoutService.active(p),"Alt can engage after activation is already held");
             PowerData.reserve(p,"electrum",0);ScoutService.tick(p);h.assertTrue(!ScoutService.active(p),"Fuel depletion ends scouting");
+            PowerData.reserve(p,"electrum",100);ScoutService.tick(p);h.assertTrue(ScoutService.active(p),"Refueled valid scouting can resume");
+            var hit=new net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent(p,new net.neoforged.neoforge.common.damagesource.DamageContainer(p.damageSources().generic(),2));net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(hit);
+            h.assertTrue(!ScoutService.active(p) && !hit.isCanceled(),"Real-body damage interrupts scouting without immunity");ScoutService.tick(p);h.assertTrue(!ScoutService.active(p),"Damage interruption requires releasing Alt before restarting");
         }finally{ScoutService.stop(p);PowerService.control(p,new PowerNetwork.Control(2,"",0));}
         h.succeed();
     }

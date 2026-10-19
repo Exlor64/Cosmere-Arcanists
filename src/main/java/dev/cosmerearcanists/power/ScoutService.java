@@ -42,7 +42,7 @@ public final class ScoutService {
         double length=Math.max(1,Math.hypot(forward,left)),yaw=Math.toRadians(p.getYRot()),speed=TemporalConfig.SCOUT_SPEED.get()*((input&128)!=0?.5:1);
         if(s.grounded && (input&64)!=0)s.vertical=.42;else s.vertical=Math.max(-.6,(s.vertical-.08)*.98);
         var desired=new Vec3((-Math.sin(yaw)*forward+Math.cos(yaw)*left)*speed/length,s.vertical,(Math.cos(yaw)*forward+Math.sin(yaw)*left)*speed/length);
-        double radius=radius(p);var offset=s.position.add(desired).subtract(s.anchor);if(offset.lengthSqr()>radius*radius)desired=s.anchor.add(offset.normalize().scale(radius)).subtract(s.position);
+        double radius=radius(p);if(s.position.distanceToSqr(s.anchor)>radius*radius+1e-6){stop(p);INTERRUPTED.add(p.getUUID());return;}var offset=s.position.add(desired).subtract(s.anchor);if(offset.lengthSqr()>radius*radius)desired=s.anchor.add(offset.normalize().scale(radius)).subtract(s.position);
         var moved=move(p,s.position,desired);s.position=s.position.add(moved);s.grounded=desired.y<0 && moved.y>desired.y+1e-6;if(Math.abs(moved.y-desired.y)>1e-6)s.vertical=0;
         PacketDistributor.sendToPlayer(p,new ScoutPacket(s.dimension,true,s.position,radius));
     }
