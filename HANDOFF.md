@@ -15,7 +15,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - Both powers reuse existing persistent attributes, filed metals/mixed vials and selection controls. No save or registry migrations. Protocol9 requires matching client/server jars. Version0.15.0-alpha.
 - Local build blocked before compilation by unavailable Gradle download network (hostJava17). Java21 GitHub Actions passed build,all43 JUnit tests,all47 required server GameTests and artifact upload on00fe868763e63c2b5632e650bddb8bcc9a644d70 in run39305801270. Added3 unit methods and5 server GameTests.
 - User steering during implementation: use Minecraft note-block noises for bronze pulses. Default remains vanilla note-block bass drum, with client pulseInstrument choices BASS_DRUM/BASS/HARP/SNARE/HAT/BELL/CHIME/FLUTE; no custom audio assets. Rhythms/pitches vary by signal.
-- Next: manual positional-audio/HUD/multiplayer testing. No progression XP added.
+- Latest chat: user asked which powers are next. Suggested zinc/brass as the next pair, using the emotional-influence gateway copper now provides. Remaining ordinary effects: zinc, brass, aluminum, duralumin, chromium, nicrosil, gold, cadmium, bendalloy (9); lerasium/further god-metal effects remain separate future work. No new implementation selected or authorized in this discussion. Version/protocol unchanged; documentation-only diff check passed.
+- Next: select/design the next power pair; manual positional-audio/HUD/multiplayer testing remains outstanding. No progression XP added.
 
 ## Vision and accepted constraints
 
