@@ -13,8 +13,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - Implemented passive tin burn/fuel/night vision, held G/H zoom, server sound events with actual entity-source identity, bounded collision geometry echoes and wireframe model rendering through walls. Silent entities near noises are never guessed as sources. Echoes are transient and remain at heard positions.
 - Dedicated sound obstruction adds per-block/hardness/wool cost to hearing distance, reducing opacity/radius/detail/fade and suppressing inaudible echoes. It does not modify vanilla audio playback. Direct-path approximation; no forced chunk loading or acoustic reflection search.
 - User refined wireframes into a high-strength ability for future progression. Default threshold effective strength >1.5, full potential at6. Attribute1 Low/Burning gives no wireframes; Flaring at strength2 gives ~11% potential, with faint/brief/small reveals. Larger attributes improve it and can unlock it without Flaring. Lower-level night vision/zoom remain independent. Planned progression covers all metals; no XP/progression system implemented now.
-- Initial tin implementation build/37 JUnit methods/35 server GameTests passed. Strength-gating revision is pending build/GameTests. Protocol now 7 with private tin status and echo packets; both client/server need update. Sensory overload remains deferred.
-- Next: verify CI, then client-playtest real mob/step/block sounds, muted/blocked walls, entity mesh wireframes, night vision and zoom. Third-party renderer compatibility and purely client-local sounds remain limitations to assess.
+- Final tin build, 38 JUnit methods, all 35 server GameTests and artifact upload passed, including strength gating and block attenuation. Protocol now 7 with private tin status and echo packets; both client/server need update. Sensory overload remains deferred.
+- Next: client-playtest real mob/step/block sounds, muted/blocked walls, entity mesh wireframes, night vision and zoom. Third-party renderer compatibility and purely client-local sounds remain limitations to assess.
 
 ## Vision and accepted constraints
 
@@ -120,8 +120,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Verification, evidence and limits
 
-- Latest gameplay commit validated: `56b38a1893b0407c4d62cc570e48ee5b0a66f962`.
-- [Successful GitHub Actions checks 39292992026](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39292992026): build, **34 JUnit methods**, **31 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
+- Latest gameplay commit validated: `268916fed930cbf0f564743f99ac1ab76a3414a3`.
+- [Successful GitHub Actions checks 39296188751](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39296188751): build, **38 JUnit methods**, **35 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
 - Tests cover metal/aluminum/cycles, ingredient quantities, power states/migrations/attributes/cloning, ability phases, scanning/falling discovery, hardness, impulse/input math, movement solver, sustained iron assistance in both slots, burn/iron/steel scaling, projectile scaling/cap, actual launch/fuel/recoil, save/load/recovery, and swept mob collision with ~2-damage nugget.
 - Collision-test pitfall: the small empty template is encased by GameTest barriers. Clear an airborne corridor before projectile tests; otherwise the shot can hit the barrier roof instead of its target. Temporary collision diagnostic logs were removed.
 - User reported steel movement working perfectly and iron working well before requesting its doubled baseline and alternate mode. Do not treat those later additions or projectile visuals as user-confirmed.
@@ -196,4 +196,4 @@ Pewter test-fixture details: use out_of_world damage to bypass ServerPlayer spaw
 - Surfaces: bounded near-first exposed collision-shape AABBs around sound, loaded chunks only. No ore IDs, silent-entity lists or distant terrain. Source entity box/ID plus remembered location allow mesh reveal when tracked and fallback outline otherwise.
 - Protocol7 `TinStatus` (strength/held zoom) and `TinEcho` (dimension, sound point, actual source ID/box, opacity/lifetime, <=256 shape boxes). Server sends only to valid tin listeners in that dimension with range/obstruction and rate checks.
 - `TinClient` fades/caps/clears echoes on deactivation/dimension/disconnect, draws terrain lines through walls, rerenders only source entity mesh with a dedicated flat wireframe render type at remembered sound position. Uses world pose/camera-relative doubles. Polygon mode/shader tint restore in finally. Non-entity-format layers/nameplates discarded. Other mod renderer compatibility and actual visuals are not manually verified. Held zoom modifies configured world FOV only. No sensory overload or audio amplification yet.
-- Added pure balance and runtime regressions for range/zoom/obstruction, real source scoping/silence, night-vision ownership and fuel, both zoom slots, thin/thick/hard/wool obstruction, bounded nearby surfaces and echo packet round trip. Initial implementation CI passed; high-strength gating revision CI pending.
+- Added pure balance and runtime regressions for range/zoom/obstruction, real source scoping/silence, night-vision ownership and fuel, both zoom slots, thin/thick/hard/wool obstruction, bounded nearby surfaces and echo packet round trip. Final strength-gated tin CI passed; see verified commit/run above.
