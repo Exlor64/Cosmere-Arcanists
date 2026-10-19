@@ -63,9 +63,9 @@ public final class TemporalGameTests {
         try{
             h.assertTrue(ScoutService.active(p) && ScoutService.position(p).x>anchor.x && p.position().equals(anchor),"Shadow moves independently while actual body stays anchored");
             h.assertTrue(Math.abs(ScoutService.radius(p)-8)<1e-9,"Baseline flare range is eight blocks");PowerAttributes.set(p,"a:electrum",4);h.assertTrue(Math.abs(ScoutService.radius(p)-16)<1e-9,"Greater effective power increases scouting range");PowerAttributes.set(p,"a:electrum",1);
-            h.setBlock(new BlockPos(2,20,1),Blocks.STONE);h.setBlock(new BlockPos(2,21,1),Blocks.STONE);
+            h.setBlock(new BlockPos(3,20,1),Blocks.STONE);h.setBlock(new BlockPos(3,21,1),Blocks.STONE);
             for(int i=0;i<50;i++)ScoutService.tick(p);
-            h.assertTrue(ScoutService.position(p).x<=h.absolutePos(new BlockPos(2,20,1)).getX()-.29,"Scout cannot pass through solid walls");
+            h.assertTrue(ScoutService.position(p).x<=h.absolutePos(new BlockPos(3,20,1)).getX()-.29,"Scout cannot pass through solid walls");
             var use=new net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickItem(p,net.minecraft.world.InteractionHand.MAIN_HAND);net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(use);h.assertTrue(use.isCanceled(),"Scouting cannot use real-body items");
             PowerService.control(p,new PowerNetwork.Control(2,"",1));ScoutService.tick(p);h.assertTrue(!ScoutService.active(p),"Releasing Alt while holding activation returns to body");
             PowerService.control(p,new PowerNetwork.Control(2,"",3));ScoutService.tick(p);h.assertTrue(ScoutService.active(p),"Alt can engage after activation is already held");
