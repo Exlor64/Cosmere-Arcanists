@@ -18,6 +18,20 @@ import net.neoforged.neoforge.gametest.*;
 public final class EmotionGameTests {
     private static FakePlayer caster(GameTestHelper h){var p=new FakePlayer(h.getLevel(),new GameProfile(UUID.randomUUID(),"EmotionTest"));p.setPos(Vec3.atCenterOf(h.absolutePos(new BlockPos(1,20,1))));for(String m:List.of("zinc","brass")){PowerAttributes.set(p,"a:"+m,1);PowerData.state(p,"a:"+m,2);PowerData.reserve(p,m,100);}return p;}
     private static <T extends Mob> T mob(GameTestHelper h,EntityType<T> type,Vec3 pos){var m=type.create(h.getLevel());m.setPos(pos);h.getLevel().addFreshEntity(m);return m;}
+    @GameTest(template="empty") public static void copperUsesMetalStrengthAndExactQuarterAdvantageForAllEmotionsAndMinions(GameTestHelper h){
+        var source=caster(h);var target=caster(h);target.setPos(source.position().add(8,0,0));PowerAttributes.set(target,"a:copper",1);PowerData.reserve(target,"copper",100);PowerData.state(target,"a:copper",2);
+        for(String power:List.of("a:zinc","a:brass"))for(var emotion:Emotion.values()){
+            EmotionService.clear(target);PowerAttributes.set(source,power,1.249999);h.assertTrue(!EmotionService.apply(source,target,power,emotion),"Less than25percent stronger is blocked for both metals and every emotion");
+            PowerAttributes.set(source,power,1.25);h.assertTrue(EmotionService.apply(source,target,power,emotion),"Exactly25percent stronger pierces independently of distance-reduced effect size");
+        }
+        EmotionService.clear(target);PowerAttributes.set(source,"a:zinc",1.25);EmotionService.apply(source,target,"a:zinc",Emotion.ANGER);PowerData.state(target,"a:copper",3);
+        h.assertTrue(EmotionService.dominant(target)==null,"Flaring copper can remove an already active weaker influence");
+        PowerAttributes.set(source,"a:zinc",2.5);h.assertTrue(EmotionService.apply(source,target,"a:zinc",Emotion.ANGER),"Burn multiplier participates on both sides of the strength comparison");
+        EmotionService.clear(target);target.setPos(source.position());PowerData.state(target,"a:copper",2);PowerAttributes.set(target,"a:copper",3.2);PowerAttributes.set(source,"a:zinc",4);SpiritualIntegrity.set(target,.25);
+        h.assertTrue(EmotionService.apply(source,target,"a:zinc",Emotion.COMPLIANCE) && DominationService.owner(target)==source,"Exact25percent edge can establish minion control");
+        PowerAttributes.set(target,"a:copper",3.200001);DominationService.tick();h.assertTrue(DominationService.owner(target)==null,"Copper becoming strong enough releases existing control");
+        PowerData.state(target,"a:copper",0);PowerAttributes.set(source,"a:zinc",1);h.assertTrue(EmotionService.apply(source,target,"a:zinc",Emotion.FEAR),"Inactive copper gives no emotional immunity");h.succeed();
+    }
     @GameTest(template="empty") public static void dominationRequiresSpiritualDamageAndOverwhelmingCompliance(GameTestHelper h){
         var source=caster(h);var target=mob(h,EntityType.ZOMBIE,source.position());PowerAttributes.set(source,"a:zinc",4);
         EmotionService.apply(source,target,"a:zinc",Emotion.COMPLIANCE);h.assertTrue(DominationService.owner(target)==null,"Intact spirits resist even strong compliance");

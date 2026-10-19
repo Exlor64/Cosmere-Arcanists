@@ -65,7 +65,7 @@ public final class SeekingGameTests {
     @GameTest(template="empty") public static void copperEmotionalProtectionIsPersonalAndFuelAndDisablementAreSafe(GameTestHelper h) {
         var smoker=player(h,"copper");var neighbor=player(h,"bronze");
         h.assertTrue(!EmotionalInfluenceEvent.allowed(smoker,1) && EmotionalInfluenceEvent.allowed(neighbor,1),"Emotional influence event protects only the burner, not everyone in the cloud");
-        h.assertTrue(EmotionalInfluenceEvent.allowed(smoker,5),"Extreme emotional strength may pierce baseline protection");
+        h.assertTrue(!EmotionalInfluenceEvent.allowed(smoker,1.249999) && EmotionalInfluenceEvent.allowed(smoker,1.25),"Copper blocks below25percent stronger and admits exact threshold strength");
         boolean enabled=SeekingConfig.COPPER.get();try{SeekingConfig.COPPER.set(false);SeekingService.tick(smoker);h.assertTrue(PowerData.reserve(smoker,"copper")==100 && SeekingService.cloud(smoker)==null && EmotionalInfluenceEvent.allowed(smoker,1),"Disabling preserves saved fuel but removes field and emotional protection");}finally{SeekingConfig.COPPER.set(enabled);}
         var replacement=player(h,"bronze");PowerData.clonePlayer(smoker,replacement);
         h.assertTrue(PowerAttributes.strength(replacement,"a:copper")==1 && PowerData.reserve(replacement,"copper")==100 && SeekingService.cloud(replacement)==null,"Respawn copies attributes/fuel but stops the cloud");

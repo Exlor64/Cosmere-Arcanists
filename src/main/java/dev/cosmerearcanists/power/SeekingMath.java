@@ -7,6 +7,6 @@ public final class SeekingMath {
         return !piercing || bronze<=copper*ratio?0:Math.clamp(1-copper*ratio/bronze,0,1);
     }
     public static double clarity(double distance,double range,double strength,double difficulty,double transmission){return range<=0?0:Math.clamp((1-distance/range)*Math.sqrt(Math.max(0,strength)/Math.max(.01,difficulty))*transmission,0,1);}
-    public static boolean emotionBlocked(double copper,double incoming,boolean piercing,double ratio){return copper>0 && (!piercing || incoming<=copper*ratio);}
+    public static boolean emotionBlocked(double copper,double incoming,boolean piercing,double ratio){return copper>0 && (!piercing || incoming<copper*ratio);}
     private SeekingMath() { }
 }

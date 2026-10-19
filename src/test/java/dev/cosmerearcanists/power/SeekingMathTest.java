@@ -16,9 +16,10 @@ class SeekingMathTest {
         assertEquals(0,SeekingMath.transmission(4,2,true,3));assertEquals(0,SeekingMath.transmission(1024,1,false,3));
         assertEquals(1,SeekingMath.transmission(1,0,true,3));
     }
-    @Test void emotionalProtectionHasAnExplicitExtremeStrengthException() {
-        assertTrue(SeekingMath.emotionBlocked(1,1,true,4));assertTrue(SeekingMath.emotionBlocked(1,4,true,4));
-        assertFalse(SeekingMath.emotionBlocked(1,5,true,4));assertTrue(SeekingMath.emotionBlocked(1,100,false,4));
-        assertFalse(SeekingMath.emotionBlocked(0,1,false,4));
+    @Test void emotionalProtectionRequiresAtLeastTwentyFivePercentMoreStrength() {
+        assertTrue(SeekingMath.emotionBlocked(1,1,true,1.25));assertTrue(SeekingMath.emotionBlocked(1,1.249999,true,1.25));
+        assertFalse(SeekingMath.emotionBlocked(1,1.25,true,1.25));assertFalse(SeekingMath.emotionBlocked(1,2,true,1.25));
+        assertTrue(SeekingMath.emotionBlocked(2,2.499999,true,1.25));assertFalse(SeekingMath.emotionBlocked(2,2.5,true,1.25));
+        assertTrue(SeekingMath.emotionBlocked(1,100,false,1.25));assertFalse(SeekingMath.emotionBlocked(0,1,false,1.25));
     }
 }

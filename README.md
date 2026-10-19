@@ -576,16 +576,19 @@ block damage, hide bodies, or remove ordinary sounds.
 
 Emotional protection applies to the **copper burner alone**, via the shared
 `EmotionalInfluenceEvent.allowed(target,strength)` server integration point.
-Extreme emotional strength may pierce it, configurable. Zinc/brass mechanics
-are still pending; third-party emotional powers must call this API to respect
-protection. No unrelated vanilla potion, AI or damage effects are canceled.
+Emotional Allomancy pierces only at **at least1.25 times** the burner's copper
+strength by default. Strength is attribute times burn multiplier, before distance
+falloff. This protects against all five emotions and minion control; increasing
+copper strength can remove existing influence/control. Third-party emotional
+powers must call this API to respect protection. No unrelated vanilla potion, AI or damage effects are canceled.
 
 Default normal-burn reserve costs: bronze .5/sec, copper .25/sec, multiplied by
 shared burn-consumption settings. Bronze range24, cap64; copper radius12, cap32;
 each scales with square-root strength. Bronze must exceed combined copper
-strength ×3 to pierce. Baseline copper blocks emotional strength up to4.
+strength ×3 to pierce. Copper blocks incoming emotional strength below1.25 times its strength;
+exact equality at that threshold pierces.
 Ordinary effect identification threshold1; burn-state detail threshold2, divided
-by the signal's detection difficulty. These are balance values, not lore ratios.
+by the signal's detection difficulty. Bronze settings remain separate from the emotional protection rule.
 
 Configure `cosmerearcanists-seeking-server.toml` for global/per-power enablement,
 fuel, detection, other arts, identification, held focus, copper masking, emotional
@@ -704,3 +707,10 @@ damage with `/cosmere integrity <targets> <value>` (0..1), grant zinc, increase
 compliance. Spiritual integrity persists through saves and player respawns;
 control does not survive restart. Hemalurgy spike effects and duralumin burning
 remain future work; integration APIs/data are ready for them.
+
+Copper emotional protection uses `copper.minimumEmotionalStrengthRatio` (default
+1.25) in the seeking server config, replacing the old `emotionalPiercingRatio`
+key so existing default4 settings do not override the new rule. Disabling
+emotional piercing makes active copper fully protective. An attack's sampled
+metal strength is retained during its linger/control duration; copper protection
+is rechecked against the defender's current active strength.

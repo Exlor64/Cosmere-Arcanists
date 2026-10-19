@@ -33,7 +33,7 @@ public final class EmotionService {
     private static final Set<Mob> GOALS=Collections.newSetFromMap(new WeakHashMap<>());
     private static final Set<UUID> SENT=new HashSet<>();
     private record Key(UUID source,String power,Emotion emotion) { }
-    private record Influence(ServerPlayer source,String power,Emotion emotion,double amount,long expires) { }
+    private record Influence(ServerPlayer source,String power,Emotion emotion,double amount,double allomanticStrength,long expires) { }
     private static final class State {
         final LivingEntity target;final double[] baseline={.20,.20,.30,.20,.20},levels=new double[5];
         final Map<Key,Influence> influences=new HashMap<>();Emotion dominant;ServerPlayer source;double intensity,complianceStrength;long burstUntil,burstCooldown;boolean inducedLove;
@@ -76,17 +76,17 @@ public final class EmotionService {
         double strength=strength(source,power);if(strength<=0 || !eligible(target)||source==target||source.level()!=target.level()||!EmotionConfig.effect(emotion)||shielded(target))return false;
         double range=Math.min(EmotionConfig.RANGE_CAP.get(),EmotionConfig.RANGE.get()*Math.sqrt(strength));double distance=target.distanceTo(source);if(distance>range)return false;
         double amount=strength*EmotionMath.falloff(distance,range)*(target instanceof Animal?EmotionConfig.ANIMAL_FACTOR.get():1);
-        if(!EmotionalInfluenceEvent.allowed(target,amount))return false;
+        if(!EmotionalInfluenceEvent.allowed(target,strength))return false;
         var state=STATES.get(target.getUUID());if(state==null){if(STATES.size()>=EmotionConfig.AFFECTED.get())return false;state=new State(target);STATES.put(target.getUUID(),state);}
-        state.influences.put(new Key(source.getUUID(),power,emotion),new Influence(source,power,emotion,(power.equals("a:zinc")?1:-1)*amount,target.level().getGameTime()+EmotionConfig.DURATION.get()));
+        state.influences.put(new Key(source.getUUID(),power,emotion),new Influence(source,power,emotion,(power.equals("a:zinc")?1:-1)*amount,strength,target.level().getGameTime()+EmotionConfig.DURATION.get()));
         refresh(state);if(target instanceof Mob mob && angerSuppressed(state))pacify(mob);
-        if(state.dominant==Emotion.COMPLIANCE && state.source==source && amount>0 && power.equals("a:zinc"))DominationService.attempt(source,target,power,state.complianceStrength);
+        if(state.dominant==Emotion.COMPLIANCE && state.source==source && amount>0 && power.equals("a:zinc"))DominationService.attempt(source,target,power,state.complianceStrength,strength);
         return true;
     }
     private static void refresh(State state) {
         long now=state.target.level().getGameTime();
         if(!eligible(state.target))state.influences.clear();
-        state.influences.values().removeIf(i->now>=i.expires || !i.source.isAlive() || i.source.isRemoved() || i.source.level()!=state.target.level() || !configured(i.power) || !EmotionConfig.effect(i.emotion) || shielded(state.target) || !EmotionalInfluenceEvent.allowed(state.target,Math.abs(i.amount)));
+        state.influences.values().removeIf(i->now>=i.expires || !i.source.isAlive() || i.source.isRemoved() || i.source.level()!=state.target.level() || !configured(i.power) || !EmotionConfig.effect(i.emotion) || shielded(state.target) || !EmotionalInfluenceEvent.allowed(state.target,i.allomanticStrength));
         System.arraycopy(state.baseline,0,state.levels,0,5);var leading=new double[5];var owners=new ServerPlayer[5];double strongest=0;ServerPlayer fallback=null;
         for(var influence:state.influences.values()) {
             double value=influence.amount*Math.clamp((influence.expires-now)/(double)EmotionConfig.DURATION.get(),0,1);int n=influence.emotion.ordinal();state.levels[n]+=value;

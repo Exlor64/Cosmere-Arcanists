@@ -9,18 +9,18 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 /** Temporary ownership is separate from short emotional linger and never survives logout/restart. */
 public final class DominationService {
-    private record Bond(LivingEntity target,ServerPlayer owner,String power,double strength,long expires,long[] nextAttack) { }
+    private record Bond(LivingEntity target,ServerPlayer owner,String power,double strength,double allomanticStrength,long expires,long[] nextAttack) { }
     private static final Map<UUID,Bond> BONDS=new HashMap<>();
-    public static void attempt(ServerPlayer source,LivingEntity target,String power,double compliance){
-        if(!EmotionConfig.DOMINATION.get() || compliance<EmotionConfig.DOMINATION_STRENGTH.get() || SpiritualIntegrity.get(target)>EmotionConfig.MAX_INTEGRITY.get())return;
+    public static void attempt(ServerPlayer source,LivingEntity target,String power,double compliance,double allomanticStrength){
+        if(!EmotionalInfluenceEvent.allowed(target,allomanticStrength) || !EmotionConfig.DOMINATION.get() || compliance<EmotionConfig.DOMINATION_STRENGTH.get() || SpiritualIntegrity.get(target)>EmotionConfig.MAX_INTEGRITY.get())return;
         var old=BONDS.get(target.getUUID());if(old!=null && old.owner!=source && old.strength>=compliance)return;
         if(old==null && BONDS.size()>=EmotionConfig.AFFECTED.get())return;
         long duration=Math.min(EmotionConfig.MINION_CAP.get(),Math.round(EmotionConfig.MINION_TICKS.get()*compliance/EmotionConfig.DOMINATION_STRENGTH.get()));
-        BONDS.put(target.getUUID(),new Bond(target,source,power,compliance,target.level().getGameTime()+duration,old==null?new long[]{0}:old.nextAttack));
+        BONDS.put(target.getUUID(),new Bond(target,source,power,compliance,allomanticStrength,target.level().getGameTime()+duration,old==null?new long[]{0}:old.nextAttack));
         if(target instanceof Mob mob){mob.setTarget(null);mob.getBrain().eraseMemory(net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET);}
         if(old==null || old.owner!=source){source.displayClientMessage(Component.literal(target.getName().getString()+" is your minion for "+duration/20+" seconds."),true);if(target instanceof ServerPlayer player)player.displayClientMessage(Component.literal("Your damaged spirit has been seized by "+source.getName().getString()+"."),false);}
     }
-    private static boolean valid(Bond b){return EmotionConfig.DOMINATION.get() && EmotionConfig.COMPLIANCE.get() && EmotionService.configured(b.power) && EmotionService.eligible(b.target) && !b.target.isRemoved() && b.owner.isAlive() && !b.owner.isRemoved() && b.owner.level()==b.target.level() && b.target.level().getGameTime()<b.expires && SpiritualIntegrity.get(b.target)<=EmotionConfig.MAX_INTEGRITY.get() && !EmotionService.shielded(b.target) && EmotionalInfluenceEvent.allowed(b.target,b.strength);}
+    private static boolean valid(Bond b){return EmotionConfig.DOMINATION.get() && EmotionConfig.COMPLIANCE.get() && EmotionService.configured(b.power) && EmotionService.eligible(b.target) && !b.target.isRemoved() && b.owner.isAlive() && !b.owner.isRemoved() && b.owner.level()==b.target.level() && b.target.level().getGameTime()<b.expires && SpiritualIntegrity.get(b.target)<=EmotionConfig.MAX_INTEGRITY.get() && !EmotionService.shielded(b.target) && EmotionalInfluenceEvent.allowed(b.target,b.allomanticStrength);}
     public static ServerPlayer owner(LivingEntity target){var b=BONDS.get(target.getUUID());return b!=null && valid(b)?b.owner:null;}
     public static long remaining(LivingEntity target){var b=BONDS.get(target.getUUID());return b!=null && valid(b)?b.expires-target.level().getGameTime():0;}
     private static LivingEntity enemy(Bond b){

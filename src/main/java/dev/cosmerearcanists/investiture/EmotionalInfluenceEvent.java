@@ -6,6 +6,8 @@ import net.neoforged.bus.api.ICancellableEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
 /** Zinc/brass and compatible mods call allowed immediately before applying emotional influence.
+ * Strength is the attacking metal attribute times burn multiplier, before distance or emotion attenuation.
+ * The supplied strength is sampled when the influence is applied; linger/control retain that attack strength.
  * This event is exclusively for emotional Investiture, not general damage, potions or AI effects.
  */
 public final class EmotionalInfluenceEvent extends Event implements ICancellableEvent {

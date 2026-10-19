@@ -17,7 +17,7 @@ public final class SeekingConfig {
         PIERCING=b.define("pierceCopperclouds",true);PIERCE_RATIO=b.comment("Bronze strength must exceed combined copper strength times this ratio. Clouds containing either source or listener count once each.").defineInRange("copperPiercingRatio",3.0,.1,100.0);b.pop();
         b.push("copper");MASKING=b.define("hideSignals",true);CLOUD_RADIUS=b.defineInRange("radius",12.0,1.0,64.0);CLOUD_CAP=b.defineInRange("maxRadius",32.0,1.0,64.0);
         EMOTIONAL=b.comment("Protect only the active copper burner via the shared EmotionalInfluenceEvent. Does not remove unrelated potion effects.").define("emotionalProtection",true);
-        EMOTION_PIERCING=b.define("extremeEmotionalStrengthCanPierce",true);EMOTION_RATIO=b.defineInRange("emotionalPiercingRatio",4.0,1.0,100.0);b.pop();
+        EMOTION_PIERCING=b.define("extremeEmotionalStrengthCanPierce",true);EMOTION_RATIO=b.comment("Incoming emotional metal effective strength must be AT LEAST this multiple of the copper burner strength. Includes attribute and burn level, before distance falloff. Replaces legacy emotionalPiercingRatio.").defineInRange("minimumEmotionalStrengthRatio",1.25,1.0,100.0);b.pop();
         INTERVAL=b.defineInRange("scanIntervalTicks",4,1,20);MAX_SIGNALS=b.defineInRange("maxDetectedSignals",32,1,64);MAX_EMISSIONS=b.comment("Server-side collection budget per dimension, including external arts. Never loads chunks.").defineInRange("maxEmissionsPerDimension",1024,32,4096);
         SPEC=b.build();
     }
