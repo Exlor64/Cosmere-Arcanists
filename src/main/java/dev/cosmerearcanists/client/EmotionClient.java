@@ -4,7 +4,7 @@ import dev.cosmerearcanists.power.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -22,15 +22,18 @@ public final class EmotionClient {
         if(status.dominant()>=0)e.getGuiGraphics().drawCenteredString(mc.font,"Dominant emotion: "+Emotion.values()[status.dominant()].label(),e.getGuiGraphics().guiWidth()/2,e.getGuiGraphics().guiHeight()/2+89,0xEDB4B4);
     }
     @SubscribeEvent public void target(RenderLevelStageEvent e){
-        var mc=Minecraft.getInstance();if(e.getStage()!=RenderLevelStageEvent.Stage.AFTER_PARTICLES || !active() || !PowerClientConfig.EMOTION_TARGET.get() || mc.options.hideGui || mc.screen!=null || status.target()<0 || !(Emotion.power(PowerClient.primaryPower()) || Emotion.power(PowerClient.secondaryPower())))return;
-        var entity=mc.level.getEntity(status.target());if(!(entity instanceof Mob) || !entity.isAlive())return;
-        float partial=e.getPartialTick().getGameTimeDeltaPartialTick(false);var eye=mc.player.getEyePosition(partial);
-        if(entity.getBoundingBox().inflate(.3).clip(eye,eye.add(mc.player.getViewVector(partial).scale(64))).isEmpty())return;
-        String text=status.targetDominant()<0?"Neutral":Emotion.values()[status.targetDominant()].label();
-        int color=status.targetDominant()<0?0xFFD2DAE3:switch(Emotion.values()[status.targetDominant()]){case ANGER->0xFFFF8A80;case FEAR->0xFFD4AAFF;case TRUST->0xFF91DDFF;case LOVE->0xFFFFB4DA;case COMPLIANCE->0xFFFFDE91;};
+        var mc=Minecraft.getInstance();if(e.getStage()!=RenderLevelStageEvent.Stage.AFTER_PARTICLES || !active() || !PowerClientConfig.EMOTION_TARGET.get() || mc.options.hideGui || mc.screen!=null)return;
+        float partial=e.getPartialTick().getGameTimeDeltaPartialTick(false);
+        var buffers=mc.renderBuffers().bufferSource();
+        for(var target:status.targets()){
+        var entity=mc.level.getEntity(target.entity());if(!(entity instanceof LivingEntity) || !entity.isAlive() || entity==mc.player || !mc.player.hasLineOfSight(entity))continue;
+        String text=target.emotion()<0?"Neutral":Emotion.values()[target.emotion()].label();
+        int color=target.emotion()<0?0xFFD2DAE3:switch(Emotion.values()[target.emotion()]){case ANGER->0xFFFF8A80;case FEAR->0xFFD4AAFF;case TRUST->0xFF91DDFF;case LOVE->0xFFFFB4DA;case COMPLIANCE->0xFFFFDE91;};
         var pose=e.getPoseStack();var position=entity.getPosition(partial);var camera=e.getCamera().getPosition();pose.pushPose();
         try{pose.translate(position.x-camera.x,position.y+entity.getBbHeight()+(entity.hasCustomName()?.8:.4)-camera.y,position.z-camera.z);pose.mulPose(mc.getEntityRenderDispatcher().cameraOrientation());pose.scale(-.025f,-.025f,.025f);
-            mc.font.drawInBatch(text,-mc.font.width(text)/2f,0,color,false,pose.last().pose(),mc.renderBuffers().bufferSource(),Font.DisplayMode.NORMAL,0x900C1524,LightTexture.FULL_BRIGHT);
+            mc.font.drawInBatch(text,-mc.font.width(text)/2f,0,color,false,pose.last().pose(),buffers,Font.DisplayMode.NORMAL,0x900C1524,LightTexture.FULL_BRIGHT);
         }finally{pose.popPose();}
+        }
+        buffers.endBatch();
     }
 }

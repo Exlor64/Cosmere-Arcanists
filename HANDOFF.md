@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-19 UTC**. Current mod version: **0.21.0-alpha**.
+Last updated: **2026-10-19 UTC**. Current mod version: **0.21.1-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -9,13 +9,12 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
-- User requests above-head current-emotion indicator for aimed-at mobs, moves Zinc/Brass mode from detached pink center text into bottom-right power panel, and config to hide/move/resize the ENTIRE blue box (explicit clarification includes text/icons and both power slots).
-- Version0.21.0-alpha/protocol13 extends private EmotionPacket with target entity ID/current dominant enum only. Server inspect selects nearest ray-hit eligible mob within emotional range, requires owned selected Zinc/Brass (either slot), and validates loaded line of sight and aluminum/copper gateway. Readout works before burning to choose a mode, never assigns emotion or mutates AI to inspect. Natural baseline shown if uninfluenced; dominated minions report compliance. No source UUID/owner/reserve data disclosed. New packet bounds validated.
-- Client billboard above current aimed mob tracks interpolated position, has emotion color/text and depth-tested background, hides on look-away/no selection/expiry/dimension/menu/F1. Server EmotionConfig targetEmotionIndicator and client targetEmotionIndicator separately disable it. Uninfluenced passive/hostile mobs display engine baseline Trust/Anger, not a simulation of every native species mood.
+- User clarified labels must appear over EACH nearby mob, only for viewers actually burning brass or zinc; no aim requirement. Prior report also requested players. Implemented nearby LivingEntity readout for eligible mobs/players with self excluded, actual effective burning strength/fuel/config gates, range, loaded LOS and existing copper/aluminum protections. No selected-slot/held-activation requirement. Nearest256 target cap bounds private packets, refreshed every4ticks; disabling/stopping clears next sync. Baselines Trust/Anger are mod states, not full native species mood simulation.
+- Version0.21.1-alpha/protocol14 replaces single aimed target with bounded immutable list of entity IDs/emotion enums. No source UUID/owner/reserve disclosure. Client renders interpolated above-head billboards for all synchronized visible targets and explicitly flushes text buffers (previous late render event never flushed labels). Menu/F1/expiry/dimension/client config gates retained. Whole-blue-panel controls unchanged. Client/server must update together.
 - Separate primary/secondary pink mode instructions removed. Mode label sits at bottom-right of each panel, reserves left, burn state above. Existing optional incoming-player dominant-status message remains; scroll controls unchanged.
 - Client cosmerearcanists-client.toml: hidePowerIndicator=false (new clear whole-group hide toggle); legacy selectedPowerIcon remains respected. hudX/hudY anchor primary panel in screen-scaled pixels; secondary follows. hudScale .25..3 defaults1 scales whole group including icons/background/text/spacing, clamps placement and fits oversized groups to viewport. Selection menus and world indicators remain independent of hiding the blue group.
 - New server regression covers natural/induced emotion readout, exact target ID packet, wall occlusion/look-away/config/no-access gates. Java21 GitHub Actions run39329396352 passed build/JUnit, required server GameTests and artifact upload for gameplay commit11915924010935f60b239c313f5c96a49aca03ea. Registered suites52 unit/69 server methods. Prior0.20.0 run39328199174 passed52 unit/68 server methods. No graphical client playtest claimed.
-- Next: user checks above-head label and whole-panel positioning/scaling, reserve/mode text alignment.
+- Current changes pending Java21 CI; no graphical client verification available locally (Java17). Next: user checks nearby labels while burning, stopping, and switching worlds.
 
 ## Vision and accepted constraints
 
@@ -117,7 +116,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - `metalDetection`: categories (including fired projectiles), recursive recipes, hardness cost/cap, range-related scanning budgets, target count and sync cadence.
 - `steelProjectiles`: enabled, reference/max speed, nugget damage, cap ≤100, recoil mass, unknown content fallback, per-shot reserve cost (default 1), lifetime, alternate straight-down drop.
 - Existing config files retain saved values. New fields obtain defaults. Datapacks can override generation and recipes. Feature disablement must not delete saved data or registry entries.
-- `PowerService`: validated inputs, ticks/sessions, dispatcher, target selection, forces, throw event. `PowerAttributes`/`PowerData`: powers/persistence. `PowerNetwork`: controls, snapshots, additive impulse; **current protocol 10**. Update both server and client, especially for new projectile registration/renderer.
+- `PowerService`: validated inputs, ticks/sessions, dispatcher, target selection, forces, throw event. `PowerAttributes`/`PowerData`: powers/persistence. `PowerNetwork`: controls, snapshots, additive impulse; **current protocol 14**. Update both server and client, especially for new projectile registration/renderer.
 - `PowerClient`/`PowerClientMod`: input, HUD, lines, impulse reception, renderer. Common classes must not reference client classes. Client supplies no target positions or force magnitudes.
 - `MetalDetector`/`MetalGraph`: classification/aluminum closure. `MetalAmounts`/`RecipeMetalAmounts`: quantities. `MetalProjectilePhysics`: pure scaling formulas. `MetalProjectiles`: registration/launch. `SteelProjectile`: collision, damage, persistence and recovery.
 - Session state clears on logout, dimension change, respawn, datapack reload and server stop. Keep migrations idempotent and configuration gates server-authoritative.

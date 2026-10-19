@@ -175,24 +175,28 @@ public final class EmotionService {
         }
     }
     public record Inspection(int entity,int emotion) { }
-    /** Read only the closest aimed-at eligible mob; no client-supplied entity IDs or wall readings. */
-    public static Inspection inspect(ServerPlayer p){
-        var none=new Inspection(-1,-1);if(!EmotionConfig.INDICATOR.get() || !p.isAlive() || p.isSpectator())return none;
-        double power=0;var available=PowerData.available(p);
-        for(String key:List.of(PowerData.selected(p),PowerData.secondary(p)))if(Emotion.power(key) && configured(key) && available.contains(key))power=Math.max(power,Math.max(PowerAttributes.strength(p,key),strength(p,key)));
-        if(power<=0)return none;double range=Math.min(EmotionConfig.RANGE_CAP.get(),EmotionConfig.RANGE.get()*Math.sqrt(power));
-        var from=p.getEyePosition();var to=from.add(p.getLookAngle().scale(range));Mob target=null;Vec3 hit=null;double closest=range*range;
-        for(var mob:p.serverLevel().getEntitiesOfClass(Mob.class,p.getBoundingBox().inflate(range),EmotionService::eligible)){
-            var clip=mob.getBoundingBox().inflate(.2).clip(from,to);if(clip.isEmpty())continue;double distance=from.distanceToSqr(clip.get());if(distance<closest){closest=distance;target=mob;hit=clip.get();}
+    /** Private, bounded nearby readout, available only while actually burning an emotional metal. */
+    public static List<Inspection> inspect(ServerPlayer p){
+        double power=Math.max(strength(p,"a:zinc"),strength(p,"a:brass"));
+        if(!EmotionConfig.INDICATOR.get() || power<=0 || !p.isAlive() || p.isSpectator())return List.of();
+        double range=Math.min(EmotionConfig.RANGE_CAP.get(),EmotionConfig.RANGE.get()*Math.sqrt(power));
+        var result=new java.util.ArrayList<Inspection>();var from=p.getEyePosition();
+        var targets=p.serverLevel().getEntitiesOfClass(LivingEntity.class,p.getBoundingBox().inflate(range),e->e!=p && eligible(e) && e.distanceToSqr(p)<=range*range);
+        targets.sort(java.util.Comparator.comparingDouble(e->e.distanceToSqr(p)));
+        for(var target:targets){
+            if(result.size()>=256)break;
+            if(shielded(target) || !EmotionalInfluenceEvent.allowed(target,power))continue;
+            var hit=target.getEyePosition();var delta=hit.subtract(from);int steps=(int)Math.ceil(delta.length()*4);boolean loaded=true;
+            for(int i=0;i<=steps;i++)if(!p.serverLevel().hasChunkAt(BlockPos.containing(from.add(delta.scale(steps==0?0:(double)i/steps))))){loaded=false;break;}
+            if(!loaded || p.serverLevel().clip(new net.minecraft.world.level.ClipContext(from,hit,net.minecraft.world.level.ClipContext.Block.COLLIDER,net.minecraft.world.level.ClipContext.Fluid.NONE,p)).getType()!=net.minecraft.world.phys.HitResult.Type.MISS)continue;
+            if(DominationService.owner(target)!=null){result.add(new Inspection(target.getId(),Emotion.COMPLIANCE.ordinal()));continue;}
+            var state=STATES.get(target.getUUID());if(state!=null)refresh(state);
+            int emotion=state!=null&&!state.influences.isEmpty()?(state.dominant==null?-1:state.dominant.ordinal()):EmotionMath.dominant(new State(target).baseline);
+            result.add(new Inspection(target.getId(),emotion));
         }
-        if(target==null || shielded(target) || !EmotionalInfluenceEvent.allowed(target,power))return none;
-        var delta=hit.subtract(from);int steps=(int)Math.ceil(delta.length()*4);for(int i=0;i<=steps;i++)if(!p.serverLevel().hasChunkAt(BlockPos.containing(from.add(delta.scale(steps==0?0:(double)i/steps)))))return none;
-        if(p.serverLevel().clip(new net.minecraft.world.level.ClipContext(from,hit,net.minecraft.world.level.ClipContext.Block.COLLIDER,net.minecraft.world.level.ClipContext.Fluid.NONE,p)).getType()!=net.minecraft.world.phys.HitResult.Type.MISS)return none;
-        if(DominationService.owner(target)!=null)return new Inspection(target.getId(),Emotion.COMPLIANCE.ordinal());
-        var state=STATES.get(target.getUUID());if(state!=null){refresh(state);if(!state.influences.isEmpty())return new Inspection(target.getId(),state.dominant==null?-1:state.dominant.ordinal());}
-        return new Inspection(target.getId(),EmotionMath.dominant(new State(target).baseline));
+        return List.copyOf(result);
     }
-    public static void sync(ServerPlayer p){var s=STATES.get(p.getUUID());if(s!=null)refresh(s);var target=inspect(p);PacketDistributor.sendToPlayer(p,new EmotionPacket(p.level().dimension().location().toString(),mode(p,"a:zinc"),mode(p,"a:brass"),s==null||s.dominant==null?-1:s.dominant.ordinal(),(float)(s==null?0:s.intensity),target.entity,target.emotion));}
+    public static void sync(ServerPlayer p){var s=STATES.get(p.getUUID());if(s!=null)refresh(s);PacketDistributor.sendToPlayer(p,new EmotionPacket(p.level().dimension().location().toString(),mode(p,"a:zinc"),mode(p,"a:brass"),s==null||s.dominant==null?-1:s.dominant.ordinal(),(float)(s==null?0:s.intensity),inspect(p)));}
     public static void clear(LivingEntity target){STATES.remove(target.getUUID());if(target instanceof ServerPlayer p)playerEffects(p,null);}
     private static void removeSource(UUID source){for(var state:STATES.values())state.influences.entrySet().removeIf(e->e.getKey().source.equals(source));}
     @SubscribeEvent public void logout(PlayerEvent.PlayerLoggedOutEvent e){DominationService.remove(e.getEntity());clear(e.getEntity());removeSource(e.getEntity().getUUID());SENT.remove(e.getEntity().getUUID());}

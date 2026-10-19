@@ -117,14 +117,27 @@ public final class EmotionGameTests {
         v.mobInteract(source,net.minecraft.world.InteractionHand.MAIN_HAND);
         h.assertTrue(offer.getCostA().getCount()<before,"Real vanilla trading entry invokes session-only trust price mixin");h.succeed();
     }
-    @GameTest(template="empty") public static void targetInspectionReportsAimedMobAndRespectsWallsAndAccess(GameTestHelper h){
+    @GameTest(template="empty") public static void nearbyInspectionRequiresBurningAndRespectsWallsAndAccess(GameTestHelper h){
         var p=caster(h);p.setYRot(-90);p.setXRot(15);var cow=mob(h,EntityType.COW,p.position().add(4,0,0));
-        var view=EmotionService.inspect(p);h.assertTrue(view.entity()==cow.getId() && view.emotion()==Emotion.TRUST.ordinal(),"Aimed unmodified passive mob shows its current natural state");
-        EmotionService.apply(p,cow,"a:zinc",Emotion.ANGER);h.assertTrue(EmotionService.inspect(p).emotion()==Emotion.ANGER.ordinal(),"Inspection updates after actual emotional manipulation");
-        var packet=new EmotionPacket(p.level().dimension().location().toString(),0,1,-1,0,cow.getId(),Emotion.ANGER.ordinal());var buffer=new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(),h.getLevel().registryAccess());try{EmotionPacket.CODEC.encode(buffer,packet);h.assertTrue(EmotionPacket.CODEC.decode(buffer).equals(packet),"Private target status safely round trips");}finally{buffer.release();}
-        var wall=net.minecraft.core.BlockPos.containing(p.position().add(2,0,0));for(int y=0;y<3;y++)h.getLevel().setBlock(wall.above(y),net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(),3);h.assertTrue(EmotionService.inspect(p).entity()== -1,"Inspection cannot reveal mobs through walls");for(int y=0;y<3;y++)h.getLevel().setBlock(wall.above(y),net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),3);
-        p.setYRot(90);h.assertTrue(EmotionService.inspect(p).entity()== -1,"Looking away clears the mob indicator");p.setYRot(-90);boolean enabled=EmotionConfig.INDICATOR.get();try{EmotionConfig.INDICATOR.set(false);h.assertTrue(EmotionService.inspect(p).entity()== -1,"Server can disable emotion inspection");}finally{EmotionConfig.INDICATOR.set(enabled);}
-        PowerAttributes.set(p,"a:zinc",0);PowerAttributes.set(p,"a:brass",0);h.assertTrue(EmotionService.inspect(p).entity()== -1,"No owned emotional power grants no target readout");cow.discard();h.succeed();
+        var view=EmotionService.inspect(p);h.assertTrue(view.stream().anyMatch(t->t.entity()==cow.getId() && t.emotion()==Emotion.TRUST.ordinal()),"Nearby unmodified passive mob shows its current natural state");
+        EmotionService.apply(p,cow,"a:zinc",Emotion.ANGER);h.assertTrue(EmotionService.inspect(p).stream().anyMatch(t->t.entity()==cow.getId() && t.emotion()==Emotion.ANGER.ordinal()),"Inspection updates after actual emotional manipulation");
+        var packet=new EmotionPacket(p.level().dimension().location().toString(),0,1,-1,0,EmotionService.inspect(p));var buffer=new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(),h.getLevel().registryAccess());try{EmotionPacket.CODEC.encode(buffer,packet);h.assertTrue(EmotionPacket.CODEC.decode(buffer).equals(packet),"Private target status safely round trips");}finally{buffer.release();}
+        var wall=net.minecraft.core.BlockPos.containing(p.position().add(2,0,0));for(int y=0;y<3;y++)h.getLevel().setBlock(wall.above(y),net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(),3);h.assertTrue(EmotionService.inspect(p).isEmpty(),"Inspection cannot reveal mobs through walls");for(int y=0;y<3;y++)h.getLevel().setBlock(wall.above(y),net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),3);
+        p.setYRot(90);h.assertTrue(!EmotionService.inspect(p).isEmpty(),"Looking away keeps nearby indicators visible");PowerData.state(p,"a:zinc",0);PowerData.state(p,"a:brass",0);h.assertTrue(EmotionService.inspect(p).isEmpty(),"Owning powers without burning grants no readout");PowerData.state(p,"a:zinc",2);p.setYRot(-90);boolean enabled=EmotionConfig.INDICATOR.get();try{EmotionConfig.INDICATOR.set(false);h.assertTrue(EmotionService.inspect(p).isEmpty(),"Server can disable emotion inspection");}finally{EmotionConfig.INDICATOR.set(enabled);}
+        PowerAttributes.set(p,"a:zinc",0);PowerAttributes.set(p,"a:brass",0);h.assertTrue(EmotionService.inspect(p).isEmpty(),"No owned emotional power grants no target readout");cow.discard();h.succeed();
+    }
+    @GameTest(template="empty") public static void nearbyInspectionIncludesMultipleMobsAndPlayersButNotSelf(GameTestHelper h){
+        var p=caster(h);var first=mob(h,EntityType.COW,p.position().add(4,0,0));var second=mob(h,EntityType.COW,p.position().add(-4,0,0));
+        var player=caster(h);player.setPos(p.position().add(0,0,4));h.getLevel().addNewPlayer(player);
+        try{
+            var view=EmotionService.inspect(p);
+            h.assertTrue(view.stream().anyMatch(t->t.entity()==first.getId()) && view.stream().anyMatch(t->t.entity()==second.getId()) && view.stream().anyMatch(t->t.entity()==player.getId()),"All nearby mobs and players are reported together without aiming");
+            h.assertTrue(view.stream().noneMatch(t->t.entity()==p.getId()),"Viewer never receives their own overhead label");
+            PowerAttributes.set(player,"a:copper",1);PowerData.reserve(player,"copper",100);PowerData.state(player,"a:copper",2);
+            h.assertTrue(EmotionService.inspect(p).stream().noneMatch(t->t.entity()==player.getId()),"Copper protection also hides player readout");
+            PowerData.reserve(p,"zinc",0);PowerData.reserve(p,"brass",0);h.assertTrue(EmotionService.inspect(p).isEmpty(),"Empty reserves disable all overhead readouts");
+        }finally{first.discard();second.discard();h.getLevel().removePlayerImmediately(player,Entity.RemovalReason.DISCARDED);}
+        h.succeed();
     }
     @GameTest(template="empty") public static void modesFuelBoundsDisablementAndPacketPersistCorrectly(GameTestHelper h){
         var p=caster(h);PowerData.assignSlot(p,"a:zinc",0);PowerService.control(p,new PowerNetwork.Control(10,"a:zinc",4));h.assertTrue(EmotionService.mode(p,"a:zinc")==4,"Mode control uses existing owned power controls");
