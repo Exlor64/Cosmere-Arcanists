@@ -19,8 +19,11 @@ public final class TemporalGameTests {
         var p=new FakePlayer(h.getLevel(),new GameProfile(UUID.randomUUID(),name));p.setPos(pos);p.setOnGround(true);
         PowerAttributes.set(p,"a:"+metal,1);PowerData.reserve(p,metal,100);PowerData.state(p,"a:"+metal,2);return p;
     }
-    private static Vec3 origin(GameTestHelper h){return Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(1,2,1)));}
-    private static void floor(GameTestHelper h){for(int x=0;x<7;x++)for(int z=0;z<5;z++)h.setBlock(new BlockPos(x,1,z),Blocks.STONE);}
+    private static Vec3 origin(GameTestHelper h){return Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(1,20,1)));}
+    private static void floor(GameTestHelper h){
+        // The tiny shared template does not clear a full flight arena. Stay above test infrastructure.
+        for(int x=0;x<7;x++)for(int z=0;z<5;z++) {h.setBlock(new BlockPos(x,19,z),Blocks.STONE);for(int y=20;y<29;y++)h.setBlock(new BlockPos(x,y,z),Blocks.AIR);}
+    }
     @GameTest(template="empty") public static void alloyPowerPersistsAndFuelAndConfigGateEffects(GameTestHelper h) {
         var p=player(h,"AlloySeer",origin(h),"atium");
         h.assertTrue(PowerData.available(p).contains("a:atium") && !PowerAttributes.keys().contains("f:atium"),"Alloy gets its own Allomantic attribute without inventing god-metal Feruchemy");
@@ -36,13 +39,13 @@ public final class TemporalGameTests {
     }
     @GameTest(template="empty") public static void trajectoriesRespectWallsAndWarnAboutFallsAndLava(GameTestHelper h) {
         floor(h);var p=player(h,"OraclePath",origin(h),"electrum");
-        h.setBlock(new BlockPos(3,2,1),Blocks.STONE);h.setBlock(new BlockPos(3,3,1),Blocks.STONE);
-        var wall=TemporalService.trace(p,new Vec3(.5,0,0),20);double maximum=h.absolutePos(new BlockPos(3,2,1)).getX()-.29;
+        h.setBlock(new BlockPos(3,20,1),Blocks.STONE);h.setBlock(new BlockPos(3,21,1),Blocks.STONE);
+        var wall=TemporalService.trace(p,new Vec3(.5,0,0),20);double maximum=h.absolutePos(new BlockPos(3,20,1)).getX()-.29;
         h.assertTrue(wall.stream().allMatch(f->f.position().x<maximum),"Future self must not pass through a wall");
         p.setPos(origin(h).add(0,5,0));p.setOnGround(false);
         var fall=TemporalService.trace(p,new Vec3(0,-.5,0),30);
-        h.assertTrue(fall.stream().anyMatch(f->(f.warning()&TemporalPacket.FALL)!=0),"Forecast accumulates fall distance and marks dangerous landing");
-        p.setPos(origin(h));h.setBlock(new BlockPos(2,2,1),Blocks.LAVA);
+        h.assertTrue(fall.stream().anyMatch(f->(f.warning()&TemporalPacket.FALL)!=0),"Forecast accumulates fall distance and marks dangerous landing: "+fall+" ground="+p.onGround()+" fly="+p.getAbilities().flying+" noGravity="+p.isNoGravity());
+        p.setPos(origin(h));h.setBlock(new BlockPos(2,20,1),Blocks.LAVA);
         var lava=TemporalService.trace(p,new Vec3(.2,0,0),12);
         h.assertTrue(lava.stream().anyMatch(f->(f.warning()&TemporalPacket.HAZARD)!=0),"Own future must warn about lava");h.succeed();
     }
@@ -51,7 +54,11 @@ public final class TemporalGameTests {
         var arrow=new Arrow(EntityType.ARROW,h.getLevel());arrow.setPos(p.position().add(4,1,0));arrow.setDeltaMovement(-2,0,0);h.getLevel().addFreshEntity(arrow);
         var forecast=TemporalService.forecast(p);
         h.assertTrue(forecast.shadows().stream().allMatch(s->s.entity()==p.getId()),"Electrum sends only the user's future, never the attacker's identity/path");
-        h.assertTrue(forecast.shadows().stream().flatMap(s->s.points().stream()).anyMatch(f->(f.warning()&TemporalPacket.IMPACT)!=0),"Crossing projectile must warn on future self");
+        h.assertTrue(forecast.shadows().stream().flatMap(s->s.points().stream()).anyMatch(f->(f.warning()&TemporalPacket.IMPACT)!=0),"Crossing projectile must warn on future self: "+forecast+" arrow="+arrow.position()+" visible="+TemporalService.visible(p,arrow)+" velocity="+arrow.getDeltaMovement());
+        PowerData.assignSlot(p,"a:electrum",0);PowerService.control(p,new PowerNetwork.Control(2,"",1));
+        h.assertTrue(TemporalService.forecast(p).shadows().stream().anyMatch(s->s.kind()==TemporalPacket.JUMP),"Holding electrum's assigned activation previews a hypothetical grounded jump");
+        PowerService.control(p,new PowerNetwork.Control(2,"",0));
+        h.assertTrue(TemporalService.forecast(p).shadows().stream().noneMatch(s->s.kind()==TemporalPacket.JUMP),"Releasing activation removes the optional jump future");
         PowerData.state(p,"a:electrum",0);h.assertTrue(TemporalService.forecast(p).shadows().isEmpty(),"Off grants no forecasts");h.succeed();
     }
     @GameTest(template="empty") public static void futureSightBranchesAndHiddenTargetsStayPrivate(GameTestHelper h) {
@@ -59,10 +66,10 @@ public final class TemporalGameTests {
         h.assertTrue(TemporalService.interferes(other),"Active electrum splits an atium forecast");PowerData.state(other,"a:electrum",0);
         h.assertTrue(!TemporalService.interferes(other),"Merely possessing electrum does not counter atium");PowerAttributes.set(other,"a:atium",1);PowerData.reserve(other,"atium",10);PowerData.state(other,"a:atium",2);
         h.assertTrue(TemporalService.interferes(other),"Two active atium burners interfere too");
-        var cow=h.spawn(EntityType.COW,new BlockPos(4,2,1));cow.setNoAi(true);
-        h.assertTrue(TemporalService.forecast(p).shadows().stream().anyMatch(s->s.entity()==cow.getId()),"Visible entities have atium shadows");
+        var cow=h.spawn(EntityType.COW,new BlockPos(4,20,1));cow.setNoAi(true);
+        h.assertTrue(TemporalService.forecast(p).shadows().stream().anyMatch(s->s.entity()==cow.getId()),"Visible entities have atium shadows: "+TemporalService.forecast(p)+" visible="+TemporalService.visible(p,cow)+" eye="+p.getEyePosition()+" cow="+cow.position()+" sight="+p.hasLineOfSight(cow));
         cow.setInvisible(true);h.assertTrue(!TemporalService.visible(p,cow),"Foresight must not reveal invisible targets");cow.setInvisible(false);
-        h.setBlock(new BlockPos(3,2,1),Blocks.STONE);h.setBlock(new BlockPos(3,3,1),Blocks.STONE);h.setBlock(new BlockPos(3,4,1),Blocks.STONE);
+        h.setBlock(new BlockPos(3,20,1),Blocks.STONE);h.setBlock(new BlockPos(3,21,1),Blocks.STONE);h.setBlock(new BlockPos(3,22,1),Blocks.STONE);
         h.assertTrue(!TemporalService.visible(p,cow),"Foresight must not become a wallhack");h.succeed();
     }
     @GameTest(template="empty") public static void temporalCodecBoundsAndThirtyThreePowerSnapshot(GameTestHelper h) {

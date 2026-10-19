@@ -100,7 +100,7 @@ public final class TemporalService {
     public static List<Frame> trace(Entity entity,Vec3 initialVelocity,int ticks) {
         if(!(entity.level() instanceof ServerLevel level))return List.of();
         var frames=new ArrayList<Frame>();var position=entity.position();var box=entity.getBoundingBox();var v=initialVelocity;double fallen=entity.fallDistance,g=gravity(entity);
-        if(v.lengthSqr()>256 || entity.getBbWidth()>8 || entity.getBbHeight()>8)return List.of(new Frame(position,TemporalPacket.UNCERTAIN));
+        if(!Double.isFinite(v.x) || !Double.isFinite(v.y) || !Double.isFinite(v.z) || v.lengthSqr()>256 || entity.getBbWidth()>8 || entity.getBbHeight()>8)return List.of(new Frame(position,TemporalPacket.UNCERTAIN));
         for(int tick=0;tick<Math.min(60,ticks);tick++) {
             var obstacles=collisions(level,box.expandTowards(v),entity);if(obstacles==null){frames.add(new Frame(position,TemporalPacket.UNCERTAIN));break;}
             var step=move(box,v,obstacles);boolean landed=v.y<0 && step.y>v.y+1e-6;

@@ -37,7 +37,11 @@ public final class TemporalClient {
             if(shadow.kind()==TemporalPacket.BRANCH){r=.8f;g=.65f;b=1;}
             var previous=entity==null?shadow.points().getFirst().position():entity.position();
             for(int i=0;i<shadow.points().size();i++) {
-                var point=shadow.points().get(i);boolean danger=(point.warning()&15)!=0;
+                var point=shadow.points().get(i);
+                // A stationary future at the camera must not fill first-person vision with the player's own torso.
+                if(own && mc.options.getCameraType().isFirstPerson() && point.position().distanceToSqr(mc.player.position())<.25)continue;
+                if(i>0 && point.position().distanceToSqr(shadow.points().get(i-1).position())<1e-6 && point.warning()==shadow.points().get(i-1).warning())continue;
+                boolean danger=(point.warning()&15)!=0;
                 float alpha=(float)(PowerClientConfig.FUTURE_OPACITY.get()*fade*(.4+.6*(i+1)/shadow.points().size()));
                 float red=danger?1:r,green=danger?.25f:g,blue=danger?.2f:b;
                 var vertices=buffers.getBuffer(net.minecraft.client.renderer.RenderType.lines());
