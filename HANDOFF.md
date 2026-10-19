@@ -13,7 +13,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - Implemented bounded passive future forecasts, client silhouettes/paths and injury warnings. Atium sees visible others/projectiles/items; electrum sees only self consequences and held jump preview. Future-sight burners split opposing atium shadows. Details below.
 - Existing atium material/filing/reserve IDs now explicitly mean the alloy. No pure-metal recipe or speculative canonical alloy ratio. Allomancy adds a separate persistent atium attribute (33 total); sixteen-metal natural origins and Feruchemy remain unchanged. Protocol8 requires matching jars.
 - Local build attempt was blocked before compilation by unavailable Gradle download network; host Java17 also differs from required Java21. Final GitHub Actions Java21 build,40 JUnit methods,all42 server GameTests and artifact upload passed on8481264af0d645efcf3e7244bf3cce72d733b438 (run39300851357), including loaded sight rays, safe water landings and fire resistance.
-- Next: finish automated checks, then manual client/multiplayer visual and balance checks. No claim of guaranteed prediction of future player decisions.
+- Latest chat: user asked which Allomantic powers remain. Confirmed implemented iron, steel, tin, pewter, electrum and atium-electrum alloy. Eleven ordinary effects remain: zinc, brass, copper, bronze, aluminum, duralumin, chromium, nicrosil, gold, cadmium, bendalloy. Lerasium effects and further god-metal/alloy powers remain separate future work. No new implementation chosen; version/protocol unchanged. Documentation-only diff check passed.
+- Next: manual client/multiplayer visual and balance checks; choose the next remaining power. No claim of guaranteed prediction of future player decisions.
 
 ## Vision and accepted constraints
 
