@@ -362,6 +362,9 @@ public final class PowerService {
         if(recoil.lengthSqr()>1e-12)accelerate(player,recoil);
     }
     @SubscribeEvent public void commands(RegisterCommandsEvent event) {
+        event.getDispatcher().register(Commands.literal("cosmere").then(Commands.literal("integrity").requires(s->s.hasPermission(2))
+            .then(Commands.argument("targets",EntityArgument.entities()).then(Commands.argument("value",com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg(0,1)).executes(ctx->{int count=0;for(var target:EntityArgument.getEntities(ctx,"targets"))if(target instanceof LivingEntity living){SpiritualIntegrity.set(living,com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(ctx,"value"));count++;}final int changed=count;ctx.getSource().sendSuccess(()->Component.literal("Set spiritual integrity for "+changed+" living targets."),true);return count;})))));
+
         event.getDispatcher().register(Commands.literal("cosmere").then(Commands.literal("power").requires(s -> s.hasPermission(2))
             .then(Commands.literal("grant").then(Commands.argument("player", EntityArgument.player()).then(Commands.argument("power", ResourceLocationArgument.id())
                 .suggests((ctx, b) -> { for (var key : PowerAttributes.keys()) b.suggest(key); return b.buildFuture(); })

@@ -4,9 +4,9 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class EmotionConfig {
     public static final ModConfigSpec SPEC;
-    public static final ModConfigSpec.BooleanValue ENABLED,ZINC,BRASS,PLAYERS,MOBS,ANIMALS,AREA,ANGER,FEAR,TRUST,LOVE,COMPLIANCE,BREEDING,TRADES,ALUMINUM;
-    public static final ModConfigSpec.DoubleValue DRAIN,RANGE,RANGE_CAP,ANIMAL_FACTOR,ANGER_DAMAGE,FEAR_DAMAGE,FEAR_ATTACK_SPEED,FEAR_SPEED,LOVE_REDUCTION,DISCOUNT,COMPLIANCE_FORCE,COMPLIANCE_CAP;
-    public static final ModConfigSpec.IntValue DURATION,TARGETS,AFFECTED,FEAR_BURST,FEAR_COOLDOWN;
+    public static final ModConfigSpec.BooleanValue ENABLED,ZINC,BRASS,PLAYERS,MOBS,ANIMALS,AREA,ANGER,FEAR,TRUST,LOVE,COMPLIANCE,BREEDING,TRADES,ALUMINUM,DOMINATION;
+    public static final ModConfigSpec.DoubleValue DRAIN,RANGE,RANGE_CAP,ANIMAL_FACTOR,ANGER_DAMAGE,FEAR_DAMAGE,FEAR_ATTACK_SPEED,FEAR_SPEED,LOVE_REDUCTION,DISCOUNT,COMPLIANCE_FORCE,COMPLIANCE_CAP,DOMINATION_STRENGTH,MAX_INTEGRITY;
+    public static final ModConfigSpec.IntValue DURATION,TARGETS,AFFECTED,FEAR_BURST,FEAR_COOLDOWN,MINION_TICKS,MINION_CAP;
     static {
         var b=new ModConfigSpec.Builder();ENABLED=b.define("enabled",true);ZINC=b.define("zincEnabled",true);BRASS=b.define("brassEnabled",true);
         PLAYERS=b.define("affectPlayers",true);MOBS=b.define("affectMobs",true);ANIMALS=b.define("affectAnimals",true);AREA=b.define("alternateAreaInfluence",true);
@@ -22,6 +22,10 @@ public final class EmotionConfig {
         LOVE_REDUCTION=b.comment(".125 per effective strength: baseline attribute1 Flaring strength2 reaches25 percent against the influencing player.").defineInRange("loveDamageReductionPerStrength",.125,0.0,.5);
         DISCOUNT=b.defineInRange("trustDiscountPerStrength",.15,0.0,.5);
         COMPLIANCE_FORCE=b.defineInRange("playerComplianceImpulsePerStrength",.003,0.0,.02);COMPLIANCE_CAP=b.defineInRange("maxPlayerComplianceImpulse",.02,0.0,.05);
+        b.pop();b.push("domination");DOMINATION=b.define("enabled",true);
+        DOMINATION_STRENGTH=b.comment("Effective positive compliance strength needed to seize a sufficiently damaged spirit. Includes burn level, distance and animal response.").defineInRange("minimumStrength",4.0,.1,1024.0);
+        MAX_INTEGRITY=b.comment("Spiritual integrity is1 for intact spirits; Hemalurgy integration can lower it via SpiritualIntegrity API.").defineInRange("maximumSpiritualIntegrity",.5,0.0,1.0);
+        MINION_TICKS=b.defineInRange("baseDurationTicks",1200,20,72000);MINION_CAP=b.defineInRange("maximumDurationTicks",12000,20,72000);
         b.pop();SPEC=b.build();
     }
     public static boolean effect(Emotion e){return switch(e){case ANGER->ANGER.get();case FEAR->FEAR.get();case TRUST->TRUST.get();case LOVE->LOVE.get();case COMPLIANCE->COMPLIANCE.get();};}

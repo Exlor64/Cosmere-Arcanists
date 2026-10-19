@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-19 UTC**. Current mod version: **0.16.1-alpha**.
+Last updated: **2026-10-19 UTC**. Current mod version: **0.17.0-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -9,11 +9,13 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
-- User clarified inverse emotions: brass can soothe native hostility, and changing the strongest emotion can make hostile mobs passive or passive mobs aggressive.
-- Version 0.16.1-alpha/protocol10: natural hostile anger is seeded even before acquiring a target. Sufficient anger suppression clears current combat targets and blocks reacquisition against any victim. Weak Soothing that leaves anger dominant preserves native AI rather than forcing infighting. Suppressing passive trust can expose anger. Losing love clears breeding readiness. Calmed creepers stop autonomous swelling; deliberate ignition remains effective.
-- Added three server regressions for weak/strong Soothing, arbitrary victims, expiry/recovery, inverse trust/love, competing Rioting and creeper swelling. No config, network or save migration changes.
-- Java21 GitHub Actions run39312319985 passed build, required server GameTests and artifact upload for gameplay commit1042b474007009206cfe15b003b1ff59897c5e6b. Three new server cases bring the registered total to56 (unit suite remains46); individual log totals not yet retrieved. Local Gradle bootstrap remains unavailable; installed Java is17.
-- Next: manual UI, mob pathfinding/trading and multiplayer balance checks.
+- User requested overwhelming compliance on targets with Hemalurgy-damaged spiritual integrity to create temporary minions: default one minute, longer with power.
+- Version0.17.0-alpha/protocol10 adds DominationService: positive dominant Zinc compliance effective intensity>=4 plus spiritual integrity<=.5 acquires control. Defaults1200ticks at threshold, linear power scaling capped12000ticks; held influence refreshes duration. Stronger controllers can take over; equal/weaker cannot steal. Bond is independent of80tick emotional linger and does not require continued burning once acquired.
+- Minion mobs follow controller and assist recent combat (last100ticks); prevent native unrelated targets, owner/fellow-minion damage. Controlled players receive additive horizontal following/combat steering and automatic in-range, visible, cooled-down melee attacks; keep camera and inventory. No teleport, block breaking, item use, or inventory control. Custom mob/Brain AI and PvP movement still need playtesting.
+- SERVER emotions config domination section toggles feature, strength/integrity thresholds and base/capped durations. Existing eligibility, entity immunity, aluminum headwear and copper protection apply to acquisition and release. Bonds end on timeout, restored integrity, death/removal, logout/dimension change, protections/config disable and server stop. No bond persistence through restart.
+- SpiritualIntegrity get/set/damage API stores intact default1, clamped0..1; player data copied on respawn, mob persistent data saved. OP test command `/cosmere integrity <targets> <value0..1>`. Hemalurgy equipment and duralumin burning are STILL pending: neither is falsely marked implemented; future Hemalurgy can call damage/set, future duralumin can boost existing power attributes/effective strength.
+- Added two server regressions for intact/weak rejection, threshold duration, stronger duration, owner protection, integrity recovery, player cloning and timed release. Java21 CI validation pending; prior0.16.1 build/server/artifact passed run39312319985.
+- Next: automated verification then manual minion following, custom mob AI, PvP and competing-controller playtests.
 
 ## Vision and accepted constraints
 

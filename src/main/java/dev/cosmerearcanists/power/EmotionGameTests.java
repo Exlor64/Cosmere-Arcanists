@@ -18,6 +18,20 @@ import net.neoforged.neoforge.gametest.*;
 public final class EmotionGameTests {
     private static FakePlayer caster(GameTestHelper h){var p=new FakePlayer(h.getLevel(),new GameProfile(UUID.randomUUID(),"EmotionTest"));p.setPos(Vec3.atCenterOf(h.absolutePos(new BlockPos(1,20,1))));for(String m:List.of("zinc","brass")){PowerAttributes.set(p,"a:"+m,1);PowerData.state(p,"a:"+m,2);PowerData.reserve(p,m,100);}return p;}
     private static <T extends Mob> T mob(GameTestHelper h,EntityType<T> type,Vec3 pos){var m=type.create(h.getLevel());m.setPos(pos);h.getLevel().addFreshEntity(m);return m;}
+    @GameTest(template="empty") public static void dominationRequiresSpiritualDamageAndOverwhelmingCompliance(GameTestHelper h){
+        var source=caster(h);var target=mob(h,EntityType.ZOMBIE,source.position());PowerAttributes.set(source,"a:zinc",4);
+        EmotionService.apply(source,target,"a:zinc",Emotion.COMPLIANCE);h.assertTrue(DominationService.owner(target)==null,"Intact spirits resist even strong compliance");
+        SpiritualIntegrity.set(target,.5);PowerAttributes.set(source,"a:zinc",1);EmotionService.apply(source,target,"a:zinc",Emotion.COMPLIANCE);h.assertTrue(DominationService.owner(target)==null,"Spiritual damage alone is insufficient");
+        PowerAttributes.set(source,"a:zinc",4);EmotionService.apply(source,target,"a:zinc",Emotion.COMPLIANCE);h.assertTrue(DominationService.owner(target)==source && DominationService.remaining(target)==1200,"Threshold strength seizes a damaged spirit for one minute");
+        target.setTarget(source);h.assertTrue(target.getTarget()==null,"Minions cannot target their controller");
+        PowerAttributes.set(source,"a:zinc",8);EmotionService.apply(source,target,"a:zinc",Emotion.COMPLIANCE);h.assertTrue(DominationService.remaining(target)==2400,"Duration scales with effective power");
+        SpiritualIntegrity.set(target,1);DominationService.tick();h.assertTrue(DominationService.owner(target)==null,"Restoring integrity releases a minion");h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=120) public static void dominationExpiresAndPlayerIntegritySurvivesClone(GameTestHelper h){
+        var source=caster(h);var target=caster(h);target.setPos(source.position());var copy=caster(h);SpiritualIntegrity.set(target,.25);PowerData.clonePlayer(target,copy);h.assertTrue(SpiritualIntegrity.get(copy)==.25,"Player spiritual damage persists through respawn copying");
+        int duration=EmotionConfig.MINION_TICKS.get();try{EmotionConfig.MINION_TICKS.set(20);PowerAttributes.set(source,"a:zinc",4);EmotionService.apply(source,target,"a:zinc",Emotion.COMPLIANCE);h.assertTrue(DominationService.owner(target)==source && DominationService.remaining(target)==20,"Players can be controlled under the same thresholds");}finally{EmotionConfig.MINION_TICKS.set(duration);}
+        h.runAfterDelay(22,()->{DominationService.tick();h.assertTrue(DominationService.owner(target)==null,"Control expires independently of short emotional linger");h.succeed();});
+    }
     @GameTest(template="empty",timeoutTicks=120) public static void soothingHostileAngerClearsEveryVictimAndAllowsRecovery(GameTestHelper h){
         var source=caster(h);var victim=caster(h);var stranger=caster(h);var zombie=mob(h,EntityType.ZOMBIE,source.position().add(1,0,0));
         zombie.setNoAi(true);zombie.setNoGravity(true);zombie.setItemSlot(EquipmentSlot.HEAD,new ItemStack(Items.IRON_HELMET));zombie.setTarget(victim);

@@ -676,7 +676,7 @@ Test with `/cosmere power grant @s a:zinc`, `a:brass`, then
 no new registry IDs or save migration. Client and server need protocol **10**.
 The private emotional status packet does not disclose an influencing player's
 identity. Player emotional mechanics and species behavior are gameplay choices
-requested for this mod; progression XP and Hemalurgic domination remain future.
+requested for this mod; progression XP and Hemalurgy equipment remain future.
 
 Soothing anger with brass can pacify naturally hostile mobs when anger loses
 dominance, clearing their current attack target and preventing reacquisition
@@ -684,3 +684,23 @@ while the suppression lasts. Weak Soothing that leaves anger strongest preserves
 ordinary hostility. Lowering another emotion can expose anger in a passive mob.
 Losing love ends breeding readiness; calmed creepers stop autonomous swelling,
 although deliberate ignition still works.
+
+### Overwhelming compliance and minions (0.17.0)
+
+Dominant positive compliance can seize a damaged spirit. Defaults require effective
+compliance strength4 and spiritual integrity at most0.5 (intact spirits default1).
+At threshold the target becomes a minion for60seconds; duration scales linearly
+with effective strength, capped at10minutes. Continued application refreshes it.
+Mob minions follow their controller and assist recent combat. Controlled players
+receive forced horizontal following and automatic visible, in-range melee attacks,
+while retaining their camera and inventory controls. Minions cannot hurt their
+controller or fellow minions. Control ends on expiry, death, logout, dimension
+change, restored integrity, protective copper/aluminum, or disabling the feature.
+Stronger compliance can replace an existing controller.
+
+Tune `domination` in the server emotions config. Operators can test spiritual
+damage with `/cosmere integrity <targets> <value>` (0..1), grant zinc, increase
+`cosmerearcanists:allomancy_zinc` with vanilla `/attribute`, refill, and apply
+compliance. Spiritual integrity persists through saves and player respawns;
+control does not survive restart. Hemalurgy spike effects and duralumin burning
+remain future work; integration APIs/data are ready for them.
