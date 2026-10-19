@@ -16,6 +16,8 @@
     "cosmerearcanists:silver_ore",
     "cosmerearcanists:deepslate_silver_ore",
     "cosmerearcanists:nickel_ore",
-    "cosmerearcanists:deepslate_nickel_ore"
+    "cosmerearcanists:deepslate_nickel_ore",
+    "cosmerearcanists:atium_block",
+    "cosmerearcanists:lerasium_block"
   ]
 }

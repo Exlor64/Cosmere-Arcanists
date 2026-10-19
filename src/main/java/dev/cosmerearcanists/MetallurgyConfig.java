@@ -8,7 +8,8 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 public final class MetallurgyConfig {
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.BooleanValue GENERATION;
-    public static final ModConfigSpec.BooleanValue ALLOYING;
+    public static final ModConfigSpec.BooleanValue ALLOYING, GOD_CONVERSIONS;
+    public static final Map<String, ModConfigSpec.BooleanValue> GOD_METALS = new LinkedHashMap<>();
     public static final Map<String, ModConfigSpec.BooleanValue> ALLOYS = new LinkedHashMap<>();
     public static final Map<String, ModConfigSpec.BooleanValue> ORES = new LinkedHashMap<>();
     public static final Map<String, ModConfigSpec.DoubleValue> CHANCES = new LinkedHashMap<>();
@@ -27,6 +28,9 @@ public final class MetallurgyConfig {
         ALLOYING = b.comment("Enable alloy crafting recipes. Restart or reload recipes after changes.").define("enabled", true);
         for (String metal : new String[]{"steel", "pewter", "brass", "bronze", "duralumin", "electrum", "bendalloy", "nicrosil"})
             ALLOYS.put(metal, b.define(metal, true));
+        b.pop();b.push("godMetals");
+        GOD_CONVERSIONS=b.comment("Enable nugget/ingot/block conversion recipes. Restart or reload recipes after changes. Registered items, blocks and saved contents are preserved.").define("conversions",true);
+        for(String metal:ModMetals.GOD_METALS)GOD_METALS.put(metal,b.define(metal,true));
         b.pop(); SPEC = b.build();
     }
     private MetallurgyConfig() { }

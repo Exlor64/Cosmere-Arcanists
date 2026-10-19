@@ -125,5 +125,11 @@
   "death.attack.cosmerearcanists.pewter_drag": "%1$s succumbed to pewter drag",
   "item.cosmerearcanists.metal_file": "Metal File",
   "item.cosmerearcanists.metal_filing": "Metal Filing",
-  "item.cosmerearcanists.metal_vial": "Metal Vial"
+  "item.cosmerearcanists.metal_vial": "Metal Vial",
+  "item.cosmerearcanists.atium_nugget": "Atium Nugget",
+  "item.cosmerearcanists.atium_ingot": "Atium Ingot",
+  "block.cosmerearcanists.atium_block": "Block of Atium",
+  "item.cosmerearcanists.lerasium_nugget": "Lerasium Nugget",
+  "item.cosmerearcanists.lerasium_ingot": "Lerasium Ingot",
+  "block.cosmerearcanists.lerasium_block": "Block of Lerasium"
 }

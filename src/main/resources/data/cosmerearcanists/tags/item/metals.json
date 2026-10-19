@@ -38,6 +38,12 @@
     "minecraft:copper_ingot",
     "cosmerearcanists:copper_nugget",
     "minecraft:gold_ingot",
-    "minecraft:gold_nugget"
+    "minecraft:gold_nugget",
+    "cosmerearcanists:atium_nugget",
+    "cosmerearcanists:atium_ingot",
+    "cosmerearcanists:atium_block",
+    "cosmerearcanists:lerasium_nugget",
+    "cosmerearcanists:lerasium_ingot",
+    "cosmerearcanists:lerasium_block"
   ]
 }

@@ -16,6 +16,8 @@
     "#c:ingots/silver",
     "#c:ingots/steel",
     "#c:ingots/tin",
-    "#c:ingots/zinc"
+    "#c:ingots/zinc",
+    "#c:ingots/atium",
+    "#c:ingots/lerasium"
   ]
 }

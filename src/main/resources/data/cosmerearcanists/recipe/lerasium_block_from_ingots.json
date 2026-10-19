@@ -1,0 +1,24 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "cosmerearcanists:god_metal_conversions",
+      "metal": "lerasium"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "MMM",
+    "MMM",
+    "MMM"
+  ],
+  "key": {
+    "M": {
+      "item": "cosmerearcanists:lerasium_ingot"
+    }
+  },
+  "result": {
+    "id": "cosmerearcanists:lerasium_block",
+    "count": 1
+  }
+}

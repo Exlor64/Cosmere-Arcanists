@@ -1,0 +1,19 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "cosmerearcanists:god_metal_conversions",
+      "metal": "atium"
+    }
+  ],
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "cosmerearcanists:atium_block"
+    }
+  ],
+  "result": {
+    "id": "cosmerearcanists:atium_ingot",
+    "count": 9
+  }
+}

@@ -16,6 +16,7 @@ public final class MetalAmounts {
             var tags=stack.getTags().map(t->t.location().getPath()).toList();
             String path=BuiltInRegistries.ITEM.getKey(item).getPath();
             if(path.endsWith("_nugget") || tags.stream().anyMatch(t->t.startsWith("nuggets/"))) fixed.put(id,1.0);
+            else if(tags.stream().anyMatch(t->t.startsWith("storage_blocks/") && !t.startsWith("storage_blocks/raw_"))) fixed.put(id,81.0);
             else if(path.endsWith("_ingot") || path.startsWith("raw_") && !path.endsWith("_block") || path.endsWith("_ore")
                 || tags.stream().anyMatch(t->t.startsWith("ingots/") || t.startsWith("raw_materials/") || t.startsWith("ores/"))) fixed.put(id,9.0);
         });

@@ -16,7 +16,7 @@ import net.minecraft.world.item.crafting.RecipeInput;
 /** Persistent per-piece filing progress and per-metal vial counts. No registry or recipe mutation. */
 public final class Filings {
     private static final String FILED="cosmerearcanists_filed", CONTENTS="cosmerearcanists_filings", METAL="cosmerearcanists_filing_metal";
-    public static final Set<String> METALS=Set.of("iron","steel","tin","pewter","zinc","brass","copper","bronze","aluminum","duralumin","chromium","nicrosil","gold","electrum","cadmium","bendalloy","lead","silver","nickel");
+    public static final Set<String> METALS=Set.of("iron","steel","tin","pewter","zinc","brass","copper","bronze","aluminum","duralumin","chromium","nicrosil","gold","electrum","cadmium","bendalloy","lead","silver","nickel","atium","lerasium");
     public record Source(String metal,int nuggetUnits) { }
     private static CompoundTag data(ItemStack stack){return stack.getOrDefault(DataComponents.CUSTOM_DATA,CustomData.EMPTY).copyTag();}
     public static boolean filed(ItemStack stack){return !stack.isEmpty() && data(stack).getCompound(FILED).getInt("used")>0;}

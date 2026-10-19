@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-19 UTC**. Current mod version: **0.12.0-alpha**.
+Last updated: **2026-10-19 UTC**. Current mod version: **0.13.0-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -9,12 +9,12 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
-- User approved tin sight/zoom and sound-driven wireframe hearing, then requested attenuation or complete blocking through too many intervening blocks.
-- Implemented passive tin burn/fuel/night vision, held G/H zoom, server sound events with actual entity-source identity, bounded collision geometry echoes and wireframe model rendering through walls. Silent entities near noises are never guessed as sources. Echoes are transient and remain at heard positions.
-- Dedicated sound obstruction adds per-block/hardness/wool cost to hearing distance, reducing opacity/radius/detail/fade and suppressing inaudible echoes. It does not modify vanilla audio playback. Direct-path approximation; no forced chunk loading or acoustic reflection search.
-- User refined wireframes into a high-strength ability for future progression. Default threshold effective strength >1.5, full potential at6. Attribute1 Low/Burning gives no wireframes; Flaring at strength2 gives ~11% potential, with faint/brief/small reveals. Larger attributes improve it and can unlock it without Flaring. Lower-level night vision/zoom remain independent. Planned progression covers all metals; no XP/progression system implemented now.
-- Final tin build, 38 JUnit methods, all 35 server GameTests and artifact upload passed, including strength gating and block attenuation. Protocol now 7 with private tin status and echo packets; both client/server need update. Sensory overload remains deferred.
-- Next: client-playtest real mob/step/block sounds, muted/blocked walls, entity mesh wireframes, night vision and zoom. Third-party renderer compatibility and purely client-local sounds remain limitations to assess.
+- User requested atium and lerasium nuggets, ingots and blocks.
+- Added six registered forms, two placeable storage blocks/self-drop loot tables, reversible 9:1 conversions, creative entries/localization/models, metal/common tags, pickaxe/iron-tool tags and configurable conversion conditions.
+- Integrated both into filing/mixed vials (21 supported metals), independent fifty-per-filing reserves and iron/steel detection/mass. Storage blocks explicitly retain 81 nugget units even when conversion recipes are disabled. No new power attributes/effects or worldgen/acquisition were requested/added.
+- God-metal conversion recipes have global and per-metal common-config gates; disabling preserves registered content and saved data. Temporary assets reuse iron (atium) and gold (lerasium). Protocol remains7, but both sides need registry updates.
+- Build/server GameTests pending; previous tin verification below remains valid for its tested revision.
+- Next: verify CI, then client-check block placement/mining and temporary item/block visuals; continue god-metal effects/acquisition design only when requested.
 
 ## Vision and accepted constraints
 
@@ -28,6 +28,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 ## Implemented scope
 
 - Command-based origins for Scadrial and separate Overworld; human race only. Assignment probabilities, Twinborn, rerolls and per-art/per-metal gates are configurable.
+- Atium/lerasium nuggets, ingots and storage blocks with reversible conversions and filing/vial support. God-metal powers/acquisition remain pending.
 - Metal ores, processing, ingots/nuggets and alloys; ore generation, creative tab, and recipe/generation gates.
 - Spike crossbow with 19 metal spike variants, embedded anchors, reusable steel ball-and-rope, and a charged/swinging/recallable grappling hook.
 - Allomantic **iron and steel effects**, detection lines, aimed push/pull, movement assistance, metal reserves/vials, fall braking, and steel-thrown projectiles.
@@ -178,7 +179,7 @@ Pewter test-fixture details: use out_of_world damage to bypass ServerPlayer spaw
 
 - `filing/FilingConfig`: SERVER `cosmerearcanists-filings-server.toml`, enabled, filingsPerNugget=4, vialCapacity=16, reservePerFiling=50, drinkTicks=32, fileWearPerFiling=1. File durability 256. Replaces old powers `vialReserve` field; existing per-metal reserve cap remains unchanged.
 - `Filings`: uses CUSTOM_DATA named compounds for per-source used/capacity, loose filing metal identity and mixed vial count map. Source capacity fixed when first filed. Filed pieces also set MAX_STACK_SIZE=1, MAX_DAMAGE=capacity and DAMAGE=used for vanilla wear rendering; preserve original item and other components. Depleted pieces disappear. Tool server path isolates exactly one piece; full inventory uses ordinary dropped-item overflow.
-- Fileable forms: ingots/nuggets/metal storage blocks for all 19 current metals, using item paths and c tags for matching metal forms from other mods. Ores/raw blocks and crafted gear are excluded. Only sixteen of those metals have Allomancy attributes; reserve ingestion never grants a power.
+- Fileable forms: ingots/nuggets/metal storage blocks for all 21 current metals, using item paths and c tags for matching metal forms from other mods. Ores/raw blocks and crafted gear are excluded. Only sixteen of those metals have Allomancy attributes; reserve ingestion never grants a power.
 - `MetalFileItem`: main-hand right-click with offhand metal. `MetalFilingItem`: right-click with opposite-hand vial or glass bottle loads one, rejects total over capacity without consumption. `MetalVialItem`: generic mixed variant plus legacy IDs; potion-style 32-tick use. Filings in the other hand load instead of drink. Each metal independently restores full 50-point filings only; retain leftovers if cap cannot fit a full filing, preventing waste. Creative drinking follows vanilla nonconsumption.
 - `FiledIngredientMixin` rejects filed material in ingredient tests. `FiledShapelessMixin` closes optimized item-ID matching. `FiledRecipeManagerMixin` guards ordinary/cached recipe lookup, including repair/smelting/recycling paths. Guards remain active when filing is disabled so a config toggle cannot restore lost metal. `FilingEvents` adds remaining capacity tooltip and blocks normal placement of filed blocks to prevent place/break resetting their metal.
 - `MetalDetector` classifies filing/vial contents dynamically, excluding any aluminum/duralumin mixture. `MetalAmounts` uses remaining filing metal and partial-piece mass for projectile/recoil balance.
@@ -197,3 +198,12 @@ Pewter test-fixture details: use out_of_world damage to bypass ServerPlayer spaw
 - Protocol7 `TinStatus` (strength/held zoom) and `TinEcho` (dimension, sound point, actual source ID/box, opacity/lifetime, <=256 shape boxes). Server sends only to valid tin listeners in that dimension with range/obstruction and rate checks.
 - `TinClient` fades/caps/clears echoes on deactivation/dimension/disconnect, draws terrain lines through walls, rerenders only source entity mesh with a dedicated flat wireframe render type at remembered sound position. Uses world pose/camera-relative doubles. Polygon mode/shader tint restore in finally. Non-entity-format layers/nameplates discarded. Other mod renderer compatibility and actual visuals are not manually verified. Held zoom modifies configured world FOV only. No sensory overload or audio amplification yet.
 - Added pure balance and runtime regressions for range/zoom/obstruction, real source scoping/silence, night-vision ownership and fuel, both zoom slots, thin/thick/hard/wool obstruction, bounded nearby surfaces and echo packet round trip. Final strength-gated tin CI passed; see verified commit/run above.
+
+
+## God-metal materials (0.13.0)
+
+- `ModMetals.GOD_METALS` contains atium/lerasium, independent of the ordinary 16-metal `Metal` enum and eight `BASE` ores. Registers each nugget/ingot/block item and storage block copied from iron-block properties, with correct pickaxe and iron-tool tags and self-drop loot. No ore generation or survival acquisition source added.
+- Resources include four reversible conversion recipes per metal: 9 nuggets ↔ 1 ingot; 9 ingots ↔ 1 block; all use `GodMetalEnabledCondition`, registered alongside alloy condition. `MetallurgyConfig.godMetals.conversions/atium/lerasium` require recipe reload/restart. Registry/data remain intact when disabled.
+- Common c:ingots, c:nuggets, c:storage_blocks per-metal/aggregate item tags and storage-block block tags, plus explicit mod metal detection tags. `MetalAmounts` seeds detectable non-raw storage blocks at81, avoiding fallback mass when recipes disabled.
+- `Filings.METALS` now21; god-metal source forms provide 4/36/324 default filings. Mixed vial content persists and restores independent reserves. No god-metal effects/attributes are implied or granted. Creative catalog automatically includes their filing variants.
+- Models reference vanilla iron and gold textures as provisional visuals; no bespoke textures yet. Tests cover all four conversion directions, registry/placement/tool tags/loot, exact filing capacity, detection/mass, disabled conversion predicate/content retention and mixed vial reserves without accidental power grants.

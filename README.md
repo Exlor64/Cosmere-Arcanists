@@ -403,7 +403,7 @@ A vial holds **16 total filings**, freely mixed: 3 iron + 13 steel carries
 150 iron reserve and 650 steel reserve. At the existing default cap of 300 per
 metal, drinking that mixture leaves 7 steel filings in the vial. Raise
 `ironSteel.reserveCapacity` if you want to ingest all 13 steel filings at once.
-All 19 mod metals are fileable, including non-Allomantic alloy ingredients;
+All 21 supported metals are fileable, including non-Allomantic alloy ingredients;
 storing a reserve never grants a power or implements an unfinished effect.
 Common tags support other mods' forms of these same metals. Ores/raw metal,
 raw storage blocks, equipment, and arbitrary crafted metal items cannot be filed.
@@ -472,3 +472,24 @@ Both client and server must update for **protocol 7**. Model wireframe appearanc
 compatibility with third-party entity renderers, and in-game sound coverage still
 need client playtesting. Some purely client-local/mod-specific sounds that do not
 emit a server sound event cannot generate a server-authorized reveal.
+
+
+### Atium and lerasium materials (0.13.0)
+
+Added nuggets, ingots and placeable storage blocks for both **atium** and
+**lerasium**, available in the mod creative tab. Conversions are reversible:
+9 nuggets ↔ 1 ingot, and 9 ingots ↔ 1 block. Blocks require an iron-or-better
+pickaxe and drop themselves. Both metals support filings (4/36/324 per form),
+mixed vials, fifty reserve per filing, and iron/steel metal detection. Nugget,
+ingot and block metal content remains 1/9/81 for projectile/recoil calculations.
+
+Conversion recipes can be disabled globally or per metal under `godMetals` in
+the metallurgy common config, followed by a recipe reload/restart. Items, placed
+blocks and saved vial contents remain registered. Common ingot/nugget/storage
+block tags support recipe compatibility. Current visuals reuse vanilla iron
+for atium and gold for lerasium as temporary assets.
+
+This adds the materials and conversions; natural acquisition/world generation
+and god-metal power effects are future work. The existing 32 ordinary Metallic
+Arts power attributes are unchanged. Network protocol remains 7; update both jars
+for the new registered blocks/items.

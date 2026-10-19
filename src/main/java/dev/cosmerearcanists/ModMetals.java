@@ -18,6 +18,7 @@ public final class ModMetals {
     public static final net.neoforged.neoforge.registries.DeferredItem<dev.cosmerearcanists.power.MetalVialItem> METAL_VIAL=ITEMS.register("metal_vial",()->new dev.cosmerearcanists.power.MetalVialItem());
     public static final net.neoforged.neoforge.registries.DeferredItem<dev.cosmerearcanists.filing.MetalFilingItem> METAL_FILING=ITEMS.register("metal_filing",dev.cosmerearcanists.filing.MetalFilingItem::new);
     public static final net.neoforged.neoforge.registries.DeferredItem<dev.cosmerearcanists.filing.MetalFileItem> METAL_FILE=ITEMS.register("metal_file",dev.cosmerearcanists.filing.MetalFileItem::new);
+    public static final String[] GOD_METALS = {"atium", "lerasium"};
     public static final String[] BASE = {"tin", "zinc", "aluminum", "chromium", "cadmium", "lead", "silver", "nickel"};
     static {
         for (String metal : BASE) {
@@ -29,6 +30,12 @@ public final class ModMetals {
                 "steel", "pewter", "brass", "bronze", "duralumin", "electrum", "bendalloy", "nicrosil"}) {
             ITEMS.registerSimpleItem(metal + "_ingot", new Item.Properties());
             ITEMS.registerSimpleItem(metal + "_nugget", new Item.Properties());
+        }
+        for(String metal:GOD_METALS) {
+            ITEMS.registerSimpleItem(metal+"_ingot",new Item.Properties());
+            ITEMS.registerSimpleItem(metal+"_nugget",new Item.Properties());
+            var block=BLOCKS.registerSimpleBlock(metal+"_block",BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK));
+            ITEMS.registerSimpleBlockItem(metal+"_block",block);
         }
         ITEMS.registerSimpleItem("copper_nugget", new Item.Properties());
         ITEMS.register("iron_vial", () -> new dev.cosmerearcanists.power.MetalVialItem("iron"));

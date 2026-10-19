@@ -18,6 +18,50 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @GameTestHolder(CosmereArcanists.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class PowerGameTests {
+    @GameTest(template = "empty")
+    public static void godMetalFormsConvertWithoutMaterialLoss(GameTestHelper helper) {
+        var level=helper.getLevel();MetalDetector.rebuild(level.getServer());
+        for(String metal:dev.cosmerearcanists.ModMetals.GOD_METALS) {
+            var nugget=BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,metal+"_nugget"));
+            var ingot=BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,metal+"_ingot"));
+            var block=BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,metal+"_block"));
+            helper.assertTrue(nugget!=Items.AIR && ingot!=Items.AIR && block instanceof net.minecraft.world.item.BlockItem,"Every god metal must register nugget, ingot and placeable block");
+            for(var pair:java.util.List.of(new net.minecraft.world.item.Item[]{nugget,ingot},new net.minecraft.world.item.Item[]{ingot,block})) {
+                var packed=net.minecraft.world.item.crafting.CraftingInput.of(3,3,java.util.Collections.nCopies(9,new ItemStack(pair[0])));
+                var compact=level.getRecipeManager().getRecipeFor(net.minecraft.world.item.crafting.RecipeType.CRAFTING,packed,level).orElseThrow().value().assemble(packed,level.registryAccess());
+                helper.assertTrue(compact.is(pair[1]) && compact.getCount()==1,"Nine lower units must compact into one higher unit for "+metal);
+                var single=net.minecraft.world.item.crafting.CraftingInput.of(1,1,java.util.List.of(new ItemStack(pair[1])));
+                var unpacked=level.getRecipeManager().getRecipeFor(net.minecraft.world.item.crafting.RecipeType.CRAFTING,single,level).orElseThrow().value().assemble(single,level.registryAccess());
+                helper.assertTrue(unpacked.is(pair[0]) && unpacked.getCount()==9,"Every compaction must reverse exactly for "+metal);
+            }
+            helper.assertTrue(MetalDetector.detects(level.getServer(),new ItemStack(block)) && MetalAmounts.units(level.getServer(),new ItemStack(nugget))==1 && MetalAmounts.units(level.getServer(),new ItemStack(ingot))==9 && MetalAmounts.units(level.getServer(),new ItemStack(block))==81,"God-metal forms must have consistent detection and 1/9/81 metal mass");
+            var condition=new dev.cosmerearcanists.GodMetalEnabledCondition(metal);boolean enabled=dev.cosmerearcanists.MetallurgyConfig.GOD_CONVERSIONS.get();
+            try {dev.cosmerearcanists.MetallurgyConfig.GOD_CONVERSIONS.set(false);helper.assertTrue(!condition.test(null) && BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,metal+"_block"))==block,"Disabling conversion must preserve registered god-metal blocks");}
+            finally{dev.cosmerearcanists.MetallurgyConfig.GOD_CONVERSIONS.set(enabled);}
+        }
+        helper.succeed();
+    }
+    @GameTest(template = "empty")
+    public static void godMetalFilingVialsAndBlockDrops(GameTestHelper helper) {
+        var level=helper.getLevel();var p=filingPlayer(helper,"GodMetalFiling");
+        for(String metal:dev.cosmerearcanists.ModMetals.GOD_METALS) {
+            for(String form:java.util.List.of("nugget","ingot","block")) {
+                var item=BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,metal+"_"+form));p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND,new ItemStack(item));
+                helper.assertTrue(dev.cosmerearcanists.filing.Filings.file(p),"All god-metal forms must support filing");
+                int expected=form.equals("nugget")?4:form.equals("ingot")?36:324;
+                helper.assertTrue(dev.cosmerearcanists.filing.Filings.capacity(p.getOffhandItem())==expected && dev.cosmerearcanists.filing.Filings.remaining(p.getOffhandItem())==expected-1,"God-metal filing must preserve standard material ratios");
+            }
+            var block=BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,metal+"_block"));var state=block.defaultBlockState();
+            helper.assertTrue(state.is(net.minecraft.tags.BlockTags.MINEABLE_WITH_PICKAXE) && state.is(net.minecraft.tags.BlockTags.NEEDS_IRON_TOOL) && new ItemStack(Items.IRON_PICKAXE).isCorrectToolForDrops(state),"God-metal blocks must use their registered pickaxe/tool tags");
+            var drops=net.minecraft.world.level.block.Block.getDrops(state,level,helper.absolutePos(new net.minecraft.core.BlockPos(1,10,1)),null,p,new ItemStack(Items.IRON_PICKAXE));
+            helper.assertTrue(drops.size()==1 && drops.getFirst().is(block.asItem()) && drops.getFirst().getCount()==1,"Mined storage blocks must drop exactly themselves");
+        }
+        var mixture=dev.cosmerearcanists.filing.Filings.vial(java.util.Map.of("atium",2,"lerasium",3));
+        var bottle=((MetalVialItem)mixture.getItem()).finishUsingItem(mixture,level,p);
+        helper.assertTrue(PowerData.reserve(p,"atium")==100 && PowerData.reserve(p,"lerasium")==150 && bottle.is(Items.GLASS_BOTTLE),"Mixed god-metal filings must restore independent reserves at fifty per filing");
+        helper.assertTrue(!PowerData.available(p).contains("a:atium") && !PowerData.available(p).contains("a:lerasium"),"Material ingestion must not accidentally grant unfinished god-metal powers");
+        helper.succeed();
+    }
     private static ServerPlayer tinPlayer(GameTestHelper helper,String name) {
         var p=new net.neoforged.neoforge.common.util.FakePlayer(helper.getLevel(),new GameProfile(UUID.randomUUID(),name));
         var pos=helper.absolutePos(new net.minecraft.core.BlockPos(1,20,1));p.setPos(pos.getX()+.5,pos.getY(),pos.getZ()+.5);

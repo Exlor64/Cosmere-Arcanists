@@ -1,0 +1,24 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "cosmerearcanists:god_metal_conversions",
+      "metal": "atium"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "MMM",
+    "MMM",
+    "MMM"
+  ],
+  "key": {
+    "M": {
+      "item": "cosmerearcanists:atium_nugget"
+    }
+  },
+  "result": {
+    "id": "cosmerearcanists:atium_ingot",
+    "count": 1
+  }
+}

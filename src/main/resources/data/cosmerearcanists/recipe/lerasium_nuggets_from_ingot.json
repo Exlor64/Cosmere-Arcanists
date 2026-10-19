@@ -1,0 +1,19 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "cosmerearcanists:god_metal_conversions",
+      "metal": "lerasium"
+    }
+  ],
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "cosmerearcanists:lerasium_ingot"
+    }
+  ],
+  "result": {
+    "id": "cosmerearcanists:lerasium_nugget",
+    "count": 9
+  }
+}
