@@ -13,8 +13,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - Added six registered forms, two placeable storage blocks/self-drop loot tables, reversible 9:1 conversions, creative entries/localization/models, metal/common tags, pickaxe/iron-tool tags and configurable conversion conditions.
 - Integrated both into filing/mixed vials (21 supported metals), independent fifty-per-filing reserves and iron/steel detection/mass. Storage blocks explicitly retain 81 nugget units even when conversion recipes are disabled. No new power attributes/effects or worldgen/acquisition were requested/added.
 - God-metal conversion recipes have global and per-metal common-config gates; disabling preserves registered content and saved data. Temporary assets reuse iron (atium) and gold (lerasium). Protocol remains7, but both sides need registry updates.
-- Build/server GameTests pending; previous tin verification below remains valid for its tested revision.
-- Next: verify CI, then client-check block placement/mining and temporary item/block visuals; continue god-metal effects/acquisition design only when requested.
+- Build, 38 JUnit methods, all 37 server GameTests and artifact upload passed on the gameplay commit linked below. New tests cover god-metal conversions, filing/vials, block loot and tool tags.
+- Next: client-check block placement/mining and temporary item/block visuals; continue god-metal effects/acquisition design only when requested.
 
 ## Vision and accepted constraints
 
@@ -121,8 +121,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Verification, evidence and limits
 
-- Latest gameplay commit validated: `268916fed930cbf0f564743f99ac1ab76a3414a3`.
-- [Successful GitHub Actions checks 39296188751](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39296188751): build, **38 JUnit methods**, **35 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
+- Latest gameplay commit validated: `f9e9d369460ff3f651afcc8ec20bb71077735105`.
+- [Successful GitHub Actions checks 39297853576](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39297853576): build, **38 JUnit methods**, **37 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
 - Tests cover metal/aluminum/cycles, ingredient quantities, power states/migrations/attributes/cloning, ability phases, scanning/falling discovery, hardness, impulse/input math, movement solver, sustained iron assistance in both slots, burn/iron/steel scaling, projectile scaling/cap, actual launch/fuel/recoil, save/load/recovery, and swept mob collision with ~2-damage nugget.
 - Collision-test pitfall: the small empty template is encased by GameTest barriers. Clear an airborne corridor before projectile tests; otherwise the shot can hit the barrier roof instead of its target. Temporary collision diagnostic logs were removed.
 - User reported steel movement working perfectly and iron working well before requesting its doubled baseline and alternate mode. Do not treat those later additions or projectile visuals as user-confirmed.
