@@ -15,6 +15,9 @@ public final class ModMetals {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(CosmereArcanists.MOD_ID);
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(CosmereArcanists.MOD_ID);
     public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, CosmereArcanists.MOD_ID);
+    public static final net.neoforged.neoforge.registries.DeferredItem<dev.cosmerearcanists.power.MetalVialItem> METAL_VIAL=ITEMS.register("metal_vial",dev.cosmerearcanists.power.MetalVialItem::new);
+    public static final net.neoforged.neoforge.registries.DeferredItem<dev.cosmerearcanists.filing.MetalFilingItem> METAL_FILING=ITEMS.register("metal_filing",dev.cosmerearcanists.filing.MetalFilingItem::new);
+    public static final net.neoforged.neoforge.registries.DeferredItem<dev.cosmerearcanists.filing.MetalFileItem> METAL_FILE=ITEMS.register("metal_file",dev.cosmerearcanists.filing.MetalFileItem::new);
     public static final String[] BASE = {"tin", "zinc", "aluminum", "chromium", "cadmium", "lead", "silver", "nickel"};
     static {
         for (String metal : BASE) {
@@ -34,7 +37,10 @@ public final class ModMetals {
         TABS.register("metals", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.cosmerearcanists.metals"))
             .icon(() -> Items.IRON_INGOT.getDefaultInstance())
-            .displayItems((parameters, output) -> ITEMS.getEntries().forEach(item -> output.accept(item.get())))
+            .displayItems((parameters, output) -> ITEMS.getEntries().forEach(item -> {
+                if(item.get()==METAL_FILING.get())dev.cosmerearcanists.filing.Filings.METALS.stream().sorted().forEach(metal->output.accept(dev.cosmerearcanists.filing.Filings.filing(metal,1)));
+                else if(!(item.get() instanceof dev.cosmerearcanists.power.MetalVialItem vial) || vial.legacyMetal()==null)output.accept(item.get());
+            }))
             .build());
     }
     private static void ore(String name, Block source) {

@@ -6,7 +6,7 @@ public final class PowerConfig {
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.BooleanValue ENABLED, IRON_STEEL, DETECTION_BLOCKS, DETECTION_ITEMS, DETECTION_GEAR, RECIPE_DETECTION, CONSUMPTION, FLARING, RECOIL, PLAYER_TARGETS, FALL_MITIGATION, BLOCK_RESISTANCE, STEEL_MOVEMENT, IRON_MOVEMENT, RESIST_WALKING, STEEL_PROJECTILES, ALTERNATE_DROP_DOWN, DETECTION_PROJECTILES, SECONDARY_ENABLED;
     public static final ModConfigSpec.IntValue RANGE, MAX_TARGETS, SCAN_BUDGET, SYNC_INTERVAL, FERUCHEMY_LEVELS, NEAR_SCAN_RADIUS, URGENT_SCAN_BUDGET, PROJECTILE_LIFETIME;
-    public static final ModConfigSpec.DoubleValue FORCE, FLARE_STRENGTH, FLARE_DRAIN, BURN_DRAIN, RESERVE_CAP, VIAL_RESERVE, MAX_SPEED, PLAYER_MASS, AIM_ANGLE, FALL_MITIGATION_STRENGTH, RESISTANCE_COST, RESISTANCE_HARDNESS_CAP, MOVEMENT_ANGLE, IRON_STRENGTH, STEEL_STRENGTH, LOW_STRENGTH, BURN_STRENGTH, LOW_DRAIN, NUGGET_SPEED, PROJECTILE_MAX_SPEED, NUGGET_DAMAGE, PROJECTILE_DAMAGE_CAP, NUGGET_MASS, UNKNOWN_METAL_UNITS, PROJECTILE_RESERVE_COST;
+    public static final ModConfigSpec.DoubleValue FORCE, FLARE_STRENGTH, FLARE_DRAIN, BURN_DRAIN, RESERVE_CAP, MAX_SPEED, PLAYER_MASS, AIM_ANGLE, FALL_MITIGATION_STRENGTH, RESISTANCE_COST, RESISTANCE_HARDNESS_CAP, MOVEMENT_ANGLE, IRON_STRENGTH, STEEL_STRENGTH, LOW_STRENGTH, BURN_STRENGTH, LOW_DRAIN, NUGGET_SPEED, PROJECTILE_MAX_SPEED, NUGGET_DAMAGE, PROJECTILE_DAMAGE_CAP, NUGGET_MASS, UNKNOWN_METAL_UNITS, PROJECTILE_RESERVE_COST;
     static {
         var b = new ModConfigSpec.Builder();
         b.push("controls");
@@ -39,7 +39,6 @@ public final class PowerConfig {
         CONSUMPTION = b.define("consumeReserves", true);
         BURN_DRAIN = b.comment("Reserve units consumed per second while burning, whether applying force or sensing.").defineInRange("burnDrainPerSecond", 1.0, 0.01, 20.0);
         RESERVE_CAP = b.defineInRange("reserveCapacity", 300.0, 1.0, 100000.0);
-        VIAL_RESERVE = b.defineInRange("vialReserve", 60.0, 1.0, 10000.0);
         b.pop(); b.push("metalDetection");
         DETECTION_BLOCKS = b.define("blocks", true); DETECTION_ITEMS = b.define("droppedItems", true); DETECTION_GEAR = b.define("equippedItems", true);
         DETECTION_PROJECTILES=b.comment("Detect and push/pull in-flight steel-launched metal, including shots fired by another player.").define("firedProjectiles",true);

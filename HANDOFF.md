@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-19 UTC**. Current mod version: **0.10.0-alpha**.
+Last updated: **2026-10-19 UTC**. Current mod version: **0.11.0-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -9,11 +9,12 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
-- User chose pewter: speed/strength/endurance, mitigation capped 50% at baseline and 70% for stronger attributes, slight healing, persistent gray-heart injury debt, recovery through rest and saturation, payout on stop/depletion.
-- Implemented passive pewter burning, transient speed/attack modifiers, pre-food exhaustion scaling via a narrow Player mixin, post-armor mitigation/deferred injury, gray debt-heart HUD/private status packet, persistent debt and recovery, payout/death handling, refill vial/recipe and command integration.
-- Interpretation stated to user: 10% of post-mitigation/post-absorption health damage is deferred (not added on top); resting clears 1% of remaining debt each continuous five seconds at normal strength. Deferred fraction stays 10%; buffs/healing/recovery scale by effective attribute × burn strength. Other balance values are provisional and configurable.
-- Build, 34 JUnit methods, all 27 server GameTests and artifact upload passed on the final gameplay commit linked below. Both client and server must update for network protocol 6.
-- Next: client-playtest pewter buffs, exhaustion, gray-heart rendering, healing/recovery and payout including lethal drag. Iron/steel basics now work well according to user.
+- User requested dynamic mixed-metal vials, filing ingots/nuggets/blocks, four filings per nugget, sixteen filings per vial, potion-style drinking, wear bars/crafting exclusion for filed material, fifty reserve per filing.
+- Implemented Metal File + loose metal filings + generic metal vial, per-piece persistent progress/stack splitting, potion-duration use, mixed contents, overflow retention, tooltips/wear bars, recipe/placement guards, remaining-metal detection/projectile mass and aluminum exclusion. Defaults: nugget 4 / ingot 36 / block 324 filings, vial total 16, reserve 50 each.
+- UX choice stated to user: file mainhand + source offhand; filings + vial/glass bottle in opposite hands loads one per right-click. Unfiled stack remainder returns to inventory while partial piece stays offhand. Overflow filings stay in vial instead of being wasted at the existing reserve cap.
+- Legacy vial IDs remain valid as one filing each; old bottle+nugget recipes replaced. New filing configuration preserves existing contents/progress when disabled. No protocol schema changes (still 6), but both jars must update for registry/mixins/items.
+- Build and server GameTests pending for this change. Previous pewter validation remains below.
+- Next: verify CI and then client-playtest filing/offhand/loading/drinking, tooltips and durability bars; temporary icons reuse vanilla assets.
 
 ## Vision and accepted constraints
 
@@ -66,7 +67,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - Allomancy states: **0 Off, 1 Low burn, 2 Burning, 3 Flaring**. Default force multipliers: 0 / 0.5 / 1 / 2. Consumption multipliers: 0 / 0.5 / 1 / 3. Disabling flaring falls back to Burning.
 - Feruchemy: zero Off, negative Storing levels, positive Tapping levels (default 1–5); no effects yet.
 - Iron baseline multiplier is **2** on top of the global force, attributes and burn level. At Burning, attribute 1 equals pre-0.6.0 iron attribute 2. Low burn intentionally gives a weaker pull. Steel now also defaults to multiplier 2 (0.9.1), independently configurable with `ironSteel.steelStrengthMultiplier`.
-- Glass bottle + iron/steel nugget crafts its vial. Drinking adds 60 reserve units by default (cap 300), returns the bottle. Normal Burning costs 1 unit/second. Sensing also consumes reserves. Switching selection does not turn off other burning metals.
+- Dynamic vials contain up to 16 mixed filings; hold right-click for 32 ticks to drink. Each consumed filing adds 50 reserve to its own metal (cap 300 per metal). Filings that cannot fit fully stay in the vial; a fully drained vial returns a glass bottle. Normal Burning costs 1 unit/second. Sensing also consumes reserves. Switching selection does not turn off other burning metals.
 
 ## Iron/steel targeting, movement and lines
 
@@ -166,7 +167,19 @@ Recall temporarily removes returning equipment heads from Allomantic targeting s
 - Persistent `PowerData.data(player).pewter_drag` stores HP. Logout/dimension travel preserve it; death clears it. Stopping, revoking attribute or running out of fuel settles once on the next player tick, before recovery/healing. Direct health charge with custom `pewter_drag` death source prevents armor/absorption/i-frame discounts and can kill; it bypasses totems. This is provisional payout behavior to review with user if desired.
 - Rest requires stationary grounded/sleeping player (position delta <.02/tick, no passenger). Every 100 continuous rest ticks clears 1% remaining debt × strength, capped at full clearance. Saturation spends up to .2/sec × strength, recovers 1 HP debt per saturation, and spends only while debt exists and never more than needed.
 - `PewterStatus` private packet sends dimension/debt/active strength with snapshots. Client `PewterClient` renders a separate gray heart row + numeric debt, capped at ten visible hearts while numeric value retains larger debt. No bonus health implied. Client `pewterDragHearts` toggle. Protocol 6.
-- Added pewter vial (bottle+nugget), existing reserve capacity/refill rules, implemented selector label. Tin and other powers still pending.
+- Added pewter reserve support and implemented selector label. The original bottle+nugget vial workflow is superseded by mixed filings in 0.11.0; legacy registered IDs remain valid. Tin and other powers still pending.
 - Added regressions: burn/attribute caps, real damage split/absorption, modifiers cleanup and once-only payout, actual exhaustion mixin, fuel depletion, stationary/moving rest, saturation spending, scaled healing, disabled-feature debt retention, persistent NBT copy and status codec. Manual client HUD/network playtesting remains outstanding.
 
 Pewter test-fixture details: use out_of_world damage to bypass ServerPlayer spawn protection (FakePlayer.tick does not decrement it). Set MAX_ABSORPTION capacity before granting absorption hearts in 1.21; otherwise setAbsorptionAmount is clamped to zero. Final suite validates real Pre/Post health damage and real causeFoodExhaustion injection.
+
+
+## Dynamic filing/vial architecture (0.11.0)
+
+- `filing/FilingConfig`: SERVER `cosmerearcanists-filings-server.toml`, enabled, filingsPerNugget=4, vialCapacity=16, reservePerFiling=50, drinkTicks=32, fileWearPerFiling=1. File durability 256. Replaces old powers `vialReserve` field; existing per-metal reserve cap remains unchanged.
+- `Filings`: uses CUSTOM_DATA named compounds for per-source used/capacity, loose filing metal identity and mixed vial count map. Source capacity fixed when first filed. Filed pieces also set MAX_STACK_SIZE=1, MAX_DAMAGE=capacity and DAMAGE=used for vanilla wear rendering; preserve original item and other components. Depleted pieces disappear. Tool server path isolates exactly one piece; full inventory uses ordinary dropped-item overflow.
+- Fileable forms: ingots/nuggets/metal storage blocks for all 19 current metals, using item paths and c tags for matching metal forms from other mods. Ores/raw blocks and crafted gear are excluded. Only sixteen of those metals have Allomancy attributes; reserve ingestion never grants a power.
+- `MetalFileItem`: main-hand right-click with offhand metal. `MetalFilingItem`: right-click with opposite-hand vial or glass bottle loads one, rejects total over capacity without consumption. `MetalVialItem`: generic mixed variant plus legacy IDs; potion-style 32-tick use. Filings in the other hand load instead of drink. Each metal independently restores full 50-point filings only; retain leftovers if cap cannot fit a full filing, preventing waste. Creative drinking follows vanilla nonconsumption.
+- `FiledIngredientMixin` rejects filed material in ingredient tests. `FiledShapelessMixin` closes optimized item-ID matching. `FiledRecipeManagerMixin` guards ordinary/cached recipe lookup, including repair/smelting/recycling paths. Guards remain active when filing is disabled so a config toggle cannot restore lost metal. `FilingEvents` adds remaining capacity tooltip and blocks normal placement of filed blocks to prevent place/break resetting their metal.
+- `MetalDetector` classifies filing/vial contents dynamically, excluding any aluminum/duralumin mixture. `MetalAmounts` uses remaining filing metal and partial-piece mass for projectile/recoil balance.
+- Old iron/steel/pewter vial registrations and saved stacks remain, interpreted as one filing per old vial; hidden from creative catalog, old crafting recipes removed. Generic vial and all filing variants appear in creative tab. Empty glass bottle may be loaded directly or crafted into an empty vial. File recipe: diagonal iron ingot (upper right) + stick (lower left).
+- Added runtime regressions for exact nugget extraction, original-stack conservation, tool wear and capacities, direct/cached recipe exclusions, component round trip, 3 iron + 13 steel mixtures and capacity rejection, delayed potion use, fifty-per-filing restoration, overflow retention, legacy items, reduced mass and aluminum exclusion. Client animation/bar/icon appearance remains untested manually.

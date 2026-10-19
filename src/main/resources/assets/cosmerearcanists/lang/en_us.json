@@ -122,5 +122,8 @@
   "item.cosmerearcanists.grappling_hook": "Grappling Hook",
   "entity.cosmerearcanists.equipment_projectile": "Metal Equipment",
   "item.cosmerearcanists.pewter_vial": "Pewter Vial",
-  "death.attack.cosmerearcanists.pewter_drag": "%1$s succumbed to pewter drag"
+  "death.attack.cosmerearcanists.pewter_drag": "%1$s succumbed to pewter drag",
+  "item.cosmerearcanists.metal_file": "Metal File",
+  "item.cosmerearcanists.metal_filing": "Metal Filing",
+  "item.cosmerearcanists.metal_vial": "Metal Vial"
 }

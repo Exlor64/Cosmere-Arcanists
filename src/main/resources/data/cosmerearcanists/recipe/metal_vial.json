@@ -4,13 +4,10 @@
   "ingredients": [
     {
       "item": "minecraft:glass_bottle"
-    },
-    {
-      "item": "minecraft:iron_nugget"
     }
   ],
   "result": {
-    "id": "cosmerearcanists:iron_vial",
+    "id": "cosmerearcanists:metal_vial",
     "count": 1
   }
 }

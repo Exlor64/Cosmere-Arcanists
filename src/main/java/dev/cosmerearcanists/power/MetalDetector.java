@@ -55,6 +55,7 @@ public final class MetalDetector {
     }
     public static boolean detects(MinecraftServer server, ItemStack stack) {
         if (owner != server) rebuild(server);
+        if(dev.cosmerearcanists.filing.Filings.dynamic(stack))return !excluded.contains(id(stack.getItem())) && dev.cosmerearcanists.filing.Filings.detectable(stack);
         return !stack.isEmpty() && classification.detectable(id(stack.getItem())) && !excluded.contains(id(stack.getItem()));
     }
     public static void clear() { owner = null; classification = new MetalGraph.Result(Set.of(), Set.of()); excluded = Set.of(); MetalAmounts.clear(); }

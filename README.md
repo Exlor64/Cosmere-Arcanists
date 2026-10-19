@@ -57,7 +57,7 @@ Default keys (all rebindable):
 - Hold **V** and scroll to change state; release to apply. Tap V cycles state. Allomancy has Off/Low burn/Burning/Flaring. Feruchemy has Off, Storing 1–5, and Tapping 1–5.
 - Hold **G** (Activate ability) to activate the currently selected implemented power. Iron/steel pull/push the metal source closest to your aim within the target cone while burning/flaring. Blue lines run from your chest to blocks, dropped items, and individual equipment sources. Lines are private to the Allomancer.
 
-Craft an iron or steel vial with a glass bottle and one corresponding nugget. Right-click the vial to ingest it, returning the bottle. Each adds 60 reserve units by default (capacity 300). Low burn applies half force at half consumption; Burning costs one unit/second at normal force; Flaring triples consumption and doubles force. Sensing consumes reserves too. States/reserves are separate per metal; switching selected power does not turn off other burning metals. Death retains powers/reserves/selection but turns active states off.
+File metal into loose filings, then load up to 16 into a dynamic metal vial. Hold right-click to drink it like a potion. Each consumed filing adds 50 reserve of its metal; filings that cannot fit under the reserve cap (default 300 per metal) remain in the vial. Empty vials return a glass bottle. Low burn applies half force at half consumption; Burning costs one unit/second at normal force; Flaring triples consumption and doubles force. Sensing consumes reserves too. States/reserves are separate per metal; switching selected power does not turn off other burning metals. Death retains powers/reserves/selection but turns active states off.
 
 Fixed blocks pull/push the player. Dropped stacks and equipped entities move under force, with player reaction and mass-dependent acceleration. Forces weaken with distance and have a configurable velocity cap. Armor sources affect the equipped entity, not a detached piece of equipment. Upward iron/steel force reduces accumulated fall distance in proportion to the reduction in squared downward speed. Arresting a descent can cancel its accumulated damage; a later unbraked descent adds fall distance normally. Sideways/downward force or merely burning metal grants no protection. This mitigation is configurable. Server-approved propulsion resets vanilla's floating timeout without granting creative flight.
 
@@ -327,8 +327,7 @@ between normal and alternate use. Iron assistance must be enabled via
 Grant with `/attribute @s cosmerearcanists:allomancy_pewter base set 1`, then
 `/cosmere power refill @s`. Select pewter with R and use V to choose Low burn,
 Burning, or Flaring. Pewter works passively while burning, with no G/H hold
-required, even if another power is selected. A glass bottle plus a pewter nugget
-crafts a Pewter Vial (60 reserve units by default).
+required, even if another power is selected. Pewter filings can be loaded into the same dynamic vials as other metals (50 reserve per filing by default).
 
 At attribute 1, Low/Burning/Flaring provide:
 
@@ -370,3 +369,54 @@ freezes saved debt rather than deleting or charging it. Re-enabling resumes
 normal behavior. Client `pewterDragHearts` controls the debt HUD independently.
 Reserve drain uses the shared burn-level consumption multipliers. Both client
 and server must update (network protocol 6).
+
+
+### Metal filing and mixed vials (0.11.0)
+
+1. Craft a **Metal File** with an iron ingot above/right of a stick in a 2×2 grid.
+2. Hold the file in your main hand and an ingot, nugget or metal storage block
+   in your offhand. Right-click to produce one filing. One physical piece stays
+   in your offhand; the untouched remainder of a stack returns to inventory.
+3. Hold the filings in one hand and a glass bottle or metal vial in the other.
+   Right-click the filings to load one. A glass bottle becomes a metal vial;
+   alternatively craft an empty metal vial from one glass bottle.
+4. Hold right-click on the vial for 32 ticks to drink. No reserves are granted
+   if you release early. Each consumed filing restores 50 of its own metal's
+   reserve. Empty vials return a glass bottle; excess filings remain in the vial
+   when their metal reserve cannot fit the full 50. Put loose filings away from
+   the other hand before drinking; that combination loads instead.
+
+| Material | Total filings |
+| --- | ---: |
+| Nugget | 4 |
+| Ingot | 36 |
+| Metal storage block | 324 |
+
+The file has 256 uses by default. Partially filed pieces become single items
+with a durability bar and remaining-filings tooltip. They can be filed further,
+but cannot be crafted, repaired/recycled through recipe machines, or placed as
+blocks. This prevents turning a worn piece back into full material. Progress
+persists through save/load and network synchronization. Full depletion consumes
+the piece. The original item type and unrelated custom components are retained.
+
+A vial holds **16 total filings**, freely mixed: 3 iron + 13 steel carries
+150 iron reserve and 650 steel reserve. At the existing default cap of 300 per
+metal, drinking that mixture leaves 7 steel filings in the vial. Raise
+`ironSteel.reserveCapacity` if you want to ingest all 13 steel filings at once.
+All 19 mod metals are fileable, including non-Allomantic alloy ingredients;
+storing a reserve never grants a power or implements an unfinished effect.
+Common tags support other mods' forms of these same metals. Ores/raw metal,
+raw storage blocks, equipment, and arbitrary crafted metal items cannot be filed.
+
+Any aluminum or duralumin filing makes the entire vial undetectable to
+iron/steel. Loose filings and partial pieces also retain correct detection
+and remaining-metal projectile mass.
+
+Tune/disable the system in `cosmerearcanists-filings-server.toml`: filings per
+nugget, vial capacity, reserve per filing, drink duration and file wear. Existing
+partially filed pieces retain their original capacity. Disabling filing leaves
+saved contents/progress intact and keeps worn metal excluded from recipes.
+Old iron/steel/pewter vial IDs remain loadable and drinkable as one filing each
+(50 reserve); their old bottle+nugget recipes are replaced by the filing workflow.
+File/filing/vial icons currently reuse vanilla assets. Both client and server
+need the update; protocol remains 6 (no payload changes).

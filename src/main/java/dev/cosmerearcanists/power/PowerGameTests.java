@@ -18,6 +18,87 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @GameTestHolder(CosmereArcanists.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class PowerGameTests {
+    private static net.neoforged.neoforge.common.util.FakePlayer filingPlayer(GameTestHelper helper,String name) {
+        var p=new net.neoforged.neoforge.common.util.FakePlayer(helper.getLevel(),new GameProfile(UUID.randomUUID(),name));
+        p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);p.getAbilities().instabuild=false;return p;
+    }
+    @GameTest(template = "empty")
+    public static void filingPiecesRespectCapacityAndStackSplitting(GameTestHelper helper) {
+        var p=filingPlayer(helper,"Filer");var file=dev.cosmerearcanists.ModMetals.METAL_FILE.get();
+        p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,file.getDefaultInstance());
+        p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND,new ItemStack(Items.IRON_NUGGET,2));
+        file.use(helper.getLevel(),p,net.minecraft.world.InteractionHand.MAIN_HAND);
+        var partial=p.getOffhandItem();
+        helper.assertTrue(partial.getCount()==1 && dev.cosmerearcanists.filing.Filings.remaining(partial)==3 && partial.getDamageValue()==1 && partial.getMaxDamage()==4 && partial.getMaxStackSize()==1,"First filing must isolate one nugget with a persistent 3/4 remaining bar");
+        helper.assertTrue(p.getMainHandItem().getDamageValue()==1,"Using the file must apply tool wear");
+        var input=net.minecraft.world.item.crafting.CraftingInput.of(3,1,java.util.List.of(partial,ItemStack.EMPTY,ItemStack.EMPTY));
+        helper.assertTrue(!net.minecraft.world.item.crafting.Ingredient.of(Items.IRON_NUGGET).test(partial),"Filed pieces must fail ordinary and tag ingredients");
+        helper.assertTrue(helper.getLevel().getRecipeManager().getRecipeFor(net.minecraft.world.item.crafting.RecipeType.CRAFTING,input,helper.getLevel()).isEmpty(),"Recipe manager must exclude filed input");
+        for(int i=0;i<3;i++)helper.assertTrue(dev.cosmerearcanists.filing.Filings.file(p),"All remaining nugget filings must be accessible");
+        helper.assertTrue(p.getOffhandItem().isEmpty(),"Fourth filing must consume the exhausted nugget");
+        int loose=0,whole=0;
+        for(int i=0;i<p.getInventory().getContainerSize();i++){var stack=p.getInventory().getItem(i);if(dev.cosmerearcanists.filing.Filings.metal(stack).equals("iron"))loose+=stack.getCount();if(stack.is(Items.IRON_NUGGET))whole+=stack.getCount();}
+        helper.assertTrue(loose==4 && whole==1,"Stack splitting must yield exactly four filings and preserve the untouched nugget");
+        for(var test:java.util.Map.of(Items.IRON_INGOT,36,Items.IRON_BLOCK,324).entrySet()) {
+            p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND,test.getKey().getDefaultInstance());
+            helper.assertTrue(dev.cosmerearcanists.filing.Filings.file(p),"Ingots and blocks must be fileable");
+            helper.assertTrue(dev.cosmerearcanists.filing.Filings.capacity(p.getOffhandItem())==test.getValue(),"Filing capacity must follow nugget equivalents");
+        }
+        helper.succeed();
+    }
+    @GameTest(template = "empty")
+    public static void filedMetalCannotBypassRecipeMatchingOrSaveProgress(GameTestHelper helper) {
+        var p=filingPlayer(helper,"FiledRecipes");p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND,new ItemStack(Items.IRON_INGOT));
+        dev.cosmerearcanists.filing.Filings.file(p);var partial=p.getOffhandItem();
+        var input=net.minecraft.world.item.crafting.CraftingInput.of(2,1,java.util.List.of(partial,new ItemStack(Items.STICK)));
+        var ingredients=net.minecraft.core.NonNullList.of(net.minecraft.world.item.crafting.Ingredient.EMPTY,net.minecraft.world.item.crafting.Ingredient.of(Items.IRON_INGOT),net.minecraft.world.item.crafting.Ingredient.of(Items.STICK));
+        var recipe=new net.minecraft.world.item.crafting.ShapelessRecipe("",net.minecraft.world.item.crafting.CraftingBookCategory.MISC,new ItemStack(Items.IRON_NUGGET),ingredients);
+        helper.assertTrue(!recipe.matches(input,helper.getLevel()),"Optimized simple shapeless recipes must not ignore filing data");
+        var clean=net.minecraft.world.item.crafting.CraftingInput.of(2,1,java.util.List.of(new ItemStack(Items.IRON_INGOT),new ItemStack(Items.STICK)));
+        helper.assertTrue(recipe.matches(clean,helper.getLevel()),"Unfiled ingredients must keep normal recipe behavior");
+        var cached=net.minecraft.world.item.crafting.RecipeManager.createCheck(net.minecraft.world.item.crafting.RecipeType.CRAFTING);
+        helper.assertTrue(cached.getRecipeFor(net.minecraft.world.item.crafting.CraftingInput.of(1,1,java.util.List.of(partial)),helper.getLevel()).isEmpty(),"Cached machine lookup must not recycle filed material");
+        var buffer=new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(),helper.getLevel().registryAccess());
+        try {ItemStack.STREAM_CODEC.encode(buffer,partial);var restored=ItemStack.STREAM_CODEC.decode(buffer);helper.assertTrue(dev.cosmerearcanists.filing.Filings.filed(restored) && dev.cosmerearcanists.filing.Filings.remaining(restored)==35 && restored.getDamageValue()==1,"Filing progress and wear must survive component serialization");}finally{buffer.release();}
+        helper.succeed();
+    }
+    @GameTest(template = "empty")
+    public static void mixedVialsHoldSixteenAndDrinkPerMetal(GameTestHelper helper) {
+        var p=filingPlayer(helper,"MixedVial");p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND,new ItemStack(Items.GLASS_BOTTLE,2));
+        for(var entry:java.util.Map.of("iron",3,"steel",13).entrySet()) {
+            // Start from a single bottle to keep the growing vial in the other hand.
+            if(!(p.getOffhandItem().getItem() instanceof MetalVialItem))p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND,new ItemStack(Items.GLASS_BOTTLE));
+            p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,dev.cosmerearcanists.filing.Filings.filing(entry.getKey(),entry.getValue()));
+            for(int i=0;i<entry.getValue();i++)helper.assertTrue(dev.cosmerearcanists.filing.Filings.load(p,net.minecraft.world.InteractionHand.MAIN_HAND),"Every filing up to capacity must load");
+        }
+        var vial=p.getOffhandItem();
+        helper.assertTrue(dev.cosmerearcanists.filing.Filings.contents(vial).equals(java.util.Map.of("iron",3,"steel",13)),"Vial must retain exact mixed counts");
+        p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,dev.cosmerearcanists.filing.Filings.filing("iron",1));
+        helper.assertTrue(!dev.cosmerearcanists.filing.Filings.load(p,net.minecraft.world.InteractionHand.MAIN_HAND) && p.getMainHandItem().getCount()==1,"Seventeenth filing must be rejected without consumption");
+        p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,ItemStack.EMPTY);
+        var item=(MetalVialItem)vial.getItem();item.use(helper.getLevel(),p,net.minecraft.world.InteractionHand.OFF_HAND);
+        helper.assertTrue(PowerData.reserve(p,"iron")==0 && PowerData.reserve(p,"steel")==0 && item.getUseAnimation(vial)==net.minecraft.world.item.UseAnim.DRINK && item.getUseDuration(vial,p)==32,"Beginning potion-style use cannot grant reserve before completion");
+        double cap=PowerConfig.RESERVE_CAP.get();
+        try {PowerConfig.RESERVE_CAP.set(1000.0);var returned=item.finishUsingItem(vial,helper.getLevel(),p);
+            helper.assertTrue(PowerData.reserve(p,"iron")==150 && PowerData.reserve(p,"steel")==650 && returned.is(Items.GLASS_BOTTLE),"3 iron + 13 steel must restore 150/650 and return one empty bottle");
+        }finally{PowerConfig.RESERVE_CAP.set(cap);}
+        helper.succeed();
+    }
+    @GameTest(template = "empty")
+    public static void vialOverflowLegacyAndAluminumArePreserved(GameTestHelper helper) {
+        var p=filingPlayer(helper,"VialOverflow");var vial=dev.cosmerearcanists.filing.Filings.vial(java.util.Map.of("iron",3,"steel",13));
+        var result=((MetalVialItem)vial.getItem()).finishUsingItem(vial,helper.getLevel(),p);
+        helper.assertTrue(PowerData.reserve(p,"iron")==150 && PowerData.reserve(p,"steel")==300 && dev.cosmerearcanists.filing.Filings.contents(result).equals(java.util.Map.of("steel",7)),"Overflow must retain seven steel filings instead of silently wasting metal");
+        MetalDetector.rebuild(helper.getLevel().getServer());
+        helper.assertTrue(MetalDetector.detects(p.server,result) && Math.abs(MetalAmounts.units(p.server,result)-1.75)<1e-9,"Vial detection and projectile mass must use actual contents");
+        var aluminum=dev.cosmerearcanists.filing.Filings.vial(java.util.Map.of("iron",15,"aluminum",1));
+        helper.assertTrue(!MetalDetector.detects(p.server,aluminum) && !MetalDetector.detects(p.server,dev.cosmerearcanists.filing.Filings.filing("duralumin",1)),"Any aluminum-bearing filing must exclude the whole item");
+        var legacy=new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,"iron_vial")));
+        helper.assertTrue(dev.cosmerearcanists.filing.Filings.contents(legacy).equals(java.util.Map.of("iron",1)),"Old saved vial IDs must remain usable as one filing");
+        p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND,new ItemStack(Items.IRON_NUGGET));dev.cosmerearcanists.filing.Filings.file(p);
+        helper.assertTrue(Math.abs(MetalAmounts.units(p.server,p.getOffhandItem())-.75)<1e-9,"Partially filed metal must have reduced projectile mass");
+        helper.succeed();
+    }
     private static ServerPlayer pewterPlayer(GameTestHelper helper,String name) {
         var p=new net.neoforged.neoforge.common.util.FakePlayer(helper.getLevel(),new GameProfile(UUID.randomUUID(),name)) {
             @Override public boolean isInvulnerableTo(net.minecraft.world.damagesource.DamageSource source){return false;}
