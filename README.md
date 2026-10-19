@@ -11,7 +11,7 @@ For current project status, accepted design decisions, verification and continua
 - Data survives death and relogging. Config changes do not reroll saved origins.
 - Hemalurgy is acquired rather than a birth power; its switch reserves the future feature gate.
 
-**Iron/steel/tin/pewter/electrum/atium Allomancy and the power selector are implemented. Other magic effects, custom dimensions, planetary travel, and the origin selection screen remain in development.** Scadrial will be Era 2 with an Overworld-like environment. The ancestry mode currently uses only a Scadrian-human probability multiplier; family inheritance and additional races are future work.
+**Iron/steel/tin/pewter/electrum/atium/bronze/copper Allomancy and the power selector are implemented. Other magic effects, custom dimensions, planetary travel, and the origin selection screen remain in development.** Scadrial will be Era 2 with an Overworld-like environment. The ancestry mode currently uses only a Scadrian-human probability multiplier; family inheritance and additional races are future work.
 
 ## Build and run
 Install JDK 21 and import the root Gradle project into IntelliJ.
@@ -50,7 +50,7 @@ Ores require an iron-tier pickaxe, support Silk Touch/Fortune, and smelt/blast i
 The Cosmere Metals creative tab contains the new materials. Textures are initial distinct pixel palettes. `cosmerearcanists:metals` and `cosmerearcanists:aluminum_containing` item tags seed iron/steel detection. Duralumin is included in the aluminum exclusion tag.
 
 ## Iron/steel and power controls (0.3.0)
-Iron, steel, tin, pewter, electrum and atium-alloy Allomantic effects are implemented. Other assigned powers appear in the selector with **effects pending**; Feruchemical state levels are controls only, with no storage/tapping mechanics yet.
+Iron, steel, tin, pewter, electrum, atium-alloy, bronze and copper Allomantic effects are implemented. Other assigned powers appear in the selector with **effects pending**; Feruchemical state levels are controls only, with no storage/tapping mechanics yet.
 
 Default keys (all rebindable):
 - Hold **R**, scroll to a power, then release R to select it. Tap R to cycle that power's state. Left-click while the menu is open also cycles the highlighted power's state.
@@ -70,7 +70,7 @@ Operator testing commands:
 - `/cosmere power grant <player> a:steel`
 - `/cosmere power grant <player> f:iron` (selector test only)
 - `/cosmere power revoke <player> <power>` sets the power’s base attribute to zero, including natural origin powers.
-- `/cosmere power refill <player>` fills iron, steel, tin, pewter, electrum and atium reserves.
+- `/cosmere power refill <player>` fills iron, steel, tin, pewter, electrum, atium, bronze and copper reserves.
 
 `./gradlew build` runs tests for recursive metal/aluminum classification, cyclic recipes, power states, and mass/distance/flaring force rules. CI also runs the GameTest server to validate runtime recipe detection and player data cloning. Multiplayer input, blue-line appearance, and hands-on movement still require client playtesting.
 
@@ -83,7 +83,7 @@ All 16 ordinary Allomantic and 16 Feruchemical powers have player attributes nam
 The atium–electrum alloy additionally has `cosmerearcanists:allomancy_atium`.
 Zero means no power; 1 is normal strength. Positive effective values grant access,
 and iron/steel force scales with the effective value (including attribute modifiers).
-Powers other than iron, steel, tin, pewter, electrum and atium still have selection/state support only. Config switches still gate access.
+Powers other than iron, steel, tin, pewter, electrum, atium, bronze and copper still have selection/state support only. Config switches still gate access.
 
 Operator examples:
 ```mcfunction
@@ -545,3 +545,70 @@ or invulnerability. Models use the entity's current pose at future positions;
 box outlines remain available if model rendering is disabled. Modded physics,
 fluids, mounts and complex AI can diverge. Hands-on client/PvP rendering and
 balance playtesting remain necessary. Both sides must update to protocol **8**.
+
+
+### Bronze and copper (0.15.0)
+
+Both work passively while burning, regardless of selected slot. Bronze senses
+**active kinetic Investiture across Invested Arts**, not merely an attribute,
+reserve inventory, stored metalmind, or an unimplemented power's selected state.
+The eight implemented Allomantic powers now emit distinct rhythmic signals.
+Other planetary arts are not implemented yet; a shared server API lets them and
+compatible mods register providers or emit short-lived active-effect pulses.
+
+Bronze gives private directional drumbeats and a pulse compass through walls.
+Strength/burn state increase range and signal clarity. Normal strength can
+identify ordinary Allomantic metals; harder foreign signals require more
+strength. Low-strength unknown signals do not send their art/effect identity.
+Hold bronze's assigned G/H activation key for up to three approximate distance,
+height and identity readouts; stronger bronze can also recognize burn state.
+No source UUID, player name, exact reserve count or entity outline is transmitted.
+Unidentified source positions are coarsened to2-block cells; identified ones to
+half-block cells. Rhythm and pitch values are provisional gameplay choices.
+
+Copper creates an invisible field around the burner, hiding compatible signals
+inside it. A Seeker standing inside a cloud also loses signals originating
+outside it. Multiple Smokers' fields add strength; the same field counts only
+once even when both listener and source are inside it. Intermediate clouds are
+not treated as solid ray barriers. Sufficiently strong bronze can pierce weaker
+clouds, receiving an attenuated signal. Copper does not disable others' powers,
+block damage, hide bodies, or remove ordinary sounds.
+
+Emotional protection applies to the **copper burner alone**, via the shared
+`EmotionalInfluenceEvent.allowed(target,strength)` server integration point.
+Extreme emotional strength may pierce it, configurable. Zinc/brass mechanics
+are still pending; third-party emotional powers must call this API to respect
+protection. No unrelated vanilla potion, AI or damage effects are canceled.
+
+Default normal-burn reserve costs: bronze .5/sec, copper .25/sec, multiplied by
+shared burn-consumption settings. Bronze range24, cap64; copper radius12, cap32;
+each scales with square-root strength. Bronze must exceed combined copper
+strength ×3 to pierce. Baseline copper blocks emotional strength up to4.
+Ordinary effect identification threshold1; burn-state detail threshold2, divided
+by the signal's detection difficulty. These are balance values, not lore ratios.
+
+Configure `cosmerearcanists-seeking-server.toml` for global/per-power enablement,
+fuel, detection, other arts, identification, held focus, copper masking, emotional
+protection/piercing, ranges, thresholds, scan cadence and budgets. Defaults scan
+once per4ticks, at most32 detected pulses and1024 collected emissions per
+dimension. Disabling preserves attributes/reserves. Client `seeking` options
+control pulse/copper HUD, private rhythms/volume and displayed pulse budget.
+
+Integration API: `investiture.InvestitureSignals.register(id,provider)` reports
+active signals on collection; `emit(level,signal,lifetimeTicks)` reports one-shot
+use for1..100ticks. Signals carry art/effect IDs, stable source UUID, loaded
+position, intensity, difficulty, period, optional burn state and copper-maskable
+flag. A source/art/effect has one refreshed signal, not an accumulating trail.
+Providers must not load chunks and should report only real kinetic activity;
+external systems can opt out of copper masking when their lore requires it.
+
+Use `/cosmere power grant @s a:bronze` or `a:copper`, then
+`/cosmere power refill @s`; both reuse existing persistent attributes, filings
+and mixed vials. Toggle their burn state in the existing menu. Registry and save
+IDs are unchanged. Update client and server together: protocol **9**.
+
+Automated checks cover active-only emissions, foreign providers, concealment,
+piercing/stacking, private unknown identities, personal emotional protection,
+fuel/disablement/respawn, pulse expiry/focus, budgets and packet round trips.
+Actual positional audio, HUD appearance and multiplayer balance need manual
+playtesting. Progression XP/savantism and other arts are still future work.

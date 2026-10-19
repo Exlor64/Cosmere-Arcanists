@@ -29,6 +29,8 @@ public final class CosmereArcanists {
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.power.TinService());
         container.registerConfig(ModConfig.Type.SERVER, dev.cosmerearcanists.power.TemporalConfig.SPEC, "cosmerearcanists-temporal-server.toml");
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.power.TemporalService());
+        container.registerConfig(ModConfig.Type.SERVER, dev.cosmerearcanists.power.SeekingConfig.SPEC, "cosmerearcanists-seeking-server.toml");
+        NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.power.SeekingService());
         bus.addListener(dev.cosmerearcanists.power.PowerNetwork::register);
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.power.PowerService());
     }

@@ -4,9 +4,9 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class PowerClientConfig {
     public static final ModConfigSpec SPEC;
-    public static final ModConfigSpec.BooleanValue HUD, LINES, THROUGH_WALLS, PEWTER_HEARTS, TIN_ECHOES, TIN_MODELS, TIN_ZOOM, FUTURES, FUTURE_MODELS, FUTURE_WARNINGS;
-    public static final ModConfigSpec.IntValue HUD_X, HUD_Y, HOLD_TICKS, TIN_ECHO_LIMIT;
-    public static final ModConfigSpec.DoubleValue LINE_WIDTH, TIN_WIDTH, TIN_OPACITY, FUTURE_OPACITY;
+    public static final ModConfigSpec.BooleanValue HUD, LINES, THROUGH_WALLS, PEWTER_HEARTS, TIN_ECHOES, TIN_MODELS, TIN_ZOOM, FUTURES, FUTURE_MODELS, FUTURE_WARNINGS, SEEKING_HUD, SEEKING_SOUNDS;
+    public static final ModConfigSpec.IntValue HUD_X, HUD_Y, HOLD_TICKS, TIN_ECHO_LIMIT, SEEKING_LIMIT;
+    public static final ModConfigSpec.DoubleValue LINE_WIDTH, TIN_WIDTH, TIN_OPACITY, FUTURE_OPACITY, SEEKING_VOLUME;
     static {
         var b = new ModConfigSpec.Builder();
         HUD = b.define("selectedPowerIcon", true); LINES = b.define("blueLines", true);
@@ -22,6 +22,9 @@ public final class PowerClientConfig {
         b.pop();b.push("futureSight");
         FUTURES=b.define("shadows",true);FUTURE_MODELS=b.define("entitySilhouettes",true);FUTURE_WARNINGS=b.define("injuryWarnings",true);
         FUTURE_OPACITY=b.defineInRange("opacity",.5,.05,1.0);
+        b.pop();b.push("seeking");
+        SEEKING_HUD=b.define("pulseCompassAndCopperStatus",true);SEEKING_SOUNDS=b.define("privateRhythms",true);
+        SEEKING_LIMIT=b.defineInRange("maxVisiblePulses",16,1,64);SEEKING_VOLUME=b.defineInRange("rhythmVolume",.35,0.0,1.0);
         b.pop();SPEC = b.build();
     }
     private PowerClientConfig() { }

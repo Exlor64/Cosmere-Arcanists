@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-19 UTC**. Current mod version: **0.14.0-alpha**.
+Last updated: **2026-10-19 UTC**. Current mod version: **0.15.0-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -9,13 +9,12 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
-- User authorized atium/electrum implementation with additional useful lore-consistent effects and confirmed atium is the atium-electrum alloy.
-- Implemented bounded passive future forecasts, client silhouettes/paths and injury warnings. Atium sees visible others/projectiles/items; electrum sees only self consequences and held jump preview. Future-sight burners split opposing atium shadows. Details below.
-- Existing atium material/filing/reserve IDs now explicitly mean the alloy. No pure-metal recipe or speculative canonical alloy ratio. Allomancy adds a separate persistent atium attribute (33 total); sixteen-metal natural origins and Feruchemy remain unchanged. Protocol8 requires matching jars.
-- Local build attempt was blocked before compilation by unavailable Gradle download network; host Java17 also differs from required Java21. Final GitHub Actions Java21 build,40 JUnit methods,all42 server GameTests and artifact upload passed on8481264af0d645efcf3e7244bf3cce72d733b438 (run39300851357), including loaded sight rays, safe water landings and fire resistance.
-- Latest chat: user asked which Allomantic powers remain. Confirmed implemented iron, steel, tin, pewter, electrum and atium-electrum alloy. Eleven ordinary effects remain: zinc, brass, copper, bronze, aluminum, duralumin, chromium, nicrosil, gold, cadmium, bendalloy. Lerasium effects and further god-metal/alloy powers remain separate future work. No new implementation chosen; version/protocol unchanged. Documentation-only diff check passed.
-- Bronze clarification (latest chat): user requires detection across Invested Arts, not just Allomancy. Scope is active/kinetic Investiture; possessing powers or dormant stored Investiture alone should not automatically emit a signal. Future implementation should use a shared emission/detection interface so later planetary arts can participate, with art-specific signal characteristics/difficulty. This is a design constraint only; bronze remains unimplemented. No copper cross-art behavior has been decided. Documentation-only diff check passed.
-- Next: manual client/multiplayer visual and balance checks; choose the next remaining power. No claim of guaranteed prediction of future player decisions.
+- User requested bronze/copper implementation after clarifying bronze detects active/kinetic Investiture across Invested Arts.
+- Added shared server provider/one-shot signal API, passive bronze/copper fuel/effects, private directional rhythm/compass/focus HUD, configurable identification/difficulty/range, coppercloud concealment and overlapping/pierceable fields. Copper personally protects its burner via a shared emotional-influence event; zinc/brass remain pending.
+- Existing eight implemented Allomantic powers emit signals only during real burning with attribute/fuel/config gates. Unimplemented Allomancy/Feruchemy states, stored reserves and dormant powers emit nothing. Foreign arts need actual API integration; they are not invented here.
+- Both powers reuse existing persistent attributes, filed metals/mixed vials and selection controls. No save or registry migrations. Protocol9 requires matching client/server jars. Version0.15.0-alpha.
+- Local build blocked before compilation by unavailable Gradle download network (hostJava17); Java21 validation will use GitHub Actions build/GameTest workflow. Added3 unit methods and5 server GameTests; final evidence pending.
+- Next: finish automated verification, then manual positional-audio/HUD/multiplayer testing. No progression XP added.
 
 ## Vision and accepted constraints
 
@@ -35,7 +34,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - Allomantic **iron and steel effects**, detection lines, aimed push/pull, movement assistance, metal reserves/vials, fall braking, and steel-thrown projectiles.
 - Allomantic **tin effects**: passive night vision, held zoom, sound-triggered mesh/surface wireframe echoes with per-block obstruction, fading and audibility/geometry budgets.
 - Allomantic **pewter effects**: passive burn, speed/melee/endurance, capped mitigation, slow healing, deferred injury, rest/saturation recovery, gray-heart HUD and fuel vial.
-- 16 Allomantic plus 16 Feruchemical attributes and selector entries. One additional atium-alloy attribute plus electrum effects are implemented; other Allomantic effects besides iron/steel/tin/pewter/electrum/atium are pending. Feruchemy has selector states only, no storing/tapping effects.
+- 16 Allomantic plus 16 Feruchemical attributes and selector entries. One additional atium-alloy attribute plus electrum effects are implemented; bronze/copper are also implemented; other Allomantic effects besides iron/steel/tin/pewter/electrum/atium/bronze/copper are pending. Feruchemy has selector states only, no storing/tapping effects.
 - **Not implemented:** Scadrial dimension, other planets/dimensions, Cognitive Realm/perpendicularities/travel, origin GUI, expanded races/ancestry, other Allomancy effects, Feruchemy mechanics/metalminds, Hemalurgy power stealing/charging, Compounding.
 
 ## Metallurgy and detection decisions
@@ -56,7 +55,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - `PowerData.KEY = cosmerearcanists_powers`: states, reserves, primary `selected` and `secondary` assignments, migration markers. Origin metadata remains under `cosmerearcanists_origin` (schema 1).
 - `burn_levels_schema = 1` migrates old active states 1/2 to current 2/3 once; Off and Feruchemy states retain their meanings.
 - `/attribute @s cosmerearcanists:allomancy_steel base set 1` grants baseline steel. Replace `steel` with `iron` as needed; 0 removes the base power.
-- `/cosmere power grant <player> a:steel` sets at least baseline strength. `revoke` sets the base to zero, including a natural origin power; a positive modifier can still grant access. `/cosmere power refill <player>` refills iron/steel/tin/pewter/electrum/atium reserves.
+- `/cosmere power grant <player> a:steel` sets at least baseline strength. `revoke` sets the base to zero, including a natural origin power; a positive modifier can still grant access. `/cosmere power refill <player>` refills iron/steel/tin/pewter/electrum/atium/bronze/copper reserves.
 - Grant/revoke use `ResourceLocationArgument`, accepting IDs such as `a:steel` and `f:iron` without the old trailing-data parser error.
 - `/cosmere origin <scadrial|overworld>` in random/ancestry modes; CHOICE adds `<allomancy metal or none> <feruchemy metal or none>`. `/cosmere reset <player>` clears origin, powers data, and power attributes/modifiers. Rerolls replace previous origin base powers while retaining other attribute powers.
 
@@ -115,7 +114,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - `metalDetection`: categories (including fired projectiles), recursive recipes, hardness cost/cap, range-related scanning budgets, target count and sync cadence.
 - `steelProjectiles`: enabled, reference/max speed, nugget damage, cap ≤100, recoil mass, unknown content fallback, per-shot reserve cost (default 1), lifetime, alternate straight-down drop.
 - Existing config files retain saved values. New fields obtain defaults. Datapacks can override generation and recipes. Feature disablement must not delete saved data or registry entries.
-- `PowerService`: validated inputs, ticks/sessions, dispatcher, target selection, forces, throw event. `PowerAttributes`/`PowerData`: powers/persistence. `PowerNetwork`: controls, snapshots, additive impulse; **current protocol 8**. Update both server and client, especially for new projectile registration/renderer.
+- `PowerService`: validated inputs, ticks/sessions, dispatcher, target selection, forces, throw event. `PowerAttributes`/`PowerData`: powers/persistence. `PowerNetwork`: controls, snapshots, additive impulse; **current protocol 9**. Update both server and client, especially for new projectile registration/renderer.
 - `PowerClient`/`PowerClientMod`: input, HUD, lines, impulse reception, renderer. Common classes must not reference client classes. Client supplies no target positions or force magnitudes.
 - `MetalDetector`/`MetalGraph`: classification/aluminum closure. `MetalAmounts`/`RecipeMetalAmounts`: quantities. `MetalProjectilePhysics`: pure scaling formulas. `MetalProjectiles`: registration/launch. `SteelProjectile`: collision, damage, persistence and recovery.
 - Session state clears on logout, dimension change, respawn, datapack reload and server stop. Keep migrations idempotent and configuration gates server-authoritative.
@@ -153,7 +152,7 @@ Tethers bind the original inventory item's custom-data UUID to one projectile.
 Recall returns the entity without dropping another inventory item; loss/death
 of owner or loss/replacement of the matching item ends it. No forced chunks.
 Control action 9 carries only Space input with a short timeout; server owns
-rope constraints and shortening. Current protocol 8 requires both sides to update.
+rope constraints and shortening. Current protocol 9 requires both sides to update.
 
 Recall temporarily removes returning equipment heads from Allomantic targeting so a still-held steel key does not fight the reel-in. Custom spike ammunition supports standard crossbow loading, Quick Charge and spread; arrow-only Piercing behavior is not implemented.
 
@@ -221,3 +220,16 @@ Pewter test-fixture details: use out_of_world damage to bypass ServerPlayer spaw
 - Active atium/electrum targets replace a reliable atium line with two divergent purple branches, without central exact path or reliable hit warning. Dormant/no-fuel/disabled powers do not interfere. Player future input remains unknowable; branching is a gameplay representation. No invulnerability, free damage, automatic dodge or blanket resistance.
 - `TemporalClient` dimension/lifetime/death/disconnect clears forecasts; client futureSight shadows/models/warnings/opacity switches, depth-tested paths/flat translucent models and red potential-injury samples. Renderer restores shader tint in finally. Third-party renderers and actual first-person/PvP appearance require manual playtesting.
 - Added2 JUnit methods for capped horizon and relative projectile sweeps;5 runtime GameTests for attribute/fuel/config/clone, wall/fall/lava trajectories, private self hit warnings, interference/LOS/invisibility and codec/33-power bounds. Initial CI build/unit checks passed;3 new server tests initially collided with nearby test infrastructure. Clear elevated arenas fixed these. Final code on8481264af0d645efcf3e7244bf3cce72d733b438 passed build,40 JUnit methods,all42 server tests and artifact upload in run39300851357, including jump hold/release, water landing reset and fire-resistance hazard checks. Sight rays explicitly check loaded voxels before vanilla clipping.
+
+
+## Bronze/copper and shared kinetic signals (0.15.0)
+
+- `investiture.InvestitureSignals` server-only public API: providers register by ResourceLocation and report active `Signal(art,effect,sourceUUID,position,intensity,difficulty,period,burnState,copperMaskable)`. One-shot emit refreshes source/art/effect for1..100ticks, bounded per dimension; only loaded positions accepted. No passive inventory/attribute scans. Transient pulses clear on source logout/dimension changes/server stop, and expire before collect/emit. Providers register once and may unregister; remain across server restarts unless explicitly removed.
+- `SeekingService` builtin provider reports only8 implemented actively burning Allomantic effects using their real feature/fuel/attribute gates (iron/steel/tin/pewter/electrum/atium/bronze/copper). No placeholder Feruchemy, gold or other arts falsely emit. Bronze/copper tick through PowerService independently of selected slots; .5/.25 reserve per second at normal burn times existing low/flare drain settings. Refill command includes both; ingestion never grants powers.
+- `SeekingConfig` SERVER cosmerearcanists-seeking-server.toml: global/per-power, detection/foreign arts/identification/focus, masking/piercing and emotional protection/piercing toggles; drains, ranges/caps, thresholds, scan/packet/emission budgets. Bronze range24sqrt(strength)sqrt(emission intensity capped4), cap64; copper radius12sqrt(strength), cap32. Default scan4ticks,32 detected signals,1024 collected emissions per dimension. Disabled data retained.
+- Copper fields conceal compatible signals when source OR listener lies inside, counting a field once per owner. Multiple Smokers' strengths add. Intermediate clouds do not act as ray walls. Baseline bronze cannot pierce normal copper: needs bronze>3*combinedCopper, then transmission=1-3*combinedCopper/bronze. No cloud coordinates or blocked signal metadata reach listener. No power suppression, damage/physics immunity or entity invisibility.
+- `EmotionalInfluenceEvent.allowed` is the actual cancellable server gateway for future zinc/brass and participating mods. Only the burning copper player is protected. Default incoming emotional strength<=4*copper is blocked; configurable extreme-strength exception. Does not remove unrelated potions or affect neighbors. No zinc/brass implementation implied.
+- Bronze senses without LOS/hardness occlusion; only bounded loaded source positions. Filters own signals, range, cloud concealment and configured minimum clarity before packet construction. Signal difficulty reduces clarity/identification. Effect identification at bronze/difficulty>=1, burn-state detail>=2. Unrecognized art/effect IDs empty in packet; no UUID/name/reserve counts. Positions quantized2blocks unknown/.5blocks identified. Values/rhythms are gameplay choices, not claimed canonical ratios.
+- Protocol9 `SeekingPacket` contains dimension, lifetime<=40, bronze/focus state, own copper radius, <=64 filtered pulses with finite position/clarity/period/state bounds. Private server-to-listener only. Existing33 attributes/registrations unchanged. Source list collected once per dimension per scan after player ticks; no client-supplied emissions or concealment decisions.
+- `SeekingClient` pulse compass, own-cloud status and up to3 held-bronze focus descriptions; private directional bass-drum rhythms projected2blocks from listener, with volume by clarity, bounded4 sounds/tick. Client effects never broadcast world sounds or trigger server tin hearing. Clear on expiry/death/spectator/dimension/disconnect. Client seeking HUD/sounds/volume/visible budget switches. Actual audio/appearance unverified manually.
+- Added3 JUnit methods (range/clarity, piercing/stacking, emotion thresholds) and5 GameTests (active emissions/walls, endpoint cloud/stack/pierce, foreign provider/identity privacy/config/opt-out, emotion/fuel/disabled-data/clone, transient expiry/focus/budget/codec). Local Gradle download blocked; final CI result pending. Previous verified gameplay evidence above remains0.14.0 until checks complete.
