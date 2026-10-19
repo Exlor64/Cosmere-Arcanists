@@ -207,3 +207,14 @@ Pewter test-fixture details: use out_of_world damage to bypass ServerPlayer spaw
 - Common c:ingots, c:nuggets, c:storage_blocks per-metal/aggregate item tags and storage-block block tags, plus explicit mod metal detection tags. `MetalAmounts` seeds detectable non-raw storage blocks at81, avoiding fallback mass when recipes disabled.
 - `Filings.METALS` now21; god-metal source forms provide 4/36/324 default filings. Mixed vial content persists and restores independent reserves. No god-metal effects/attributes are implied or granted. Creative catalog automatically includes their filing variants.
 - Models reference vanilla iron and gold textures as provisional visuals; no bespoke textures yet. Tests cover all four conversion directions, registry/placement/tool tags/loot, exact filing capacity, detection/mass, disabled conversion predicate/content retention and mixed vial reserves without accidental power grants.
+
+
+## Atium/electrum design discussion (2026-10-19; proposals only)
+
+- User asked how these powers could work; no implementation requested or accepted yet. Version remains 0.13.0-alpha; no gameplay, config, protocol, or save changes. Existing verification remains applicable.
+- Proposed shared bounded server forecasting: projectile physics/collisions, mob movement and available attack intent; player movement extrapolation cannot predict future player input. Predictions should fade/change or branch with uncertainty, never claim guaranteed foresight.
+- Proposed atium: future silhouettes of other entities/projectiles, probable attack/hit warnings, short horizon scaling with burn state and persistent attributes. No global time slowing or automatic invulnerability.
+- Proposed electrum: own future silhouettes along projected movement, warnings for foreseeable falls, hazards and incoming collisions; useful independently and potentially splits an atium observer's prediction when both use future sight. Exact combat-counter mechanics remain undecided.
+- Proposed config: independent toggles for silhouettes/warnings/counters, horizons, range, target and sampling budgets, reserve drain and scaling. Suggested build order: own-trajectory/projectile forecasting for electrum, then expand shared system to atium. All values and mechanics are tentative.
+- Lore naming decision pending: familiar Mistborn atium future shadows are associated with atium-electrum alloy; do not silently assign that behavior to pure god metal or invent an accepted alloy recipe.
+- Documentation-only chat update; validated with git diff --check. No new runtime tests required.
