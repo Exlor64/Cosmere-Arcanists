@@ -93,7 +93,8 @@ public final class TemporalService {
         for(var pos:BlockPos.betweenClosed(BlockPos.containing(box.minX,box.minY-.05,box.minZ),BlockPos.containing(box.maxX-1e-6,box.maxY-1e-6,box.maxZ-1e-6))) {
             if(!level.hasChunkAt(pos))return TemporalPacket.UNCERTAIN;
             var state=level.getBlockState(pos);
-            if((!entity.fireImmune() && (state.getFluidState().is(FluidTags.LAVA)||state.is(Blocks.FIRE)||state.is(Blocks.SOUL_FIRE)||state.is(Blocks.MAGMA_BLOCK)))
+            boolean fireProtected=entity.fireImmune() || entity instanceof LivingEntity l && l.hasEffect(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE);
+            if((!fireProtected && (state.getFluidState().is(FluidTags.LAVA)||state.is(Blocks.FIRE)||state.is(Blocks.SOUL_FIRE)||state.is(Blocks.MAGMA_BLOCK)))
                 || state.is(Blocks.CACTUS)||state.is(Blocks.SWEET_BERRY_BUSH)||state.is(Blocks.WITHER_ROSE)||state.is(Blocks.POWDER_SNOW))return TemporalPacket.HAZARD;
         }return 0;
     }
@@ -105,7 +106,8 @@ public final class TemporalService {
             var obstacles=collisions(level,box.expandTowards(v),entity);if(obstacles==null){frames.add(new Frame(position,TemporalPacket.UNCERTAIN));break;}
             var step=move(box,v,obstacles);boolean landed=v.y<0 && step.y>v.y+1e-6;
             position=position.add(step);box=box.move(step);int flags=hazard(level,box,entity);
-            if(step.y<0)fallen-=step.y;
+            boolean water=level.getFluidState(BlockPos.containing(position)).is(FluidTags.WATER);
+            if(water)fallen=0;else if(step.y<0)fallen-=step.y;
             if(landed) {
                 if(fallen>3 && g>=.05 && !(entity instanceof LivingEntity l && l.hasEffect(net.minecraft.world.effect.MobEffects.SLOW_FALLING)))flags|=TemporalPacket.FALL;
                 fallen=0;
@@ -127,7 +129,12 @@ public final class TemporalService {
         return new TemporalPacket.Shadow(e.getId(),kind,e.getBbWidth(),e.getBbHeight(),List.copyOf(samples));
     }
     public static boolean visible(ServerPlayer observer,Entity e) {
-        return !e.isRemoved() && !e.isSpectator() && !e.isInvisibleTo(observer) && observer.hasLineOfSight(e) && e.getBbWidth()<=8 && e.getBbHeight()<=8;
+        if(e.isRemoved() || e.isSpectator() || e.isInvisibleTo(observer) || e.getBbWidth()>8 || e.getBbHeight()>8)return false;
+        // Vanilla ray tracing may read chunks; prove every traversed voxel is loaded first.
+        var from=observer.getEyePosition();var delta=e.getEyePosition().subtract(from);int steps=(int)Math.ceil(delta.length()*4);
+        if(steps>512)return false;
+        for(int i=0;i<=steps;i++)if(!observer.serverLevel().hasChunkAt(BlockPos.containing(from.add(delta.scale(steps==0?0:(double)i/steps)))))return false;
+        return observer.hasLineOfSight(e);
     }
     private static boolean hostile(Entity entity,ServerPlayer observer) {
         if(!TemporalConfig.ATTACKS.get())return false;

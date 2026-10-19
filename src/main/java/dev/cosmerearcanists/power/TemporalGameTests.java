@@ -45,9 +45,15 @@ public final class TemporalGameTests {
         p.setPos(origin(h).add(0,5,0));p.setOnGround(false);
         var fall=TemporalService.trace(p,new Vec3(0,-.5,0),30);
         h.assertTrue(fall.stream().anyMatch(f->(f.warning()&TemporalPacket.FALL)!=0),"Forecast accumulates fall distance and marks dangerous landing: "+fall+" ground="+p.onGround()+" fly="+p.getAbilities().flying+" noGravity="+p.isNoGravity());
+        h.setBlock(new BlockPos(1,20,1),Blocks.WATER);
+        var water=TemporalService.trace(p,new Vec3(0,-.5,0),30);
+        h.assertTrue(water.stream().noneMatch(f->(f.warning()&TemporalPacket.FALL)!=0),"A water landing cancels projected fall injury");
+        h.setBlock(new BlockPos(1,20,1),Blocks.AIR);
         p.setPos(origin(h));h.setBlock(new BlockPos(2,20,1),Blocks.LAVA);
         var lava=TemporalService.trace(p,new Vec3(.2,0,0),12);
-        h.assertTrue(lava.stream().anyMatch(f->(f.warning()&TemporalPacket.HAZARD)!=0),"Own future must warn about lava");h.succeed();
+        h.assertTrue(lava.stream().anyMatch(f->(f.warning()&TemporalPacket.HAZARD)!=0),"Own future must warn about lava");
+        p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE,200));
+        h.assertTrue(TemporalService.trace(p,new Vec3(.2,0,0),12).stream().noneMatch(f->(f.warning()&TemporalPacket.HAZARD)!=0),"Fire resistance prevents false lava injury warnings");h.succeed();
     }
     @GameTest(template="empty") public static void electrumPredictsHitsWithoutRevealingAttackers(GameTestHelper h) {
         floor(h);var p=player(h,"OracleHit",origin(h),"electrum");
