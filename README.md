@@ -749,3 +749,15 @@ Future Invested Arts can query `EnhancementService.profile(player)` for a
 resource-independent boost profile and apply its duration to their own budgets;
 those integrations are still future work. Existing vials support both metals.
 Use `/cosmere power grant @s a:aluminum` or `a:duralumin`, then refill.
+
+### Pewter HUD and Tin visibility (0.18.1)
+
+Pewter's gray debt hearts sit immediately above the health stack, or above armor
+when present, without the "Pewter drag" text. Extra health and absorption rows
+are included in the layout.
+
+Tin's server-approved sound echoes draw through blocks for both model wireframes
+and block/source outlines. The renderer explicitly bypasses inherited world
+depth testing and restores it after drawing. High-strength requirements and
+sound obstruction still apply: thick/hard barriers or wool can mute or entirely
+suppress a reveal. This does not continuously reveal silent mobs.

@@ -4,7 +4,8 @@ import dev.cosmerearcanists.power.PowerNetwork;
 import net.minecraft.client.Minecraft;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 
 /** Separate gray injury hearts: these represent deferred debt, never extra usable health. */
 public final class PewterClient {
@@ -13,13 +14,15 @@ public final class PewterClient {
     @SubscribeEvent public void tick(ClientTickEvent.Post event) {
         if(Minecraft.getInstance().level==null)status=new PowerNetwork.PewterStatus("",0,false,0);
     }
-    @SubscribeEvent public void render(RenderGuiEvent.Post event) {
+    @SubscribeEvent public void render(RenderGuiLayerEvent.Post event) {
+        if(!event.getName().equals(VanillaGuiLayers.ARMOR_LEVEL))return;
         var mc=Minecraft.getInstance();
-        if(!PowerClientConfig.PEWTER_HEARTS.get() || mc.player==null || mc.level==null || mc.player.isSpectator()
+        if(mc.gameMode==null || !mc.gameMode.canHurtPlayer() || !PowerClientConfig.PEWTER_HEARTS.get() || mc.player==null || mc.level==null || mc.player.isSpectator()
             || mc.options.hideGui || status.debt()<=.001 || !status.dimension().equals(mc.level.dimension().location().toString()))return;
         var g=event.getGuiGraphics();
-        int rows=(int)Math.ceil((mc.player.getMaxHealth()+mc.player.getAbsorptionAmount())/20.0);
-        int x=g.guiWidth()/2-91, y=g.guiHeight()-62-Math.max(0,rows-1)*10;
+        // Health and armor have already advanced the actual NeoForge HUD stack.
+        int x=g.guiWidth()/2-90, y=g.guiHeight()-mc.gui.leftHeight+1;
+        mc.gui.leftHeight+=10; // Reserve space for following overlays and the selected-item tooltip.
         int count=(int)Math.min(10,Math.ceil(status.debt()/2));
         for(int i=0;i<count;i++) {
             int left=x+i*9;
@@ -35,6 +38,5 @@ public final class PewterClient {
                 }
             }
         }
-        g.drawString(mc.font,String.format(java.util.Locale.ROOT,"Pewter drag: %.2f",status.debt()),x,y-10,0xB5BAC2);
     }
 }

@@ -11,6 +11,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -48,6 +49,16 @@ public final class TinClient {
         public VertexConsumer setUv2(int u,int v){return this;}
         public VertexConsumer setNormal(float x,float y,float z){return this;}
     };
+    /** NO_DEPTH_TEST does not guarantee that a previously enabled world depth test is disabled.
+     * Flush this pass explicitly without depth testing, then restore the caller's state. */
+    private static void flushThroughWalls(MultiBufferSource.BufferSource buffers,RenderType type){
+        boolean depth=GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
+        try{RenderSystem.disableDepthTest();buffers.endBatch(type);}
+        finally{if(depth)RenderSystem.enableDepthTest();else RenderSystem.disableDepthTest();}
+    }
+    private static void sourceBox(com.mojang.blaze3d.vertex.PoseStack pose,MultiBufferSource.BufferSource buffers,PowerNetwork.TinEcho packet,Vec3 camera,float alpha){
+        var lines=TinRenderTypes.lines();LevelRenderer.renderLineBox(pose,buffers.getBuffer(lines),packet.sourceBox().move(camera.scale(-1)),.65f,.8f,.85f,alpha);flushThroughWalls(buffers,lines);
+    }
     @SubscribeEvent public void render(RenderLevelStageEvent event) {
         var mc=Minecraft.getInstance();
         if(event.getStage()!=RenderLevelStageEvent.Stage.AFTER_PARTICLES || !wireActive() || !PowerClientConfig.TIN_ECHOES.get() || ECHOES.isEmpty())return;
@@ -60,20 +71,22 @@ public final class TinClient {
             for(var box:echo.packet.surfaces())LevelRenderer.renderLineBox(pose,vertices,box.move(camera.scale(-1)),.55f,.72f,.78f,alpha);
             var entity=echo.packet.entityId()<0?null:mc.level.getEntity(echo.packet.entityId());
             if(echo.packet.entityId()>=0 && (entity==null || !PowerClientConfig.TIN_MODELS.get()))LevelRenderer.renderLineBox(pose,vertices,echo.packet.sourceBox().move(camera.scale(-1)),.65f,.8f,.85f,alpha);
-            buffers.endBatch(lines);
+            flushThroughWalls(buffers,lines);
             if(entity==null || entity==mc.player || !PowerClientConfig.TIN_MODELS.get())continue;
             var type=TinRenderTypes.models();
-            MultiBufferSource wire=original->original.format().equals(DefaultVertexFormat.NEW_ENTITY)?buffers.getBuffer(type):DISCARD;
+            boolean[] modelBuffer={false};
+            MultiBufferSource wire=original->{if(original.format().equals(DefaultVertexFormat.NEW_ENTITY)){modelBuffer[0]=true;return buffers.getBuffer(type);}return DISCARD;};
             pose.pushPose();
             var box=echo.packet.sourceBox();pose.translate((box.minX+box.maxX)*.5-camera.x,box.minY-camera.y,(box.minZ+box.maxZ)*.5-camera.z);
             try {
                 RenderSystem.polygonMode(GL11.GL_FRONT_AND_BACK,GL11.GL_LINE);
                 RenderSystem.setShaderColor(.55f,.72f,.78f,alpha);
                 mc.getEntityRenderDispatcher().getRenderer(entity).render(entity,entity.getYRot(),partial,pose,wire,LightTexture.FULL_BRIGHT);
-                buffers.endBatch(type);
+                flushThroughWalls(buffers,type);
             } finally {
                 RenderSystem.setShaderColor(1,1,1,1);RenderSystem.polygonMode(GL11.GL_FRONT_AND_BACK,GL11.GL_FILL);pose.popPose();
             }
+            if(!modelBuffer[0])sourceBox(pose,buffers,echo.packet,camera,alpha);
         }
     }
 }

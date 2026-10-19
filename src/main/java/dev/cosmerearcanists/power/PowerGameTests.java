@@ -128,6 +128,19 @@ public final class PowerGameTests {
         helper.succeed();
     }
     @GameTest(template = "empty")
+    public static void highTinIdentifiesANoisyMobBehindAStoneWall(GameTestHelper helper){
+        var p=tinPlayer(helper,"TinWallMob");PowerAttributes.set(p,"a:tin",6);var level=helper.getLevel();var origin=net.minecraft.core.BlockPos.containing(p.position());
+        for(int x=1;x<=5;x++)for(int y=0;y<4;y++)level.setBlock(origin.offset(x,y,0),net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),3);
+        for(int y=0;y<3;y++)level.setBlock(origin.offset(2,y,0),net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(),3);
+        var cow=net.minecraft.world.entity.EntityType.COW.create(level);cow.setPos(p.position().add(4,0,0));cow.setNoAi(true);level.addFreshEntity(cow);
+        var probe=new TinSoundProbe();net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(probe);
+        try{cow.playSound(net.minecraft.sounds.SoundEvents.COW_AMBIENT,1,1);var echo=TinService.echo(p,cow.position(),probe.heard,1);
+            helper.assertTrue(TinService.obstruction(level,p.getEyePosition(),cow.position())>0,"Fixture must put real blocking geometry between listener and mob");
+            helper.assertTrue(echo!=null && echo.entityId()==cow.getId() && echo.sourceBox().equals(cow.getBoundingBox()) && echo.audible()>.1 && !echo.surfaces().isEmpty(),"High tin must send an identified mob and nearby geometry through a modest wall when it actually makes noise");
+            PowerData.state(p,"a:tin",0);helper.assertTrue(TinService.echo(p,cow.position(),cow,1)==null,"Disabling tin removes through-wall sound reveals");
+        }finally{net.neoforged.neoforge.common.NeoForge.EVENT_BUS.unregister(probe);cow.discard();}helper.succeed();
+    }
+    @GameTest(template = "empty")
     public static void tinSurfaceShapesAndPacketsStayBounded(GameTestHelper helper) {
         var p=tinPlayer(helper,"TinShapes");var level=helper.getLevel();var center=p.position().add(3,0,0);var floor=net.minecraft.core.BlockPos.containing(center).below();
         for(int x=-2;x<=2;x++)for(int z=-2;z<=2;z++)level.setBlock(floor.offset(x,0,z),net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(),3);
