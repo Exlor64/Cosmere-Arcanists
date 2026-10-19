@@ -6,5 +6,7 @@ public final class TinMath {
     public static double zoom(double strength,double rate,double cap){return Math.clamp(1+rate*Math.sqrt(Math.max(0,strength)),1,Math.max(1,cap));}
     public static double reveal(double power,double threshold,double full){return Math.clamp((power-threshold)/Math.max(.001,full-threshold),0,1);}
     public static double echoFade(double age,double lifetime,double hold){if(lifetime<=0 || age>=lifetime)return 0;double progress=Math.clamp(age/lifetime,0,1);return Math.sqrt(Math.clamp((1-progress)/Math.max(.001,1-Math.clamp(hold,0,.75)),0,1));}
+    public static double waveReveal(double age,double distance,double speed){double t=Math.clamp((age-Math.max(0,distance)/Math.max(.01,speed))/2,0,1);return t*t*(3-2*t);}
+    public static double smoothProgress(double age,double ticks){double t=Math.clamp(age/Math.max(1,ticks),0,1);return t*t*(3-2*t);}
     private TinMath() { }
 }

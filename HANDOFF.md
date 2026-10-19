@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-19 UTC**. Current mod version: **0.18.2-alpha**.
+Last updated: **2026-10-19 UTC**. Current mod version: **0.19.0-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -9,11 +9,13 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
-- User requests Tin pulses last a bit longer and be easier to see. Version0.18.2-alpha/protocol10: server persistence multiplier1.4 extends existing duration/cap settings; lifetime stays4..200ticks. Client brighter pale cyan, brightness multiplier1.35, line-width multiplier1.25 for source/block/model outlines, full-brightness hold first20percent followed by softer square-root fade. Near full-strength default peak opacity~.88 (old.65); base line width1.2 becomes1.5.
-- New knobs apply to existing installations without overwriting old personal settings: Tin server hearing.echoPersistenceMultiplier; client tin.echoBrightnessMultiplier, echoLineWidthMultiplier and echoHoldFraction. Existing opacity/lineWidth and fadeTicks/maxFadeTicks remain respected.
-- Sound obstruction, power threshold/progression scaling, silent-mob rules, source identity, geometry/budget bounds and explicit through-wall depth pass are unchanged. Low baseline Flaring remains a weak glimpse. Pewter HUD remains above health/armor without label from0.18.1.
-- Added pure fade-curve unit regression plus server persistence regression covering longer same-source echoes, unchanged audibility,200tick cap and low-power gate. Java21 GitHub Actions run39325529820 passed build/JUnit, required server GameTests and artifact upload. Registered suites50 unit/65 server methods. Prior0.18.1 build/server/artifact passed run39324424539. No graphical client/GL visual test is available here; appearance still needs user playtesting.
-- Next: user visual pulse duration/brightness checks; all accepted later mechanics remain documented below.
+- User requests Tin pulses propagate as waves, mob outlines move smoothly instead of teleporting, visual strength AND hearing/reveal range doubled, and pulses invisible unless actually Flaring Tin. This explicitly supersedes earlier allowance for high-attribute normal-burning wireframes.
+- Version0.19.0-alpha/protocol11. TinStatus adds server-authoritative wireframes eligibility boolean; both sides must update. Server hearing.wireframesRequireFlaring defaults true. Actual state3 and enabled Flaring required regardless of attributes; strength/progression/obstruction/fuel still apply. Night vision and held zoom remain available in other burn states.
+- Each approved sound has an independent expanding three-ring wave, with surface outlines smoothly revealed as the wave reaches their distance. Wave origin stays at the actual sound location. Waves share the existing bounded echo budget and expiry, with no extra entity/terrain queries or silent-source detection.
+- Mob mesh/source box follows vanilla client-interpolated position/yaw for its short active echo; missing/untracked models smoothly bridge source snapshots over4ticks. Only the strongest active echo draws each mob, avoiding overdraw and sudden dimming when a new wave begins. Silent mobs stop showing when their last sound echo expires; no ongoing server tracking added.
+- Client tin.pulseIntensityMultiplier defaults2.0 (visual intensity only, opacity capped1); tin.waveSpeed defaults.65 blocks/tick. Server hearing.echoRangeMultiplier defaults2.0, multiplying hearing distance/cap and surface radius/cap (base defaults24/64 become48/128; surface3/6 become6/12). Geometry/echo budgets remain bounded and no chunk loads are forced. Prior persistence/brightness/width/hold settings retained; explicit through-wall drawing and block resistance remain.
+- Added2 pure math cases for outward wave timing/smooth snapshot interpolation and1 server case for extreme-attribute low/normal rejection, actual Flaring enablement/disablement new status codec and doubled capped hearing range. Thick-barrier regression now uses wool and allows equal rounded lifetimes while asserting lower audibility. Existing high-power tests now explicitly flare. Java21 CI pending; prior0.18.2 build/server/artifact passed run39325529820 (50 unit/65 server). No graphical client/GL playtest claimed.
+- Next: automated verification then user visual checks of spreading waves, moving mobs, and immediate disappearance after leaving Flaring.
 
 ## Vision and accepted constraints
 

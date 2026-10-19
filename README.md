@@ -676,7 +676,7 @@ compatibility and terrain navigation still require playtesting. Client
 
 Test with `/cosmere power grant @s a:zinc`, `a:brass`, then
 `/cosmere power refill @s`. Existing persistent attributes and mixed vials work;
-no new registry IDs or save migration. Client and server need protocol **10**.
+no new registry IDs or save migration. Client and server need protocol **11**.
 The private emotional status packet does not disclose an influencing player's
 identity. Player emotional mechanics and species behavior are gameplay choices
 requested for this mod; progression XP and Hemalurgy equipment remain future.
@@ -771,3 +771,19 @@ Tune server `hearing.echoPersistenceMultiplier` and client
 `tin.echoBrightnessMultiplier`, `tin.echoLineWidthMultiplier`, and
 `tin.echoHoldFraction`. They multiply existing lifetime/opacity/width settings,
 so existing installations receive the improvement without resetting preferences.
+
+### Tin wave pulses (0.19.0)
+
+Tin wireframes now require **Flaring** by default, even at very high attributes.
+Night vision and zoom still work during ordinary burning. Approved sounds launch
+expanding rings and reveal nearby surfaces progressively as the wave reaches
+them. Mob outlines use smoothly interpolated movement during their short echo
+window; silent mobs disappear when that window expires.
+
+Pulse visual intensity and hearing/reveal ranges are doubled; opacity remains
+capped and sound blocking still applies. Tune client `tin.pulseIntensityMultiplier` and
+`tin.waveSpeed`, or server `hearing.wireframesRequireFlaring` and
+`hearing.echoRangeMultiplier`. Default hearing base/cap becomes48/128blocks,
+and surface radius/cap becomes6/12blocks before strength/attenuation scaling. Existing echo
+duration/brightness/width settings still apply. Client and server must both
+update: networking protocol is now **11** for authoritative wireframe eligibility.

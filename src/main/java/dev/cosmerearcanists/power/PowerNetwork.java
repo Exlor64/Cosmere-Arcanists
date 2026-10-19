@@ -48,11 +48,11 @@ public final class PowerNetwork {
     }
     public static Consumer<TinStatus> tinReceiver = packet -> { };
     public static Consumer<TinEcho> echoReceiver = packet -> { };
-    public record TinStatus(String dimension,double strength,double zoom) implements CustomPacketPayload {
+    public record TinStatus(String dimension,double strength,double zoom,boolean wireframes) implements CustomPacketPayload {
         public static final Type<TinStatus> TYPE=new Type<>(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,"tin_status"));
         public static final StreamCodec<RegistryFriendlyByteBuf,TinStatus> CODEC=new StreamCodec<>() {
-            public TinStatus decode(RegistryFriendlyByteBuf b){return new TinStatus(b.readUtf(128),b.readDouble(),b.readDouble());}
-            public void encode(RegistryFriendlyByteBuf b,TinStatus p){b.writeUtf(p.dimension,128);b.writeDouble(p.strength);b.writeDouble(p.zoom);}
+            public TinStatus decode(RegistryFriendlyByteBuf b){return new TinStatus(b.readUtf(128),b.readDouble(),b.readDouble(),b.readBoolean());}
+            public void encode(RegistryFriendlyByteBuf b,TinStatus p){b.writeUtf(p.dimension,128);b.writeDouble(p.strength);b.writeDouble(p.zoom);b.writeBoolean(p.wireframes);}
         };
         @Override public Type<TinStatus> type(){return TYPE;}
     }
@@ -89,7 +89,7 @@ public final class PowerNetwork {
         @Override public Type<Impulse> type() { return TYPE; }
     }
     public static void register(RegisterPayloadHandlersEvent event) {
-        var r = event.registrar("10");
+        var r = event.registrar("11");
         r.playToClient(EmotionPacket.TYPE,EmotionPacket.CODEC,(packet,context)->context.enqueueWork(()->EmotionPacket.receiver.accept(packet)));
         r.playToClient(SeekingPacket.TYPE,SeekingPacket.CODEC,(packet,context)->context.enqueueWork(()->SeekingPacket.receiver.accept(packet)));
         r.playToClient(TemporalPacket.TYPE,TemporalPacket.CODEC,(packet,context)->context.enqueueWork(()->TemporalPacket.receiver.accept(packet)));
@@ -104,7 +104,7 @@ public final class PowerNetwork {
     }
     public static void sync(ServerPlayer p, List<MetalTarget> targets) {
         double tin=TinService.strength(p);
-        PacketDistributor.sendToPlayer(p,new TinStatus(p.level().dimension().location().toString(),tin,tin>0 && TinConfig.ZOOM.get() && PowerService.holdingAbility(p,"a:tin")?TinMath.zoom(tin,TinConfig.ZOOM_STRENGTH.get(),TinConfig.MAX_ZOOM.get()):1));
+        PacketDistributor.sendToPlayer(p,new TinStatus(p.level().dimension().location().toString(),tin,tin>0 && TinConfig.ZOOM.get() && PowerService.holdingAbility(p,"a:tin")?TinMath.zoom(tin,TinConfig.ZOOM_STRENGTH.get(),TinConfig.MAX_ZOOM.get()):1,TinService.revealStrength(p)>0));
         double pewter=PewterService.strength(p);
         PacketDistributor.sendToPlayer(p,new PewterStatus(p.level().dimension().location().toString(),PewterService.debt(p),pewter>0,pewter));
         var list = PowerData.available(p).stream().map(power -> new Entry(power, PowerData.state(p, power), power.startsWith("a:") ? PowerData.reserve(p, power.substring(2)) : 0)).toList();

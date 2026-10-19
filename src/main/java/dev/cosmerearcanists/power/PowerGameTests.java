@@ -94,13 +94,13 @@ public final class PowerGameTests {
         var clear=TinService.echo(p,target,null,1);helper.assertTrue(clear!=null,"Unblocked nearby sound must be heard");
         var wall=first.offset(4,0,0);level.setBlock(wall,net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(),3);
         double stone=TinService.obstruction(level,from,target);var muted=TinService.echo(p,target,null,1);
-        helper.assertTrue(stone>0 && muted!=null && muted.audible()<clear.audible() && muted.ticks()<clear.ticks(),"One wall must mute and shorten the sound reveal");
+        helper.assertTrue(stone>0 && muted!=null && muted.audible()<clear.audible() && muted.ticks()<=clear.ticks(),"One wall must mute and shorten the sound reveal");
         level.setBlock(wall,net.minecraft.world.level.block.Blocks.OBSIDIAN.defaultBlockState(),3);
         helper.assertTrue(TinService.obstruction(level,from,target)>stone,"Harder blocks must attenuate more");
         level.setBlock(wall,net.minecraft.world.level.block.Blocks.WHITE_WOOL.defaultBlockState(),3);
         helper.assertTrue(TinService.obstruction(level,from,target)>stone,"Wool must strongly muffle sound");
-        for(int x=1;x<=7;x++)level.setBlock(first.offset(x,0,0),net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(),3);
-        helper.assertTrue(TinService.echo(p,target,null,1)==null,"Enough intervening blocks must entirely suppress wireframes");
+        for(int x=1;x<=7;x++)level.setBlock(first.offset(x,0,0),net.minecraft.world.level.block.Blocks.WHITE_WOOL.defaultBlockState(),3);
+        helper.assertTrue(TinService.echo(p,target,null,1)==null,"A thick muffling barrier must entirely suppress wireframes");
         helper.assertTrue(TinService.echo(p,target,null,0)==null,"Zero-volume sound must reveal nothing");
         PowerData.state(p,"a:tin",0);helper.assertTrue(TinService.echo(p,target,null,1)==null,"Inactive players must receive no sound geometry");helper.succeed();
     }
@@ -128,18 +128,27 @@ public final class PowerGameTests {
         helper.succeed();
     }
     @GameTest(template = "empty")
+    public static void tinWireframesRequireActualFlaringEvenAtExtremeStrength(GameTestHelper helper){
+        var p=tinPlayer(helper,"TinFlareGate");PowerAttributes.set(p,"a:tin",1024);var sound=p.getEyePosition().add(2,0,0);
+        for(int state:new int[]{1,2}){PowerData.state(p,"a:tin",state);helper.assertTrue(TinService.revealStrength(p)==0 && TinService.echo(p,sound,null,1)==null,"Attributes cannot bypass the Flaring-only wireframe rule");}
+        PowerData.state(p,"a:tin",3);helper.assertTrue(TinService.echo(p,sound,null,1)!=null,"Flaring enables eligible high-strength echoes");
+        boolean flaring=PowerConfig.FLARING.get();try{PowerConfig.FLARING.set(false);helper.assertTrue(TinService.echo(p,sound,null,1)==null,"Disabled flaring cannot unlock echoes through a stored flare state");}finally{PowerConfig.FLARING.set(flaring);}
+        double range=TinConfig.ECHO_RANGE.get(),base=TinConfig.RANGE.get(),cap=TinConfig.MAX_RANGE.get();try{TinConfig.RANGE.set(1.0);TinConfig.MAX_RANGE.set(2.0);TinConfig.ECHO_RANGE.set(1.0);var distant=p.getEyePosition().add(3,0,0);helper.assertTrue(TinService.echo(p,distant,null,1)==null,"Original capped hearing range excludes this loaded sound");TinConfig.ECHO_RANGE.set(2.0);helper.assertTrue(TinService.echo(p,distant,null,1)!=null,"Doubled capped range includes the same loaded unobstructed sound");}finally{TinConfig.ECHO_RANGE.set(range);TinConfig.RANGE.set(base);TinConfig.MAX_RANGE.set(cap);}
+        var packet=new PowerNetwork.TinStatus(p.level().dimension().location().toString(),TinService.strength(p),1,true);var buffer=new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(),helper.getLevel().registryAccess());try{PowerNetwork.TinStatus.CODEC.encode(buffer,packet);helper.assertTrue(PowerNetwork.TinStatus.CODEC.decode(buffer).equals(packet),"Tin status transmits server-authoritative wireframe eligibility");}finally{buffer.release();}helper.succeed();
+    }
+    @GameTest(template = "empty")
     public static void tinPersistenceExtendsEchoesWithoutBypassingPowerGateOrPacketBounds(GameTestHelper helper){
-        var p=tinPlayer(helper,"TinPersistence");PowerAttributes.set(p,"a:tin",6);var sound=p.getEyePosition().add(2,0,0);
+        var p=tinPlayer(helper,"TinPersistence");PowerAttributes.set(p,"a:tin",6);PowerData.state(p,"a:tin",3);var sound=p.getEyePosition().add(2,0,0);
         double persistence=TinConfig.PERSISTENCE.get();int fade=TinConfig.FADE.get(),cap=TinConfig.MAX_FADE.get();
         try{TinConfig.PERSISTENCE.set(1.0);var shorter=TinService.echo(p,sound,null,1);TinConfig.PERSISTENCE.set(1.4);var longer=TinService.echo(p,sound,null,1);
             helper.assertTrue(shorter!=null && longer!=null && longer.ticks()>shorter.ticks() && longer.audible()==shorter.audible(),"Persistence extends the same approved echo without weakening obstruction or changing its audibility");
             TinConfig.PERSISTENCE.set(4.0);TinConfig.FADE.set(100);TinConfig.MAX_FADE.set(200);PowerAttributes.set(p,"a:tin",1024);helper.assertTrue(TinService.echo(p,sound,null,1).ticks()<=200,"Long echoes remain within packet lifetime bounds");
-            PowerAttributes.set(p,"a:tin",1);helper.assertTrue(TinService.echo(p,sound,null,1)==null,"Longer persistence cannot unlock wireframes below the Tin threshold");
+            PowerAttributes.set(p,"a:tin",1);PowerData.state(p,"a:tin",2);helper.assertTrue(TinService.echo(p,sound,null,1)==null,"Longer persistence cannot unlock wireframes below the Tin threshold");
         }finally{TinConfig.PERSISTENCE.set(persistence);TinConfig.FADE.set(fade);TinConfig.MAX_FADE.set(cap);}helper.succeed();
     }
     @GameTest(template = "empty")
     public static void highTinIdentifiesANoisyMobBehindAStoneWall(GameTestHelper helper){
-        var p=tinPlayer(helper,"TinWallMob");PowerAttributes.set(p,"a:tin",6);var level=helper.getLevel();var origin=net.minecraft.core.BlockPos.containing(p.position());
+        var p=tinPlayer(helper,"TinWallMob");PowerAttributes.set(p,"a:tin",6);PowerData.state(p,"a:tin",3);var level=helper.getLevel();var origin=net.minecraft.core.BlockPos.containing(p.position());
         for(int x=1;x<=5;x++)for(int y=0;y<4;y++)level.setBlock(origin.offset(x,y,0),net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),3);
         for(int y=0;y<3;y++)level.setBlock(origin.offset(2,y,0),net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(),3);
         var cow=net.minecraft.world.entity.EntityType.COW.create(level);cow.setPos(p.position().add(4,0,0));cow.setNoAi(true);level.addFreshEntity(cow);

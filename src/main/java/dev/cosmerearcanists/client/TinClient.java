@@ -6,7 +6,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.cosmerearcanists.power.PowerNetwork;
 import dev.cosmerearcanists.power.TinMath;
-import dev.cosmerearcanists.power.TinConfig;
+import net.minecraft.util.Mth;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
@@ -21,22 +21,23 @@ import net.neoforged.neoforge.client.event.ViewportEvent;
 import org.lwjgl.opengl.GL11;
 
 public final class TinClient {
-    private static PowerNetwork.TinStatus status=new PowerNetwork.TinStatus("",0,1);
-    private record Echo(PowerNetwork.TinEcho packet,long started) { }
+    private static PowerNetwork.TinStatus status=new PowerNetwork.TinStatus("",0,1,false);
+    private record Echo(PowerNetwork.TinEcho packet,long started,Vec3 from) { }
     private static final List<Echo> ECHOES=new ArrayList<>();
-    public static void status(PowerNetwork.TinStatus packet){status=packet;if(TinMath.reveal(packet.strength(),TinConfig.REVEAL_THRESHOLD.get(),TinConfig.FULL_REVEAL.get())<=0)ECHOES.clear();}
+    public static void status(PowerNetwork.TinStatus packet){status=packet;if(!packet.wireframes())ECHOES.clear();}
     public static void echo(PowerNetwork.TinEcho packet){
         var mc=Minecraft.getInstance();if(mc.level==null || !PowerClientConfig.TIN_ECHOES.get() || !packet.dimension().equals(mc.level.dimension().location().toString()))return;
-        // New sound updates replace the same entity's old echo, never leave a continuous tracking trail.
-        if(packet.entityId()>=0)ECHOES.removeIf(e->e.packet.entityId()==packet.entityId());
-        ECHOES.add(new Echo(packet,mc.level.getGameTime()));
+        // Keep independent waves, but render each mob once using its strongest active echo.
+        Vec3 from=feet(packet.sourceBox());
+        for(var old:ECHOES.reversed())if(packet.entityId()>=0 && old.packet.entityId()==packet.entityId()){from=anchor(old,1);break;}
+        ECHOES.add(new Echo(packet,mc.level.getGameTime(),from));
         while(ECHOES.size()>PowerClientConfig.TIN_ECHO_LIMIT.get())ECHOES.removeFirst();
     }
     private static boolean active(){var mc=Minecraft.getInstance();return mc.level!=null && mc.player!=null && status.strength()>0 && status.dimension().equals(mc.level.dimension().location().toString());}
-    private static boolean wireActive(){return active() && TinMath.reveal(status.strength(),TinConfig.REVEAL_THRESHOLD.get(),TinConfig.FULL_REVEAL.get())>0;}
+    private static boolean wireActive(){return active() && status.wireframes();}
     @SubscribeEvent public void tick(ClientTickEvent.Post event){
         var mc=Minecraft.getInstance();
-        if(!active()){ECHOES.clear();if(mc.level==null)status=new PowerNetwork.TinStatus("",0,1);return;}
+        if(!active()){ECHOES.clear();if(mc.level==null)status=new PowerNetwork.TinStatus("",0,1,false);return;}
         if(!wireActive())ECHOES.clear();
         ECHOES.removeIf(e->!e.packet.dimension().equals(status.dimension()) || mc.level.getGameTime()-e.started>=e.packet.ticks());
     }
@@ -56,37 +57,58 @@ public final class TinClient {
         try{RenderSystem.disableDepthTest();buffers.endBatch(type);}
         finally{if(depth)RenderSystem.enableDepthTest();else RenderSystem.disableDepthTest();}
     }
-    private static void sourceBox(com.mojang.blaze3d.vertex.PoseStack pose,MultiBufferSource.BufferSource buffers,PowerNetwork.TinEcho packet,Vec3 camera,float alpha){
-        var lines=TinRenderTypes.lines();LevelRenderer.renderLineBox(pose,buffers.getBuffer(lines),packet.sourceBox().move(camera.scale(-1)),.85f,.97f,1f,alpha);flushThroughWalls(buffers,lines);
+    private static Vec3 feet(AABB box){return new Vec3((box.minX+box.maxX)*.5,box.minY,(box.minZ+box.maxZ)*.5);}
+    private static Vec3 anchor(Echo echo,float partial){
+        var mc=Minecraft.getInstance();var entity=echo.packet.entityId()<0?null:mc.level.getEntity(echo.packet.entityId());
+        if(entity!=null && !entity.isRemoved())return entity.getPosition(partial);
+        return echo.from.lerp(feet(echo.packet.sourceBox()),TinMath.smoothProgress(mc.level.getGameTime()-echo.started+partial,4));
+    }
+    private static float alpha(Echo echo,double age){return (float)Math.clamp(TinMath.echoFade(age,echo.packet.ticks(),PowerClientConfig.TIN_HOLD.get())*echo.packet.audible()*PowerClientConfig.TIN_OPACITY.get()*PowerClientConfig.TIN_BRIGHTNESS.get()*PowerClientConfig.TIN_PULSE_STRENGTH.get(),0,1);}
+    private static float mobAlpha(Echo echo,double age){return (float)(alpha(echo,age)*TinMath.waveReveal(age,echo.packet.sourceBox().getCenter().distanceTo(echo.packet.position()),PowerClientConfig.TIN_WAVE_SPEED.get()));}
+    private static void wave(com.mojang.blaze3d.vertex.PoseStack pose,VertexConsumer vertices,Vec3 origin,double radius,float alpha){
+        if(radius<.05 || alpha<.01)return;
+        for(int plane=0;plane<3;plane++)for(int i=0;i<48;i++){
+            double a=i*Math.PI*2/48,b=(i+1)*Math.PI*2/48;
+            Vec3 start=plane==0?new Vec3(Math.cos(a)*radius,0,Math.sin(a)*radius):plane==1?new Vec3(Math.cos(a)*radius,Math.sin(a)*radius,0):new Vec3(0,Math.cos(a)*radius,Math.sin(a)*radius);
+            Vec3 end=plane==0?new Vec3(Math.cos(b)*radius,0,Math.sin(b)*radius):plane==1?new Vec3(Math.cos(b)*radius,Math.sin(b)*radius,0):new Vec3(0,Math.cos(b)*radius,Math.sin(b)*radius);
+            var normal=end.subtract(start).normalize();start=start.add(origin);end=end.add(origin);
+            vertices.addVertex(pose.last().pose(),(float)start.x,(float)start.y,(float)start.z).setColor(.78f,.93f,1f,alpha).setNormal(pose.last(),(float)normal.x,(float)normal.y,(float)normal.z);
+            vertices.addVertex(pose.last().pose(),(float)end.x,(float)end.y,(float)end.z).setColor(.78f,.93f,1f,alpha).setNormal(pose.last(),(float)normal.x,(float)normal.y,(float)normal.z);
+        }
     }
     @SubscribeEvent public void render(RenderLevelStageEvent event) {
         var mc=Minecraft.getInstance();
         if(event.getStage()!=RenderLevelStageEvent.Stage.AFTER_PARTICLES || !wireActive() || !PowerClientConfig.TIN_ECHOES.get() || ECHOES.isEmpty())return;
         var camera=event.getCamera().getPosition();var pose=event.getPoseStack();var buffers=mc.renderBuffers().bufferSource();
-        float partial=event.getPartialTick().getGameTimeDeltaPartialTick(false);
-        for(var echo:ECHOES) {
-            float fade=(float)TinMath.echoFade(mc.level.getGameTime()-echo.started+partial,echo.packet.ticks(),PowerClientConfig.TIN_HOLD.get());
-            float alpha=(float)Math.clamp(fade*echo.packet.audible()*PowerClientConfig.TIN_OPACITY.get()*PowerClientConfig.TIN_BRIGHTNESS.get(),0,1);if(alpha<.01)continue;
-            var lines=TinRenderTypes.lines();var vertices=buffers.getBuffer(lines);
-            for(var box:echo.packet.surfaces())LevelRenderer.renderLineBox(pose,vertices,box.move(camera.scale(-1)),.78f,.93f,1f,alpha);
-            var entity=echo.packet.entityId()<0?null:mc.level.getEntity(echo.packet.entityId());
-            if(echo.packet.entityId()>=0 && (entity==null || !PowerClientConfig.TIN_MODELS.get()))LevelRenderer.renderLineBox(pose,vertices,echo.packet.sourceBox().move(camera.scale(-1)),.85f,.97f,1f,alpha);
-            flushThroughWalls(buffers,lines);
-            if(entity==null || entity==mc.player || !PowerClientConfig.TIN_MODELS.get())continue;
-            var type=TinRenderTypes.models();
-            boolean[] modelBuffer={false};
-            MultiBufferSource wire=original->{if(original.format().equals(DefaultVertexFormat.NEW_ENTITY)){modelBuffer[0]=true;return buffers.getBuffer(type);}return DISCARD;};
-            pose.pushPose();
-            var box=echo.packet.sourceBox();pose.translate((box.minX+box.maxX)*.5-camera.x,box.minY-camera.y,(box.minZ+box.maxZ)*.5-camera.z);
-            try {
-                RenderSystem.polygonMode(GL11.GL_FRONT_AND_BACK,GL11.GL_LINE);
-                RenderSystem.setShaderColor(.78f,.93f,1f,alpha);
-                mc.getEntityRenderDispatcher().getRenderer(entity).render(entity,entity.getYRot(),partial,pose,wire,LightTexture.FULL_BRIGHT);
-                flushThroughWalls(buffers,type);
-            } finally {
-                RenderSystem.setShaderColor(1,1,1,1);RenderSystem.polygonMode(GL11.GL_FRONT_AND_BACK,GL11.GL_FILL);pose.popPose();
+        float partial=event.getPartialTick().getGameTimeDeltaPartialTick(false);double now=mc.level.getGameTime()+partial;
+        var strongest=new HashMap<Integer,Echo>();
+        for(var echo:ECHOES)if(echo.packet.entityId()>=0){var previous=strongest.get(echo.packet.entityId());if(previous==null || mobAlpha(echo,now-echo.started)>mobAlpha(previous,now-previous.started))strongest.put(echo.packet.entityId(),echo);}
+        for(var echo:ECHOES){
+            double age=now-echo.started,speed=PowerClientConfig.TIN_WAVE_SPEED.get();float alpha=alpha(echo,age);if(alpha<.01)continue;
+            var lines=TinRenderTypes.lines();var vertices=buffers.getBuffer(lines);double radius=3;
+            for(var box:echo.packet.surfaces()){
+                double distance=box.getCenter().distanceTo(echo.packet.position());radius=Math.max(radius,distance+1);
+                float reveal=(float)TinMath.waveReveal(age,distance,speed);
+                if(reveal>0)LevelRenderer.renderLineBox(pose,vertices,box.move(camera.scale(-1)),.78f,.93f,1f,alpha*reveal);
             }
-            if(!modelBuffer[0])sourceBox(pose,buffers,echo.packet,camera,alpha);
+            double front=age*speed,maxRadius=Math.min(34,radius);
+            if(front<maxRadius)wave(pose,vertices,echo.packet.position().subtract(camera),front,(float)(alpha*.65*(1-front/maxRadius)));
+            flushThroughWalls(buffers,lines);
+            if(echo.packet.entityId()<0 || strongest.get(echo.packet.entityId())!=echo)continue;
+            float modelAlpha=mobAlpha(echo,age);if(modelAlpha<.01)continue;
+            var entity=mc.level.getEntity(echo.packet.entityId());if(entity==mc.player)continue;
+            var position=anchor(echo,partial);var box=echo.packet.sourceBox().move(position.subtract(feet(echo.packet.sourceBox())));
+            boolean[] modelBuffer={false};
+            if(entity!=null && PowerClientConfig.TIN_MODELS.get()){
+                var type=TinRenderTypes.models();MultiBufferSource wire=original->{if(original.format().equals(DefaultVertexFormat.NEW_ENTITY)){modelBuffer[0]=true;return buffers.getBuffer(type);}return DISCARD;};
+                pose.pushPose();pose.translate(position.x-camera.x,position.y-camera.y,position.z-camera.z);
+                try{
+                    RenderSystem.polygonMode(GL11.GL_FRONT_AND_BACK,GL11.GL_LINE);RenderSystem.setShaderColor(.78f,.93f,1f,modelAlpha);
+                    mc.getEntityRenderDispatcher().getRenderer(entity).render(entity,Mth.rotLerp(partial,entity.yRotO,entity.getYRot()),partial,pose,wire,LightTexture.FULL_BRIGHT);
+                    flushThroughWalls(buffers,type);
+                }finally{RenderSystem.setShaderColor(1,1,1,1);RenderSystem.polygonMode(GL11.GL_FRONT_AND_BACK,GL11.GL_FILL);pose.popPose();}
+            }
+            if(!modelBuffer[0]){LevelRenderer.renderLineBox(pose,buffers.getBuffer(lines),box.move(camera.scale(-1)),.85f,.97f,1f,modelAlpha);flushThroughWalls(buffers,lines);}
         }
     }
 }

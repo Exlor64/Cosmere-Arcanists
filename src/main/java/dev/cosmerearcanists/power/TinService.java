@@ -35,7 +35,7 @@ public final class TinService {
         int state=PowerData.state(p,"a:tin");if(state==3&&!PowerConfig.FLARING.get())state=2;
         return PowerAttributes.effectiveStrength(p,"a:tin")*PowerRules.levelMultiplier(state,PowerConfig.LOW_STRENGTH.get(),PowerConfig.BURN_STRENGTH.get(),PowerConfig.FLARE_STRENGTH.get());
     }
-    public static double revealStrength(ServerPlayer p){return TinMath.reveal(strength(p),TinConfig.REVEAL_THRESHOLD.get(),TinConfig.FULL_REVEAL.get());}
+    public static double revealStrength(ServerPlayer p){return TinConfig.REQUIRE_FLARING.get() && (PowerData.state(p,"a:tin")!=3 || !PowerConfig.FLARING.get())?0:TinMath.reveal(strength(p),TinConfig.REVEAL_THRESHOLD.get(),TinConfig.FULL_REVEAL.get());}
     private static boolean looksOwned(MobEffectInstance effect){return effect!=null && effect.getAmplifier()==0 && effect.isAmbient() && !effect.isVisible() && !effect.showIcon() && effect.getDuration()<=320;}
     public static void tick(ServerPlayer p) {
         double power=strength(p);
@@ -70,7 +70,7 @@ public final class TinService {
             float hardness=state.getDestroySpeed(level,pos);
             result+=TinConfig.BLOCK_COST.get()+Math.min(hardness<0?TinConfig.HARDNESS_CAP.get():hardness,TinConfig.HARDNESS_CAP.get())*TinConfig.HARDNESS_COST.get();
             if(state.is(BlockTags.WOOL))result+=TinConfig.WOOL_COST.get();
-            if(result>TinConfig.MAX_RANGE.get())break;
+            if(result>TinConfig.MAX_RANGE.get()*TinConfig.ECHO_RANGE.get())break;
         }
         return result;
     }
@@ -88,12 +88,12 @@ public final class TinService {
     }
     public static PowerNetwork.TinEcho echo(ServerPlayer listener,Vec3 position,Entity source,float volume) {
         double power=strength(listener);if(power<=0 || !TinConfig.HEARING.get() || !Float.isFinite(volume) || volume<=0)return null;
-        double potential=TinMath.reveal(power,TinConfig.REVEAL_THRESHOLD.get(),TinConfig.FULL_REVEAL.get());if(potential<=0)return null;
-        double range=TinMath.range(power,volume,TinConfig.RANGE.get(),TinConfig.MAX_RANGE.get())*(.5+.5*potential);double distance=listener.getEyePosition().distanceTo(position);
+        double potential=revealStrength(listener);if(potential<=0)return null;
+        double range=TinMath.range(power,volume,TinConfig.RANGE.get()*TinConfig.ECHO_RANGE.get(),TinConfig.MAX_RANGE.get()*TinConfig.ECHO_RANGE.get())*(.5+.5*potential);double distance=listener.getEyePosition().distanceTo(position);
         if(distance>=range)return null;
         double audible=TinMath.audibility(distance,obstruction(listener.serverLevel(),listener.getEyePosition(),position),range);
         if(audible<TinConfig.MIN_AUDIBILITY.get())return null;
-        double radius=Math.min(TinConfig.MAX_RADIUS.get(),TinConfig.RADIUS.get()*Math.sqrt(power)*Math.sqrt(Math.min(4,volume)))*Math.sqrt(audible*potential);
+        double radius=Math.min(TinConfig.MAX_RADIUS.get(),TinConfig.RADIUS.get()*Math.sqrt(power)*Math.sqrt(Math.min(4,volume)))*TinConfig.ECHO_RANGE.get()*Math.sqrt(audible*potential);
         int ticks=(int)Math.clamp(TinConfig.FADE.get()*(.75+.25*Math.sqrt(power))*Math.sqrt(audible)*(.35+.65*potential)*TinConfig.PERSISTENCE.get(),4,Math.max(4,Math.min(200,TinConfig.MAX_FADE.get()*TinConfig.PERSISTENCE.get())));
         int detail=Math.max(4,(int)(TinConfig.SHAPES.get()*potential*Math.sqrt(audible)));
         boolean identified=source!=null && source.level()==listener.level() && !source.isSilent() && source.position().distanceToSqr(position)<9;
