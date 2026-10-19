@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-19 UTC**. Current mod version: **0.20.0-alpha**.
+Last updated: **2026-10-19 UTC**. Current mod version: **0.21.0-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -9,13 +9,13 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
-- User requests subtler atium/electrum shadows without hitbox outlines, both powers only while holding their assigned activation button, and electrum warning when a projected self would draw hostile aggro.
-- Version0.20.0-alpha/protocol12: TemporalClient removes all box outlines, draws one final mesh per shadow instead of mid+final, and applies futureSight.prominenceMultiplier default.45 to existing opacity/path settings. Warning text remains readable. Projectiles keep trajectory rails, never hitbox boxes.
-- TemporalConfig requireHeldActivation defaults true. sightStrength gates forecasts, normal drain, counter-foresight interference, actual bronze signals and duralumin active-metal capture; raw burn strength remains available for formulas. Correct primary/secondary slot must be held; heartbeat/death/config/fuel validation preserved. Release clears private forecast on next server tick. Duralumin committed bursts retain their existing fuel commitment rules.
-- New AGGRO32 flag with DANGER_MASK47; decoder permits flags0..63. Protocol12 requires updated client/server. Electrum self/jump futures gain a "may draw hostile attention" warning when predicted positions enter an idle hostile mob's follow range and loaded-voxel-checked future sight line. Does not set targets, mutate AI or send attacker identity/path. Hidden current mobs may inform private self consequences, but atium still only sends currently visible entity paths.
-- Prospective aggro is bounded heuristic, not full species-AI simulation: ordinary Enemy mobs able to attack, not noAI/creative-invulnerable players, no current target, neutral mobs only when already angry at observer, no pacified/minion/trusting sources. Existing target/sample/horizon/range budgets remain. Special mob senses/gear/daylight/custom AI can differ; warn wording is intentionally conditional. TemporalConfig electrumAggroWarnings toggles it.
-- Added2 server regressions for held-slot/privacy/fuel/interference gates, prospective aggro, noAI/wall exclusions and new warning codec; existing temporal fixtures now hold activation and duralumin fixture holds both temporal slots. Initial Java21 build and new cases passed; one old bronze fixture expected unheld temporal emissions. Updated it to test both unheld exclusion and held inclusion. Final Java21 GitHub Actions run39328199174 passed build/JUnit, required server GameTests and artifact upload. Registered suites52 unit/68 server methods. Prior0.19.0 passed52 unit/66 server methods in run39327080436. No graphical client playtest claimed.
-- Next: user checks of shadow prominence, G/H release behavior and practical aggro warning accuracy.
+- User requests above-head current-emotion indicator for aimed-at mobs, moves Zinc/Brass mode from detached pink center text into bottom-right power panel, and config to hide/move/resize the ENTIRE blue box (explicit clarification includes text/icons and both power slots).
+- Version0.21.0-alpha/protocol13 extends private EmotionPacket with target entity ID/current dominant enum only. Server inspect selects nearest ray-hit eligible mob within emotional range, requires owned selected Zinc/Brass (either slot), and validates loaded line of sight and aluminum/copper gateway. Readout works before burning to choose a mode, never assigns emotion or mutates AI to inspect. Natural baseline shown if uninfluenced; dominated minions report compliance. No source UUID/owner/reserve data disclosed. New packet bounds validated.
+- Client billboard above current aimed mob tracks interpolated position, has emotion color/text and depth-tested background, hides on look-away/no selection/expiry/dimension/menu/F1. Server EmotionConfig targetEmotionIndicator and client targetEmotionIndicator separately disable it. Uninfluenced passive/hostile mobs display engine baseline Trust/Anger, not a simulation of every native species mood.
+- Separate primary/secondary pink mode instructions removed. Mode label sits at bottom-right of each panel, reserves left, burn state above. Existing optional incoming-player dominant-status message remains; scroll controls unchanged.
+- Client cosmerearcanists-client.toml: hidePowerIndicator=false (new clear whole-group hide toggle); legacy selectedPowerIcon remains respected. hudX/hudY anchor primary panel in screen-scaled pixels; secondary follows. hudScale .25..3 defaults1 scales whole group including icons/background/text/spacing, clamps placement and fits oversized groups to viewport. Selection menus and world indicators remain independent of hiding the blue group.
+- New server regression covers natural/induced emotion readout, exact target ID packet, wall occlusion/look-away/config/no-access gates. Java21 CI pending. Prior0.20.0 run39328199174 passed52 unit/68 server methods. No graphical client playtest claimed.
+- Next: automated validation, then user checks above-head label and whole-panel positioning/scaling, reserve/mode text alignment.
 
 ## Vision and accepted constraints
 

@@ -676,7 +676,7 @@ compatibility and terrain navigation still require playtesting. Client
 
 Test with `/cosmere power grant @s a:zinc`, `a:brass`, then
 `/cosmere power refill @s`. Existing persistent attributes and mixed vials work;
-no new registry IDs or save migration. Client and server need protocol **12**.
+no new registry IDs or save migration. Client and server need protocol **13**.
 The private emotional status packet does not disclose an influencing player's
 identity. Player emotional mechanics and species behavior are gameplay choices
 requested for this mod; progression XP and Hemalurgy equipment remain future.
@@ -802,4 +802,27 @@ enters a nearby idle hostile mob's targeting range and predicted line of sight.
 This also applies to the jump preview. It reveals no attacker identity/path and
 does not change actual mob AI. The bounded forecast approximates ordinary mob
 aggro; special senses, equipment rules and custom AI may differ. Toggle server
-`electrumAggroWarnings`. Both client and server need protocol **12**.
+`electrumAggroWarnings`. Both client and server need protocol **13**.
+
+### Emotional targeting and power-panel layout (0.21.0)
+
+With zinc or brass assigned to either activation slot, aiming at a visible mob
+shows its current dominant emotion above its head. The indicator reflects the
+mod's emotional model, including natural baseline and manipulated states. It
+works before burning, within emotional range, and respects walls/protections.
+Server and client `targetEmotionIndicator` can each disable it.
+
+The selected emotion now appears at the bottom-right of each blue power panel,
+next to the reserve/burn information. Detached pink mode text is removed;
+ability+scroll still changes emotion.
+
+In `cosmerearcanists-client.toml`:
+
+- `hidePowerIndicator = true` hides the **entire blue primary/secondary group**.
+- `hudX` / `hudY` move it; `-1` uses the default edge anchor.
+- `hudScale` resizes the entire group, including its text, icons and background
+  (default1;0.25–3). Oversized groups fit the viewport.
+
+The legacy `selectedPowerIcon` toggle is also respected. Selection menus and
+the mob emotion indicator remain independent. Update client and server together
+for protocol **13**.

@@ -178,34 +178,23 @@ public final class PowerClient {
         String metal = power.substring(2); String namespace = Set.of("iron", "gold", "copper").contains(metal) ? "minecraft" : CosmereArcanists.MOD_ID;
         return new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(namespace, metal + "_ingot")));
     }
+    private static void panel(GuiGraphics g,String power,int y){
+        var font=Minecraft.getInstance().font;g.fill(-3,y-3,194,y+34,0xB0101B29);g.renderItem(icon(power),0,y);
+        g.drawString(font,font.plainSubstrByWidth("["+slotLabel(power)+"] "+name(power),170),21,y,0x91CFFF);
+        String label=PowerRules.label(power,state(power));if(!PowerRules.implemented(power))label+=" · effects pending";g.drawString(font,label,21,y+12,0xFFFFFF);
+        String emotion=PowerClientConfig.EMOTION_HUD.get()?EmotionClient.modeLabel(power):"";int modeX=190-font.width(emotion);
+        if(!emotion.isEmpty())g.drawString(font,emotion,modeX,y+24,0x91CFFF);
+        if(power.startsWith("a:")){double reserve=snapshot.powers().stream().filter(e->e.power().equals(power)).mapToDouble(PowerNetwork.Entry::reserve).findFirst().orElse(0);g.drawString(font,font.plainSubstrByWidth(String.format(Locale.ROOT,"Reserve: %.1f",reserve),emotion.isEmpty()?170:Math.max(20,modeX-25)),21,y+24,0xACB9C8);}
+    }
     @SubscribeEvent public void hud(RenderGuiEvent.Post event) {
         var mc = Minecraft.getInstance(); if (mc.player == null || mc.level == null || mc.options.hideGui || mc.screen != null) return;
         var g = event.getGuiGraphics(); int width = g.guiWidth(), height = g.guiHeight();
-        if (PowerClientConfig.HUD.get() && !selected().isEmpty()) {
-            int x = PowerClientConfig.HUD_X.get() < 0 ? width - 200 : PowerClientConfig.HUD_X.get();
-            int y = PowerClientConfig.HUD_Y.get() < 0 ? height - 65 : PowerClientConfig.HUD_Y.get();
-            g.fill(x - 3, y - 3, x + 194, y + 34, 0xB0101B29); g.renderItem(icon(selected()), x, y);
-            g.drawString(mc.font, mc.font.plainSubstrByWidth("["+slotLabel(selected())+"] "+name(selected()),170), x + 21, y, 0x91CFFF);
-            String label = PowerRules.label(selected(), state(selected()));
-            if (!PowerRules.implemented(selected())) label += " · effects pending";
-            g.drawString(mc.font, label, x + 21, y + 12, 0xFFFFFF);
-            if (selected().startsWith("a:")) {
-                double reserve = snapshot.powers().stream().filter(e -> e.power().equals(selected())).mapToDouble(PowerNetwork.Entry::reserve).findFirst().orElse(0);
-                g.drawString(mc.font, String.format(Locale.ROOT, "Reserve: %.1f", reserve), x + 21, y + 24, 0xACB9C8);
-            }
-        }
-        if(PowerClientConfig.HUD.get() && !snapshot.secondary().isEmpty()) {
-            int x=PowerClientConfig.HUD_X.get()<0?width-200:PowerClientConfig.HUD_X.get();
-            int y=(PowerClientConfig.HUD_Y.get()<0?height-65:PowerClientConfig.HUD_Y.get())-44;
-            String power=snapshot.secondary();
-            g.fill(x-3,y-3,x+194,y+34,0xB0101B29); g.renderItem(icon(power),x,y);
-            g.drawString(mc.font,mc.font.plainSubstrByWidth("["+slotLabel(power)+"] "+name(power),170),x+21,y,0x91CFFF);
-            String label=PowerRules.label(power,state(power)); if(!PowerRules.implemented(power))label+=" · effects pending";
-            g.drawString(mc.font,label,x+21,y+12,0xFFFFFF);
-            if(power.startsWith("a:")) {
-                double reserve=snapshot.powers().stream().filter(e->e.power().equals(power)).mapToDouble(PowerNetwork.Entry::reserve).findFirst().orElse(0);
-                g.drawString(mc.font,String.format(Locale.ROOT,"Reserve: %.1f",reserve),x+21,y+24,0xACB9C8);
-            }
+        if(PowerClientConfig.HUD.get() && !PowerClientConfig.HIDE_HUD.get() && (!selected().isEmpty() || !snapshot.secondary().isEmpty())){
+            double scale=Math.min(PowerClientConfig.HUD_SCALE.get(),Math.min((width-8)/197.0,(height-8)/(!snapshot.secondary().isEmpty()?81.0:37.0)));
+            double x=PowerClientConfig.HUD_X.get()<0?width-200*scale:PowerClientConfig.HUD_X.get();
+            double y=PowerClientConfig.HUD_Y.get()<0?height-65*scale:PowerClientConfig.HUD_Y.get();
+            x=Math.clamp(x,3*scale,Math.max(3*scale,width-194*scale));y=Math.clamp(y,(!snapshot.secondary().isEmpty()?47:3)*scale,Math.max((!snapshot.secondary().isEmpty()?47:3)*scale,height-34*scale));
+            g.pose().pushPose();try{g.pose().translate(x,y,0);g.pose().scale((float)scale,(float)scale,1);if(!selected().isEmpty())panel(g,selected(),0);if(!snapshot.secondary().isEmpty())panel(g,snapshot.secondary(),-44);}finally{g.pose().popPose();}
         }
         if (selecting && (selectTicks >= PowerClientConfig.HOLD_TICKS.get() || scrolledSelect)) {
             int x = width / 2 - 130, y = Math.max(20, height / 2 - 70);

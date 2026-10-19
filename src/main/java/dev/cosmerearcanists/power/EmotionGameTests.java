@@ -117,6 +117,15 @@ public final class EmotionGameTests {
         v.mobInteract(source,net.minecraft.world.InteractionHand.MAIN_HAND);
         h.assertTrue(offer.getCostA().getCount()<before,"Real vanilla trading entry invokes session-only trust price mixin");h.succeed();
     }
+    @GameTest(template="empty") public static void targetInspectionReportsAimedMobAndRespectsWallsAndAccess(GameTestHelper h){
+        var p=caster(h);p.setYRot(-90);p.setXRot(15);var cow=mob(h,EntityType.COW,p.position().add(4,0,0));
+        var view=EmotionService.inspect(p);h.assertTrue(view.entity()==cow.getId() && view.emotion()==Emotion.TRUST.ordinal(),"Aimed unmodified passive mob shows its current natural state");
+        EmotionService.apply(p,cow,"a:zinc",Emotion.ANGER);h.assertTrue(EmotionService.inspect(p).emotion()==Emotion.ANGER.ordinal(),"Inspection updates after actual emotional manipulation");
+        var packet=new EmotionPacket(p.level().dimension().location().toString(),0,1,-1,0,cow.getId(),Emotion.ANGER.ordinal());var buffer=new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(),h.getLevel().registryAccess());try{EmotionPacket.CODEC.encode(buffer,packet);h.assertTrue(EmotionPacket.CODEC.decode(buffer).equals(packet),"Private target status safely round trips");}finally{buffer.release();}
+        var wall=net.minecraft.core.BlockPos.containing(p.position().add(2,0,0));for(int y=0;y<3;y++)h.getLevel().setBlock(wall.above(y),net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(),3);h.assertTrue(EmotionService.inspect(p).entity()== -1,"Inspection cannot reveal mobs through walls");for(int y=0;y<3;y++)h.getLevel().setBlock(wall.above(y),net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),3);
+        p.setYRot(90);h.assertTrue(EmotionService.inspect(p).entity()== -1,"Looking away clears the mob indicator");p.setYRot(-90);boolean enabled=EmotionConfig.INDICATOR.get();try{EmotionConfig.INDICATOR.set(false);h.assertTrue(EmotionService.inspect(p).entity()== -1,"Server can disable emotion inspection");}finally{EmotionConfig.INDICATOR.set(enabled);}
+        PowerAttributes.set(p,"a:zinc",0);PowerAttributes.set(p,"a:brass",0);h.assertTrue(EmotionService.inspect(p).entity()== -1,"No owned emotional power grants no target readout");cow.discard();h.succeed();
+    }
     @GameTest(template="empty") public static void modesFuelBoundsDisablementAndPacketPersistCorrectly(GameTestHelper h){
         var p=caster(h);PowerData.assignSlot(p,"a:zinc",0);PowerService.control(p,new PowerNetwork.Control(10,"a:zinc",4));h.assertTrue(EmotionService.mode(p,"a:zinc")==4,"Mode control uses existing owned power controls");
         PowerService.control(p,new PowerNetwork.Control(10,"a:zinc",99));h.assertTrue(EmotionService.mode(p,"a:zinc")==4,"Invalid mode cannot change saved selection");

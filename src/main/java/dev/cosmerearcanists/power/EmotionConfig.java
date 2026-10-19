@@ -4,11 +4,12 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class EmotionConfig {
     public static final ModConfigSpec SPEC;
-    public static final ModConfigSpec.BooleanValue ENABLED,ZINC,BRASS,PLAYERS,MOBS,ANIMALS,AREA,ANGER,FEAR,TRUST,LOVE,COMPLIANCE,BREEDING,TRADES,ALUMINUM,DOMINATION;
+    public static final ModConfigSpec.BooleanValue ENABLED,ZINC,BRASS,PLAYERS,MOBS,ANIMALS,AREA,ANGER,FEAR,TRUST,LOVE,COMPLIANCE,BREEDING,TRADES,ALUMINUM,DOMINATION,INDICATOR;
     public static final ModConfigSpec.DoubleValue DRAIN,RANGE,RANGE_CAP,ANIMAL_FACTOR,ANGER_DAMAGE,FEAR_DAMAGE,FEAR_ATTACK_SPEED,FEAR_SPEED,LOVE_REDUCTION,DISCOUNT,COMPLIANCE_FORCE,COMPLIANCE_CAP,DOMINATION_STRENGTH,MAX_INTEGRITY;
     public static final ModConfigSpec.IntValue DURATION,TARGETS,AFFECTED,FEAR_BURST,FEAR_COOLDOWN,MINION_TICKS,MINION_CAP;
     static {
         var b=new ModConfigSpec.Builder();ENABLED=b.define("enabled",true);ZINC=b.define("zincEnabled",true);BRASS=b.define("brassEnabled",true);
+        INDICATOR=b.define("targetEmotionIndicator",true);
         PLAYERS=b.define("affectPlayers",true);MOBS=b.define("affectMobs",true);ANIMALS=b.define("affectAnimals",true);AREA=b.define("alternateAreaInfluence",true);
         ALUMINUM=b.comment("Aluminum-containing headwear or emotion_shielding item tags block influence; copper's existing emotional gateway also applies.").define("aluminumHeadwearProtection",true);
         DRAIN=b.defineInRange("reservePerSecond",1.0,0.0,100.0);RANGE=b.defineInRange("range",16.0,1.0,64.0);RANGE_CAP=b.defineInRange("maxRange",32.0,1.0,64.0);

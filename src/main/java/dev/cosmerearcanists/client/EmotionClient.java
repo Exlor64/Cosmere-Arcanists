@@ -2,6 +2,10 @@ package dev.cosmerearcanists.client;
 
 import dev.cosmerearcanists.power.*;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.world.entity.Mob;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
@@ -11,12 +15,22 @@ public final class EmotionClient {
     private static int zinc,brass;
     public static void receive(EmotionPacket p){var mc=Minecraft.getInstance();if(mc.level==null||!p.dimension().equals(mc.level.dimension().location().toString()))return;status=p;received=mc.level.getGameTime();zinc=p.zincMode();brass=p.brassMode();}
     public static int cycle(String power,int direction){if(power.equals("a:zinc")){zinc=Math.floorMod(zinc+direction,5);return zinc;}brass=Math.floorMod(brass+direction,5);return brass;}
+    public static String modeLabel(String power){return Emotion.power(power)?Emotion.values()[power.equals("a:zinc")?zinc:brass].label():"";}
     private static boolean active(){var mc=Minecraft.getInstance();return mc.player!=null&&mc.level!=null&&mc.player.isAlive()&&status.dimension().equals(mc.level.dimension().location().toString())&&mc.level.getGameTime()-received<20;}
     @SubscribeEvent public void tick(ClientTickEvent.Post e){if(!active()){status=new EmotionPacket("",0,0,-1,0);zinc=brass=0;}}
-    @SubscribeEvent public void hud(RenderGuiEvent.Post e){var mc=Minecraft.getInstance();if(!active()||!PowerClientConfig.EMOTION_HUD.get()||mc.options.hideGui||mc.screen!=null)return;var g=e.getGuiGraphics();int y=g.guiHeight()/2+65;
-        String primary=PowerClient.primaryPower(),secondary=PowerClient.secondaryPower();
-        if(Emotion.power(primary))g.drawCenteredString(mc.font,(primary.equals("a:zinc")?"Riot ":"Soothe ")+Emotion.values()[primary.equals("a:zinc")?zinc:brass].label()+" · hold ability + scroll",g.guiWidth()/2,y,0xD9ACD7);
-        if(Emotion.power(secondary))g.drawCenteredString(mc.font,(secondary.equals("a:zinc")?"Riot ":"Soothe ")+Emotion.values()[secondary.equals("a:zinc")?zinc:brass].label()+" · secondary + scroll",g.guiWidth()/2,y+11,0xD9ACD7);
-        if(status.dominant()>=0)g.drawCenteredString(mc.font,"Dominant emotion: "+Emotion.values()[status.dominant()].label(),g.guiWidth()/2,y+24,0xEDB4B4);
+    @SubscribeEvent public void hud(RenderGuiEvent.Post e){var mc=Minecraft.getInstance();if(!active()||!PowerClientConfig.EMOTION_HUD.get()||mc.options.hideGui||mc.screen!=null)return;
+        if(status.dominant()>=0)e.getGuiGraphics().drawCenteredString(mc.font,"Dominant emotion: "+Emotion.values()[status.dominant()].label(),e.getGuiGraphics().guiWidth()/2,e.getGuiGraphics().guiHeight()/2+89,0xEDB4B4);
+    }
+    @SubscribeEvent public void target(RenderLevelStageEvent e){
+        var mc=Minecraft.getInstance();if(e.getStage()!=RenderLevelStageEvent.Stage.AFTER_PARTICLES || !active() || !PowerClientConfig.EMOTION_TARGET.get() || mc.options.hideGui || mc.screen!=null || status.target()<0 || !(Emotion.power(PowerClient.primaryPower()) || Emotion.power(PowerClient.secondaryPower())))return;
+        var entity=mc.level.getEntity(status.target());if(!(entity instanceof Mob) || !entity.isAlive())return;
+        float partial=e.getPartialTick().getGameTimeDeltaPartialTick(false);var eye=mc.player.getEyePosition(partial);
+        if(entity.getBoundingBox().inflate(.3).clip(eye,eye.add(mc.player.getViewVector(partial).scale(64))).isEmpty())return;
+        String text=status.targetDominant()<0?"Neutral":Emotion.values()[status.targetDominant()].label();
+        int color=status.targetDominant()<0?0xFFD2DAE3:switch(Emotion.values()[status.targetDominant()]){case ANGER->0xFFFF8A80;case FEAR->0xFFD4AAFF;case TRUST->0xFF91DDFF;case LOVE->0xFFFFB4DA;case COMPLIANCE->0xFFFFDE91;};
+        var pose=e.getPoseStack();var position=entity.getPosition(partial);var camera=e.getCamera().getPosition();pose.pushPose();
+        try{pose.translate(position.x-camera.x,position.y+entity.getBbHeight()+(entity.hasCustomName()?.8:.4)-camera.y,position.z-camera.z);pose.mulPose(mc.getEntityRenderDispatcher().cameraOrientation());pose.scale(-.025f,-.025f,.025f);
+            mc.font.drawInBatch(text,-mc.font.width(text)/2f,0,color,false,pose.last().pose(),mc.renderBuffers().bufferSource(),Font.DisplayMode.NORMAL,0x900C1524,LightTexture.FULL_BRIGHT);
+        }finally{pose.popPose();}
     }
 }

@@ -6,16 +6,18 @@ public final class PowerClientConfig {
     public enum PulseInstrument { BASS_DRUM, BASS, HARP, SNARE, HAT, BELL, CHIME, FLUTE }
     public static final ModConfigSpec.EnumValue<PulseInstrument> SEEKING_INSTRUMENT;
     public static final ModConfigSpec SPEC;
-    public static final ModConfigSpec.BooleanValue HUD, LINES, THROUGH_WALLS, PEWTER_HEARTS, TIN_ECHOES, TIN_MODELS, TIN_ZOOM, FUTURES, FUTURE_MODELS, FUTURE_WARNINGS, SEEKING_HUD, SEEKING_SOUNDS, EMOTION_HUD;
+    public static final ModConfigSpec.BooleanValue HUD, HIDE_HUD, LINES, THROUGH_WALLS, PEWTER_HEARTS, TIN_ECHOES, TIN_MODELS, TIN_ZOOM, FUTURES, FUTURE_MODELS, FUTURE_WARNINGS, SEEKING_HUD, SEEKING_SOUNDS, EMOTION_HUD, EMOTION_TARGET;
     public static final ModConfigSpec.IntValue HUD_X, HUD_Y, HOLD_TICKS, TIN_ECHO_LIMIT, SEEKING_LIMIT;
-    public static final ModConfigSpec.DoubleValue LINE_WIDTH, TIN_WIDTH, TIN_OPACITY, FUTURE_OPACITY, SEEKING_VOLUME, TIN_BRIGHTNESS, TIN_WIDTH_SCALE, TIN_HOLD, TIN_PULSE_STRENGTH, TIN_WAVE_SPEED, FUTURE_PROMINENCE;
+    public static final ModConfigSpec.DoubleValue LINE_WIDTH, TIN_WIDTH, TIN_OPACITY, FUTURE_OPACITY, SEEKING_VOLUME, TIN_BRIGHTNESS, TIN_WIDTH_SCALE, TIN_HOLD, TIN_PULSE_STRENGTH, TIN_WAVE_SPEED, FUTURE_PROMINENCE, HUD_SCALE;
     static {
         var b = new ModConfigSpec.Builder();
-        HUD = b.define("selectedPowerIcon", true); LINES = b.define("blueLines", true);
+        HUD = b.comment("Show or hide the entire blue power panel, including the secondary panel, text and icons.").define("selectedPowerIcon", true); LINES = b.define("blueLines", true);
+        HIDE_HUD=b.comment("Hide the entire blue power indicator group. Selection menus and world emotion labels are separate.").define("hidePowerIndicator",false);
         PEWTER_HEARTS = b.define("pewterDragHearts", true);
         THROUGH_WALLS = b.define("linesThroughWalls", true);
-        HUD_X = b.comment("HUD coordinates in scaled pixels; -1 uses the default.").defineInRange("hudX", -1, -1, 8192);
+        HUD_X = b.comment("Primary blue-panel anchor in scaled screen pixels; secondary moves with it. -1 docks to the default screen edge.").defineInRange("hudX", -1, -1, 8192);
         HUD_Y = b.defineInRange("hudY", -1, -1, 8192);
+        HUD_SCALE=b.comment("Scale the entire blue primary/secondary panel group, including text and item icons.").defineInRange("hudScale",1.0,.25,3.0);
         HOLD_TICKS = b.comment("A shorter press cycles state; hold opens selection.").defineInRange("menuHoldTicks", 4, 1, 20);
         LINE_WIDTH = b.defineInRange("lineWidth", 2.0, 1.0, 5.0);
         b.push("tin");
@@ -32,7 +34,7 @@ public final class PowerClientConfig {
         SEEKING_HUD=b.define("pulseCompassAndCopperStatus",true);SEEKING_SOUNDS=b.define("privateRhythms",true);
         SEEKING_INSTRUMENT=b.comment("Vanilla note-block instrument for private bronze pulses; rhythms/pitch still distinguish signals.").defineEnum("pulseInstrument",PulseInstrument.BASS_DRUM);
         SEEKING_LIMIT=b.defineInRange("maxVisiblePulses",16,1,64);SEEKING_VOLUME=b.defineInRange("rhythmVolume",.35,0.0,1.0);
-        b.pop();EMOTION_HUD=b.define("emotionControlsAndStatus",true);SPEC = b.build();
+        b.pop();EMOTION_TARGET=b.define("targetEmotionIndicator",true);EMOTION_HUD=b.define("emotionControlsAndStatus",true);SPEC = b.build();
     }
     private PowerClientConfig() { }
 }
