@@ -25,6 +25,7 @@ public final class PowerGameTests {
         p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
         p.setPos(net.minecraft.world.phys.Vec3.atCenterOf(helper.absolutePos(new net.minecraft.core.BlockPos(1,10,1))));
         p.getAbilities().invulnerable=false;
+        // Damage tests use out_of_world to bypass ServerPlayer spawn protection, which FakePlayer.tick never advances.
         PowerAttributes.set(p,"a:pewter",1);PowerData.state(p,"a:pewter",2);PowerData.reserve(p,"pewter",300);
         return p;
     }
@@ -34,7 +35,7 @@ public final class PowerGameTests {
         double speed=p.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
         double attack=p.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
         helper.assertTrue(speed>.1 && attack>=4,"Burning pewter must enhance movement and melee attacks without holding activation");
-        p.setHealth(20);p.invulnerableTime=0;p.hurt(p.damageSources().generic(),10);
+        p.setHealth(20);p.invulnerableTime=0;p.hurt(p.damageSources().fellOutOfWorld(),10);
         helper.assertTrue(Math.abs(p.getHealth()-13.25)<.01 && Math.abs(PewterService.debt(p)-.75)<.01,"10 damage must become 6.75 immediate + .75 deferred after 25% mitigation; health="+p.getHealth()+", debt="+PewterService.debt(p));
         p.setAbsorptionAmount(4);p.invulnerableTime=20;
         PowerData.state(p,"a:pewter",0);PewterService.tick(p);
@@ -49,14 +50,14 @@ public final class PowerGameTests {
         double[] immediate={7.875,6.75,4.5};
         for(int level=1;level<=3;level++) {
             PowerData.state(p,"a:pewter",level);PewterService.debt(p,0);p.setHealth(20);p.invulnerableTime=0;
-            p.hurt(p.damageSources().generic(),10);
+            p.hurt(p.damageSources().fellOutOfWorld(),10);
             helper.assertTrue(Math.abs((20-p.getHealth())-immediate[level-1])<.01,"Pewter health damage must scale by burn level "+level);
         }
         PowerAttributes.set(p,"a:pewter",2);PowerData.state(p,"a:pewter",3);p.setHealth(20);p.invulnerableTime=0;PewterService.debt(p,0);
-        p.hurt(p.damageSources().generic(),10);
+        p.hurt(p.damageSources().fellOutOfWorld(),10);
         helper.assertTrue(Math.abs(p.getHealth()-17.3)<.01 && Math.abs(PewterService.debt(p)-.3)<.01,"Stronger Flaring must cap mitigation at 70%");
         PowerAttributes.set(p,"a:pewter",1);PowerData.state(p,"a:pewter",2);p.setHealth(20);p.setAbsorptionAmount(10);p.invulnerableTime=0;PewterService.debt(p,0);
-        p.hurt(p.damageSources().generic(),10);
+        p.hurt(p.damageSources().fellOutOfWorld(),10);
         helper.assertTrue(PewterService.debt(p)==0 && p.getHealth()==20,"Absorbed hits cannot create deferred injury");
         p.getFoodData().setExhaustion(0);p.causeFoodExhaustion(4);
         helper.assertTrue(Math.abs(p.getFoodData().getExhaustionLevel()-2)<.01,"Actual exhaustion entry point must apply pewter endurance before hunger thresholds");

@@ -12,7 +12,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - User chose pewter: speed/strength/endurance, mitigation capped 50% at baseline and 70% for stronger attributes, slight healing, persistent gray-heart injury debt, recovery through rest and saturation, payout on stop/depletion.
 - Implemented passive pewter burning, transient speed/attack modifiers, pre-food exhaustion scaling via a narrow Player mixin, post-armor mitigation/deferred injury, gray debt-heart HUD/private status packet, persistent debt and recovery, payout/death handling, refill vial/recipe and command integration.
 - Interpretation stated to user: 10% of post-mitigation/post-absorption health damage is deferred (not added on top); resting clears 1% of remaining debt each continuous five seconds at normal strength. Deferred fraction stays 10%; buffs/healing/recovery scale by effective attribute × burn strength. Other balance values are provisional and configurable.
-- Build, JUnit and server GameTests pending for this change. Prior verified iron/steel baseline remains documented below. Network protocol now 6; both sides must update.
+- Initial build/34 JUnit methods passed; 25/27 server GameTests passed, with two damage fixtures blocked by spawn protection. Corrected fixtures use out_of_world damage (bypasses spawn protection); rerun pending. Prior verified iron/steel baseline remains documented below. Network protocol now 6; both sides must update.
 - Next: validate CI, then client-playtest pewter buffs, exhaustion, gray-heart rendering, healing/recovery and payout including lethal drag. Iron/steel basics now work well according to user.
 
 ## Vision and accepted constraints
