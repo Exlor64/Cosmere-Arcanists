@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-19 UTC**. Current mod version: **0.15.0-alpha**.
+Last updated: **2026-10-19 UTC**. Current mod version: **0.16.0-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -9,15 +9,11 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
-- User requested bronze/copper implementation after clarifying bronze detects active/kinetic Investiture across Invested Arts.
-- Added shared server provider/one-shot signal API, passive bronze/copper fuel/effects, private directional rhythm/compass/focus HUD, configurable identification/difficulty/range, coppercloud concealment and overlapping/pierceable fields. Copper personally protects its burner via a shared emotional-influence event; zinc/brass remain pending.
-- Existing eight implemented Allomantic powers emit signals only during real burning with attribute/fuel/config gates. Unimplemented Allomancy/Feruchemy states, stored reserves and dormant powers emit nothing. Foreign arts need actual API integration; they are not invented here.
-- Both powers reuse existing persistent attributes, filed metals/mixed vials and selection controls. No save or registry migrations. Protocol9 requires matching client/server jars. Version0.15.0-alpha.
-- Local build blocked before compilation by unavailable Gradle download network (hostJava17). Java21 GitHub Actions passed build,all43 JUnit tests,all47 required server GameTests and artifact upload on00fe868763e63c2b5632e650bddb8bcc9a644d70 in run39305801270. Added3 unit methods and5 server GameTests.
-- User steering during implementation: use Minecraft note-block noises for bronze pulses. Default remains vanilla note-block bass drum, with client pulseInstrument choices BASS_DRUM/BASS/HARP/SNARE/HAT/BELL/CHIME/FLUTE; no custom audio assets. Rhythms/pitches vary by signal.
-- Latest chat: user asked which powers are next. Suggested zinc/brass as the next pair, using the emotional-influence gateway copper now provides. Remaining ordinary effects: zinc, brass, aluminum, duralumin, chromium, nicrosil, gold, cadmium, bendalloy (9); lerasium/further god-metal effects remain separate future work. No new implementation selected or authorized in this discussion. Version/protocol unchanged; documentation-only diff check passed.
-- User confirmed brass/zinc (initially mistyped bronze), then stated they have their own implementation ideas. Pause implementation pending their design. Assistant's anger/fear/resolve modes, controls, eligibility and player effects were suggestions only, not accepted requirements. No brass/zinc gameplay code or resources have been changed.
-- Next: hear the user's brass/zinc design before implementation; manual positional-audio/HUD/multiplayer testing remains outstanding. Version0.15.0-alpha/protocol9 unchanged; documentation-only diff check passed.
+- User specified emotional Allomancy: most mobs, weaker animals;5 emotions anger/fear/trust/love/compliance; highest emotion controls behavior. Explicit player combat/speed, villager prices, breeding and weak compliance effects supersede assistant's earlier tentative design.
+- Implemented the five-mode influence engine, aimed/Alt-area held activation, ability+scroll mode selection, persistent mode NBT, dominant-state mechanics, mob goal/avoidance/panic and villager trade hooks, transient player modifiers, source-specific love defense and weak additive compliance pull. Bronze sees both powers; copper gateway and aluminum headwear protect.
+- Version0.16.0-alpha/protocol10. Existing33 power attributes and filing/vial IDs unchanged. Added SERVER emotions config and client status HUD switch, entity/item datapack tags. No migration needed.
+- Local build attempt blocked before compilation by unavailable Gradle download; Java21 build and server GameTests will run in GitHub Actions. Added3 unit methods and6 server tests; results pending. Previous0.15.0 verification retained below until new checks finish.
+- Next: finish verification and manual UI, mob pathfinding/trading and multiplayer balance checks.
 
 ## Vision and accepted constraints
 
@@ -37,7 +33,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - Allomantic **iron and steel effects**, detection lines, aimed push/pull, movement assistance, metal reserves/vials, fall braking, and steel-thrown projectiles.
 - Allomantic **tin effects**: passive night vision, held zoom, sound-triggered mesh/surface wireframe echoes with per-block obstruction, fading and audibility/geometry budgets.
 - Allomantic **pewter effects**: passive burn, speed/melee/endurance, capped mitigation, slow healing, deferred injury, rest/saturation recovery, gray-heart HUD and fuel vial.
-- 16 Allomantic plus 16 Feruchemical attributes and selector entries. One additional atium-alloy attribute plus electrum effects are implemented; bronze/copper are also implemented; other Allomantic effects besides iron/steel/tin/pewter/electrum/atium/bronze/copper are pending. Feruchemy has selector states only, no storing/tapping effects.
+- 16 Allomantic plus 16 Feruchemical attributes and selector entries. One additional atium-alloy attribute plus electrum effects are implemented; bronze/copper/zinc/brass are also implemented; other Allomantic effects besides iron/steel/tin/pewter/electrum/atium/bronze/copper/zinc/brass are pending. Feruchemy has selector states only, no storing/tapping effects.
 - **Not implemented:** Scadrial dimension, other planets/dimensions, Cognitive Realm/perpendicularities/travel, origin GUI, expanded races/ancestry, other Allomancy effects, Feruchemy mechanics/metalminds, Hemalurgy power stealing/charging, Compounding.
 
 ## Metallurgy and detection decisions
@@ -58,7 +54,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - `PowerData.KEY = cosmerearcanists_powers`: states, reserves, primary `selected` and `secondary` assignments, migration markers. Origin metadata remains under `cosmerearcanists_origin` (schema 1).
 - `burn_levels_schema = 1` migrates old active states 1/2 to current 2/3 once; Off and Feruchemy states retain their meanings.
 - `/attribute @s cosmerearcanists:allomancy_steel base set 1` grants baseline steel. Replace `steel` with `iron` as needed; 0 removes the base power.
-- `/cosmere power grant <player> a:steel` sets at least baseline strength. `revoke` sets the base to zero, including a natural origin power; a positive modifier can still grant access. `/cosmere power refill <player>` refills iron/steel/tin/pewter/electrum/atium/bronze/copper reserves.
+- `/cosmere power grant <player> a:steel` sets at least baseline strength. `revoke` sets the base to zero, including a natural origin power; a positive modifier can still grant access. `/cosmere power refill <player>` refills all ten implemented Allomantic reserves.
 - Grant/revoke use `ResourceLocationArgument`, accepting IDs such as `a:steel` and `f:iron` without the old trailing-data parser error.
 - `/cosmere origin <scadrial|overworld>` in random/ancestry modes; CHOICE adds `<allomancy metal or none> <feruchemy metal or none>`. `/cosmere reset <player>` clears origin, powers data, and power attributes/modifiers. Rerolls replace previous origin base powers while retaining other attribute powers.
 
@@ -117,7 +113,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - `metalDetection`: categories (including fired projectiles), recursive recipes, hardness cost/cap, range-related scanning budgets, target count and sync cadence.
 - `steelProjectiles`: enabled, reference/max speed, nugget damage, cap ≤100, recoil mass, unknown content fallback, per-shot reserve cost (default 1), lifetime, alternate straight-down drop.
 - Existing config files retain saved values. New fields obtain defaults. Datapacks can override generation and recipes. Feature disablement must not delete saved data or registry entries.
-- `PowerService`: validated inputs, ticks/sessions, dispatcher, target selection, forces, throw event. `PowerAttributes`/`PowerData`: powers/persistence. `PowerNetwork`: controls, snapshots, additive impulse; **current protocol 9**. Update both server and client, especially for new projectile registration/renderer.
+- `PowerService`: validated inputs, ticks/sessions, dispatcher, target selection, forces, throw event. `PowerAttributes`/`PowerData`: powers/persistence. `PowerNetwork`: controls, snapshots, additive impulse; **current protocol 10**. Update both server and client, especially for new projectile registration/renderer.
 - `PowerClient`/`PowerClientMod`: input, HUD, lines, impulse reception, renderer. Common classes must not reference client classes. Client supplies no target positions or force magnitudes.
 - `MetalDetector`/`MetalGraph`: classification/aluminum closure. `MetalAmounts`/`RecipeMetalAmounts`: quantities. `MetalProjectilePhysics`: pure scaling formulas. `MetalProjectiles`: registration/launch. `SteelProjectile`: collision, damage, persistence and recovery.
 - Session state clears on logout, dimension change, respawn, datapack reload and server stop. Keep migrations idempotent and configuration gates server-authoritative.
@@ -155,7 +151,7 @@ Tethers bind the original inventory item's custom-data UUID to one projectile.
 Recall returns the entity without dropping another inventory item; loss/death
 of owner or loss/replacement of the matching item ends it. No forced chunks.
 Control action 9 carries only Space input with a short timeout; server owns
-rope constraints and shortening. Current protocol 9 requires both sides to update.
+rope constraints and shortening. Current protocol 10 requires both sides to update.
 
 Recall temporarily removes returning equipment heads from Allomantic targeting so a still-held steel key does not fight the reel-in. Custom spike ammunition supports standard crossbow loading, Quick Charge and spread; arrow-only Piercing behavior is not implemented.
 
@@ -236,3 +232,17 @@ Pewter test-fixture details: use out_of_world damage to bypass ServerPlayer spaw
 - Protocol9 `SeekingPacket` contains dimension, lifetime<=40, bronze/focus state, own copper radius, <=64 filtered pulses with finite position/clarity/period/state bounds. Private server-to-listener only. Existing33 attributes/registrations unchanged. Source list collected once per dimension per scan after player ticks; no client-supplied emissions or concealment decisions.
 - `SeekingClient` pulse compass, own-cloud status and up to3 held-bronze focus descriptions; private directional vanilla note-block rhythms (default bass drum, client-selectable instrument) projected2blocks from listener, with volume by clarity, bounded4 sounds/tick. Client effects never broadcast world sounds or trigger server tin hearing. Clear on expiry/death/spectator/dimension/disconnect. Client seeking HUD/sounds/volume/visible budget switches. Actual audio/appearance unverified manually.
 - Added3 JUnit methods (range/clarity, piercing/stacking, emotion thresholds) and5 GameTests (active emissions/walls, endpoint cloud/stack/pierce, foreign provider/identity privacy/config/opt-out, emotion/fuel/disabled-data/clone, transient expiry/focus/budget/codec). Local Gradle download blocked. Initial CI compiled all code;42/43 unit tests passed, with one stale PowerRules assertion still expecting bronze to be pending. Updated the working-power expectation. Final run39305801270 on00fe868763e63c2b5632e650bddb8bcc9a644d70 passed build,all43 JUnit tests,all47 required server tests and artifact upload, including configurable vanilla note-block instruments.
+
+
+## Emotional Allomancy: user design and implementation (0.16.0)
+
+- User's accepted5 emotions: anger mobs attack nearby mobs, player~25% damage; fear mobs flee, player speed burst and30% damage/attack-speed reduction; trust calms avoidance/harmed animals/villagers and discounts villager trades; love breeding and~25% player damage reduction toward user at baseline Flaring; compliance slow mob following and weak power-scaled player influence. Most mobs eligible, animals weaker. Highest emotion wins. Earlier proposed3-mood/no-player-control/limited-species approach is explicitly superseded.
+- `EmotionService` states baseline5 levels per entity, keyed source/power/emotion contributions refreshed on real activation; zinc adds/brass subtracts, bounded totals, deterministic tie order, strongest relevant source identifies behavior recipient. Linger80ticks with linear decay, no repeated-packet accumulation. Baselines trust.3/others.2, existing mob combat anger.6. No permanent mob allegiance or player emotion NBT. Actor modes use PowerData emotion_zinc/emotion_brass and persist with existing clone/save behavior.
+- G/H aimed ray targeting within16sqrt(strength) cap32; Alt latched before held ability enables max16 target area. Ability+scroll changes emotion via validated control action10; R/V menu scroll priority preserved. Server validates attributes, config/fuel/life/dimension/range/targets/protection. Burning alone drains1/sec and emits bronze signal but no influence. Existing shared burn strengths/drain apply. Refill includes both.33 attributes unchanged.
+- Most mobs/players eligible; Animal multiplier.5 default. Entity tag emotionally_immune default dragon/wither/armor_stand; item emotion_shielding or recursive aluminum-containing headwear blocks. Existing EmotionalInfluenceEvent gateway applies copper's personal protection/extreme piercing before actual influence. Config disable clears active contributions/modifiers while retaining attributes/modes/reserves.
+- `EmotionalGoal` via MobGoalsAccessor on EntityJoin controls anger/fear/compliance movement/target/look; normal goals resume afterward. Anger attacks nearest other nonallied mob, fallback damage for passive species without attack attribute; fear navigates away; compliance speed.45 toward user. Native pathfinding guarded by loaded region based follow-range+8. No chunks forced. Custom/special AI compatibility and actual routes remain untested manually.
+- Trust AvoidEntityGoal/PanicGoal mixins stop avoidance of source and injury panic (not fire). Villager injury/avoidance brain memories clear. Villager.updateSpecialPrices TAIL gives source-only15%/strength capped50% session discount; vanilla resets quoted special prices on session close, never base offers/gossip. Open sessions retain quoted prices after influence changes.
+- Love uses vanilla adult Animal in-love readiness at intensity>=.25; no babies/cooldown bypass. Willing Villagers get breeding/interaction target memory, food/beds still required. Player source-specific love damage reduction=.125*winning intensity, cap.75; baseline Flaring2=>25%. Only damage against influencing user reduced; no blanket defense.
+- Player transient ADD_MULTIPLIED_TOTAL attack damage +.25/anger intensity cap.75; fear attack damage/attack speed -.30/intensity cap.9. Fear movement +.4/intensity cap1 for40ticks on entry,100tick retrigger cooldown. Compliance horizontal additive impulse .003/intensity every4ticks cap.02, server authorized with existing Impulse packet and no walking-input filtering. Preserve real client momentum; never replace with walking displacement. Effects scale with effective attribute/burn/distance/animal factor, winning emotion only.
+- `EmotionConfig` SERVER cosmerearcanists-emotions-server.toml major per-power/entity/animal/area/each-emotion/breeding/trade/aluminum gates, drains/ranges/duration/animal multiplier/target-state budgets/combat rates/fear timing/trust/love/compliance. Client emotionControlsAndStatus toggles own selected modes/incoming dominant HUD. Protocol10 EmotionPacket dimension,2 modes,dominant/-1,intensity bounds; no source identity. Clear states/transient modifiers on expiration/logout/dimension/server stop.
+- Added3 JUnit methods dominant/tie, percentages/caps, falloff and6 server GameTests:5 emotions/opposition/animals, player modifier cleanup, actual copper/love scope, passive aggression/breeding safeguards, avoidance/trade session mixin, modes/clone/fuel/config/packet. CI pending; do not claim success yet.

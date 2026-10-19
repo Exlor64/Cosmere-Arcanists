@@ -17,6 +17,8 @@ public final class PowerClientMod {
         bus.addListener(this::keys);
         bus.addListener(this::renderers);
         bus.addListener(this::setup);
+        dev.cosmerearcanists.power.EmotionPacket.receiver=EmotionClient::receive;
+        NeoForge.EVENT_BUS.register(new EmotionClient());
         dev.cosmerearcanists.power.SeekingPacket.receiver=SeekingClient::receive;
         NeoForge.EVENT_BUS.register(new SeekingClient());
         dev.cosmerearcanists.power.TemporalPacket.receiver=TemporalClient::receive;

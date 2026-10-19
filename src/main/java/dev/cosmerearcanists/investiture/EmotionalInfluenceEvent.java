@@ -5,7 +5,7 @@ import net.neoforged.bus.api.Event;
 import net.neoforged.bus.api.ICancellableEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
-/** Future zinc/brass and compatible mods must call allowed immediately before applying emotional influence.
+/** Zinc/brass and compatible mods call allowed immediately before applying emotional influence.
  * This event is exclusively for emotional Investiture, not general damage, potions or AI effects.
  */
 public final class EmotionalInfluenceEvent extends Event implements ICancellableEvent {

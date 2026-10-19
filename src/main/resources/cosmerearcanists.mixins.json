@@ -8,7 +8,11 @@
     "FiledIngredientMixin",
     "FiledShapelessMixin",
     "FiledRecipeManagerMixin",
-    "EntitySoundSourceMixin"
+    "EntitySoundSourceMixin",
+    "MobGoalsAccessor",
+    "EmotionAvoidGoalMixin",
+    "EmotionPanicGoalMixin",
+    "EmotionVillagerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

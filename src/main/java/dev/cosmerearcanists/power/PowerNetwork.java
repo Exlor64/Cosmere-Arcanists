@@ -70,7 +70,7 @@ public final class PowerNetwork {
         };
         @Override public Type<TinEcho> type(){return TYPE;}
     }
-    /** action: 0 select, 1 set state, 2 activate selected ability hold, 3 cycle state, 4 request snapshot, 5 primary pulse, 6 toggle highlighted power slot, 7 secondary hold, 8 secondary pulse, 9 grapple Space input. Activation value bits: held=1, alternate=2, forward=4, back=8, left=16, right=32, jump=64, descend=128. */
+    /** action: 0 select, 1 set state, 2 activate selected ability hold, 3 cycle state, 4 request snapshot, 5 primary pulse, 6 toggle highlighted power slot, 7 secondary hold, 8 secondary pulse, 9 grapple Space input, 10 set emotional mode. Activation value bits: held=1, alternate=2, forward=4, back=8, left=16, right=32, jump=64, descend=128. */
     public record Control(int action, String power, int value) implements CustomPacketPayload {
         public static final Type<Control> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID, "power_control"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Control> CODEC = new StreamCodec<>() {
@@ -89,7 +89,8 @@ public final class PowerNetwork {
         @Override public Type<Impulse> type() { return TYPE; }
     }
     public static void register(RegisterPayloadHandlersEvent event) {
-        var r = event.registrar("9");
+        var r = event.registrar("10");
+        r.playToClient(EmotionPacket.TYPE,EmotionPacket.CODEC,(packet,context)->context.enqueueWork(()->EmotionPacket.receiver.accept(packet)));
         r.playToClient(SeekingPacket.TYPE,SeekingPacket.CODEC,(packet,context)->context.enqueueWork(()->SeekingPacket.receiver.accept(packet)));
         r.playToClient(TemporalPacket.TYPE,TemporalPacket.CODEC,(packet,context)->context.enqueueWork(()->TemporalPacket.receiver.accept(packet)));
         r.playToClient(TinStatus.TYPE,TinStatus.CODEC,(packet,context)->context.enqueueWork(()->tinReceiver.accept(packet)));

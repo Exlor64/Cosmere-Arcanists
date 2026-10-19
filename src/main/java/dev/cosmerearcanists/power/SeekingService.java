@@ -31,6 +31,7 @@ public final class SeekingService {
     }
     public static double activeStrength(ServerPlayer p,String power) {
         return switch(power) {
+            case "a:zinc","a:brass" -> EmotionService.strength(p,power);
             case "a:iron","a:steel" -> PowerConfig.IRON_STEEL.get()?ordinaryStrength(p,power.substring(2)):0;
             case "a:tin" -> TinService.strength(p);
             case "a:pewter" -> PewterService.strength(p);

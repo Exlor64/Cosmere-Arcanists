@@ -6,7 +6,7 @@ public final class PowerClientConfig {
     public enum PulseInstrument { BASS_DRUM, BASS, HARP, SNARE, HAT, BELL, CHIME, FLUTE }
     public static final ModConfigSpec.EnumValue<PulseInstrument> SEEKING_INSTRUMENT;
     public static final ModConfigSpec SPEC;
-    public static final ModConfigSpec.BooleanValue HUD, LINES, THROUGH_WALLS, PEWTER_HEARTS, TIN_ECHOES, TIN_MODELS, TIN_ZOOM, FUTURES, FUTURE_MODELS, FUTURE_WARNINGS, SEEKING_HUD, SEEKING_SOUNDS;
+    public static final ModConfigSpec.BooleanValue HUD, LINES, THROUGH_WALLS, PEWTER_HEARTS, TIN_ECHOES, TIN_MODELS, TIN_ZOOM, FUTURES, FUTURE_MODELS, FUTURE_WARNINGS, SEEKING_HUD, SEEKING_SOUNDS, EMOTION_HUD;
     public static final ModConfigSpec.IntValue HUD_X, HUD_Y, HOLD_TICKS, TIN_ECHO_LIMIT, SEEKING_LIMIT;
     public static final ModConfigSpec.DoubleValue LINE_WIDTH, TIN_WIDTH, TIN_OPACITY, FUTURE_OPACITY, SEEKING_VOLUME;
     static {
@@ -28,7 +28,7 @@ public final class PowerClientConfig {
         SEEKING_HUD=b.define("pulseCompassAndCopperStatus",true);SEEKING_SOUNDS=b.define("privateRhythms",true);
         SEEKING_INSTRUMENT=b.comment("Vanilla note-block instrument for private bronze pulses; rhythms/pitch still distinguish signals.").defineEnum("pulseInstrument",PulseInstrument.BASS_DRUM);
         SEEKING_LIMIT=b.defineInRange("maxVisiblePulses",16,1,64);SEEKING_VOLUME=b.defineInRange("rhythmVolume",.35,0.0,1.0);
-        b.pop();SPEC = b.build();
+        b.pop();EMOTION_HUD=b.define("emotionControlsAndStatus",true);SPEC = b.build();
     }
     private PowerClientConfig() { }
 }

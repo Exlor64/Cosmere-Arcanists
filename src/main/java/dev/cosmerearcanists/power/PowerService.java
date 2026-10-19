@@ -47,6 +47,8 @@ public final class PowerService {
         };
         ABILITIES.register("a:iron", ironSteel);
         ABILITIES.register("a:steel", ironSteel);
+        ABILITIES.register("a:zinc",(p,key,phase,targets)->EmotionService.activate(p,key,phase));
+        ABILITIES.register("a:brass",(p,key,phase,targets)->EmotionService.activate(p,key,phase));
     }
     private static Session session(ServerPlayer p) { return SESSIONS.computeIfAbsent(p.getUUID(), id -> new Session()); }
     private static Activation activationForPower(ServerPlayer p,String power) {
@@ -82,13 +84,14 @@ public final class PowerService {
         if (packet.action() == 4) { PowerNetwork.sync(p, s.targets); return; }
         if (!p.isAlive() || p.isSpectator() || !PowerData.available(p).contains(packet.power())) return;
         switch (packet.action()) {
+            case 10 -> EmotionService.mode(p,packet.power(),packet.value());
             case 0 -> PowerData.assignSlot(p,packet.power(),0);
             case 6 -> PowerData.assignSlot(p,packet.power(),PowerData.secondary(p).equals(packet.power())?0:1);
             case 1 -> PowerData.state(p, packet.power(), packet.value());
             case 3 -> PowerData.state(p, packet.power(), PowerRules.next(packet.power(), PowerData.state(p, packet.power()), PowerConfig.FERUCHEMY_LEVELS.get()));
             default -> { return; }
         }
-        PowerNetwork.sync(p, s.targets);
+        PowerNetwork.sync(p, s.targets);EmotionService.sync(p);
     }
     @SubscribeEvent public void syncDatapack(OnDatapackSyncEvent event) {
         if (event.getPlayer() == null) { event.getPlayerList().getPlayers().forEach(PowerService::stopActivation); MetalDetector.rebuild(event.getPlayerList().getServer()); SESSIONS.clear(); }
@@ -124,6 +127,7 @@ public final class PowerService {
         TinService.tick(p);
         TemporalService.tick(p);
         SeekingService.tick(p);
+        EmotionService.tickFuel(p);
         var s = session(p); var available = PowerData.available(p);
         Vec3 displacement = s.previousPosition == null ? null : p.position().subtract(s.previousPosition);
         s.observedMovement = usableMovement(displacement) ? displacement : null;
@@ -372,7 +376,7 @@ public final class PowerService {
             }))))
             .then(Commands.literal("refill").then(Commands.argument("player", EntityArgument.player()).executes(ctx -> {
                 var p = EntityArgument.getPlayer(ctx, "player");
-                PowerData.reserve(p, "iron", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "steel", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "pewter", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "tin", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"bronze",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"copper",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"atium",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"electrum",PowerConfig.RESERVE_CAP.get()); PowerNetwork.sync(p, List.of()); return 1;
+                PowerData.reserve(p, "iron", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "steel", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "pewter", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "tin", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"zinc",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"brass",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"bronze",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"copper",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"atium",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"electrum",PowerConfig.RESERVE_CAP.get()); PowerNetwork.sync(p, List.of()); return 1;
             })))));
     }
     private boolean validPower(String key) {

@@ -58,6 +58,8 @@ public final class PowerClient {
         input.forwardImpulse = (float)(-sin*filtered[0] + cos*filtered[1]);
         input.leftImpulse = (float)(cos*filtered[0] + sin*filtered[1]);
     }
+    public static String primaryPower(){return snapshot.selected();}
+    public static String secondaryPower(){return snapshot.secondary();}
     private static String selected() { return snapshot.selected(); }
     private static String preview() { return snapshot.powers().isEmpty() ? "" : snapshot.powers().get(Math.floorMod(previewIndex, snapshot.powers().size())).power(); }
     private static int state(String power) { return snapshot.powers().stream().filter(e -> e.power().equals(power)).mapToInt(PowerNetwork.Entry::state).findFirst().orElse(0); }
@@ -145,6 +147,9 @@ public final class PowerClient {
             if (!choosingState) { choosingState = true; stateTicks = 0; previewState = state(selected()); }
             previewState = PowerRules.clamp(selected(), previewState + direction, snapshot.levels());
             scrolledState = true; event.setCanceled(true);
+        } else {
+            String emotional=APPLY.isDown()&&Emotion.power(selected())?selected():SECONDARY.isDown()&&Emotion.power(snapshot.secondary())?snapshot.secondary():"";
+            if(!emotional.isEmpty()){send(10,emotional,EmotionClient.cycle(emotional,direction));event.setCanceled(true);}
         }
     }
     @SubscribeEvent public void click(InputEvent.MouseButton.Pre event) {

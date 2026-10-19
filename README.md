@@ -11,7 +11,7 @@ For current project status, accepted design decisions, verification and continua
 - Data survives death and relogging. Config changes do not reroll saved origins.
 - Hemalurgy is acquired rather than a birth power; its switch reserves the future feature gate.
 
-**Iron/steel/tin/pewter/electrum/atium/bronze/copper Allomancy and the power selector are implemented. Other magic effects, custom dimensions, planetary travel, and the origin selection screen remain in development.** Scadrial will be Era 2 with an Overworld-like environment. The ancestry mode currently uses only a Scadrian-human probability multiplier; family inheritance and additional races are future work.
+**Iron/steel/tin/pewter/electrum/atium/bronze/copper/zinc/brass Allomancy and the power selector are implemented. Other magic effects, custom dimensions, planetary travel, and the origin selection screen remain in development.** Scadrial will be Era 2 with an Overworld-like environment. The ancestry mode currently uses only a Scadrian-human probability multiplier; family inheritance and additional races are future work.
 
 ## Build and run
 Install JDK 21 and import the root Gradle project into IntelliJ.
@@ -50,7 +50,7 @@ Ores require an iron-tier pickaxe, support Silk Touch/Fortune, and smelt/blast i
 The Cosmere Metals creative tab contains the new materials. Textures are initial distinct pixel palettes. `cosmerearcanists:metals` and `cosmerearcanists:aluminum_containing` item tags seed iron/steel detection. Duralumin is included in the aluminum exclusion tag.
 
 ## Iron/steel and power controls (0.3.0)
-Iron, steel, tin, pewter, electrum, atium-alloy, bronze and copper Allomantic effects are implemented. Other assigned powers appear in the selector with **effects pending**; Feruchemical state levels are controls only, with no storage/tapping mechanics yet.
+Iron, steel, tin, pewter, electrum, atium-alloy, bronze, copper, zinc and brass Allomantic effects are implemented. Other assigned powers appear in the selector with **effects pending**; Feruchemical state levels are controls only, with no storage/tapping mechanics yet.
 
 Default keys (all rebindable):
 - Hold **R**, scroll to a power, then release R to select it. Tap R to cycle that power's state. Left-click while the menu is open also cycles the highlighted power's state.
@@ -70,7 +70,7 @@ Operator testing commands:
 - `/cosmere power grant <player> a:steel`
 - `/cosmere power grant <player> f:iron` (selector test only)
 - `/cosmere power revoke <player> <power>` sets the power’s base attribute to zero, including natural origin powers.
-- `/cosmere power refill <player>` fills iron, steel, tin, pewter, electrum, atium, bronze and copper reserves.
+- `/cosmere power refill <player>` fills all ten implemented Allomantic reserves.
 
 `./gradlew build` runs tests for recursive metal/aluminum classification, cyclic recipes, power states, and mass/distance/flaring force rules. CI also runs the GameTest server to validate runtime recipe detection and player data cloning. Multiplayer input, blue-line appearance, and hands-on movement still require client playtesting.
 
@@ -83,7 +83,7 @@ All 16 ordinary Allomantic and 16 Feruchemical powers have player attributes nam
 The atium–electrum alloy additionally has `cosmerearcanists:allomancy_atium`.
 Zero means no power; 1 is normal strength. Positive effective values grant access,
 and iron/steel force scales with the effective value (including attribute modifiers).
-Powers other than iron, steel, tin, pewter, electrum, atium, bronze and copper still have selection/state support only. Config switches still gate access.
+Powers other than iron, steel, tin, pewter, electrum, atium, bronze, copper, zinc and brass still have selection/state support only. Config switches still gate access.
 
 Operator examples:
 ```mcfunction
@@ -494,7 +494,7 @@ Natural acquisition/world generation and lerasium powers remain future work.
 As of 0.14.0, existing atium IDs explicitly represent the atium–electrum alloy;
 no pure-atium recipe, material, or effect is implied. No alloy ratio is invented.
 The existing 32 ordinary Metallic Arts attributes remain; alloy Allomancy adds
-one separate attribute. Current network protocol is 9; update both jars.
+one separate attribute. Current network protocol is 10; update both jars.
 
 
 ### Atium-alloy and electrum future sight (0.14.0)
@@ -615,3 +615,65 @@ piercing/stacking, private unknown identities, personal emotional protection,
 fuel/disablement/respawn, pulse expiry/focus, budgets and packet round trips.
 Actual positional audio, HUD appearance and multiplayer balance need manual
 playtesting. Progression XP/savantism and other arts are still future work.
+
+
+### Emotional Allomancy: zinc and brass (0.16.0)
+
+Zinc intensifies and brass suppresses one of five emotions: **anger, fear, trust,
+love, compliance**. Most mobs respond; animals receive half the influence by
+default. The highest emotional level determines behavior, with stable enum order
+breaking ties. Opposing Rioting/Soothing and multiple users combine rather than
+stacking repeated packets from the same user into unlimited power.
+
+Hold the assigned G/H activation key to influence the aimed target. Hold that key
+and scroll to select an emotion; R/V menu scrolling retains priority. Hold Alt
+before activation for bounded area influence. Selection is stored separately for
+zinc/brass and survives respawn/relog. Burning drains1 reserve/sec at normal burn,
+with existing low/flare multipliers; passive burning alone does not influence
+others. Both powers produce bronze-detectable signals while burning.
+
+- **Anger:** mobs attack nearby mobs, including passive animals using a small
+  fallback attack. Players gain about25% melee attack damage per effective
+  strength, capped75%.
+- **Fear:** mobs flee the influencing user. Players receive a40tick speed burst
+  on fear onset and30% lower melee attack damage and attack speed per strength.
+  The burst cannot retrigger within100ticks; reductions cap90%.
+- **Trust:** animals' avoidance of the influencing user and non-fire injury panic
+  are suppressed; villagers' injury/avoidance memories are calmed. Trust lowers
+  the influencing user's villager prices by15% per strength, max50%, at trading
+  session start. Vanilla resets session prices afterward; base prices and gossip
+  are not changed. An already open trading session keeps its quoted prices.
+- **Love:** adult breeding-ready animals enter vanilla love mode; babies and
+  cooldowns are respected. Willing love-influenced villagers receive mate intent,
+  retaining vanilla food/bed checks. Influenced players deal less damage to the
+  influencing user only:12.5% per strength means25% at baseline Flaring, cap75%.
+- **Compliance:** mobs slowly follow the user. Players receive a weak horizontal
+  additive pull every4ticks, .003 per strength capped.02, retaining their input
+  and existing momentum. No teleporting or forced look direction.
+
+Effect strength scales with persistent power attributes, burn level, distance and
+animal multiplier. Natural baseline emotions and current combat intent seed the
+state. Influence fades over80ticks after application; stronger new emotions can
+replace the dominant behavior. Only the winning emotion applies its mechanics.
+
+Copper's existing emotional-influence gateway can block actual zinc/brass use.
+Aluminum-containing headwear (recursive recipe classification) and items in
+`cosmerearcanists:emotion_shielding` also protect. Default entity-type tag
+`cosmerearcanists:emotionally_immune` excludes dragon/wither/armor stands; datapacks
+can change it. Disabling a power/effect removes its active influence/modifiers
+while retaining player attributes, reserves and emotion selections.
+
+`cosmerearcanists-emotions-server.toml` exposes power/entity/animal/area toggles,
+per-emotion and breeding/trade toggles, drains, ranges, animal response, duration,
+target/state budgets, combat rates, burst timings, discounts and compliance force.
+Defaults range16sqrt(strength), cap32,16 targets/use,256 affected entities. Native
+pathfinding is requested only inside a verified loaded region; custom mob AI
+compatibility and terrain navigation still require playtesting. Client
+`emotionControlsAndStatus` toggles the emotion selector/status HUD.
+
+Test with `/cosmere power grant @s a:zinc`, `a:brass`, then
+`/cosmere power refill @s`. Existing persistent attributes and mixed vials work;
+no new registry IDs or save migration. Client and server need protocol **10**.
+The private emotional status packet does not disclose an influencing player's
+identity. Player emotional mechanics and species behavior are gameplay choices
+requested for this mod; progression XP and Hemalurgic domination remain future.
