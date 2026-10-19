@@ -25,6 +25,8 @@ public final class EmotionGameTests {
         PowerAttributes.set(source,"a:zinc",4);EmotionService.apply(source,target,"a:zinc",Emotion.COMPLIANCE);h.assertTrue(DominationService.owner(target)==source && DominationService.remaining(target)==1200,"Threshold strength seizes a damaged spirit for one minute");
         target.setTarget(source);h.assertTrue(target.getTarget()==null,"Minions cannot target their controller");
         PowerAttributes.set(source,"a:zinc",8);EmotionService.apply(source,target,"a:zinc",Emotion.COMPLIANCE);h.assertTrue(DominationService.remaining(target)==2400,"Duration scales with effective power");
+        var enemy=mob(h,EntityType.SHEEP,source.position().add(1,0,0));source.setLastHurtMob(enemy);float health=enemy.getHealth();DominationService.behave(target);h.assertTrue(target.getTarget()==enemy && enemy.getHealth()<health,"Controlled mobs assist their owner in combat");
+        PowerAttributes.set(source,"a:zinc",64);EmotionService.apply(source,target,"a:zinc",Emotion.COMPLIANCE);h.assertTrue(DominationService.remaining(target)==EmotionConfig.MINION_CAP.get(),"Extreme strength reaches the configured duration cap independently of HUD intensity limits");
         SpiritualIntegrity.set(target,1);DominationService.tick();h.assertTrue(DominationService.owner(target)==null,"Restoring integrity releases a minion");h.succeed();
     }
     @GameTest(template="empty",timeoutTicks=120) public static void dominationExpiresAndPlayerIntegritySurvivesClone(GameTestHelper h){

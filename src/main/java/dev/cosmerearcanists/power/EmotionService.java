@@ -36,7 +36,7 @@ public final class EmotionService {
     private record Influence(ServerPlayer source,String power,Emotion emotion,double amount,long expires) { }
     private static final class State {
         final LivingEntity target;final double[] baseline={.20,.20,.30,.20,.20},levels=new double[5];
-        final Map<Key,Influence> influences=new HashMap<>();Emotion dominant;ServerPlayer source;double intensity;long burstUntil,burstCooldown;boolean inducedLove;
+        final Map<Key,Influence> influences=new HashMap<>();Emotion dominant;ServerPlayer source;double intensity,complianceStrength;long burstUntil,burstCooldown;boolean inducedLove;
         State(LivingEntity target){this.target=target;if(target instanceof Mob mob && (mob.getTarget()!=null || mob instanceof net.minecraft.world.entity.monster.Enemy))baseline[0]=.6;if(target instanceof Animal animal && animal.isInLove())baseline[Emotion.LOVE.ordinal()]=.6;}
     }
     private static ResourceLocation id(String path){return ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,path);}
@@ -80,7 +80,7 @@ public final class EmotionService {
         var state=STATES.get(target.getUUID());if(state==null){if(STATES.size()>=EmotionConfig.AFFECTED.get())return false;state=new State(target);STATES.put(target.getUUID(),state);}
         state.influences.put(new Key(source.getUUID(),power,emotion),new Influence(source,power,emotion,(power.equals("a:zinc")?1:-1)*amount,target.level().getGameTime()+EmotionConfig.DURATION.get()));
         refresh(state);if(target instanceof Mob mob && angerSuppressed(state))pacify(mob);
-        if(state.dominant==Emotion.COMPLIANCE && state.source==source && amount>0 && power.equals("a:zinc"))DominationService.attempt(source,target,power,state.intensity);
+        if(state.dominant==Emotion.COMPLIANCE && state.source==source && amount>0 && power.equals("a:zinc"))DominationService.attempt(source,target,power,state.complianceStrength);
         return true;
     }
     private static void refresh(State state) {
@@ -93,6 +93,7 @@ public final class EmotionService {
             if(value>leading[n]){leading[n]=value;owners[n]=influence.source;}
             if(Math.abs(value)>strongest){strongest=Math.abs(value);fallback=influence.source;}
         }
+        state.complianceStrength=Math.max(0,state.levels[Emotion.COMPLIANCE.ordinal()]-state.baseline[Emotion.COMPLIANCE.ordinal()]);
         for(int i=0;i<5;i++)state.levels[i]=Math.clamp(state.levels[i],0,16);
         Emotion old=state.dominant;state.dominant=state.influences.isEmpty()?null:Emotion.values()[EmotionMath.dominant(state.levels)];
         if(state.dominant!=null && state.levels[state.dominant.ordinal()]<=.001)state.dominant=null;
