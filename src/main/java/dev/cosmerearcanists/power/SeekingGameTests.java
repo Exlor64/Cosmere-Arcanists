@@ -23,6 +23,8 @@ public final class SeekingGameTests {
     @GameTest(template="empty") public static void onlyActiveImplementedEffectsEmitAndBronzeSeesThroughWalls(GameTestHelper h) {
         var source=player(h,"steel");
         for(String m:List.of("iron","tin","pewter","electrum","atium","bronze","copper","gold"))grant(source,m);
+        h.assertTrue(SeekingService.signalsFor(source).size()==6,"Unheld future-sight metals emit no active signal");
+        PowerData.assignSlot(source,"a:atium",0);PowerData.assignSlot(source,"a:electrum",1);PowerService.control(source,new PowerNetwork.Control(2,"",1));PowerService.control(source,new PowerNetwork.Control(7,"",1));
         var emissions=SeekingService.signalsFor(source);
         h.assertTrue(emissions.size()==8 && emissions.stream().noneMatch(s->s.effect().getPath().equals("gold")),"Only eight implemented actively burning effects emit, not placeholder gold");
         PowerData.state(source,"a:steel",0);h.assertTrue(SeekingService.signalsFor(source).stream().noneMatch(s->s.effect().getPath().equals("steel")),"Possessing the attribute and reserves does not emit while off");
