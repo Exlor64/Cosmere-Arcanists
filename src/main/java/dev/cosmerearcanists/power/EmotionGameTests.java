@@ -25,7 +25,8 @@ public final class EmotionGameTests {
         EmotionService.apply(source,cow,"a:zinc",Emotion.ANGER);h.assertTrue(EmotionService.intensity(cow)<EmotionService.intensity(p),"Animals have a lesser response");
         EmotionService.apply(source,p,"a:brass",Emotion.ANGER);h.assertTrue(EmotionService.dominant(p)==Emotion.TRUST,"Equal Soothing counters Rioting and changes the dominant emotion");
         for(var emotion:Emotion.values()){EmotionService.clear(p);EmotionService.apply(source,p,"a:zinc",emotion);h.assertTrue(EmotionService.dominant(p)==emotion,"Each requested emotion can dominate: "+emotion);}
-        EmotionService.clear(p);EmotionService.clear(cow);h.succeed();
+        EmotionService.clear(p);for(var emotion:Emotion.values())EmotionService.apply(source,p,"a:brass",emotion);
+        h.assertTrue(EmotionService.dominant(p)==null,"Suppressing every emotion to zero must not create spurious anger");EmotionService.clear(p);EmotionService.clear(cow);h.succeed();
     }
     @GameTest(template="empty") public static void emotionalCombatModifiersApplyAndCleanUp(GameTestHelper h){
         var source=caster(h);var p=caster(h);p.setPos(source.position());double attack=p.getAttributeValue(Attributes.ATTACK_DAMAGE),speed=p.getAttributeValue(Attributes.ATTACK_SPEED),movement=p.getAttributeValue(Attributes.MOVEMENT_SPEED);

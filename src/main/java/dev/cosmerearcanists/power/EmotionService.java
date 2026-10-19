@@ -88,11 +88,12 @@ public final class EmotionService {
         System.arraycopy(state.baseline,0,state.levels,0,5);var leading=new double[5];var owners=new ServerPlayer[5];double strongest=0;ServerPlayer fallback=null;
         for(var influence:state.influences.values()) {
             double value=influence.amount*Math.clamp((influence.expires-now)/(double)EmotionConfig.DURATION.get(),0,1);int n=influence.emotion.ordinal();state.levels[n]+=value;
-            if(Math.abs(value)>leading[n]){leading[n]=Math.abs(value);owners[n]=influence.source;}
+            if(value>leading[n]){leading[n]=value;owners[n]=influence.source;}
             if(Math.abs(value)>strongest){strongest=Math.abs(value);fallback=influence.source;}
         }
         for(int i=0;i<5;i++)state.levels[i]=Math.clamp(state.levels[i],0,16);
         Emotion old=state.dominant;state.dominant=state.influences.isEmpty()?null:Emotion.values()[EmotionMath.dominant(state.levels)];
+        if(state.dominant!=null && state.levels[state.dominant.ordinal()]<=.001)state.dominant=null;
         int n=state.dominant==null?0:state.dominant.ordinal();state.source=owners[n]==null?fallback:owners[n];state.intensity=state.dominant==null?0:Math.max(0,state.levels[n]-state.baseline[n]);
         if(state.dominant==Emotion.FEAR && old!=Emotion.FEAR && now>=state.burstCooldown){state.burstUntil=now+EmotionConfig.FEAR_BURST.get();state.burstCooldown=now+EmotionConfig.FEAR_COOLDOWN.get();}
         if(state.dominant!=Emotion.FEAR)state.burstUntil=0;
@@ -138,7 +139,7 @@ public final class EmotionService {
         }
     }
     public static void discount(Villager villager,Player customer){var s=STATES.get(villager.getUUID());if(!EmotionConfig.TRADES.get()||!trusts(villager,customer)||s==null)return;double fraction=EmotionMath.capped(Math.max(s.intensity,.1),EmotionConfig.DISCOUNT.get(),.5);for(var offer:villager.getOffers())offer.addToSpecialPriceDiff(-(int)Math.floor(offer.getBaseCostA().getCount()*fraction));}
-    @SubscribeEvent public void targeting(LivingChangeTargetEvent event){var s=STATES.get(event.getEntity().getUUID());if(s==null)return;refresh(s);if(s.dominant==Emotion.FEAR||s.dominant==Emotion.COMPLIANCE || (s.dominant==Emotion.TRUST||s.dominant==Emotion.LOVE) && event.getNewTarget()==s.source)event.setNewTarget(null);}
+    @SubscribeEvent public void targeting(LivingChangeTargetEvent event){var s=STATES.get(event.getEntity().getUUID());if(s==null)return;refresh(s);if(s.dominant==Emotion.FEAR||s.dominant==Emotion.COMPLIANCE || (s.dominant==Emotion.TRUST||s.dominant==Emotion.LOVE) && event.getNewAboutToBeSetTarget()==s.source)event.setNewAboutToBeSetTarget(null);}
     @SubscribeEvent(priority=EventPriority.HIGH) public void loveDamage(LivingDamageEvent.Pre event){if(event.getSource().getEntity() instanceof ServerPlayer attacker)event.setNewDamage((float)(event.getNewDamage()*(1-loveReduction(attacker,event.getEntity()))));}
     @SubscribeEvent public void join(EntityJoinLevelEvent event){if(!event.getLevel().isClientSide && event.getEntity() instanceof Mob mob && GOALS.add(mob))((dev.cosmerearcanists.mixin.MobGoalsAccessor)mob).cosmerearcanists$goals().addGoal(0,new EmotionalGoal(mob));}
     @SubscribeEvent public void tick(ServerTickEvent.Post event) {
