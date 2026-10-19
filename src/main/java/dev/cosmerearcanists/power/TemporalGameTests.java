@@ -56,6 +56,31 @@ public final class TemporalGameTests {
         }finally{TemporalConfig.DODGE_CHANCE.set(base);TemporalConfig.DODGE_CAP.set(cap);TemporalConfig.DODGE.set(enabled);attacker.discard();}
         h.succeed();
     }
+    @GameTest(template="empty") public static void electrumScoutAnchorsBodyScalesRangeAndStopsCleanly(GameTestHelper h){
+        floor(h);var p=player(h,"Scout",origin(h),"electrum");var anchor=p.position();p.setYRot(-90);
+        PowerService.control(p,new PowerNetwork.Control(2,"",3|4));ScoutService.tick(p);h.assertTrue(!ScoutService.active(p),"Scouting requires actual flaring");
+        PowerData.state(p,"a:electrum",3);ScoutService.tick(p);
+        try{
+            h.assertTrue(ScoutService.active(p) && ScoutService.position(p).x>anchor.x && p.position().equals(anchor),"Shadow moves independently while actual body stays anchored");
+            h.assertTrue(Math.abs(ScoutService.radius(p)-8)<1e-9,"Baseline flare range is eight blocks");PowerAttributes.set(p,"a:electrum",4);h.assertTrue(Math.abs(ScoutService.radius(p)-16)<1e-9,"Greater effective power increases scouting range");PowerAttributes.set(p,"a:electrum",1);
+            h.setBlock(new BlockPos(2,20,1),Blocks.STONE);h.setBlock(new BlockPos(2,21,1),Blocks.STONE);
+            for(int i=0;i<50;i++)ScoutService.tick(p);
+            h.assertTrue(ScoutService.position(p).x<=h.absolutePos(new BlockPos(2,20,1)).getX()-.29,"Scout cannot pass through solid walls");
+            var use=new net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickItem(p,net.minecraft.world.InteractionHand.MAIN_HAND);net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(use);h.assertTrue(use.isCanceled(),"Scouting cannot use real-body items");
+            PowerService.control(p,new PowerNetwork.Control(2,"",1));ScoutService.tick(p);h.assertTrue(!ScoutService.active(p),"Releasing Alt while holding activation returns to body");
+            PowerService.control(p,new PowerNetwork.Control(2,"",3));ScoutService.tick(p);h.assertTrue(ScoutService.active(p),"Alt can engage after activation is already held");
+            PowerData.reserve(p,"electrum",0);ScoutService.tick(p);h.assertTrue(!ScoutService.active(p),"Fuel depletion ends scouting");
+        }finally{ScoutService.stop(p);PowerService.control(p,new PowerNetwork.Control(2,"",0));}
+        h.succeed();
+    }
+    @GameTest(template="empty") public static void atiumAlternateAddsTwoBranchesAndScoutPacketRoundTrips(GameTestHelper h){
+        floor(h);var p=player(h,"ManyFutures",origin(h),"atium");var cow=h.spawn(EntityType.COW,new BlockPos(4,20,1));cow.setNoAi(true);
+        h.assertTrue(TemporalService.forecast(p).shadows().stream().filter(s->s.entity()==cow.getId()).count()==1,"Normal atium has one forecast per ordinary target");
+        PowerService.control(p,new PowerNetwork.Control(2,"",3));var paths=TemporalService.forecast(p).shadows().stream().filter(s->s.entity()==cow.getId()).toList();
+        h.assertTrue(paths.size()==3 && paths.stream().filter(s->s.kind()==TemporalPacket.OTHER).count()==1 && paths.stream().filter(s->s.kind()==TemporalPacket.BRANCH).count()==2,"Alt keeps one primary future and adds two dim alternatives");
+        var packet=new ScoutPacket(p.level().dimension().location().toString(),true,p.position().add(3,0,0),8);var buffer=new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(),h.getLevel().registryAccess());try{ScoutPacket.CODEC.encode(buffer,packet);h.assertTrue(ScoutPacket.CODEC.decode(buffer).equals(packet),"Private server-approved viewpoint safely round trips");}finally{buffer.release();cow.discard();}
+        PowerService.control(p,new PowerNetwork.Control(2,"",0));h.succeed();
+    }
     @GameTest(template="empty") public static void trajectoriesRespectWallsAndWarnAboutFallsAndLava(GameTestHelper h) {
         floor(h);var p=player(h,"OraclePath",origin(h),"electrum");
         h.setBlock(new BlockPos(3,20,1),Blocks.STONE);h.setBlock(new BlockPos(3,21,1),Blocks.STONE);

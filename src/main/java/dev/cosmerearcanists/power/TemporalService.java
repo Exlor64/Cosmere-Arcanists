@@ -83,7 +83,7 @@ public final class TemporalService {
         if(e instanceof LivingEntity living && living.hasEffect(net.minecraft.world.effect.MobEffects.SLOW_FALLING) && e.getDeltaMovement().y<=0)return .01;
         return e instanceof AbstractArrow?.05:e instanceof ThrowableProjectile?.03:e instanceof Projectile?0:e instanceof ItemEntity?.04:.08;
     }
-    private static List<AABB> collisions(ServerLevel level,AABB swept,Entity entity) {
+    static List<AABB> collisions(ServerLevel level,AABB swept,Entity entity) {
         var first=BlockPos.containing(swept.minX-1e-6,swept.minY-1e-6,swept.minZ-1e-6);var last=BlockPos.containing(swept.maxX+1e-6,swept.maxY+1e-6,swept.maxZ+1e-6);
         if((long)(last.getX()-first.getX()+1)*(last.getY()-first.getY()+1)*(last.getZ()-first.getZ()+1)>216)return null;
         var boxes=new ArrayList<AABB>();
@@ -93,7 +93,7 @@ public final class TemporalService {
         }
         return boxes;
     }
-    private static double clip(AABB box,AABB obstacle,int axis,double delta) {
+    static double clip(AABB box,AABB obstacle,int axis,double delta) {
         double bmin=axis==0?box.minX:axis==1?box.minY:box.minZ,bmax=axis==0?box.maxX:axis==1?box.maxY:box.maxZ;
         double omin=axis==0?obstacle.minX:axis==1?obstacle.minY:obstacle.minZ,omax=axis==0?obstacle.maxX:axis==1?obstacle.maxY:obstacle.maxZ;
         boolean overlap=axis==0?box.maxY>obstacle.minY && box.minY<obstacle.maxY && box.maxZ>obstacle.minZ && box.minZ<obstacle.maxZ:
@@ -213,12 +213,20 @@ public final class TemporalService {
             }
             if(warnings && electrum>0 && !split && entity instanceof Mob mob && mayAggro(mob,observer)){aggro(observer,mob,self,frames);aggroSources.put(mob,frames);}
             if(atium<=0 || !visible(observer,entity) || !TemporalConfig.SHADOWS.get() && threat==0)continue;
+            boolean alternate=TemporalConfig.MULTI_SHADOWS.get() && PowerService.holdingAlternateAbility(observer,"a:atium");
             if(split) {
                 if(TemporalConfig.SHADOWS.get())for(int sign:new int[]{-1,1}) {
                     var possibilities=branch(entity,velocity(entity),horizon(atium),sign);
                     if(!possibilities.isEmpty())shadows.add(shadow(entity,TemporalPacket.BRANCH,possibilities,false,TemporalPacket.UNCERTAIN));
                 }
-            } else shadows.add(shadow(entity,entity instanceof Projectile?TemporalPacket.PROJECTILE:TemporalPacket.OTHER,frames,warnings,threat));
+                if(alternate && TemporalConfig.SHADOWS.get())shadows.add(shadow(entity,TemporalPacket.BRANCH,frames,false,TemporalPacket.UNCERTAIN));
+            } else {
+                shadows.add(shadow(entity,entity instanceof Projectile?TemporalPacket.PROJECTILE:TemporalPacket.OTHER,frames,warnings,threat));
+                if(alternate && TemporalConfig.SHADOWS.get())for(int sign:new int[]{-1,1}){
+                    var possibilities=branch(entity,velocity(entity),horizon(atium),sign);
+                    if(!possibilities.isEmpty())shadows.add(shadow(entity,TemporalPacket.BRANCH,possibilities,false,TemporalPacket.UNCERTAIN));
+                }
+            }
         }
         if(electrum>0 && !self.isEmpty() && (TemporalConfig.SHADOWS.get() || warnings)) {
             int n=Math.min(self.size(),horizon(electrum));shadows.add(shadow(observer,TemporalPacket.SELF,self.subList(0,n),warnings,0));

@@ -21,6 +21,8 @@ public final class PowerClientMod {
         NeoForge.EVENT_BUS.register(new EmotionClient());
         dev.cosmerearcanists.power.SeekingPacket.receiver=SeekingClient::receive;
         NeoForge.EVENT_BUS.register(new SeekingClient());
+        dev.cosmerearcanists.power.ScoutPacket.receiver=ScoutClient::receive;
+        NeoForge.EVENT_BUS.register(new ScoutClient());
         dev.cosmerearcanists.power.TemporalPacket.receiver=TemporalClient::receive;
         NeoForge.EVENT_BUS.register(new TemporalClient());
         PowerNetwork.tinReceiver = TinClient::status;

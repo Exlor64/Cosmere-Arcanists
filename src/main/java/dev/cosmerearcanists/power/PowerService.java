@@ -59,6 +59,7 @@ public final class PowerService {
         var a=activationForPower(player,power); long age=player.level().getGameTime()-a.lastApply;
         return a.applying && age>=0 && age<=15;
     }
+    public static int movementInputs(ServerPlayer p,String power){return holdingAbility(p,power)?activationForPower(p,power).movementInputs:0;}
     static boolean holdingAlternateAbility(ServerPlayer player,String power) {
         return holdingAbility(player,power) && activationForPower(player,power).alternate;
     }
@@ -72,7 +73,7 @@ public final class PowerService {
             var a=secondary?s.secondary:s;
             if(packet.action()==2 || packet.action()==7) {
                 boolean held=(packet.value()&1)!=0 && p.isAlive() && !p.isSpectator();
-                if(!a.applying && held)a.alternate=(packet.value()&2)!=0;
+                if(held && (!a.applying || (secondary?PowerData.secondary(p):PowerData.selected(p)).matches("a:(atium|electrum)")))a.alternate=(packet.value()&2)!=0;
                 if(!held)a.alternate=false;
                 a.movementInputs=packet.value()&252; a.applying=held;
             } else {
@@ -127,6 +128,7 @@ public final class PowerService {
         PewterService.tick(p);
         TinService.tick(p);
         TemporalService.tick(p);
+        ScoutService.tick(p);
         SeekingService.tick(p);
         EmotionService.tickFuel(p);
         var s = session(p); var available = PowerData.available(p);
@@ -157,7 +159,7 @@ public final class PowerService {
     static void advanceActivation(ServerPlayer p,Session s,Activation a,String power,List<String> available) {
         long age=p.level().getGameTime()-a.lastApply;
         String activated=(a.applying||a.pulse) && p.isAlive() && !p.isSpectator() && age>=0 && age<=15
-            && available.contains(power) && PowerData.state(p,power)!=0 ? power : "";
+            && !ScoutService.active(p) && available.contains(power) && PowerData.state(p,power)!=0 ? power : "";
         if(!activated.equals(a.activePower)) {
             if(!a.activePower.isEmpty())ABILITIES.activate(p,a.activePower,AbilityDispatcher.Phase.STOP,s.targets);
             a.activePower=activated;

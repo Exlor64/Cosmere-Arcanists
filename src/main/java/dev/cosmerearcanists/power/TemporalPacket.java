@@ -21,7 +21,7 @@ public record TemporalPacket(String dimension,int lifetime,List<Shadow> shadows)
     public static final StreamCodec<RegistryFriendlyByteBuf,TemporalPacket> CODEC=new StreamCodec<>() {
         public TemporalPacket decode(RegistryFriendlyByteBuf b) {
             String dimension=b.readUtf(128);int lifetime=b.readVarInt(),count=b.readVarInt();
-            if(lifetime<1||lifetime>40||count<0||count>52)throw new IllegalArgumentException("Invalid forecast");
+            if(lifetime<1||lifetime>40||count<0||count>76)throw new IllegalArgumentException("Invalid forecast");
             var shadows=new ArrayList<Shadow>();
             for(int i=0;i<count;i++) {
                 int id=b.readInt(),kind=b.readVarInt();float width=b.readFloat(),height=b.readFloat();int n=b.readVarInt();

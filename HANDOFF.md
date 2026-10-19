@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-19 UTC**. Current mod version: **0.22.0-alpha**.
+Last updated: **2026-10-19 UTC**. Current mod version: **0.23.0-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -8,6 +8,11 @@ Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
 Read this and `AGENTS.md` when beginning a session. The user requires this file to be updated after every change or project chat. Keep it current rather than appending conflicting summaries.
 
 ## Latest session and next action
+
+- 0.23.0 user requested flared electrum controllable scouting shadow, stationary real body, and atium Alt three paths with most-likely brighter. User clarified8blocks is baseline flare radius and range increases with power. Implemented server virtual scout feet/physics, loaded collision checks, sphere8*sqrt(effective/baseFlare) cap32 configurable; WASD/jump/crouch inputs reuse validated control payload, no client camera-position upload. Grounded start, real vulnerable body anchored, targeting/use/break/attacks blocked; damage interruption, hold release, fuel/life/config/dimension/disconnect cleanup. No spectator/gamemode/attribute changes. Private camera packet drives client detached camera; golden model in third person, distance HUD. Temporal Alt is live while held; iron/steel latch remains unchanged. Config electrumScout.enabled/baseRange/maxRange/movementPerTick.
+- Atium Alt adds2dim branches beside normal brighter forecast, max24targets*3+2self paths bounded76. Counter-art targets remain equally uncertain, now3branches in Alt and2normally, never privileged true central prediction. Config atiumAlternateShadows. Protocol15 adds ScoutPacket and expands bounded forecast count; update both sides. No save migration. New server coverage/CI pending; client camera/visual playtesting unavailable locally.
+- Dodge verification: Java21 run39332776090 passed build and required server tests for4e57368e7326ee95cbd0ab18bf5ed680c9bc16e0; current alternate work requires a new run.
+
 
 - 0.22.0: user requested slight dodge chance while flaring atium. Server LivingIncomingDamageEvent cancels successful physical melee/projectile hits before pewter processing. Default10% at attribute1 flare, sqrt(effectiveStrength/baselineFlare) scaling including duralumin, cap25%. Requires actual flare, enabled flaring, owned/fueled active sight (held activation by default); no normal/low-burn dodge. No forced movement/teleport. Hazards/falls/explosions/armor-or-invulnerability bypass damage excluded. Active attacker atium/electrum counters via existing interference toggle. Config temporal-server atiumDodge enabled/baseChance/maxChance. No save migration/protocol change (14). Unit math and deterministic registered damage-event server regression added; CI pending, local Java17/Gradle bootstrap unavailable.
 
@@ -119,7 +124,7 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - `metalDetection`: categories (including fired projectiles), recursive recipes, hardness cost/cap, range-related scanning budgets, target count and sync cadence.
 - `steelProjectiles`: enabled, reference/max speed, nugget damage, cap ≤100, recoil mass, unknown content fallback, per-shot reserve cost (default 1), lifetime, alternate straight-down drop.
 - Existing config files retain saved values. New fields obtain defaults. Datapacks can override generation and recipes. Feature disablement must not delete saved data or registry entries.
-- `PowerService`: validated inputs, ticks/sessions, dispatcher, target selection, forces, throw event. `PowerAttributes`/`PowerData`: powers/persistence. `PowerNetwork`: controls, snapshots, additive impulse; **current protocol 14**. Update both server and client, especially for new projectile registration/renderer.
+- `PowerService`: validated inputs, ticks/sessions, dispatcher, target selection, forces, throw event. `PowerAttributes`/`PowerData`: powers/persistence. `PowerNetwork`: controls, snapshots, additive impulse; **current protocol 15**. Update both server and client, especially for new projectile registration/renderer.
 - `PowerClient`/`PowerClientMod`: input, HUD, lines, impulse reception, renderer. Common classes must not reference client classes. Client supplies no target positions or force magnitudes.
 - `MetalDetector`/`MetalGraph`: classification/aluminum closure. `MetalAmounts`/`RecipeMetalAmounts`: quantities. `MetalProjectilePhysics`: pure scaling formulas. `MetalProjectiles`: registration/launch. `SteelProjectile`: collision, damage, persistence and recovery.
 - Session state clears on logout, dimension change, respawn, datapack reload and server stop. Keep migrations idempotent and configuration gates server-authoritative.

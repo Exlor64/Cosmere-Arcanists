@@ -676,7 +676,7 @@ compatibility and terrain navigation still require playtesting. Client
 
 Test with `/cosmere power grant @s a:zinc`, `a:brass`, then
 `/cosmere power refill @s`. Existing persistent attributes and mixed vials work;
-no new registry IDs or save migration. Client and server need protocol **14**.
+no new registry IDs or save migration. Client and server need protocol **15**.
 The private emotional status packet does not disclose an influencing player's
 identity. Player emotional mechanics and species behavior are gameplay choices
 requested for this mod; progression XP and Hemalurgy equipment remain future.
@@ -802,7 +802,7 @@ enters a nearby idle hostile mob's targeting range and predicted line of sight.
 This also applies to the jump preview. It reveals no attacker identity/path and
 does not change actual mob AI. The bounded forecast approximates ordinary mob
 aggro; special senses, equipment rules and custom AI may differ. Toggle server
-`electrumAggroWarnings`. Both client and server need protocol **14**.
+`electrumAggroWarnings`. Both client and server need protocol **15**.
 
 ### Emotional targeting and power-panel layout (0.21.0)
 
@@ -828,7 +828,7 @@ In `cosmerearcanists-client.toml`:
 
 The legacy `selectedPowerIcon` toggle is also respected. Selection menus and
 the mob emotion indicator remain independent. Update client and server together
-for protocol **14**.
+for protocol **15**.
 
 ### Atium flare dodge (0.22.0)
 
@@ -846,3 +846,30 @@ In `cosmerearcanists-temporal-server.toml`, `atiumDodge.enabled`,
 `atiumDodge.baseChance` and `atiumDodge.maxChance` control the feature. Existing
 future-sight activation, fuel, flaring and global power gates apply. No save or
 network migration; protocol remains **14**.
+
+### Alternate temporal powers (0.23.0)
+
+While **flaring electrum**, hold its activation button and **Alt** to scout as a
+private electrum shadow. WASD moves the shadow, Space jumps, and crouch slows it.
+Your real body remains stationary and vulnerable. Start while grounded; the
+shadow respects solid blocks and loaded chunks. You cannot attack, use items,
+interact with blocks or activate other targeted powers while scouting. Damage,
+fuel depletion, releasing Alt/activation, death, dimension changes and logout
+end scouting. Damage interrupts require releasing Alt before starting again.
+
+Range is **8 blocks at baseline flaring strength**, scaling with the square root
+of effective electrum power, including duralumin (attribute4 normally gives16
+blocks). Default cap32 blocks. Configure `electrumScout.enabled`, `baseRange`,
+`maxRange` and `movementPerTick` in the temporal server config. This is a private
+future viewpoint; it does not create an interacting second player or spectator
+body. Third-person view shows the golden projection; first person views through
+its eyes.
+
+Atium's **Alt + activation** shows three possible forecasts per visible entity.
+The current-motion forecast is brighter; two alternative turns are dimmer. These
+are short conditional predictions, not certainty about a player's future inputs.
+An interfering atium/electrum user instead gives three equally uncertain paths,
+without revealing a privileged true path. `atiumAlternateShadows` disables the
+extra paths. Alt can be pressed/released while either temporal activation is held;
+other powers retain their existing Alt latch behavior. Both sides need protocol
+**15**. No persistent player-data migration.

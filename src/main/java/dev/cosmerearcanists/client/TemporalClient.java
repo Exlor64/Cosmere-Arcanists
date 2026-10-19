@@ -20,7 +20,7 @@ public final class TemporalClient {
     private static boolean active(){var mc=Minecraft.getInstance();return mc.level!=null && mc.player!=null && mc.player.isAlive() && !mc.player.isSpectator() && forecast.dimension().equals(mc.level.dimension().location().toString()) && mc.level.getGameTime()-received<forecast.lifetime();}
     @SubscribeEvent public void tick(ClientTickEvent.Post event){if(!active())forecast=new TemporalPacket("",1,java.util.List.of());}
     private static int warning(TemporalPacket.Shadow shadow){int flags=0;for(var p:shadow.points())flags|=p.warning();return flags&TemporalPacket.DANGER_MASK;}
-    private static final VertexConsumer DISCARD=new VertexConsumer(){
+    static final VertexConsumer DISCARD=new VertexConsumer(){
         public VertexConsumer addVertex(float x,float y,float z){return this;}public VertexConsumer setColor(int r,int g,int b,int a){return this;}
         public VertexConsumer setUv(float u,float v){return this;}public VertexConsumer setUv1(int u,int v){return this;}public VertexConsumer setUv2(int u,int v){return this;}public VertexConsumer setNormal(float x,float y,float z){return this;}
     };
@@ -40,7 +40,7 @@ public final class TemporalClient {
                 if(own && mc.options.getCameraType().isFirstPerson() && point.position().distanceToSqr(mc.player.position())<.25)continue;
                 if(i>0 && point.position().distanceToSqr(shadow.points().get(i-1).position())<1e-6 && point.warning()==shadow.points().get(i-1).warning())continue;
                 boolean danger=(point.warning()&TemporalPacket.DANGER_MASK)!=0;
-                float alpha=(float)(PowerClientConfig.FUTURE_OPACITY.get()*PowerClientConfig.FUTURE_PROMINENCE.get()*fade*(.4+.6*(i+1)/shadow.points().size()));
+                float alpha=(float)(PowerClientConfig.FUTURE_OPACITY.get()*PowerClientConfig.FUTURE_PROMINENCE.get()*fade*(shadow.kind()==TemporalPacket.BRANCH?.35:1)*(.4+.6*(i+1)/shadow.points().size()));
                 float red=danger?1:r,green=danger?.25f:g,blue=danger?.2f:b;
                 var vertices=buffers.getBuffer(net.minecraft.client.renderer.RenderType.lines());
                 var feet=point.position();

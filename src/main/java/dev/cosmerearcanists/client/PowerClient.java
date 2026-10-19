@@ -49,6 +49,9 @@ public final class PowerClient {
     }
     @SubscribeEvent public void movementInput(MovementInputUpdateEvent event) {
         var mc = Minecraft.getInstance();
+        if(event.getEntity()==mc.player && ScoutClient.active()){
+            var input=event.getInput();input.forwardImpulse=input.leftImpulse=0;input.up=input.down=input.left=input.right=input.jumping=input.shiftKeyDown=false;return;
+        }
         if (event.getEntity() != mc.player || mc.level == null || clock - impulseClock > 2) return;
         var input = event.getInput(); double yaw = Math.toRadians(mc.player.getYRot());
         double sin = Math.sin(yaw), cos = Math.cos(yaw);
@@ -109,7 +112,7 @@ public final class PowerClient {
         }
         down = APPLY.isDown() && !selecting && !choosingState;
         boolean alternateReady = ALTERNATE.isDown();
-        if (down && !applied) alternateLatched = alternateReady;
+        if (down && (!applied || selected().matches("a:(atium|electrum)"))) alternateLatched = alternateReady;
         int inputs = movementInputs(mc);
         if (activateClick && !APPLY.isDown() && !selecting && !choosingState) send(5, "", (alternateReady ? 2 : 0) | inputs);
         int activation = down ? 1 | (alternateLatched ? 2 : 0) | inputs : 0;
@@ -117,7 +120,7 @@ public final class PowerClient {
         lastActivation = activation; applied = down;
         if (!down) alternateLatched = false;
         boolean secondaryDown=SECONDARY.isDown() && !selecting && !choosingState;
-        if(secondaryDown && !secondaryApplied)secondaryAlternate=alternateReady;
+        if(secondaryDown && (!secondaryApplied || snapshot.secondary().matches("a:(atium|electrum)")))secondaryAlternate=alternateReady;
         if(secondaryClick && !SECONDARY.isDown() && !selecting && !choosingState)send(8,"",(alternateReady?2:0)|inputs);
         int secondaryActivation=secondaryDown?1|(secondaryAlternate?2:0)|inputs:0;
         if(secondaryActivation!=lastSecondaryActivation || secondaryDown && clock%2==0)send(7,"",secondaryActivation);
