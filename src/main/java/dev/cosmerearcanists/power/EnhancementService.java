@@ -27,7 +27,7 @@ public final class EnhancementService {
         if(multiplier>1)multiplier=Math.max(1,multiplier/efficiency(PowerAttributes.strength(p,"a:duralumin")));
         PowerData.reserve(p,metal,PowerData.reserve(p,metal)-amount*multiplier);
     }
-    public static double attributeCurve(double strength,double growth){return Math.max(.1,1+Math.log(Math.max(.01,strength))/Math.log(2)*growth);}
+    public static double attributeCurve(double strength,double growth){return EnhancementMath.attributeCurve(strength,growth);}
     private static double efficiency(double strength){return attributeCurve(strength,EnhancementConfig.EFFICIENCY_GROWTH.get());}
     private static double boost(double base,double strength){return 1+(base-1)*attributeCurve(strength,EnhancementConfig.POWER_GROWTH.get());}
     /** Resource-independent integration profile: foreign arts apply these modifiers to their own validated effects/budgets.
@@ -42,7 +42,7 @@ public final class EnhancementService {
         double drain=state==1?EnhancementConfig.LOW_DRAIN.get():state==2?EnhancementConfig.BURN_DRAIN.get():1;
         return new Profile(boost(base,strength),state==3?1:Math.max(1,drain/efficiency),(int)Math.ceil(EnhancementConfig.FLARE_TICKS.get()*efficiency),state==3);
     }
-    public static int flareTicks(double reserves,double maximum,int fullTicks){return reserves<=0||maximum<=0?0:Math.max(1,(int)Math.ceil(fullTicks*Math.clamp(reserves/maximum,0,1)));}
+    public static int flareTicks(double reserves,double maximum,int fullTicks){return EnhancementMath.flareTicks(reserves,maximum,fullTicks);}
     public static void begin(ServerPlayer p){
         if(!p.isAlive() || p.isSpectator()){clear(p);return;}
         if(usable(p,"aluminum")){
