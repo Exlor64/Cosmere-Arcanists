@@ -14,8 +14,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - Client billboard above current aimed mob tracks interpolated position, has emotion color/text and depth-tested background, hides on look-away/no selection/expiry/dimension/menu/F1. Server EmotionConfig targetEmotionIndicator and client targetEmotionIndicator separately disable it. Uninfluenced passive/hostile mobs display engine baseline Trust/Anger, not a simulation of every native species mood.
 - Separate primary/secondary pink mode instructions removed. Mode label sits at bottom-right of each panel, reserves left, burn state above. Existing optional incoming-player dominant-status message remains; scroll controls unchanged.
 - Client cosmerearcanists-client.toml: hidePowerIndicator=false (new clear whole-group hide toggle); legacy selectedPowerIcon remains respected. hudX/hudY anchor primary panel in screen-scaled pixels; secondary follows. hudScale .25..3 defaults1 scales whole group including icons/background/text/spacing, clamps placement and fits oversized groups to viewport. Selection menus and world indicators remain independent of hiding the blue group.
-- New server regression covers natural/induced emotion readout, exact target ID packet, wall occlusion/look-away/config/no-access gates. Java21 CI pending. Prior0.20.0 run39328199174 passed52 unit/68 server methods. No graphical client playtest claimed.
-- Next: automated validation, then user checks above-head label and whole-panel positioning/scaling, reserve/mode text alignment.
+- New server regression covers natural/induced emotion readout, exact target ID packet, wall occlusion/look-away/config/no-access gates. Java21 GitHub Actions run39329396352 passed build/JUnit, required server GameTests and artifact upload for gameplay commit11915924010935f60b239c313f5c96a49aca03ea. Registered suites52 unit/69 server methods. Prior0.20.0 run39328199174 passed52 unit/68 server methods. No graphical client playtest claimed.
+- Next: user checks above-head label and whole-panel positioning/scaling, reserve/mode text alignment.
 
 ## Vision and accepted constraints
 
