@@ -424,9 +424,11 @@ need the update; protocol remains 6 (no payload changes).
 
 ### Allomantic tin (0.12.0)
 
-Tin works passively while burning, even when another power is selected. It grants
-night vision and reveals actual audible events as brief **wireframes through
-walls**: the noisy entity's mesh, plus nearby exposed collision shapes such as
+Tin works passively while burning, even when another power is selected. Night
+vision and held zoom work at lower levels. **Sound wireframes require high tin
+strength**: at attribute 1, Low burn and Burning reveal nothing; Flaring gives
+only a faint, brief glimpse of a small area. Higher attributes develop its
+potential for the planned progression system. Reveals show the noisy entity's mesh, plus nearby exposed collision shapes such as
 floors, walls, stairs and doors. Silent entities are not scanned or revealed merely
 because they stand near a sound. Block-only noises reveal terrain, not a guessed
 nearby mob. Echoes fade and remember the sound's location, not a continuously
@@ -445,15 +447,22 @@ area, detail and persistence. This is a direct-path approximation, not acoustic
 reflection/diffraction simulation. It affects tin's visual hearing effect; vanilla
 audio playback is unchanged.
 
-Base hearing range is 24 blocks at normal strength/volume, scaling with square
-roots of attribute × burn strength and sound volume, capped at 64 blocks. Base
-surface radius is 3, capped at 6; base fade is 24 ticks, with a 60-tick cap. All
-are further reduced by distance/obstruction. The server sends only validated,
+Effective strength is attribute × burn multiplier. The default wireframe unlock
+threshold is 1.5; potential rises smoothly to full strength at 6 (attribute 3
+Flaring). Baseline Flaring reaches 2, about 11% of full potential. Potential
+reduces range, opacity, surface radius, detail and persistence. Higher attributes
+can eventually reveal sound even without Flaring. The progression/XP system
+itself is not implemented yet.
+
+The base hearing range formula is 24 × sqrt(effective strength) × sqrt(volume),
+capped at 64, then scaled from half to full range by wireframe potential. Base
+surface radius is 3 (cap 6), and fade is 24 ticks (cap 60); potential and
+obstruction further limit these. The server sends only validated,
 bounded geometry from loaded chunks to active tin users in the same dimension.
 Each listener has sound budgets/cooldowns; it is not a continuous X-ray scan.
 
 Configure `cosmerearcanists-tin-server.toml` for enablement, sight/hearing/zoom,
-range, obstruction/hardness/wool costs, audibility cutoff, shape/network budgets,
+unlock/full-strength thresholds, range, obstruction/hardness/wool costs, audibility cutoff, shape/network budgets,
 fade and fuel drain. Client `tin` options control wireframe/model rendering,
 opacity, line width, visible echo count and zoom. Night vision supplied by tin
 is removed on stop; independent potion effects are preserved. Sensory overload

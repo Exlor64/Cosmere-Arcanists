@@ -19,6 +19,15 @@ class TinMathTest {
         assertEquals(0,TinMath.audibility(6,Double.POSITIVE_INFINITY,24));
         assertEquals(0,TinMath.audibility(6,0,0));
     }
+    @Test void baselineWireframesUnlockWeaklyAtFlaringAndGrowWithProgression() {
+        assertEquals(0,TinMath.reveal(.5,1.5,6));
+        assertEquals(0,TinMath.reveal(1,1.5,6));
+        assertEquals(0,TinMath.reveal(1.5,1.5,6));
+        assertEquals(1.0/9,TinMath.reveal(2,1.5,6),1e-9);
+        assertTrue(TinMath.reveal(4,1.5,6)>TinMath.reveal(2,1.5,6));
+        assertEquals(1,TinMath.reveal(6,1.5,6));
+        assertEquals(1,TinMath.reveal(1024,1.5,6));
+    }
     @Test void heldZoomScalesAndCapsWithoutAffectingInactiveVision() {
         assertEquals(1,TinMath.zoom(0,1.5,8));
         assertEquals(2.5,TinMath.zoom(1,1.5,8));

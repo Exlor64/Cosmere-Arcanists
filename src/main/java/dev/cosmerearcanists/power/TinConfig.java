@@ -5,7 +5,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 public final class TinConfig {
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.BooleanValue ENABLED, NIGHT_VISION, ZOOM, HEARING, OBSTRUCTION;
-    public static final ModConfigSpec.DoubleValue DRAIN, RANGE, MAX_RANGE, RADIUS, MAX_RADIUS, BLOCK_COST, HARDNESS_COST, HARDNESS_CAP, WOOL_COST, MIN_AUDIBILITY, ZOOM_STRENGTH, MAX_ZOOM;
+    public static final ModConfigSpec.DoubleValue DRAIN, RANGE, MAX_RANGE, RADIUS, MAX_RADIUS, BLOCK_COST, HARDNESS_COST, HARDNESS_CAP, WOOL_COST, MIN_AUDIBILITY, ZOOM_STRENGTH, MAX_ZOOM, REVEAL_THRESHOLD, FULL_REVEAL;
     public static final ModConfigSpec.IntValue FADE, MAX_FADE, SHAPES, EVENTS_PER_TICK, SOURCE_INTERVAL;
     static {
         var b=new ModConfigSpec.Builder();
@@ -13,6 +13,8 @@ public final class TinConfig {
         DRAIN=b.defineInRange("reserveDrainPerSecond",1.0,0.0,100.0);
         ZOOM_STRENGTH=b.defineInRange("zoomPerStrength",1.5,0.0,10.0);MAX_ZOOM=b.defineInRange("maxZoom",8.0,1.0,20.0);
         b.push("hearing");
+        REVEAL_THRESHOLD=b.comment("Effective strength must exceed this to reveal sound wireframes. Attribute 1 Low/Burning are below 1.5; Flaring reaches 2 for a weak glimpse.").defineInRange("wireframeStrengthThreshold",1.5,0.0,100.0);
+        FULL_REVEAL=b.comment("Effective attribute times burn strength for full wireframe potential. Default 6: attribute 3 Flaring. Range/detail still obey their caps.").defineInRange("fullWireframeStrength",6.0,.01,1024.0);
         RANGE=b.comment("Base hearing distance at normal strength and volume. Scales with square roots of strength and volume.").defineInRange("range",24.0,1.0,128.0);
         MAX_RANGE=b.defineInRange("maxRange",64.0,1.0,128.0);
         RADIUS=b.defineInRange("surfaceRadius",3.0,.5,8.0);MAX_RADIUS=b.defineInRange("maxSurfaceRadius",6.0,1.0,8.0);

@@ -35,6 +35,7 @@ public final class TinService {
         int state=PowerData.state(p,"a:tin");if(state==3&&!PowerConfig.FLARING.get())state=2;
         return PowerAttributes.strength(p,"a:tin")*PowerRules.levelMultiplier(state,PowerConfig.LOW_STRENGTH.get(),PowerConfig.BURN_STRENGTH.get(),PowerConfig.FLARE_STRENGTH.get());
     }
+    public static double revealStrength(ServerPlayer p){return TinMath.reveal(strength(p),TinConfig.REVEAL_THRESHOLD.get(),TinConfig.FULL_REVEAL.get());}
     private static boolean looksOwned(MobEffectInstance effect){return effect!=null && effect.getAmplifier()==0 && effect.isAmbient() && !effect.isVisible() && !effect.showIcon() && effect.getDuration()<=320;}
     public static void tick(ServerPlayer p) {
         double power=strength(p);
@@ -87,22 +88,23 @@ public final class TinService {
     }
     public static PowerNetwork.TinEcho echo(ServerPlayer listener,Vec3 position,Entity source,float volume) {
         double power=strength(listener);if(power<=0 || !TinConfig.HEARING.get() || !Float.isFinite(volume) || volume<=0)return null;
-        double range=TinMath.range(power,volume,TinConfig.RANGE.get(),TinConfig.MAX_RANGE.get());double distance=listener.getEyePosition().distanceTo(position);
+        double potential=TinMath.reveal(power,TinConfig.REVEAL_THRESHOLD.get(),TinConfig.FULL_REVEAL.get());if(potential<=0)return null;
+        double range=TinMath.range(power,volume,TinConfig.RANGE.get(),TinConfig.MAX_RANGE.get())*(.5+.5*potential);double distance=listener.getEyePosition().distanceTo(position);
         if(distance>=range)return null;
         double audible=TinMath.audibility(distance,obstruction(listener.serverLevel(),listener.getEyePosition(),position),range);
         if(audible<TinConfig.MIN_AUDIBILITY.get())return null;
-        double radius=Math.min(TinConfig.MAX_RADIUS.get(),TinConfig.RADIUS.get()*Math.sqrt(power)*Math.sqrt(Math.min(4,volume)))*Math.sqrt(audible);
-        int ticks=(int)Math.clamp(TinConfig.FADE.get()*(.75+.25*Math.sqrt(power))*Math.sqrt(audible),4,TinConfig.MAX_FADE.get());
-        int detail=Math.max(4,(int)(TinConfig.SHAPES.get()*Math.min(1,power)*Math.sqrt(audible)));
+        double radius=Math.min(TinConfig.MAX_RADIUS.get(),TinConfig.RADIUS.get()*Math.sqrt(power)*Math.sqrt(Math.min(4,volume)))*Math.sqrt(audible*potential);
+        int ticks=(int)Math.clamp(TinConfig.FADE.get()*(.75+.25*Math.sqrt(power))*Math.sqrt(audible)*(.35+.65*potential),4,TinConfig.MAX_FADE.get());
+        int detail=Math.max(4,(int)(TinConfig.SHAPES.get()*potential*Math.sqrt(audible)));
         boolean identified=source!=null && source.level()==listener.level() && !source.isSilent() && source.position().distanceToSqr(position)<9;
         return new PowerNetwork.TinEcho(listener.level().dimension().location().toString(),position,identified?source.getId():-1,
-            identified?source.getBoundingBox():new AABB(position,position),ticks,(float)audible,surfaces(listener.serverLevel(),position,radius,detail));
+            identified?source.getBoundingBox():new AABB(position,position),ticks,(float)(audible*potential),surfaces(listener.serverLevel(),position,radius,detail));
     }
     private static void emit(Level level,Vec3 position,Entity source,float volume,SoundSource category) {
         if(!(level instanceof ServerLevel server) || !TinConfig.ENABLED.get() || !TinConfig.HEARING.get() || volume<=0 || category==SoundSource.MUSIC || category==SoundSource.RECORDS || category==SoundSource.MASTER)return;
         long tick=server.getGameTime();long key=source==null?BlockPos.containing(position).asLong():Long.MIN_VALUE+source.getId();
         for(var player:server.players()) {
-            if(strength(player)<=0)continue;var budget=BUDGETS.computeIfAbsent(player.getUUID(),id->new Budget());
+            if(revealStrength(player)<=0)continue;var budget=BUDGETS.computeIfAbsent(player.getUUID(),id->new Budget());
             if(budget.tick!=tick){budget.tick=tick;budget.count=0;budget.recent.entrySet().removeIf(e->tick-e.getValue()>40);}
             if(budget.count>=TinConfig.EVENTS_PER_TICK.get() || tick-budget.recent.getOrDefault(key,-100L)<TinConfig.SOURCE_INTERVAL.get())continue;
             var echo=echo(player,position,source,volume);if(echo==null)continue;

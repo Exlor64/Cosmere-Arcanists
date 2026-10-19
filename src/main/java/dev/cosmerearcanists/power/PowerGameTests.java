@@ -44,7 +44,7 @@ public final class PowerGameTests {
     }
     @GameTest(template = "empty")
     public static void tinWallsMuffleAndBlockRealEchoes(GameTestHelper helper) {
-        var p=tinPlayer(helper,"TinWalls");var level=helper.getLevel();
+        var p=tinPlayer(helper,"TinWalls");PowerData.state(p,"a:tin",3);var level=helper.getLevel();
         var from=p.getEyePosition();var target=from.add(8,0,0);var first=net.minecraft.core.BlockPos.containing(from);
         for(int x=0;x<=8;x++)level.setBlock(first.offset(x,0,0),net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),3);
         var clear=TinService.echo(p,target,null,1);helper.assertTrue(clear!=null,"Unblocked nearby sound must be heard");
@@ -68,7 +68,7 @@ public final class PowerGameTests {
     }
     @GameTest(template = "empty")
     public static void tinEntitySoundsIdentifyOnlyTheActualEmitter(GameTestHelper helper) {
-        var p=tinPlayer(helper,"TinSource");var level=helper.getLevel();
+        var p=tinPlayer(helper,"TinSource");PowerData.state(p,"a:tin",3);var level=helper.getLevel();
         var cow=net.minecraft.world.entity.EntityType.COW.create(level);cow.setPos(p.position().add(4,0,0));cow.setNoAi(true);level.addFreshEntity(cow);
         var probe=new TinSoundProbe();net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(probe);
         try {
@@ -93,8 +93,10 @@ public final class PowerGameTests {
         var packet=new PowerNetwork.TinEcho(level.dimension().location().toString(),center,-1,new net.minecraft.world.phys.AABB(center,center),24,.5f,boxes);
         var buffer=new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(),level.registryAccess());
         try {PowerNetwork.TinEcho.CODEC.encode(buffer,packet);helper.assertTrue(PowerNetwork.TinEcho.CODEC.decode(buffer).equals(packet),"Echo packet must preserve source, lifetime, obstruction intensity and shapes");}finally{buffer.release();}
-        var normal=TinService.echo(p,center,null,1);PowerAttributes.set(p,"a:tin",2);var stronger=TinService.echo(p,center,null,1);
-        helper.assertTrue(normal!=null && stronger!=null && stronger.audible()>normal.audible() && stronger.ticks()>=normal.ticks(),"Greater attributes must improve hearing and persistence");
+        helper.assertTrue(TinService.echo(p,center,null,1)==null,"Baseline Burning must not unlock wireframes");
+        PowerData.state(p,"a:tin",1);helper.assertTrue(TinService.echo(p,center,null,1)==null,"Baseline Low burn must not unlock wireframes");
+        PowerData.state(p,"a:tin",3);var normal=TinService.echo(p,center,null,1);PowerAttributes.set(p,"a:tin",3);var stronger=TinService.echo(p,center,null,1);
+        helper.assertTrue(normal!=null && stronger!=null && stronger.audible()>normal.audible()*2 && stronger.ticks()>normal.ticks() && stronger.surfaces().size()>=normal.surfaces().size(),"Greater attributes must improve hearing and persistence");
         helper.succeed();
     }
     private static net.neoforged.neoforge.common.util.FakePlayer filingPlayer(GameTestHelper helper,String name) {

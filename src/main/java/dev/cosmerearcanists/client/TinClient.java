@@ -5,6 +5,8 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.cosmerearcanists.power.PowerNetwork;
+import dev.cosmerearcanists.power.TinMath;
+import dev.cosmerearcanists.power.TinConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
@@ -21,7 +23,7 @@ public final class TinClient {
     private static PowerNetwork.TinStatus status=new PowerNetwork.TinStatus("",0,1);
     private record Echo(PowerNetwork.TinEcho packet,long started) { }
     private static final List<Echo> ECHOES=new ArrayList<>();
-    public static void status(PowerNetwork.TinStatus packet){status=packet;if(packet.strength()<=0)ECHOES.clear();}
+    public static void status(PowerNetwork.TinStatus packet){status=packet;if(TinMath.reveal(packet.strength(),TinConfig.REVEAL_THRESHOLD.get(),TinConfig.FULL_REVEAL.get())<=0)ECHOES.clear();}
     public static void echo(PowerNetwork.TinEcho packet){
         var mc=Minecraft.getInstance();if(mc.level==null || !PowerClientConfig.TIN_ECHOES.get() || !packet.dimension().equals(mc.level.dimension().location().toString()))return;
         // New sound updates replace the same entity's old echo, never leave a continuous tracking trail.
@@ -30,9 +32,11 @@ public final class TinClient {
         while(ECHOES.size()>PowerClientConfig.TIN_ECHO_LIMIT.get())ECHOES.removeFirst();
     }
     private static boolean active(){var mc=Minecraft.getInstance();return mc.level!=null && mc.player!=null && status.strength()>0 && status.dimension().equals(mc.level.dimension().location().toString());}
+    private static boolean wireActive(){return active() && TinMath.reveal(status.strength(),TinConfig.REVEAL_THRESHOLD.get(),TinConfig.FULL_REVEAL.get())>0;}
     @SubscribeEvent public void tick(ClientTickEvent.Post event){
         var mc=Minecraft.getInstance();
         if(!active()){ECHOES.clear();if(mc.level==null)status=new PowerNetwork.TinStatus("",0,1);return;}
+        if(!wireActive())ECHOES.clear();
         ECHOES.removeIf(e->!e.packet.dimension().equals(status.dimension()) || mc.level.getGameTime()-e.started>=e.packet.ticks());
     }
     @SubscribeEvent public void fov(ViewportEvent.ComputeFov event){if(active() && PowerClientConfig.TIN_ZOOM.get() && event.usedConfiguredFov())event.setFOV(Math.max(5,event.getFOV()/Math.max(1,status.zoom())));}
@@ -46,7 +50,7 @@ public final class TinClient {
     };
     @SubscribeEvent public void render(RenderLevelStageEvent event) {
         var mc=Minecraft.getInstance();
-        if(event.getStage()!=RenderLevelStageEvent.Stage.AFTER_PARTICLES || !active() || !PowerClientConfig.TIN_ECHOES.get() || ECHOES.isEmpty())return;
+        if(event.getStage()!=RenderLevelStageEvent.Stage.AFTER_PARTICLES || !wireActive() || !PowerClientConfig.TIN_ECHOES.get() || ECHOES.isEmpty())return;
         var camera=event.getCamera().getPosition();var pose=event.getPoseStack();var buffers=mc.renderBuffers().bufferSource();
         float partial=event.getPartialTick().getGameTimeDeltaPartialTick(false);
         for(var echo:ECHOES) {
