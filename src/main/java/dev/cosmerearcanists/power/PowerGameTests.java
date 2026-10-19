@@ -25,6 +25,7 @@ public final class PowerGameTests {
         p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
         p.setPos(net.minecraft.world.phys.Vec3.atCenterOf(helper.absolutePos(new net.minecraft.core.BlockPos(1,10,1))));
         p.getAbilities().invulnerable=false;
+        p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_ABSORPTION).setBaseValue(20);
         // Damage tests use out_of_world to bypass ServerPlayer spawn protection, which FakePlayer.tick never advances.
         PowerAttributes.set(p,"a:pewter",1);PowerData.state(p,"a:pewter",2);PowerData.reserve(p,"pewter",300);
         return p;
@@ -39,7 +40,7 @@ public final class PowerGameTests {
         helper.assertTrue(Math.abs(p.getHealth()-13.25)<.01 && Math.abs(PewterService.debt(p)-.75)<.01,"10 damage must become 6.75 immediate + .75 deferred after 25% mitigation; health="+p.getHealth()+", debt="+PewterService.debt(p));
         p.setAbsorptionAmount(4);p.invulnerableTime=20;
         PowerData.state(p,"a:pewter",0);PewterService.tick(p);
-        helper.assertTrue(Math.abs(p.getHealth()-12.5)<.01 && PewterService.debt(p)==0 && p.getAbsorptionAmount()==4,"Stopping must settle once without absorption or hurt-immunity discounts");
+        helper.assertTrue(Math.abs(p.getHealth()-12.5)<.01 && PewterService.debt(p)==0 && p.getAbsorptionAmount()==4,"Stopping must settle once without absorption or hurt-immunity discounts; health="+p.getHealth()+", absorption="+p.getAbsorptionAmount()+", debt="+PewterService.debt(p));
         helper.assertTrue(Math.abs(p.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED)-.1)<1e-6 && p.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)==1,"Pewter modifiers must be removed on stop");
         PewterService.tick(p);helper.assertTrue(Math.abs(p.getHealth()-12.5)<.01,"Settled debt cannot be charged twice");
         helper.succeed();
@@ -58,9 +59,11 @@ public final class PowerGameTests {
         helper.assertTrue(Math.abs(p.getHealth()-17.3)<.01 && Math.abs(PewterService.debt(p)-.3)<.01,"Stronger Flaring must cap mitigation at 70%");
         PowerAttributes.set(p,"a:pewter",1);PowerData.state(p,"a:pewter",2);p.setHealth(20);p.setAbsorptionAmount(10);p.invulnerableTime=0;PewterService.debt(p,0);
         p.hurt(p.damageSources().fellOutOfWorld(),10);
-        helper.assertTrue(PewterService.debt(p)==0 && p.getHealth()==20,"Absorbed hits cannot create deferred injury");
+        helper.assertTrue(PewterService.debt(p)==0 && p.getHealth()==20,"Absorbed hits cannot create deferred injury; health="+p.getHealth()+", absorption="+p.getAbsorptionAmount()+", debt="+PewterService.debt(p));
         p.getFoodData().setExhaustion(0);p.causeFoodExhaustion(4);
         helper.assertTrue(Math.abs(p.getFoodData().getExhaustionLevel()-2)<.01,"Actual exhaustion entry point must apply pewter endurance before hunger thresholds");
+        PowerData.state(p,"a:pewter",0);p.getFoodData().setExhaustion(0);p.causeFoodExhaustion(4);
+        helper.assertTrue(Math.abs(p.getFoodData().getExhaustionLevel()-4)<.01,"Inactive pewter must leave vanilla exhaustion unchanged");
         helper.succeed();
     }
     @GameTest(template = "empty")

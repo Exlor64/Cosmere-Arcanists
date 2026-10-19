@@ -37,7 +37,9 @@ public final class PewterService {
     public static double debt(ServerPlayer p){return Math.max(0,PowerData.data(p).getDouble("pewter_drag"));}
     static void debt(ServerPlayer p,double amount){PowerData.data(p).putDouble("pewter_drag",Double.isFinite(amount)?Math.max(0,amount):0);}
     public static float exhaustion(Player p,float amount) {
-        return p instanceof ServerPlayer server?(float)PewterMath.exhaustion(amount,strength(server),PewterConfig.EXHAUSTION.get()):amount;
+        if(!(p instanceof ServerPlayer server) || amount<=0)return amount;
+        double power=strength(server);
+        return power>0?(float)PewterMath.exhaustion(amount,power,PewterConfig.EXHAUSTION.get()):amount;
     }
     private static void modifier(ServerPlayer p,net.minecraft.core.Holder<Attribute> attribute,ResourceLocation id,double amount,AttributeModifier.Operation operation) {
         var instance=p.getAttribute(attribute); if(instance==null)return;
