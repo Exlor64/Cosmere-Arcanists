@@ -12,8 +12,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 - User clarified inverse emotions: brass can soothe native hostility, and changing the strongest emotion can make hostile mobs passive or passive mobs aggressive.
 - Version 0.16.1-alpha/protocol10: natural hostile anger is seeded even before acquiring a target. Sufficient anger suppression clears current combat targets and blocks reacquisition against any victim. Weak Soothing that leaves anger dominant preserves native AI rather than forcing infighting. Suppressing passive trust can expose anger. Losing love clears breeding readiness. Calmed creepers stop autonomous swelling; deliberate ignition remains effective.
 - Added three server regressions for weak/strong Soothing, arbitrary victims, expiry/recovery, inverse trust/love, competing Rioting and creeper swelling. No config, network or save migration changes.
-- Validation pending Java21 GitHub Actions. Prior 0.16.0 gameplay passed46 unit/53 server tests in run39309714199. Local Gradle bootstrap remains unavailable; installed Java is17.
-- Next: finish automated verification, then manual UI, mob pathfinding/trading and multiplayer balance checks.
+- Java21 GitHub Actions run39312319985 passed build, required server GameTests and artifact upload for gameplay commit1042b474007009206cfe15b003b1ff59897c5e6b. Three new server cases bring the registered total to56 (unit suite remains46); individual log totals not yet retrieved. Local Gradle bootstrap remains unavailable; installed Java is17.
+- Next: manual UI, mob pathfinding/trading and multiplayer balance checks.
 
 ## Vision and accepted constraints
 
