@@ -49,7 +49,12 @@ public final class ScoutService {
     private static void interrupt(ServerPlayer p){if(active(p)){stop(p);INTERRUPTED.add(p.getUUID());}}
     @SubscribeEvent public void hurt(LivingIncomingDamageEvent e){if(e.getEntity() instanceof ServerPlayer p && e.getAmount()>0)interrupt(p);}
     @SubscribeEvent public void death(LivingDeathEvent e){if(e.getEntity() instanceof ServerPlayer p)interrupt(p);}
-    @SubscribeEvent public void interact(PlayerInteractEvent e){if(e.getEntity() instanceof ServerPlayer p && active(p) && e instanceof net.neoforged.bus.api.ICancellableEvent cancel)cancel.setCanceled(true);}
+    private static boolean blocked(PlayerInteractEvent e){return e.getEntity() instanceof ServerPlayer p && active(p);}
+    @SubscribeEvent public void useBlock(PlayerInteractEvent.RightClickBlock e){if(blocked(e))e.setCanceled(true);}
+    @SubscribeEvent public void useItem(PlayerInteractEvent.RightClickItem e){if(blocked(e))e.setCanceled(true);}
+    @SubscribeEvent public void useEntity(PlayerInteractEvent.EntityInteract e){if(blocked(e))e.setCanceled(true);}
+    @SubscribeEvent public void useEntityAt(PlayerInteractEvent.EntityInteractSpecific e){if(blocked(e))e.setCanceled(true);}
+    @SubscribeEvent public void hitBlock(PlayerInteractEvent.LeftClickBlock e){if(blocked(e))e.setCanceled(true);}
     @SubscribeEvent public void attack(AttackEntityEvent e){if(e.getEntity() instanceof ServerPlayer p && active(p))e.setCanceled(true);}
     @SubscribeEvent public void breakBlock(net.neoforged.neoforge.event.level.BlockEvent.BreakEvent e){if(e.getPlayer() instanceof ServerPlayer p && active(p))e.setCanceled(true);}
     @SubscribeEvent public void logout(PlayerEvent.PlayerLoggedOutEvent e){SCOUTS.remove(e.getEntity().getUUID());INTERRUPTED.remove(e.getEntity().getUUID());}
