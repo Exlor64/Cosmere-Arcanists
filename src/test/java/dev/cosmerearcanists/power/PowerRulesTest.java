@@ -30,8 +30,8 @@ class PowerRulesTest {
         assertEquals("Tapping 3", PowerRules.label("f:iron", 3));
         assertEquals("Off", PowerRules.label("f:iron", 0));
     }
-    @Test void onlyFourPhysicalMetalsClaimImplementedEffects() {
-        assertTrue(PowerRules.implemented("a:iron")); assertTrue(PowerRules.implemented("a:steel"));
-        assertFalse(PowerRules.implemented("f:iron")); assertTrue(PowerRules.implemented("a:pewter")); assertTrue(PowerRules.implemented("a:tin")); assertFalse(PowerRules.implemented("a:bronze"));
+    @Test void onlyWorkingPowersClaimImplementedEffects() {
+        for(String metal:new String[]{"iron","steel","tin","pewter","electrum","atium","bronze","copper"})assertTrue(PowerRules.implemented("a:"+metal));
+        assertFalse(PowerRules.implemented("f:iron"));assertFalse(PowerRules.implemented("a:gold"));assertFalse(PowerRules.implemented("a:zinc"));
     }
 }

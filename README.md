@@ -294,7 +294,7 @@ shortening rate and spike damage/lifetime live in the equipment server config.
 Tethers have one active head per inventory item; lost ownership/items end the
 tether, and range overflow recalls it. Recipe choices beyond the user-specified
 spikes and ball ingredients are provisional. Current icons reuse vanilla item
-art; physical rope renders separately. Equipment initially used protocol 5; current pewter update requires protocol 6 on both sides.
+art; physical rope renders separately. Equipment initially used protocol5 and pewter protocol6; current bronze/copper release requires protocol9 on both sides.
 
 Returning tether heads temporarily leave Allomantic targeting until reused, so holding steel does not fight recall. Spike ammunition currently does not implement arrow-only Piercing behavior.
 
@@ -494,7 +494,7 @@ Natural acquisition/world generation and lerasium powers remain future work.
 As of 0.14.0, existing atium IDs explicitly represent the atium–electrum alloy;
 no pure-atium recipe, material, or effect is implied. No alloy ratio is invented.
 The existing 32 ordinary Metallic Arts attributes remain; alloy Allomancy adds
-one separate attribute. Current network protocol is 8; update both jars.
+one separate attribute. Current network protocol is 9; update both jars.
 
 
 ### Atium-alloy and electrum future sight (0.14.0)
@@ -593,6 +593,9 @@ protection/piercing, ranges, thresholds, scan cadence and budgets. Defaults scan
 once per4ticks, at most32 detected pulses and1024 collected emissions per
 dimension. Disabling preserves attributes/reserves. Client `seeking` options
 control pulse/copper HUD, private rhythms/volume and displayed pulse budget.
+Per user request, pulses use Minecraft note-block sounds. Client `pulseInstrument`
+selects BASS_DRUM (default), BASS, HARP, SNARE, HAT, BELL, CHIME or FLUTE;
+effect-specific rhythms and pitches remain. No custom sound pack is required.
 
 Integration API: `investiture.InvestitureSignals.register(id,provider)` reports
 active signals on collection; `emit(level,signal,lifetimeTicks)` reports one-shot

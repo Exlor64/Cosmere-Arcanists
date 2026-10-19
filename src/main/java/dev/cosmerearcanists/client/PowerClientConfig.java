@@ -3,6 +3,8 @@ package dev.cosmerearcanists.client;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class PowerClientConfig {
+    public enum PulseInstrument { BASS_DRUM, BASS, HARP, SNARE, HAT, BELL, CHIME, FLUTE }
+    public static final ModConfigSpec.EnumValue<PulseInstrument> SEEKING_INSTRUMENT;
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.BooleanValue HUD, LINES, THROUGH_WALLS, PEWTER_HEARTS, TIN_ECHOES, TIN_MODELS, TIN_ZOOM, FUTURES, FUTURE_MODELS, FUTURE_WARNINGS, SEEKING_HUD, SEEKING_SOUNDS;
     public static final ModConfigSpec.IntValue HUD_X, HUD_Y, HOLD_TICKS, TIN_ECHO_LIMIT, SEEKING_LIMIT;
@@ -24,6 +26,7 @@ public final class PowerClientConfig {
         FUTURE_OPACITY=b.defineInRange("opacity",.5,.05,1.0);
         b.pop();b.push("seeking");
         SEEKING_HUD=b.define("pulseCompassAndCopperStatus",true);SEEKING_SOUNDS=b.define("privateRhythms",true);
+        SEEKING_INSTRUMENT=b.comment("Vanilla note-block instrument for private bronze pulses; rhythms/pitch still distinguish signals.").defineEnum("pulseInstrument",PulseInstrument.BASS_DRUM);
         SEEKING_LIMIT=b.defineInRange("maxVisiblePulses",16,1,64);SEEKING_VOLUME=b.defineInRange("rhythmVolume",.35,0.0,1.0);
         b.pop();SPEC = b.build();
     }

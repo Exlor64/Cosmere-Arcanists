@@ -19,6 +19,12 @@ public final class SeekingClient {
     private static boolean active(){var mc=Minecraft.getInstance();return mc.player!=null && mc.level!=null && mc.player.isAlive() && !mc.player.isSpectator() && status.dimension().equals(mc.level.dimension().location().toString()) && mc.level.getGameTime()-received<status.lifetime();}
     private static String key(SeekingPacket.Pulse p){return p.art()+"/"+p.effect()+"/"+Math.round(p.position().x/2)+"/"+Math.round(p.position().z/2);}
     private static double beat(SeekingPacket.Pulse p,long tick){return 1-Math.floorMod(tick+key(p).hashCode(),p.period())/(double)p.period();}
+    private static net.minecraft.sounds.SoundEvent instrument(){return switch(PowerClientConfig.SEEKING_INSTRUMENT.get()) {
+        case BASS_DRUM -> SoundEvents.NOTE_BLOCK_BASEDRUM.value();case BASS -> SoundEvents.NOTE_BLOCK_BASS.value();
+        case HARP -> SoundEvents.NOTE_BLOCK_HARP.value();case SNARE -> SoundEvents.NOTE_BLOCK_SNARE.value();
+        case HAT -> SoundEvents.NOTE_BLOCK_HAT.value();case BELL -> SoundEvents.NOTE_BLOCK_BELL.value();
+        case CHIME -> SoundEvents.NOTE_BLOCK_CHIME.value();case FLUTE -> SoundEvents.NOTE_BLOCK_FLUTE.value();
+    };}
     @SubscribeEvent public void tick(ClientTickEvent.Post event) {
         var mc=Minecraft.getInstance();
         if(!active()){status=new SeekingPacket("",1,false,false,0,List.of());BEATS.clear();return;}
@@ -30,7 +36,7 @@ public final class SeekingClient {
             BEATS.put(key,tick);if(played++>=4)continue;
             var direction=pulse.position().subtract(mc.player.getEyePosition()).normalize();var position=mc.player.getEyePosition().add(direction.scale(2));
             float pitch=.65f+Math.floorMod((pulse.art()+pulse.effect()).hashCode(),9)*.09f;
-            mc.level.playLocalSound(position.x,position.y,position.z,SoundEvents.NOTE_BLOCK_BASEDRUM.value(),SoundSource.PLAYERS,(float)(PowerClientConfig.SEEKING_VOLUME.get()*pulse.clarity()),pitch,false);
+            mc.level.playLocalSound(position.x,position.y,position.z,instrument(),SoundSource.PLAYERS,(float)(PowerClientConfig.SEEKING_VOLUME.get()*pulse.clarity()),pitch,false);
         }
     }
     private static String effect(SeekingPacket.Pulse p){
