@@ -9,10 +9,10 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
-- User reports iron Alt movement starts inconsistently unless Alt/pull/direction are pressed slowly and can stop after seconds.
-- Found client Alt gating required the key already down in the previous tick. Removed this extra-tick requirement for both activation slots; alternate still latches on activation press. Same-tick Alt + G/H now works when Alt is down at sampling.
-- Added a five-second runtime regression for iron assistance in both slots, changing upward/forward input and rejecting backward input without a viable anchor. Build, 30 JUnit methods, 23 server GameTests and artifact upload passed. No force/solver change; the reported mid-hold stoppage is not yet reproduced.
-- Next: have user retest quick activation and sustained iron movement with suitable anchors, available fuel and range. Investigate any remaining stoppage with exact anchor/input setup.
+- User now reports the basics of iron and steel work quite well and wants to move on to other Allomantic powers.
+- Proposed next pair: tin (enhanced senses) and pewter (physical enhancement). These are suggestions awaiting user selection and mechanic design; no new power effects implemented in this discussion.
+- Next: choose the next metal and agree on burn effects, active/alternate functions, scaling and configuration before implementation. Existing attribute/selector infrastructure supports additional powers.
+- Previous 0.9.2 timing fix and five-second iron movement regression remain verified below. User's general positive report does not establish every equipment/visual edge case as tested.
 
 ## Vision and accepted constraints
 
