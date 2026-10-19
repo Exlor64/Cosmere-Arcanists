@@ -86,9 +86,59 @@ public final class TinClient {
             vertices.addVertex(pose.last().pose(),(float)end.x,(float)end.y,(float)end.z).setColor(.78f,.93f,1f,alpha).setNormal(pose.last(),(float)normal.x,(float)normal.y,(float)normal.z);
         }
     }
+    private record Puff(Vec3 position,float width,float height,float opacity) { }
+    private static void puff(java.util.List<Puff> puffs,Vec3 position,double width,double height,float opacity){
+        if(opacity>.003)puffs.add(new Puff(position,(float)width,(float)height,opacity));
+    }
+    /** Gaussian billboards provide vague sound impressions without a full-screen blur or hard mesh edges. */
+    private static void softEchoes(RenderLevelStageEvent event){
+        var mc=Minecraft.getInstance();float partial=event.getPartialTick().getGameTimeDeltaPartialTick(false);double now=mc.level.getGameTime()+partial;
+        var camera=event.getCamera().getPosition();var strongest=new HashMap<Integer,Echo>();
+        for(var echo:ECHOES)if(echo.packet.entityId()>=0){var old=strongest.get(echo.packet.entityId());if(old==null || mobAlpha(echo,now-echo.started)>mobAlpha(old,now-old.started))strongest.put(echo.packet.entityId(),echo);}
+        var puffs=new ArrayList<Puff>();double size=PowerClientConfig.TIN_BLUR_SIZE.get();
+        float opacity=(float)(PowerClientConfig.TIN_BLUR_OPACITY.get()/Math.sqrt(Math.max(1,ECHOES.size())));
+        // Keep one softly connected body impression per actual sound source, not one per sound packet.
+        for(var echo:strongest.values()){
+            var entity=mc.level.getEntity(echo.packet.entityId());if(entity==mc.player)continue;
+            var pos=anchor(echo,partial);var box=echo.packet.sourceBox();double width=Math.max(.45,box.getXsize()),height=Math.max(.4,box.getYsize());
+            float a=mobAlpha(echo,now-echo.started)*opacity;
+            if(PowerClientConfig.TIN_MODELS.get()){
+                puff(puffs,pos.add(0,height*.28,0),width*1.5*size,height*.65*size,a*.65f);
+                puff(puffs,pos.add(0,height*.58,0),width*1.7*size,height*.7*size,a);
+                puff(puffs,pos.add(0,height*.86,0),width*1.3*size,height*.4*size,a*.8f);
+            }else puff(puffs,pos.add(0,height*.5,0),width*1.7*size,height*1.2*size,a);
+        }
+        // Merge repeated surface impressions before drawing to prevent overlapping sounds whitening the view.
+        var surfaces=new HashMap<net.minecraft.core.BlockPos,Puff>();
+        for(var echo:ECHOES){double age=now-echo.started;float a=alpha(echo,age)*opacity*.55f;
+            for(var box:echo.packet.surfaces()){
+                var center=box.getCenter();float reveal=(float)TinMath.waveReveal(age,center.distanceTo(echo.packet.position()),PowerClientConfig.TIN_WAVE_SPEED.get());
+                if(reveal<=0)continue;
+                var key=net.minecraft.core.BlockPos.containing(center);var old=surfaces.get(key);float strength=a*reveal;
+                if(old==null || strength>old.opacity())surfaces.put(key,new Puff(center,(float)(Math.clamp(Math.max(box.getXsize(),box.getZsize())*1.5,.5,2.5)*size),(float)(Math.clamp(box.getYsize()*1.5,.5,2.5)*size),strength));
+            }
+        }
+        // Prefer nearby surfaces and preserve the source impressions when reaching the shared draw budget.
+        var terrain=new ArrayList<>(surfaces.values());terrain.sort(Comparator.comparingDouble(p->p.position().distanceToSqr(camera)));puffs.addAll(terrain);
+        var type=TinRenderTypes.blur();var buffers=mc.renderBuffers().bufferSource();var vertices=buffers.getBuffer(type);var pose=event.getPoseStack();int drawn=0;
+        for(var puff:puffs){
+            if(drawn>=PowerClientConfig.TIN_BLUR_LIMIT.get())break;
+            if(puff.opacity()<.003 || puff.position().distanceToSqr(camera)<.75*.75)continue; // Avoid a cloud filling the camera.
+            drawn++;pose.pushPose();
+            try{pose.translate(puff.position().x-camera.x,puff.position().y-camera.y,puff.position().z-camera.z);pose.mulPose(mc.getEntityRenderDispatcher().cameraOrientation());
+                float x=puff.width()*.5f,y=puff.height()*.5f;
+                vertices.addVertex(pose.last().pose(),-x,-y,0).setUv(0,1).setColor(1f,1f,1f,puff.opacity());
+                vertices.addVertex(pose.last().pose(),x,-y,0).setUv(1,1).setColor(1f,1f,1f,puff.opacity());
+                vertices.addVertex(pose.last().pose(),x,y,0).setUv(1,0).setColor(1f,1f,1f,puff.opacity());
+                vertices.addVertex(pose.last().pose(),-x,y,0).setUv(0,0).setColor(1f,1f,1f,puff.opacity());
+            }finally{pose.popPose();}
+        }
+        flushThroughWalls(buffers,type);
+    }
     @SubscribeEvent public void render(RenderLevelStageEvent event) {
         var mc=Minecraft.getInstance();
         if(event.getStage()!=RenderLevelStageEvent.Stage.AFTER_PARTICLES || !wireActive() || !PowerClientConfig.TIN_ECHOES.get() || ECHOES.isEmpty())return;
+        if(PowerClientConfig.TIN_ECHO_STYLE.get()==PowerClientConfig.TinEchoStyle.SOFT_BLUR){softEchoes(event);return;}
         var camera=event.getCamera().getPosition();var pose=event.getPoseStack();var buffers=mc.renderBuffers().bufferSource();
         float partial=event.getPartialTick().getGameTimeDeltaPartialTick(false);double now=mc.level.getGameTime()+partial;
         var strongest=new HashMap<Integer,Echo>();

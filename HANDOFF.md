@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-19 UTC**. Current mod version: **0.24.0-alpha**.
+Last updated: **2026-10-19 UTC**. Current mod version: **0.24.1-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -8,6 +8,9 @@ Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
 Read this and `AGENTS.md` when beginning a session. The user requires this file to be updated after every change or project chat. Keep it current rather than appending conflicting summaries.
 
 ## Latest session and next action
+
+- 0.24.1 user requests a translucent white blur instead of tin wireframes and may want reversal. Default client tin.echoStyle=SOFT_BLUR uses custom Gaussian billboard shader for softly connected mob impressions and vague surface clouds. Retained exact previous wireframe path behind WIREFRAME setting; no gameplay/protocol/save change (16). Client blurOpacity .16 (.01..35%), blurSize1, maxBlurPuffs64 cap perframe; deduplicates surface blocks, strongest source echo only, scales opacity down with concurrent echoes, skips clouds within.75blocks of camera. World/GUI not blurred; no full-screen render targets. Uses existing interpolated sound-source anchors, wave arrival, fade, strength/flare eligibility and obstruction, explicit through-wall batch flush with depth restoration. Client shader reload via RegisterShadersEvent. Night vision/zoom unchanged. CI pending; shader appearance needs actual client testing.
+
 
 - 0.24.0 user requested tin vision variable with strength, potentially a shader. Implemented continuous server-approved lightmap enhancement (client-only LightTexture NativeImage pixel mixin), not fixed potion or world block light. Curve .95*(1-exp(-.6*effectiveStrength)) gives attribute1 Low~.246/Burn~.429/Flare~.664, asymptote.95; includes attributes/burn/duralumin. Client smooth interpolation, configscale/toggle/transition and40tick stale timeout; disconnect/dimension/death clears. Server nightVision toggle preserved plus vision.strengthResponse/maxBrightness. TinStatus adds bounded floatvision; protocol16 requires both sides.
 - Old tin-owned hidden320tick ambient effect ownership marker is cleaned nexttick; ordinary potions remain vanilla and are not removed. Client mixin only modifies lightmap sampled by world shaders, keeping alpha and leaving bright pixels unchanged; no chunk/block light changes or new render targets. Hearing/zoom/wireframe behavior retained. Shader packs bypassing vanilla lightmap need compatibility testing. Verification: Java21 GitHub Actions run39334505569 for gameplay commit2b86b7056f2a4ca6df33958e82aacc33d8040b2f passed build/JUnit (55 registered unit methods), explicitly logged All74requiredtestspassed, and uploaded artifacts. Unit curve/pixel tests and server scaling/gates/migration/potion/packet tests passed. No graphical-client or shader-pack validation available locally. Next: user checks cave/night brightness at three burn levels and stronger attributes, transitions, and independent potion behavior.

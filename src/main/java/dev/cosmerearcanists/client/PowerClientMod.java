@@ -15,6 +15,7 @@ public final class PowerClientMod {
     public PowerClientMod(IEventBus bus, ModContainer container) {
         container.registerConfig(ModConfig.Type.CLIENT, PowerClientConfig.SPEC);
         bus.addListener(this::keys);
+        bus.addListener(TinRenderTypes::registerShaders);
         bus.addListener(this::renderers);
         bus.addListener(this::setup);
         dev.cosmerearcanists.power.EmotionPacket.receiver=EmotionClient::receive;

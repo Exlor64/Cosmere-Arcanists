@@ -3,12 +3,14 @@ package dev.cosmerearcanists.client;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class PowerClientConfig {
+    public enum TinEchoStyle { SOFT_BLUR, WIREFRAME }
+    public static final ModConfigSpec.EnumValue<TinEchoStyle> TIN_ECHO_STYLE;
     public enum PulseInstrument { BASS_DRUM, BASS, HARP, SNARE, HAT, BELL, CHIME, FLUTE }
     public static final ModConfigSpec.EnumValue<PulseInstrument> SEEKING_INSTRUMENT;
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.BooleanValue HUD, HIDE_HUD, LINES, THROUGH_WALLS, PEWTER_HEARTS, TIN_ECHOES, TIN_MODELS, TIN_ZOOM, FUTURES, FUTURE_MODELS, FUTURE_WARNINGS, SEEKING_HUD, SEEKING_SOUNDS, EMOTION_HUD, EMOTION_TARGET, TIN_LIGHTMAP;
-    public static final ModConfigSpec.IntValue HUD_X, HUD_Y, HOLD_TICKS, TIN_ECHO_LIMIT, SEEKING_LIMIT;
-    public static final ModConfigSpec.DoubleValue LINE_WIDTH, TIN_WIDTH, TIN_OPACITY, FUTURE_OPACITY, SEEKING_VOLUME, TIN_BRIGHTNESS, TIN_WIDTH_SCALE, TIN_HOLD, TIN_PULSE_STRENGTH, TIN_WAVE_SPEED, FUTURE_PROMINENCE, HUD_SCALE, TIN_VISION_SCALE, TIN_VISION_FADE;
+    public static final ModConfigSpec.IntValue HUD_X, HUD_Y, HOLD_TICKS, TIN_ECHO_LIMIT, SEEKING_LIMIT, TIN_BLUR_LIMIT;
+    public static final ModConfigSpec.DoubleValue LINE_WIDTH, TIN_WIDTH, TIN_OPACITY, FUTURE_OPACITY, SEEKING_VOLUME, TIN_BRIGHTNESS, TIN_WIDTH_SCALE, TIN_HOLD, TIN_PULSE_STRENGTH, TIN_WAVE_SPEED, FUTURE_PROMINENCE, HUD_SCALE, TIN_VISION_SCALE, TIN_VISION_FADE, TIN_BLUR_OPACITY, TIN_BLUR_SIZE;
     static {
         var b = new ModConfigSpec.Builder();
         HUD = b.comment("Show or hide the entire blue power panel, including the secondary panel, text and icons.").define("selectedPowerIcon", true); LINES = b.define("blueLines", true);
@@ -21,6 +23,9 @@ public final class PowerClientConfig {
         HOLD_TICKS = b.comment("A shorter press cycles state; hold opens selection.").defineInRange("menuHoldTicks", 4, 1, 20);
         LINE_WIDTH = b.defineInRange("lineWidth", 2.0, 1.0, 5.0);
         b.push("tin");
+        TIN_ECHO_STYLE=b.comment("SOFT_BLUR shows faint white sound impressions; WIREFRAME restores the original mesh/block outlines.").defineEnum("echoStyle",TinEchoStyle.SOFT_BLUR);
+        TIN_BLUR_OPACITY=b.comment("Maximum opacity per soft impression before fading/obstruction and overlap reduction.").defineInRange("blurOpacity",.16,.01,.35);
+        TIN_BLUR_SIZE=b.defineInRange("blurSize",1.0,.5,2.0);TIN_BLUR_LIMIT=b.defineInRange("maxBlurPuffs",64,8,128);
         TIN_LIGHTMAP=b.define("variableNightVision",true);
         TIN_VISION_SCALE=b.defineInRange("visionBrightnessMultiplier",1.0,0.0,2.0);
         TIN_VISION_FADE=b.comment("Exponential transition time in ticks for changing vision strength.").defineInRange("visionTransitionTicks",6.0,1.0,40.0);

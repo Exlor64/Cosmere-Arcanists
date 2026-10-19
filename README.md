@@ -893,3 +893,18 @@ tin-owned hidden potion effects are cleaned up; other potions are preserved.
 Client and server need protocol **16**. This uses the vanilla lightmap sampled by
 world shaders; shader packs replacing that pipeline need separate compatibility
 testing. Tin's hearing, flaring-only echoes and held zoom are unchanged.
+
+### Soft white tin echoes (0.24.1)
+
+Tin's sound impressions now default to **faint, soft white blurs**, replacing the
+hard block and mob wireframes. A small Gaussian shader feathers each impression
+to transparency; the world itself remains sharp. Echoes still travel outward
+from sounds, fade, follow sounding mobs and remain visible through walls when
+server-approved. Flaring/strength thresholds and sound obstruction are unchanged.
+
+In the client config `[tin]`, set `echoStyle = "WIREFRAME"` to restore the previous
+look, or keep `"SOFT_BLUR"`. `blurOpacity` defaults0.16, `blurSize` defaults1, and
+`maxBlurPuffs` defaults64 per frame. Surface impressions are merged across
+overlapping sounds, opacity is reduced during multiple echoes, and clouds very
+near the camera are skipped to keep vision clear. Existing echo visibility
+controls still apply. No protocol or saved-data changes (protocol16).

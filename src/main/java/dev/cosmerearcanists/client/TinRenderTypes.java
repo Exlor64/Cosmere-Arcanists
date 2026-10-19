@@ -8,6 +8,15 @@ import net.minecraft.resources.ResourceLocation;
 
 public final class TinRenderTypes extends RenderType {
     private TinRenderTypes(){super("unused",DefaultVertexFormat.POSITION,VertexFormat.Mode.LINES,256,false,false,()->{},()->{});}
+    private static net.minecraft.client.renderer.ShaderInstance blurShader;
+    public static void registerShaders(net.neoforged.neoforge.client.event.RegisterShadersEvent event) {
+        try{event.registerShader(new net.minecraft.client.renderer.ShaderInstance(event.getResourceProvider(),ResourceLocation.fromNamespaceAndPath("cosmerearcanists","tin_blur"),DefaultVertexFormat.POSITION_TEX_COLOR),shader->blurShader=shader);}
+        catch(java.io.IOException e){throw new java.io.UncheckedIOException("Unable to load tin echo shader",e);}
+    }
+    private static final RenderType BLUR=create("cosmere_tin_soft_echo",DefaultVertexFormat.POSITION_TEX_COLOR,VertexFormat.Mode.QUADS,4096,false,false,
+        CompositeState.builder().setShaderState(new ShaderStateShard(()->blurShader)).setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+        .setDepthTestState(NO_DEPTH_TEST).setCullState(NO_CULL).setWriteMaskState(COLOR_WRITE).createCompositeState(false));
+    public static RenderType blur(){return BLUR;}
     private static RenderType lines;private static double width;
     public static RenderType lines(){
         if(lines==null || width!=echoWidth()) {
