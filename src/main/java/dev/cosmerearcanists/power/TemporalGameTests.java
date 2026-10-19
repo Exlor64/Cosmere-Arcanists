@@ -47,8 +47,12 @@ public final class TemporalGameTests {
         var arrow=new Arrow(EntityType.ARROW,h.getLevel());h.assertTrue(TemporalService.dodgeChance(p,p.damageSources().arrow(arrow,attacker))>0,"Physical projectiles are dodgeable");
         h.assertTrue(TemporalService.dodgeChance(p,p.damageSources().fall())==0 && TemporalService.dodgeChance(p,p.damageSources().lava())==0,"Falling and environmental hazards cannot be dodged");
         double base=TemporalConfig.DODGE_CHANCE.get(),cap=TemporalConfig.DODGE_CAP.get();boolean enabled=TemporalConfig.DODGE.get();
-        try{TemporalConfig.DODGE_CHANCE.set(1.0);TemporalConfig.DODGE_CAP.set(1.0);float health=p.getHealth();p.hurt(source,4);h.assertTrue(p.getHealth()==health,"Successful dodge cancels the real incoming damage event");
-            TemporalConfig.DODGE.set(false);p.invulnerableTime=0;p.hurt(source,4);h.assertTrue(p.getHealth()<health,"Disabling dodge restores incoming attack damage");
+        try{TemporalConfig.DODGE_CHANCE.set(1.0);TemporalConfig.DODGE_CAP.set(1.0);
+            // FakePlayer is invulnerable and never ages spawn protection; dispatch the real incoming event directly.
+            var hit=new net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent(p,new net.neoforged.neoforge.common.damagesource.DamageContainer(source,4));
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(hit);h.assertTrue(hit.isCanceled(),"Registered handler cancels a successful dodge before damage processing");
+            TemporalConfig.DODGE.set(false);var normal=new net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent(p,new net.neoforged.neoforge.common.damagesource.DamageContainer(source,4));
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(normal);h.assertTrue(!normal.isCanceled(),"Disabling dodge preserves incoming attack events");
         }finally{TemporalConfig.DODGE_CHANCE.set(base);TemporalConfig.DODGE_CAP.set(cap);TemporalConfig.DODGE.set(enabled);attacker.discard();}
         h.succeed();
     }
