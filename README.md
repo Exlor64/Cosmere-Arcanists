@@ -676,7 +676,7 @@ compatibility and terrain navigation still require playtesting. Client
 
 Test with `/cosmere power grant @s a:zinc`, `a:brass`, then
 `/cosmere power refill @s`. Existing persistent attributes and mixed vials work;
-no new registry IDs or save migration. Client and server need protocol **11**.
+no new registry IDs or save migration. Client and server need protocol **12**.
 The private emotional status packet does not disclose an influencing player's
 identity. Player emotional mechanics and species behavior are gameplay choices
 requested for this mod; progression XP and Hemalurgy equipment remain future.
@@ -787,3 +787,19 @@ capped and sound blocking still applies. Tune client `tin.pulseIntensityMultipli
 and surface radius/cap becomes6/12blocks before strength/attenuation scaling. Existing echo
 duration/brightness/width settings still apply. Client and server must both
 update: networking protocol is now **11** for authoritative wireframe eligibility.
+
+### Held, subtler future sight (0.20.0)
+
+Atium and electrum now require holding their assigned **G/H** activation button
+in addition to burning. Release clears the forecast and stops normal drain and
+future-sight interference. Existing duralumin burst fuel commitments still apply.
+Shadows are subtler, use fewer ghost models, and no longer have box outlines.
+Tune client `futureSight.prominenceMultiplier` (default0.45) or server
+`requireHeldActivation`.
+
+Electrum can mark a future self with **may draw hostile attention** if that path
+enters a nearby idle hostile mob's targeting range and predicted line of sight.
+This also applies to the jump preview. It reveals no attacker identity/path and
+does not change actual mob AI. The bounded forecast approximates ordinary mob
+aggro; special senses, equipment rules and custom AI may differ. Toggle server
+`electrumAggroWarnings`. Both client and server need protocol **12**.

@@ -17,7 +17,7 @@ import net.neoforged.neoforge.gametest.*;
 public final class TemporalGameTests {
     private static FakePlayer player(GameTestHelper h,String name,Vec3 pos,String metal) {
         var p=new FakePlayer(h.getLevel(),new GameProfile(UUID.randomUUID(),name));p.setPos(pos);p.setOnGround(true);
-        PowerAttributes.set(p,"a:"+metal,1);PowerData.reserve(p,metal,100);PowerData.state(p,"a:"+metal,2);return p;
+        PowerAttributes.set(p,"a:"+metal,1);PowerData.reserve(p,metal,100);PowerData.state(p,"a:"+metal,2);PowerData.assignSlot(p,"a:"+metal,0);PowerService.control(p,new PowerNetwork.Control(2,"",1));return p;
     }
     private static Vec3 origin(GameTestHelper h){return Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(1,20,1)));}
     private static void floor(GameTestHelper h){
@@ -71,12 +71,29 @@ public final class TemporalGameTests {
         floor(h);var p=player(h,"Seer",origin(h),"atium");var other=player(h,"Oracle",origin(h).add(3,0,0),"electrum");
         h.assertTrue(TemporalService.interferes(other),"Active electrum splits an atium forecast");PowerData.state(other,"a:electrum",0);
         h.assertTrue(!TemporalService.interferes(other),"Merely possessing electrum does not counter atium");PowerAttributes.set(other,"a:atium",1);PowerData.reserve(other,"atium",10);PowerData.state(other,"a:atium",2);
-        h.assertTrue(TemporalService.interferes(other),"Two active atium burners interfere too");
+        PowerData.assignSlot(other,"a:atium",0);PowerService.control(other,new PowerNetwork.Control(2,"",1));h.assertTrue(TemporalService.interferes(other),"Two actively held atium powers interfere too");
         var cow=h.spawn(EntityType.COW,new BlockPos(4,20,1));cow.setNoAi(true);
         h.assertTrue(TemporalService.forecast(p).shadows().stream().anyMatch(s->s.entity()==cow.getId()),"Visible entities have atium shadows: "+TemporalService.forecast(p)+" visible="+TemporalService.visible(p,cow)+" eye="+p.getEyePosition()+" cow="+cow.position()+" sight="+p.hasLineOfSight(cow));
         cow.setInvisible(true);h.assertTrue(!TemporalService.visible(p,cow),"Foresight must not reveal invisible targets");cow.setInvisible(false);
         h.setBlock(new BlockPos(3,20,1),Blocks.STONE);h.setBlock(new BlockPos(3,21,1),Blocks.STONE);h.setBlock(new BlockPos(3,22,1),Blocks.STONE);
         h.assertTrue(!TemporalService.visible(p,cow),"Foresight must not become a wallhack");h.succeed();
+    }
+    @GameTest(template="empty") public static void forecastsAndInterferenceRequireTheCorrectHeldSlot(GameTestHelper h){
+        floor(h);var p=player(h,"HeldSight",origin(h),"electrum");PowerService.control(p,new PowerNetwork.Control(2,"",0));double reserve=PowerData.reserve(p,"electrum");TemporalService.tick(p);
+        h.assertTrue(TemporalService.forecast(p).shadows().isEmpty() && !TemporalService.interferes(p) && PowerData.reserve(p,"electrum")==reserve,"Burning alone gives no forecasts, interference or normal drain");
+        PowerData.assignSlot(p,"a:electrum",1);PowerService.control(p,new PowerNetwork.Control(2,"",1));h.assertTrue(TemporalService.forecast(p).shadows().isEmpty(),"Holding a different slot does not activate electrum");
+        PowerService.control(p,new PowerNetwork.Control(7,"",1));h.assertTrue(!TemporalService.forecast(p).shadows().isEmpty() && TemporalService.interferes(p),"Secondary activation enables the assigned future sight");PowerService.control(p,new PowerNetwork.Control(7,"",0));h.assertTrue(TemporalService.forecast(p).shadows().isEmpty(),"Release removes all futures immediately");h.succeed();
+    }
+    @GameTest(template="empty") public static void electrumWarnsAboutFutureAggroWithoutRevealingTheMob(GameTestHelper h){
+        floor(h);var p=player(h,"AggroOracle",origin(h),"electrum");p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);p.setDeltaMovement(.2,0,0);
+        var zombie=EntityType.ZOMBIE.create(h.getLevel());zombie.setPos(origin(h).add(5,0,0));zombie.setNoGravity(true);zombie.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.FOLLOW_RANGE).setBaseValue(2);h.getLevel().addFreshEntity(zombie);
+        var forecast=TemporalService.forecast(p);h.assertTrue(forecast.shadows().stream().allMatch(s->s.entity()==p.getId()),"Electrum aggro warnings must not reveal the hostile mob identity or path");
+        h.assertTrue(forecast.shadows().stream().flatMap(s->s.points().stream()).anyMatch(f->(f.warning()&TemporalPacket.AGGRO)!=0),"Walking into an idle hostile mob's follow range warns on the future self");
+        zombie.setNoAi(true);h.assertTrue(TemporalService.forecast(p).shadows().stream().flatMap(s->s.points().stream()).noneMatch(f->(f.warning()&TemporalPacket.AGGRO)!=0),"A mob with disabled AI cannot acquire aggro");
+        zombie.setNoAi(false);zombie.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.FOLLOW_RANGE).setBaseValue(8);for(int y=20;y<24;y++)h.setBlock(new BlockPos(4,y,1),Blocks.STONE);p.setDeltaMovement(Vec3.ZERO);
+        h.assertTrue(TemporalService.forecast(p).shadows().stream().flatMap(s->s.points().stream()).noneMatch(f->(f.warning()&TemporalPacket.AGGRO)!=0),"A solid barrier blocks prospective aggro even within follow range");zombie.discard();
+        var packet=new TemporalPacket(h.getLevel().dimension().location().toString(),5,List.of(new TemporalPacket.Shadow(p.getId(),TemporalPacket.SELF,.6f,1.8f,List.of(new TemporalPacket.Point(p.position(),TemporalPacket.AGGRO)))));
+        var buffer=new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(),h.getLevel().registryAccess());try{TemporalPacket.CODEC.encode(buffer,packet);h.assertTrue(TemporalPacket.CODEC.decode(buffer).equals(packet),"New aggro warning flag round trips safely");}finally{buffer.release();}h.succeed();
     }
     @GameTest(template="empty") public static void temporalCodecBoundsAndThirtyThreePowerSnapshot(GameTestHelper h) {
         var level=h.getLevel();var p=player(h,"ForecastCodec",origin(h),"electrum");

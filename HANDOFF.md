@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-19 UTC**. Current mod version: **0.19.0-alpha**.
+Last updated: **2026-10-19 UTC**. Current mod version: **0.20.0-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -9,13 +9,13 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Latest session and next action
 
-- User requests Tin pulses propagate as waves, mob outlines move smoothly instead of teleporting, visual strength AND hearing/reveal range doubled, and pulses invisible unless actually Flaring Tin. This explicitly supersedes earlier allowance for high-attribute normal-burning wireframes.
-- Version0.19.0-alpha/protocol11. TinStatus adds server-authoritative wireframes eligibility boolean; both sides must update. Server hearing.wireframesRequireFlaring defaults true. Actual state3 and enabled Flaring required regardless of attributes; strength/progression/obstruction/fuel still apply. Night vision and held zoom remain available in other burn states.
-- Each approved sound has an independent expanding three-ring wave, with surface outlines smoothly revealed as the wave reaches their distance. Wave origin stays at the actual sound location. Waves share the existing bounded echo budget and expiry, with no extra entity/terrain queries or silent-source detection.
-- Mob mesh/source box follows vanilla client-interpolated position/yaw for its short active echo; missing/untracked models smoothly bridge source snapshots over4ticks. Only the strongest active echo draws each mob, avoiding overdraw and sudden dimming when a new wave begins. Silent mobs stop showing when their last sound echo expires; no ongoing server tracking added.
-- Client tin.pulseIntensityMultiplier defaults2.0 (visual intensity only, opacity capped1); tin.waveSpeed defaults.65 blocks/tick. Server hearing.echoRangeMultiplier defaults2.0, multiplying hearing distance/cap and surface radius/cap (base defaults24/64 become48/128; surface3/6 become6/12). Geometry/echo budgets remain bounded and no chunk loads are forced. Prior persistence/brightness/width/hold settings retained; explicit through-wall drawing and block resistance remain.
-- Added2 pure math cases for outward wave timing/smooth snapshot interpolation and1 server case for extreme-attribute low/normal rejection, actual Flaring enablement/disablement new status codec and doubled capped hearing range. Thick-barrier regression now uses wool and allows equal rounded lifetimes while asserting lower audibility. Existing high-power tests now explicitly flare. Java21 GitHub Actions run39327080436 passed build/JUnit, required server GameTests and artifact upload for gameplay commit55367bdf1cff8597b472b777839efebd95f09523. Registered suites52 unit/66 server methods. Prior0.18.2 build/server/artifact passed run39325529820 (50 unit/65 server). No graphical client/GL playtest claimed.
-- Next: user visual checks of spreading waves, moving mobs, and immediate disappearance after leaving Flaring.
+- User requests subtler atium/electrum shadows without hitbox outlines, both powers only while holding their assigned activation button, and electrum warning when a projected self would draw hostile aggro.
+- Version0.20.0-alpha/protocol12: TemporalClient removes all box outlines, draws one final mesh per shadow instead of mid+final, and applies futureSight.prominenceMultiplier default.45 to existing opacity/path settings. Warning text remains readable. Projectiles keep trajectory rails, never hitbox boxes.
+- TemporalConfig requireHeldActivation defaults true. sightStrength gates forecasts, normal drain, counter-foresight interference, actual bronze signals and duralumin active-metal capture; raw burn strength remains available for formulas. Correct primary/secondary slot must be held; heartbeat/death/config/fuel validation preserved. Release clears private forecast on next server tick. Duralumin committed bursts retain their existing fuel commitment rules.
+- New AGGRO32 flag with DANGER_MASK47; decoder permits flags0..63. Protocol12 requires updated client/server. Electrum self/jump futures gain a "may draw hostile attention" warning when predicted positions enter an idle hostile mob's follow range and loaded-voxel-checked future sight line. Does not set targets, mutate AI or send attacker identity/path. Hidden current mobs may inform private self consequences, but atium still only sends currently visible entity paths.
+- Prospective aggro is bounded heuristic, not full species-AI simulation: ordinary Enemy mobs able to attack, not noAI/creative-invulnerable players, no current target, neutral mobs only when already angry at observer, no pacified/minion/trusting sources. Existing target/sample/horizon/range budgets remain. Special mob senses/gear/daylight/custom AI can differ; warn wording is intentionally conditional. TemporalConfig electrumAggroWarnings toggles it.
+- Added2 server regressions for held-slot/privacy/fuel/interference gates, prospective aggro, noAI/wall exclusions and new warning codec; existing temporal fixtures now hold activation and duralumin fixture holds both temporal slots. Java21 CI pending. Prior0.19.0 passed52 unit/66 server methods in run39327080436. No graphical client playtest claimed.
+- Next: automated validation then user checks of shadow prominence, G/H release behavior and practical aggro warning accuracy.
 
 ## Vision and accepted constraints
 

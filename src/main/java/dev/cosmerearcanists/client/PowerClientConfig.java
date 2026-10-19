@@ -8,7 +8,7 @@ public final class PowerClientConfig {
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.BooleanValue HUD, LINES, THROUGH_WALLS, PEWTER_HEARTS, TIN_ECHOES, TIN_MODELS, TIN_ZOOM, FUTURES, FUTURE_MODELS, FUTURE_WARNINGS, SEEKING_HUD, SEEKING_SOUNDS, EMOTION_HUD;
     public static final ModConfigSpec.IntValue HUD_X, HUD_Y, HOLD_TICKS, TIN_ECHO_LIMIT, SEEKING_LIMIT;
-    public static final ModConfigSpec.DoubleValue LINE_WIDTH, TIN_WIDTH, TIN_OPACITY, FUTURE_OPACITY, SEEKING_VOLUME, TIN_BRIGHTNESS, TIN_WIDTH_SCALE, TIN_HOLD, TIN_PULSE_STRENGTH, TIN_WAVE_SPEED;
+    public static final ModConfigSpec.DoubleValue LINE_WIDTH, TIN_WIDTH, TIN_OPACITY, FUTURE_OPACITY, SEEKING_VOLUME, TIN_BRIGHTNESS, TIN_WIDTH_SCALE, TIN_HOLD, TIN_PULSE_STRENGTH, TIN_WAVE_SPEED, FUTURE_PROMINENCE;
     static {
         var b = new ModConfigSpec.Builder();
         HUD = b.define("selectedPowerIcon", true); LINES = b.define("blueLines", true);
@@ -26,6 +26,7 @@ public final class PowerClientConfig {
         TIN_HOLD=b.comment("Keep full echo brightness for this fraction of its lifetime, then smoothly fade.").defineInRange("echoHoldFraction",.2,0.0,.75);
         b.pop();b.push("futureSight");
         FUTURES=b.define("shadows",true);FUTURE_MODELS=b.define("entitySilhouettes",true);FUTURE_WARNINGS=b.define("injuryWarnings",true);
+        FUTURE_PROMINENCE=b.comment("Additional shadow/path visibility scale. Does not affect warning text.").defineInRange("prominenceMultiplier",.45,.05,1.0);
         FUTURE_OPACITY=b.defineInRange("opacity",.5,.05,1.0);
         b.pop();b.push("seeking");
         SEEKING_HUD=b.define("pulseCompassAndCopperStatus",true);SEEKING_SOUNDS=b.define("privateRhythms",true);

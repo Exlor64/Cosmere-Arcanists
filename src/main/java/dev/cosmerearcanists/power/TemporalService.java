@@ -30,7 +30,8 @@ public final class TemporalService {
         int state=PowerData.state(p,"a:"+metal);if(state==3&&!PowerConfig.FLARING.get())state=2;
         return PowerAttributes.effectiveStrength(p,"a:"+metal)*PowerRules.levelMultiplier(state,PowerConfig.LOW_STRENGTH.get(),PowerConfig.BURN_STRENGTH.get(),PowerConfig.FLARE_STRENGTH.get());
     }
-    public static boolean interferes(Entity e) {return TemporalConfig.COUNTERS.get() && e instanceof ServerPlayer p && (strength(p,"atium")>0 || strength(p,"electrum")>0);}
+    public static double sightStrength(ServerPlayer p,String metal){return TemporalConfig.REQUIRE_HOLD.get() && !PowerService.holdingAbility(p,"a:"+metal)?0:strength(p,metal);}
+    public static boolean interferes(Entity e) {return TemporalConfig.COUNTERS.get() && e instanceof ServerPlayer p && (sightStrength(p,"atium")>0 || sightStrength(p,"electrum")>0);}
     public static int horizon(double strength){return TemporalMath.horizon(strength,TemporalConfig.BASE_HORIZON.get(),TemporalConfig.MAX_HORIZON.get());}
     private static Vec3 velocity(Entity e) {
         if(e instanceof ServerPlayer) {
@@ -47,14 +48,14 @@ public final class TemporalService {
         }
         MOTION.put(p.getUUID(),new Motion(p.position(),v,time,dim));
         for(String metal:List.of("atium","electrum")) {
-            if(strength(p,metal)>0 && PowerConfig.CONSUMPTION.get()) {
+            if(sightStrength(p,metal)>0 && PowerConfig.CONSUMPTION.get()) {
                 int state=PowerData.state(p,"a:"+metal);if(state==3&&!PowerConfig.FLARING.get()){state=2;PowerData.state(p,"a:"+metal,2);}
                 double rate=metal.equals("atium")?TemporalConfig.ATIUM_DRAIN.get():TemporalConfig.ELECTRUM_DRAIN.get();
                 EnhancementService.consume(p,metal,rate/20*PowerRules.levelMultiplier(state,PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get()));
             }
             if(PowerConfig.CONSUMPTION.get() && PowerData.reserve(p,metal)<=0 && PowerData.state(p,"a:"+metal)>0)PowerData.state(p,"a:"+metal,0);
         }
-        boolean active=strength(p,"atium")>0 || strength(p,"electrum")>0;
+        boolean active=sightStrength(p,"atium")>0 || sightStrength(p,"electrum")>0;
         if(!active) {if(SENT.remove(p.getUUID()))PacketDistributor.sendToPlayer(p,new TemporalPacket(dim,1,List.of()));return;}
         if(time%TemporalConfig.INTERVAL.get()==0 || !SENT.contains(p.getUUID())) {
             PacketDistributor.sendToPlayer(p,forecast(p));SENT.add(p.getUUID());
@@ -124,7 +125,7 @@ public final class TemporalService {
         for(int i=0;i<count;i++) {
             int index=(i+1)*frames.size()/count-1,flags=extra;
             for(int j=previous;j<=index;j++)flags|=frames.get(j).warning;previous=index+1;
-            if(TemporalConfig.SHADOWS.get() || warnings && (flags&15)!=0)samples.add(new TemporalPacket.Point(frames.get(index).position,warnings?flags:flags&TemporalPacket.UNCERTAIN));
+            if(TemporalConfig.SHADOWS.get() || warnings && (flags&TemporalPacket.DANGER_MASK)!=0)samples.add(new TemporalPacket.Point(frames.get(index).position,warnings?flags:flags&TemporalPacket.UNCERTAIN));
         }
         return new TemporalPacket.Shadow(e.getId(),kind,e.getBbWidth(),e.getBbHeight(),List.copyOf(samples));
     }
@@ -140,20 +141,36 @@ public final class TemporalService {
         if(!TemporalConfig.ATTACKS.get())return false;
         return entity instanceof Mob mob && mob.getTarget()==observer && mob.isAggressive() || entity instanceof Creeper creeper && creeper.getSwellDir()>0;
     }
+    private static boolean mayAggro(Mob mob,ServerPlayer observer){
+        return TemporalConfig.AGGRO.get() && mob instanceof net.minecraft.world.entity.monster.Enemy && !mob.isNoAi() && mob.getTarget()==null && mob.canAttack(observer) && !observer.getAbilities().invulnerable && !observer.isSpectator()
+            && (!(mob instanceof NeutralMob neutral) || neutral.isAngryAt(observer)) && !EmotionService.pacified(mob) && DominationService.owner(mob)==null && !EmotionService.trusts(mob,observer);
+    }
+    private static boolean futureSightLine(ServerPlayer observer,Vec3 from,Vec3 to){
+        var delta=to.subtract(from);int steps=(int)Math.ceil(delta.length()*4);if(steps>256)return false;
+        for(int i=0;i<=steps;i++)if(!observer.serverLevel().hasChunkAt(BlockPos.containing(from.add(delta.scale(steps==0?0:(double)i/steps)))))return false;
+        return observer.serverLevel().clip(new net.minecraft.world.level.ClipContext(from,to,net.minecraft.world.level.ClipContext.Block.COLLIDER,net.minecraft.world.level.ClipContext.Fluid.NONE,observer)).getType()==HitResult.Type.MISS;
+    }
+    private static void aggro(ServerPlayer observer,Mob mob,List<Frame> own,List<Frame> other){
+        double range=Math.min(64,mob.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.FOLLOW_RANGE));
+        for(int i=0;i<Math.min(own.size(),other.size());i++){var f=own.get(i);var position=other.get(i).position;
+            if(position.distanceToSqr(f.position)<=range*range && futureSightLine(observer,position.add(0,mob.getEyeHeight(),0),f.position.add(0,observer.getEyeHeight(),0))){own.set(i,new Frame(f.position,f.warning|TemporalPacket.AGGRO));break;}
+        }
+    }
     /** Interference deliberately replaces a useful line with divergent possibilities, not a hidden exact line beneath branches. */
     private static List<Frame> branch(Entity e,Vec3 velocity,int ticks,int sign) {
         double speed=Math.max(.12,Math.min(.4,velocity.horizontalDistance()));double yaw=Math.toRadians(e.getYRot()+sign*70);
         return trace(e,new Vec3(-Math.sin(yaw)*speed,velocity.y,Math.cos(yaw)*speed),ticks);
     }
     public static TemporalPacket forecast(ServerPlayer observer) {
-        String dim=observer.level().dimension().location().toString();double atium=strength(observer,"atium"),electrum=strength(observer,"electrum");
+        String dim=observer.level().dimension().location().toString();double atium=sightStrength(observer,"atium"),electrum=sightStrength(observer,"electrum");
         var shadows=new ArrayList<TemporalPacket.Shadow>();int horizon=horizon(Math.max(atium,electrum));
         if(horizon==0)return new TemporalPacket(dim,1,List.of());
         var self=new ArrayList<>(trace(observer,velocity(observer),horizon));boolean warnings=TemporalConfig.WARNINGS.get();
         double range=Math.min(TemporalConfig.MAX_RANGE.get(),TemporalConfig.RANGE.get()*Math.sqrt(Math.max(1,atium)));
         // Electrum scans threats only to forecast consequences for self, never sends their identity or path.
-        var candidates=observer.serverLevel().getEntities(observer,observer.getBoundingBox().inflate(range),e->(e instanceof LivingEntity || TemporalConfig.PROJECTILES.get() && e instanceof Projectile && e.getDeltaMovement().lengthSqr()>1e-6 || atium>0 && e instanceof ItemEntity) && visible(observer,e));
+        var candidates=observer.serverLevel().getEntities(observer,observer.getBoundingBox().inflate(range),e->(e instanceof LivingEntity || TemporalConfig.PROJECTILES.get() && e instanceof Projectile && e.getDeltaMovement().lengthSqr()>1e-6 || atium>0 && e instanceof ItemEntity) && (visible(observer,e) || electrum>0 && e instanceof Mob mob && mayAggro(mob,observer)));
         candidates.sort(Comparator.<Entity>comparingInt(e->e instanceof Projectile?0:hostile(e,observer)?1:2).thenComparingDouble(e->e.distanceToSqr(observer)));
+        var aggroSources=new HashMap<Mob,List<Frame>>();
         int targets=0;
         for(var entity:candidates) {
             if(targets++>=TemporalConfig.TARGETS.get())break;
@@ -177,7 +194,8 @@ public final class TemporalService {
                     var f=self.get(i);self.set(i,new Frame(f.position,f.warning|TemporalPacket.ATTACK));threat|=TemporalPacket.ATTACK;break;
                 }
             }
-            if(atium<=0 || !TemporalConfig.SHADOWS.get() && threat==0)continue;
+            if(warnings && electrum>0 && !split && entity instanceof Mob mob && mayAggro(mob,observer)){aggro(observer,mob,self,frames);aggroSources.put(mob,frames);}
+            if(atium<=0 || !visible(observer,entity) || !TemporalConfig.SHADOWS.get() && threat==0)continue;
             if(split) {
                 if(TemporalConfig.SHADOWS.get())for(int sign:new int[]{-1,1}) {
                     var possibilities=branch(entity,velocity(entity),horizon(atium),sign);
@@ -188,7 +206,7 @@ public final class TemporalService {
         if(electrum>0 && !self.isEmpty() && (TemporalConfig.SHADOWS.get() || warnings)) {
             int n=Math.min(self.size(),horizon(electrum));shadows.add(shadow(observer,TemporalPacket.SELF,self.subList(0,n),warnings,0));
             if(TemporalConfig.SHADOWS.get() && TemporalConfig.JUMP.get() && observer.onGround() && PowerService.holdingAbility(observer,"a:electrum")) {
-                var v=velocity(observer);var jump=trace(observer,new Vec3(v.x,.42,v.z),horizon(electrum));
+                var v=velocity(observer);var jump=new ArrayList<>(trace(observer,new Vec3(v.x,.42,v.z),horizon(electrum)));for(var entry:aggroSources.entrySet())aggro(observer,entry.getKey(),jump,entry.getValue());
                 if(!jump.isEmpty())shadows.add(shadow(observer,TemporalPacket.JUMP,jump,warnings,TemporalPacket.UNCERTAIN));
             }
         }

@@ -12,7 +12,8 @@ import net.minecraft.world.phys.Vec3;
 /** Private, replaceable forecasts. Client never requests targets or supplies predictions. */
 public record TemporalPacket(String dimension,int lifetime,List<Shadow> shadows) implements CustomPacketPayload {
     public static final int SELF=0, OTHER=1, PROJECTILE=2, BRANCH=3, JUMP=4;
-    public static final int HAZARD=1, FALL=2, IMPACT=4, ATTACK=8, UNCERTAIN=16;
+    public static final int HAZARD=1, FALL=2, IMPACT=4, ATTACK=8, UNCERTAIN=16, AGGRO=32;
+    public static final int DANGER_MASK=HAZARD|FALL|IMPACT|ATTACK|AGGRO;
     public record Point(Vec3 position,int warning) { }
     public record Shadow(int entity,int kind,float width,float height,List<Point> points) { }
     public static Consumer<TemporalPacket> receiver=p->{};
@@ -28,7 +29,7 @@ public record TemporalPacket(String dimension,int lifetime,List<Shadow> shadows)
                 var points=new ArrayList<Point>();
                 for(int j=0;j<n;j++) {
                     double x=b.readDouble(),y=b.readDouble(),z=b.readDouble();int warning=b.readVarInt();
-                    if(!Double.isFinite(x)||!Double.isFinite(y)||!Double.isFinite(z)||Math.abs(x)>3.1e7||Math.abs(y)>3.1e7||Math.abs(z)>3.1e7||warning<0||warning>31)throw new IllegalArgumentException("Invalid future point");
+                    if(!Double.isFinite(x)||!Double.isFinite(y)||!Double.isFinite(z)||Math.abs(x)>3.1e7||Math.abs(y)>3.1e7||Math.abs(z)>3.1e7||warning<0||warning>63)throw new IllegalArgumentException("Invalid future point");
                     points.add(new Point(new Vec3(x,y,z),warning));
                 }
                 shadows.add(new Shadow(id,kind,width,height,List.copyOf(points)));

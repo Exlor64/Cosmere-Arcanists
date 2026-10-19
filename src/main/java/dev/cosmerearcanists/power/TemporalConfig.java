@@ -5,7 +5,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 /** Bounded short-term forecasts, not a simulation of unknown future player inputs. */
 public final class TemporalConfig {
     public static final ModConfigSpec SPEC;
-    public static final ModConfigSpec.BooleanValue ENABLED, ATIUM, ELECTRUM, SHADOWS, WARNINGS, COUNTERS, JUMP, PROJECTILES, ATTACKS;
+    public static final ModConfigSpec.BooleanValue ENABLED, ATIUM, ELECTRUM, SHADOWS, WARNINGS, COUNTERS, JUMP, PROJECTILES, ATTACKS, REQUIRE_HOLD, AGGRO;
     public static final ModConfigSpec.DoubleValue ATIUM_DRAIN, ELECTRUM_DRAIN, RANGE, MAX_RANGE, BASE_HORIZON, MAX_HORIZON;
     public static final ModConfigSpec.IntValue INTERVAL, TARGETS, SAMPLES;
     static {
@@ -13,6 +13,7 @@ public final class TemporalConfig {
         ENABLED=b.define("enabled",true);ATIUM=b.comment("The existing atium items/reserve represent the atium-electrum alloy. No pure-atium effect is granted.").define("atium",true);
         ELECTRUM=b.define("electrum",true);SHADOWS=b.define("futureShadows",true);WARNINGS=b.define("injuryWarnings",true);
         COUNTERS=b.comment("Atium/electrum burners split an atium observer's predictions; no reliable central future or hit warning is sent for them.").define("futureSightInterference",true);
+        REQUIRE_HOLD=b.define("requireHeldActivation",true);AGGRO=b.define("electrumAggroWarnings",true);
         JUMP=b.define("heldElectrumJumpPreview",true);PROJECTILES=b.define("projectileForecasts",true);ATTACKS=b.define("mobAttackIntentWarnings",true);
         ATIUM_DRAIN=b.defineInRange("atiumReservePerSecond",4.0,0.0,100.0);ELECTRUM_DRAIN=b.defineInRange("electrumReservePerSecond",1.0,0.0,100.0);
         RANGE=b.defineInRange("atiumRange",24.0,1.0,64.0);MAX_RANGE=b.defineInRange("maxAtiumRange",48.0,1.0,64.0);

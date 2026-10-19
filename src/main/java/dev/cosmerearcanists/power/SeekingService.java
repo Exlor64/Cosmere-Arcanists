@@ -36,7 +36,7 @@ public final class SeekingService {
             case "a:iron","a:steel" -> PowerConfig.IRON_STEEL.get()?ordinaryStrength(p,power.substring(2)):0;
             case "a:tin" -> TinService.strength(p);
             case "a:pewter" -> PewterService.strength(p);
-            case "a:electrum","a:atium" -> TemporalService.strength(p,power.substring(2));
+            case "a:electrum","a:atium" -> TemporalService.sightStrength(p,power.substring(2));
             case "a:bronze","a:copper" -> strength(p,power.substring(2));
             default -> 0; // Placeholder states, passive possessions and reserve inventories are not kinetic effects.
         };
