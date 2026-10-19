@@ -11,8 +11,8 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 - User reports iron Alt movement starts inconsistently unless Alt/pull/direction are pressed slowly and can stop after seconds.
 - Found client Alt gating required the key already down in the previous tick. Removed this extra-tick requirement for both activation slots; alternate still latches on activation press. Same-tick Alt + G/H now works when Alt is down at sampling.
-- Added a five-second runtime regression for iron assistance in both slots, changing upward/forward input and rejecting backward input without a viable anchor. Build/GameTests pending. No force/solver change; the reported mid-hold stoppage is not yet reproduced.
-- Next: verify CI and have user retest quick activation and sustained iron movement with suitable anchors, available fuel and range. Investigate any remaining stoppage with exact anchor/input setup.
+- Added a five-second runtime regression for iron assistance in both slots, changing upward/forward input and rejecting backward input without a viable anchor. Build, 30 JUnit methods, 23 server GameTests and artifact upload passed. No force/solver change; the reported mid-hold stoppage is not yet reproduced.
+- Next: have user retest quick activation and sustained iron movement with suitable anchors, available fuel and range. Investigate any remaining stoppage with exact anchor/input setup.
 
 ## Vision and accepted constraints
 
@@ -116,9 +116,9 @@ Read this and `AGENTS.md` when beginning a session. The user requires this file 
 
 ## Verification, evidence and limits
 
-- Latest gameplay commit validated: `32b9cdc5e9838b69d350e72de59721ade7fec643`.
-- [Successful GitHub Actions checks 39193475519](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39193475519): build, **30 JUnit methods**, **22 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
-- Tests cover metal/aluminum/cycles, ingredient quantities, power states/migrations/attributes/cloning, ability phases, scanning/falling discovery, hardness, impulse/input math, movement solver, burn/iron scaling, projectile scaling/cap, actual launch/fuel/recoil, save/load/recovery, and swept mob collision with ~2-damage nugget.
+- Latest gameplay commit validated: `6a3af20322c91209b2dcfaf9f4789e3333fd7e82`.
+- [Successful GitHub Actions checks 39194704623](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39194704623): build, **30 JUnit methods**, **23 server GameTests**, and artifact upload passed. Counts are source-method counts at this version.
+- Tests cover metal/aluminum/cycles, ingredient quantities, power states/migrations/attributes/cloning, ability phases, scanning/falling discovery, hardness, impulse/input math, movement solver, sustained iron assistance in both slots, burn/iron/steel scaling, projectile scaling/cap, actual launch/fuel/recoil, save/load/recovery, and swept mob collision with ~2-damage nugget.
 - Collision-test pitfall: the small empty template is encased by GameTest barriers. Clear an airborne corridor before projectile tests; otherwise the shot can hit the barrier roof instead of its target. Temporary collision diagnostic logs were removed.
 - User reported steel movement working perfectly and iron working well before requesting its doubled baseline and alternate mode. Do not treat those later additions or projectile visuals as user-confirmed.
 - User reports the projectile concept works in game; this does not independently validate every projectile behavior or balance setting. No manual client/multiplayer visual playtest has been performed by the assistant. Projectile appearance, movement feel/balance, real network latency, and modded/dynamic recipe edge cases still need playtesting.
