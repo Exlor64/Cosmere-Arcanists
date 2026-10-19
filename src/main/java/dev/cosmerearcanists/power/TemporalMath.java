@@ -11,5 +11,9 @@ public final class TemporalMath {
         double t=length<1e-12?0:Math.clamp(-(x*dx+y*dy+z*dz)/length,0,1);
         x+=t*dx;y+=t*dy;z+=t*dz;return x*x+y*y+z*z;
     }
+    public static double dodgeChance(double strength,double baselineFlare,double base,double cap) {
+        if(!Double.isFinite(strength)||strength<=0||!Double.isFinite(baselineFlare)||baselineFlare<=0)return 0;
+        return Math.clamp(base*Math.sqrt(strength/baselineFlare),0,Math.clamp(cap,0,1));
+    }
     private TemporalMath() { }
 }

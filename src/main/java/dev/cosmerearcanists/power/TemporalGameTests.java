@@ -37,6 +37,21 @@ public final class TemporalGameTests {
         h.assertTrue(PowerData.state(p,"a:atium")==0 && TemporalService.forecast(p).shadows().isEmpty(),"Exhaustion clears future sight immediately");
         PowerAttributes.set(p,"a:atium",0);h.assertTrue(!PowerData.available(p).contains("a:atium"),"Revocation is persistent, never restored by metadata");h.succeed();
     }
+    @GameTest(template="empty") public static void flaredAtiumDodgesPhysicalHitsWithFuelHoldAndCounterGates(GameTestHelper h){
+        var p=player(h,"Dodger",origin(h),"atium");var attacker=h.spawn(EntityType.ZOMBIE,new BlockPos(4,20,1));attacker.setNoAi(true);var source=p.damageSources().mobAttack(attacker);
+        h.assertTrue(TemporalService.dodgeChance(p,source)==0,"Normal burning grants no dodge");
+        PowerData.state(p,"a:atium",3);h.assertTrue(Math.abs(TemporalService.dodgeChance(p,source)-.1)<1e-9,"Baseline flare grants ten percent dodge");
+        PowerService.control(p,new PowerNetwork.Control(2,"",0));h.assertTrue(TemporalService.dodgeChance(p,source)==0,"Released future sight grants no dodge");PowerService.control(p,new PowerNetwork.Control(2,"",1));
+        PowerData.reserve(p,"atium",0);h.assertTrue(TemporalService.dodgeChance(p,source)==0,"Empty reserves grant no dodge");PowerData.reserve(p,"atium",100);
+        var oracle=player(h,"CounterOracle",origin(h).add(3,0,0),"electrum");h.assertTrue(TemporalService.dodgeChance(p,p.damageSources().playerAttack(oracle))==0,"Active electrum counters automatic dodge");
+        var arrow=new Arrow(EntityType.ARROW,h.getLevel());h.assertTrue(TemporalService.dodgeChance(p,p.damageSources().arrow(arrow,attacker))>0,"Physical projectiles are dodgeable");
+        h.assertTrue(TemporalService.dodgeChance(p,p.damageSources().fall())==0 && TemporalService.dodgeChance(p,p.damageSources().lava())==0,"Falling and environmental hazards cannot be dodged");
+        double base=TemporalConfig.DODGE_CHANCE.get(),cap=TemporalConfig.DODGE_CAP.get();boolean enabled=TemporalConfig.DODGE.get();
+        try{TemporalConfig.DODGE_CHANCE.set(1.0);TemporalConfig.DODGE_CAP.set(1.0);float health=p.getHealth();p.hurt(source,4);h.assertTrue(p.getHealth()==health,"Successful dodge cancels the real incoming damage event");
+            TemporalConfig.DODGE.set(false);p.invulnerableTime=0;p.hurt(source,4);h.assertTrue(p.getHealth()<health,"Disabling dodge restores incoming attack damage");
+        }finally{TemporalConfig.DODGE_CHANCE.set(base);TemporalConfig.DODGE_CAP.set(cap);TemporalConfig.DODGE.set(enabled);attacker.discard();}
+        h.succeed();
+    }
     @GameTest(template="empty") public static void trajectoriesRespectWallsAndWarnAboutFallsAndLava(GameTestHelper h) {
         floor(h);var p=player(h,"OraclePath",origin(h),"electrum");
         h.setBlock(new BlockPos(3,20,1),Blocks.STONE);h.setBlock(new BlockPos(3,21,1),Blocks.STONE);

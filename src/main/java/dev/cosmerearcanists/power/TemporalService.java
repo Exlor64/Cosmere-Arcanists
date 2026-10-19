@@ -31,6 +31,23 @@ public final class TemporalService {
         return PowerAttributes.effectiveStrength(p,"a:"+metal)*PowerRules.levelMultiplier(state,PowerConfig.LOW_STRENGTH.get(),PowerConfig.BURN_STRENGTH.get(),PowerConfig.FLARE_STRENGTH.get());
     }
     public static double sightStrength(ServerPlayer p,String metal){return TemporalConfig.REQUIRE_HOLD.get() && !PowerService.holdingAbility(p,"a:"+metal)?0:strength(p,metal);}
+    /** Dodge only avoidable physical attacks, never falls, hazards, explosions or bypass damage. */
+    public static double dodgeChance(ServerPlayer p,net.minecraft.world.damagesource.DamageSource source){
+        if(!TemporalConfig.DODGE.get() || !PowerConfig.FLARING.get() || PowerData.state(p,"a:atium")!=3)return 0;
+        double power=sightStrength(p,"atium");if(power<=0)return 0;
+        if(source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY) || source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_ARMOR) || source.is(net.minecraft.tags.DamageTypeTags.IS_EXPLOSION))return 0;
+        var direct=source.getDirectEntity();var attacker=source.getEntity();
+        boolean physical=source.is(net.minecraft.tags.DamageTypeTags.IS_PROJECTILE) || direct instanceof LivingEntity && direct==attacker;
+        if(!physical || attacker==p || interferes(attacker) || interferes(direct))return 0;
+        return TemporalMath.dodgeChance(power,PowerConfig.FLARE_STRENGTH.get(),TemporalConfig.DODGE_CHANCE.get(),TemporalConfig.DODGE_CAP.get());
+    }
+    @SubscribeEvent(priority=net.neoforged.bus.api.EventPriority.HIGHEST)
+    public void dodge(net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent event){
+        if(event.getEntity() instanceof ServerPlayer p && event.getAmount()>0){
+            double chance=dodgeChance(p,event.getSource());
+            if(chance>0 && p.getRandom().nextDouble()<chance)event.setCanceled(true);
+        }
+    }
     public static boolean interferes(Entity e) {return TemporalConfig.COUNTERS.get() && e instanceof ServerPlayer p && (sightStrength(p,"atium")>0 || sightStrength(p,"electrum")>0);}
     public static int horizon(double strength){return TemporalMath.horizon(strength,TemporalConfig.BASE_HORIZON.get(),TemporalConfig.MAX_HORIZON.get());}
     private static Vec3 velocity(Entity e) {

@@ -829,3 +829,20 @@ In `cosmerearcanists-client.toml`:
 The legacy `selectedPowerIcon` toggle is also respected. Selection menus and
 the mob emotion indicator remain independent. Update client and server together
 for protocol **14**.
+
+### Atium flare dodge (0.22.0)
+
+Flaring the atium-electrum alloy grants a **10% dodge chance** against melee and
+physical projectile hits while its future sight is active (hold the assigned
+activation button by default). Chance scales with the square root of effective
+strength relative to baseline flaring, capped at **25%**. Duralumin contributes
+to effective strength. Normal/low burning grants no dodge. Successful dodges
+cancel the hit before armor/pewter damage processing, without teleporting you.
+Falls, fire, lava, explosions and armor/invulnerability-bypassing damage are
+excluded. Attackers actively using atium/electrum counter the dodge when
+`futureSightInterference` is enabled.
+
+In `cosmerearcanists-temporal-server.toml`, `atiumDodge.enabled`,
+`atiumDodge.baseChance` and `atiumDodge.maxChance` control the feature. Existing
+future-sight activation, fuel, flaring and global power gates apply. No save or
+network migration; protocol remains **14**.
