@@ -39,7 +39,7 @@ public final class MetalProjectiles {
         projectile.setDeltaMovement(direction.scale(speed));
         if(!player.serverLevel().addFreshEntity(projectile))return null;
         if(PowerConfig.CONSUMPTION.get())PowerData.reserve(player,"steel",PowerData.reserve(player,"steel")-cost);
-        return PowerConfig.RECOIL.get() ? direction.scale(-MetalProjectilePhysics.recoil(units,speed,PowerConfig.NUGGET_MASS.get(),PowerConfig.PLAYER_MASS.get())) : Vec3.ZERO;
+        return PowerConfig.RECOIL.get() ? direction.scale(-MetalProjectilePhysics.recoil(units,speed,PowerConfig.NUGGET_MASS.get(),dev.cosmerearcanists.feruchemy.IronFeruchemy.allomanticMass(player))) : Vec3.ZERO;
     }
     private MetalProjectiles() { }
 }

@@ -75,7 +75,7 @@ public final class TetherItem extends Item {
         bind(stack,entity.getUUID());
         if(!hook){
             if(PowerConfig.CONSUMPTION.get())PowerData.reserve(player,"steel",PowerData.reserve(player,"steel")-PowerConfig.PROJECTILE_RESERVE_COST.get());
-            if(PowerConfig.RECOIL.get())PowerService.externalImpulse(player,player.getLookAngle().scale(-MetalProjectilePhysics.recoil(units,speed,PowerConfig.NUGGET_MASS.get(),PowerConfig.PLAYER_MASS.get())));
+            if(PowerConfig.RECOIL.get())PowerService.externalImpulse(player,player.getLookAngle().scale(-MetalProjectilePhysics.recoil(units,speed,PowerConfig.NUGGET_MASS.get(),dev.cosmerearcanists.feruchemy.IronFeruchemy.allomanticMass(player))));
         }
         return true;
     }

@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "cosmerearcanists:bronze_ingot"
+    }
+  ],
+  "result": {
+    "id": "cosmerearcanists:bronze_metalmind_bracelet",
+    "count": 1
+  }
+}

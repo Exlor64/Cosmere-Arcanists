@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "cosmerearcanists:pewter_ingot"
+    }
+  ],
+  "result": {
+    "id": "cosmerearcanists:pewter_metalmind_bracelet",
+    "count": 1
+  }
+}

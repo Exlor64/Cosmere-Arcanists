@@ -5,6 +5,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        curios: [false, true]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -13,13 +16,13 @@ jobs:
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
       - run: chmod +x gradlew
-      - run: ./gradlew build --no-daemon
+      - run: ./gradlew build --no-daemon -PwithCurios=${{ matrix.curios }}
       - name: Run required server GameTests
         run: |
           set -o pipefail
-          ./gradlew runGameTestServer --no-daemon | tee gametest.log
+          ./gradlew runGameTestServer --no-daemon -PwithCurios=${{ matrix.curios }} | tee gametest.log
           python -c 'import re; assert re.search(r"All [1-9][0-9]* required tests passed", open("gametest.log").read()), "Server did not report completed required GameTests"'
       - uses: actions/upload-artifact@v4
         with:
-          name: Cosmere-Arcanists
+          name: Cosmere-Arcanists-curios-${{ matrix.curios }}
           path: build/libs/*.jar

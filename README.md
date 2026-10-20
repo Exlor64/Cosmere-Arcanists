@@ -1197,3 +1197,61 @@ multiplies the individual iron/steel/pewter profiles. This doubles their normal
 full-reserve durations to10/10/5 minutes in existing worlds as well as new ones.
 At low burning these are20/20/10 minutes; flaring gives3m20s/3m20s/1m40s.
 Other metals and flat activation costs retain their existing rates.
+
+### Feruchemical iron and metalminds (0.29.0)
+
+Grant iron with `/attribute @s cosmerearcanists:feruchemy_iron base set 1`.
+Use the existing power selector and power-state key to select **Storing** or
+**Tapping** levels. The selected state works passively; G/H is not required.
+
+Hold exactly **one** iron nugget, ingot, or storage-block item in either hand,
+or wear iron metalmind jewelry with Curios. You cannot store into or tap a
+stack of two or more; nothing is split automatically. First storage makes a
+denomination non-stackable and binds its charge to your UUID. Dedicated
+metalminds are non-stackable even before charging. Empty bound pieces retain
+identity and cannot be recycled by crafting, filing, smelting, or placement.
+Charge belongs to the item, survives saving, and is not an Allomantic reserve.
+
+All16ordinary metals have ring, bracelet and necklace items; their effects are
+implemented as each Feruchemical metal is added. **Only iron is active so far.**
+Existing nugget/ingot/block denominations use the same storage foundation.
+
+| Metalmind form | Crafting material | Default capacity |
+|---|---|---:|
+| Nugget / ring | Ring:1matching nugget | 600 weight-seconds |
+| Ingot / bracelet | Bracelet:1matching ingot | 5,400 weight-seconds |
+| Necklace | 1matching ingot+1string | 5,400 weight-seconds |
+| Storage-block item | Existing block item | 48,600 weight-seconds |
+
+At attribute1, Storing1 removes10% mass, through Storing5 removing50%. Tapping1
+adds50% mass; Tapping5 gives3.5times normal mass. Higher attributes increase the
+effect, capped at90% stored and20times tapped mass by default. One second spent
+storing half your mass gives0.5weight-seconds. Tapping faster than one extra
+normal mass incurs configurable compression loss. Partial charge gives only
+the effect actually paid for; missing contact, full storage or depletion stops
+the power. Power selection can change while the storing/tapping state remains
+active, as with Allomancy.
+
+Mass affects iron/steel acceleration and recoil (including other players
+pushing/pulling you), metal-shot/ball recoil, and vanilla knockback. Lighter
+bodies have more air resistance and reduced fall impacts. Gravitational
+acceleration stays the same; extra mass grants no melee-strength buff. Precise
+momentum changes and structural block crushing are future work.
+
+**Optional Curios compatibility:** install Curios API9.5.1+1.21.1 on client and
+server for2ring slots,2bracelet slots and1necklace slot. Equip the matching
+jewelry in Curios. Active storing automatically fills worn matching pieces
+first, then held pieces, moving on when one fills. Tapping drains worn pieces
+similarly. There is one total transfer rate, regardless of how many pieces are
+worn. Cosmetic slots never store or tap. Other packs may alter visible slot
+counts; this integration uses the first2rings/2bracelets/1necklace. Without
+Curios, held single-item denominations and jewelry work normally.
+
+Settings are in `cosmerearcanists-feruchemy-server.toml`. Features can be
+disabled without deleting saved charge. The HUD shows accessible charge and
+current iron mass; tooltips show the individual piece's capacity and owner.
+Jewelry currently uses provisional vanilla item silhouettes.
+
+Development checks run both without Curios and with `-PwithCurios=true`.
+Protocol remains18; install matching0.29.0 client/server versions for the new
+registry entries and HUD semantics.

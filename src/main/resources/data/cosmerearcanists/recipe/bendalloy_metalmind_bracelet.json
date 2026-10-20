@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "cosmerearcanists:bendalloy_ingot"
+    }
+  ],
+  "result": {
+    "id": "cosmerearcanists:bendalloy_metalmind_bracelet",
+    "count": 1
+  }
+}

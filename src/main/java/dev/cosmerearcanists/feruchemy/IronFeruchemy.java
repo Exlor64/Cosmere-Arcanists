@@ -1,0 +1,37 @@
+package dev.cosmerearcanists.feruchemy;
+import dev.cosmerearcanists.*;
+import dev.cosmerearcanists.power.*;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.player.Player;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+/** Weight seconds are conserved; fast tapping adds configurable compression loss. */
+public final class IronFeruchemy {
+    private static final ResourceLocation MODIFIER=ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,"feruchemical_iron_mass");
+    public static boolean configured(){return PowerConfig.ENABLED.get()&&FeruchemyConfig.ENABLED.get()&&FeruchemyConfig.IRON.get()&&ServerConfig.FERUCHEMY.enabled().get()&&ServerConfig.FERUCHEMY.metals().get(Metal.IRON).get();}
+    public static double massMultiplier(Entity e){if(!(e instanceof Player p)||!p.isAlive()||p.isSpectator())return 1;var instance=p.getAttribute(PowerAttributes.MASS);return instance==null?1:instance.getValue();}
+    public static double allomanticMass(ServerPlayer p){return PowerConfig.PLAYER_MASS.get()*(FeruchemyConfig.MASS.get()?massMultiplier(p):1);}
+    public static void mass(ServerPlayer p,double factor){var a=p.getAttribute(PowerAttributes.MASS);if(a==null)return;var old=a.getModifier(MODIFIER);double value=factor-1;if(old!=null&&Math.abs(old.amount()-value)<1e-10)return;a.removeModifier(MODIFIER);if(Math.abs(value)>1e-10)a.addTransientModifier(new AttributeModifier(MODIFIER,value,AttributeModifier.Operation.ADD_VALUE));}
+    public static double strength(ServerPlayer p){return configured()&&p.isAlive()&&!p.isSpectator()&&PowerData.state(p,"f:iron")!=0&&Math.abs(massMultiplier(p)-1)>1e-8?PowerAttributes.strength(p,"f:iron")*Math.abs(massMultiplier(p)-1):0;}
+    public static void tick(ServerPlayer p){
+        double factor=1;int state=PowerData.state(p,"f:iron");double strength=PowerAttributes.strength(p,"f:iron");
+        if(configured()&&p.isAlive()&&!p.isSpectator()&&state!=0&&strength>0){
+            boolean storing=state<0;
+            double magnitude=storing?Math.min(FeruchemyConfig.MAX_STORE.get(),-state*FeruchemyConfig.STORE_STEP.get()*strength):Math.min(FeruchemyConfig.MAX_MASS.get()-1,state*FeruchemyConfig.TAP_STEP.get()*strength);
+            double cost=storing?magnitude/20:magnitude*Math.pow(Math.max(1,magnitude),FeruchemyConfig.TAP_LOSS.get())/20;
+            double moved=Metalminds.transferAccessible(p,"iron",storing?cost:-cost);
+            if(cost>0&&Math.abs(moved)>0)factor=storing?1-Math.abs(moved)*20:1+magnitude*Math.min(1,Math.abs(moved)/cost);
+            if(cost<=0||Math.abs(moved)<cost-1e-9)PowerData.state(p,"f:iron",0);
+        }
+        mass(p,factor);
+    }
+    @SubscribeEvent public void fall(LivingFallEvent event){double mass=massMultiplier(event.getEntity());if(FeruchemyConfig.FALL.get()&&mass<1)event.setDamageMultiplier((float)(event.getDamageMultiplier()*mass));}
+    @SubscribeEvent public void death(LivingDeathEvent event){if(event.getEntity() instanceof ServerPlayer p)mass(p,1);}
+    @SubscribeEvent public void logout(PlayerEvent.PlayerLoggedOutEvent event){if(event.getEntity() instanceof ServerPlayer p){mass(p,1);PowerData.state(p,"f:iron",0);}}
+    @SubscribeEvent public void dimension(PlayerEvent.PlayerChangedDimensionEvent event){if(event.getEntity() instanceof ServerPlayer p){mass(p,1);PowerData.state(p,"f:iron",0);}}
+}

@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "PlayerExhaustionMixin",
+    "FeruchemyMotionMixin",
     "FiledIngredientMixin",
     "FiledShapelessMixin",
     "FiledRecipeManagerMixin",

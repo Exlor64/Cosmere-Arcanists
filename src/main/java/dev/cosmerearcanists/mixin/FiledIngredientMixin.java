@@ -12,6 +12,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class FiledIngredientMixin {
     @Inject(method="test(Lnet/minecraft/world/item/ItemStack;)Z",at=@At("HEAD"),cancellable=true)
     private void cosmerearcanists$excludeFiled(ItemStack stack,CallbackInfoReturnable<Boolean> cir) {
-        if(stack!=null && Filings.filed(stack))cir.setReturnValue(false);
+        if(stack!=null && Filings.protectedMaterial(stack))cir.setReturnValue(false);
     }
 }

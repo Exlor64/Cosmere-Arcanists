@@ -1,0 +1,21 @@
+{
+  "replace": false,
+  "values": [
+    "cosmerearcanists:iron_metalmind_necklace",
+    "cosmerearcanists:steel_metalmind_necklace",
+    "cosmerearcanists:tin_metalmind_necklace",
+    "cosmerearcanists:pewter_metalmind_necklace",
+    "cosmerearcanists:zinc_metalmind_necklace",
+    "cosmerearcanists:brass_metalmind_necklace",
+    "cosmerearcanists:copper_metalmind_necklace",
+    "cosmerearcanists:bronze_metalmind_necklace",
+    "cosmerearcanists:aluminum_metalmind_necklace",
+    "cosmerearcanists:duralumin_metalmind_necklace",
+    "cosmerearcanists:chromium_metalmind_necklace",
+    "cosmerearcanists:nicrosil_metalmind_necklace",
+    "cosmerearcanists:gold_metalmind_necklace",
+    "cosmerearcanists:electrum_metalmind_necklace",
+    "cosmerearcanists:cadmium_metalmind_necklace",
+    "cosmerearcanists:bendalloy_metalmind_necklace"
+  ]
+}

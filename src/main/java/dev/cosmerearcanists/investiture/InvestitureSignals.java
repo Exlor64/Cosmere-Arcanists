@@ -14,6 +14,7 @@ import dev.cosmerearcanists.power.SeekingConfig;
  */
 public final class InvestitureSignals {
     public static final ResourceLocation ALLOMANCY=ResourceLocation.fromNamespaceAndPath("cosmerearcanists","allomancy");
+    public static final ResourceLocation FERUCHEMY=ResourceLocation.fromNamespaceAndPath("cosmerearcanists","feruchemy");
     public record Signal(ResourceLocation art,ResourceLocation effect,UUID source,Vec3 position,double intensity,double difficulty,int period,int burnState,boolean copperMaskable) {
         public Signal {
             Objects.requireNonNull(art);Objects.requireNonNull(effect);Objects.requireNonNull(source);Objects.requireNonNull(position);

@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "cosmerearcanists:zinc_nugget"
+    }
+  ],
+  "result": {
+    "id": "cosmerearcanists:zinc_metalmind_ring",
+    "count": 1
+  }
+}

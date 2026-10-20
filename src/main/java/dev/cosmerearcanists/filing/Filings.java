@@ -20,7 +20,8 @@ public final class Filings {
     public record Source(String metal,int nuggetUnits) { }
     private static CompoundTag data(ItemStack stack){return stack.getOrDefault(DataComponents.CUSTOM_DATA,CustomData.EMPTY).copyTag();}
     public static boolean filed(ItemStack stack){return !stack.isEmpty() && data(stack).getCompound(FILED).getInt("used")>0;}
-    public static boolean hasFiled(RecipeInput input){for(int i=0;i<input.size();i++)if(filed(input.getItem(i)))return true;return false;}
+    public static boolean protectedMaterial(ItemStack stack){return filed(stack)||dev.cosmerearcanists.feruchemy.Metalminds.bound(stack);}
+    public static boolean hasFiled(RecipeInput input){for(int i=0;i<input.size();i++)if(protectedMaterial(input.getItem(i)))return true;return false;}
     public static int capacity(ItemStack stack){return Math.max(0,data(stack).getCompound(FILED).getInt("capacity"));}
     public static int remaining(ItemStack stack){var tag=data(stack).getCompound(FILED);return Math.max(0,tag.getInt("capacity")-tag.getInt("used"));}
     public static Source source(ItemStack stack) {
@@ -69,7 +70,7 @@ public final class Filings {
     /** Takes exactly one physical piece, leaving the rest of an unfiled stack untouched. */
     public static boolean file(ServerPlayer player) {
         if(!FilingConfig.ENABLED.get())return false;
-        var sourceStack=player.getOffhandItem();var source=source(sourceStack);if(source==null)return false;
+        var sourceStack=player.getOffhandItem();var source=source(sourceStack);if(source==null||dev.cosmerearcanists.feruchemy.Metalminds.bound(sourceStack))return false;
         var piece=sourceStack.copyWithCount(1);var root=data(piece);var progress=root.getCompound(FILED);
         int capacity=filed(piece)?capacity(piece):source.nuggetUnits()*FilingConfig.PER_NUGGET.get();
         int used=filed(piece)?progress.getInt("used"):0;if(used>=capacity)return false;

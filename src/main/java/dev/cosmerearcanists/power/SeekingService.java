@@ -31,6 +31,7 @@ public final class SeekingService {
     }
     public static double activeStrength(ServerPlayer p,String power) {
         return switch(power) {
+            case "f:iron" -> dev.cosmerearcanists.feruchemy.IronFeruchemy.strength(p);
             case "a:bendalloy","a:cadmium" -> BubbleService.strength(p,power.substring(2));
             case "a:gold" -> GoldService.strength(p);
             case "a:chromium","a:nicrosil" -> ContactService.strength(p,power.substring(2));
@@ -51,7 +52,7 @@ public final class SeekingService {
             String metal=power.substring(2);int state=PowerData.state(p,power);if(state==3&&!PowerConfig.FLARING.get())state=2;
             int index=metal.equals("atium")?16:Metal.valueOf(metal.toUpperCase(Locale.ROOT)).ordinal();
             int period=(int)Math.clamp((20+index*2)*(state==1?1.25:state==3?.75:1),4,200);
-            list.add(new InvestitureSignals.Signal(InvestitureSignals.ALLOMANCY,ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,metal),p.getUUID(),p.position(),Math.min(4096,value),1,period,state,true));
+            list.add(new InvestitureSignals.Signal(power.startsWith("f:")?InvestitureSignals.FERUCHEMY:InvestitureSignals.ALLOMANCY,ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,metal),p.getUUID(),p.position(),Math.min(4096,value),1,period,power.startsWith("f:")?Math.min(3,Math.abs(state)):state,true));
         }return List.copyOf(list);
     }
     private static void allomancy(ServerLevel level,Consumer<InvestitureSignals.Signal> sink){for(var player:level.players())signalsFor(player).forEach(sink);}

@@ -21,6 +21,11 @@ public final class ModMetals {
     public static final String[] GOD_METALS = {"atium", "lerasium"};
     public static final String[] BASE = {"tin", "zinc", "aluminum", "chromium", "cadmium", "lead", "silver", "nickel"};
     static {
+        for(var metal:Metal.values())for(String slot:new String[]{"ring","bracelet","necklace"}){
+            String id=metal.id()+"_metalmind_"+slot;int units=slot.equals("ring")?1:9;
+            ITEMS.register(id,()->new dev.cosmerearcanists.feruchemy.MetalmindItem(metal.id(),slot,units));
+        }
+
         for (String metal : BASE) {
             ITEMS.registerSimpleItem("raw_" + metal, new Item.Properties());
             ore(metal + "_ore", Blocks.IRON_ORE);

@@ -28,6 +28,7 @@ sourceSets.main.resources {
 
 repositories {
     mavenCentral()
+    maven { url = "https://maven.theillusivec4.top/" }
     // Add here additional repositories if required by some of the dependencies below.
 }
 
@@ -117,6 +118,10 @@ configurations {
 }
 
 dependencies {
+    compileOnly "top.theillusivec4.curios:curios-neoforge:9.5.1+1.21.1:api"
+    if (providers.gradleProperty("withCurios").getOrElse("false").toBoolean()) {
+        localRuntime "top.theillusivec4.curios:curios-neoforge:9.5.1+1.21.1"
+    }
     testImplementation "org.junit.jupiter:junit-jupiter:5.11.4"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.11.4"
     // Example optional mod dependency with JEI

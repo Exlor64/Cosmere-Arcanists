@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "cosmerearcanists:nicrosil_ingot"
+    }
+  ],
+  "result": {
+    "id": "cosmerearcanists:nicrosil_metalmind_bracelet",
+    "count": 1
+  }
+}

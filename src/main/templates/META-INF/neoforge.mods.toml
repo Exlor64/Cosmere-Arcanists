@@ -20,5 +20,12 @@ versionRange="${minecraft_version_range}"
 ordering="NONE"
 side="BOTH"
 
+[[dependencies.${mod_id}]]
+modId="curios"
+type="optional"
+versionRange="[9.5.1,10)"
+ordering="AFTER"
+side="BOTH"
+
 [[mixins]]
 config="cosmerearcanists.mixins.json"

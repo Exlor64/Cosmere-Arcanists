@@ -120,6 +120,7 @@ public final class PowerService {
     }
     @SubscribeEvent public void clonePlayer(PlayerEvent.Clone event) {
         if (event.getOriginal() instanceof ServerPlayer old && event.getEntity() instanceof ServerPlayer p) {
+            dev.cosmerearcanists.feruchemy.IronFeruchemy.mass(old,1);dev.cosmerearcanists.feruchemy.IronFeruchemy.mass(p,1);
             EnhancementService.clear(old); stopActivation(old); PowerData.clonePlayer(old, p); SESSIONS.remove(p.getUUID());
         }
     }
@@ -130,6 +131,7 @@ public final class PowerService {
     @SubscribeEvent public void stopped(ServerStoppedEvent event) { event.getServer().getPlayerList().getPlayers().forEach(PowerService::stopActivation); SESSIONS.clear(); EnhancementService.clear();MetalDetector.clear(); }
     @SubscribeEvent public void tick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer p)) return;
+        dev.cosmerearcanists.feruchemy.IronFeruchemy.tick(p);
         EnhancementService.begin(p);
         PewterService.tick(p);
         TinService.tick(p);
@@ -296,7 +298,7 @@ public final class PowerService {
     static Vec3 targetImpulse(ServerPlayer p, MetalTarget best, Vec3 direction, double force) {
         var point = best.position(p.level(), 1); if (point == null) return Vec3.ZERO;
         double distance = point.distanceTo(chest(p));
-        double accel = AllomanticPhysics.acceleration(force, distance, PowerConfig.RANGE.get(), PowerConfig.PLAYER_MASS.get());
+        double accel = AllomanticPhysics.acceleration(force, distance, PowerConfig.RANGE.get(), dev.cosmerearcanists.feruchemy.IronFeruchemy.allomanticMass(p));
         // Fixed blocks anchor the force: iron draws the player in; steel pushes them away.
         if (best.entityId() < 0) return direction.scale(accel);
         Entity entity = p.level().getEntity(best.entityId()); if (entity == null) return Vec3.ZERO;
@@ -308,7 +310,7 @@ public final class PowerService {
             projectile.beforeAllomanticForce();
         }
         double mass = entity instanceof AllomanticProjectile projectile ? projectile.allomanticMass() : entity instanceof ItemEntity item ? Math.max(.2, item.getItem().getCount() * .2)
-            : entity instanceof ServerPlayer ? PowerConfig.PLAYER_MASS.get() : Math.max(10, entity.getBbWidth() * entity.getBbWidth() * entity.getBbHeight() * 100);
+            : entity instanceof ServerPlayer targetPlayer ? dev.cosmerearcanists.feruchemy.IronFeruchemy.allomanticMass(targetPlayer) : Math.max(10, entity.getBbWidth() * entity.getBbWidth() * entity.getBbHeight() * 100);
         accelerate(entity, direction.scale(-AllomanticPhysics.acceleration(force, distance, PowerConfig.RANGE.get(), mass)));
         return PowerConfig.RECOIL.get() ? direction.scale(accel) : Vec3.ZERO;
     }
@@ -333,7 +335,7 @@ public final class PowerService {
             if (target.entityId() >= 0 && (!PowerConfig.RECOIL.get() || !usedEntities.add(target.entityId()))) continue;
             var point = target.position(p.level(), 1); if (point == null || point.distanceTo(chest(p)) < .3) continue;
             anchors.add(target); directions.add(anchorDirection(chest(p), point, power));
-            strengths.add(AllomanticPhysics.acceleration(1, point.distanceTo(chest(p)), PowerConfig.RANGE.get(), PowerConfig.PLAYER_MASS.get()));
+            strengths.add(AllomanticPhysics.acceleration(1, point.distanceTo(chest(p)), PowerConfig.RANGE.get(), dev.cosmerearcanists.feruchemy.IronFeruchemy.allomanticMass(p)));
         }
         double[][] vectors = directions.stream().map(v -> new double[]{v.x,v.y,v.z}).toArray(double[][]::new);
         double[] weights = SteelMovement.weights(new double[]{desired.x,desired.y,desired.z}, vectors,

@@ -113,7 +113,7 @@ public final class PowerNetwork {
         PacketDistributor.sendToPlayer(p,new TinStatus(p.level().dimension().location().toString(),tin,tin>0 && TinConfig.ZOOM.get() && PowerService.holdingAbility(p,"a:tin")?TinMath.zoom(tin,TinConfig.ZOOM_STRENGTH.get(),TinConfig.MAX_ZOOM.get()):1,TinService.revealStrength(p)>0,(float)TinService.nightVision(p)));
         double pewter=PewterService.strength(p);
         PacketDistributor.sendToPlayer(p,new PewterStatus(p.level().dimension().location().toString(),PewterService.debt(p),pewter>0,pewter));
-        var list = PowerData.available(p).stream().map(power -> new Entry(power, PowerData.state(p, power), power.startsWith("a:") ? PowerData.reserve(p, power.substring(2)) : 0)).toList();
+        var list = PowerData.available(p).stream().map(power -> new Entry(power, PowerData.state(p, power), power.startsWith("a:") ? PowerData.reserve(p, power.substring(2)) : dev.cosmerearcanists.feruchemy.Metalminds.accessibleCharge(p,power.substring(2)))).toList();
         PacketDistributor.sendToPlayer(p, new Snapshot(p.level().dimension().location().toString(), PowerData.selected(p), PowerData.secondary(p), PowerConfig.FERUCHEMY_LEVELS.get(), list, targets));
     }
     private PowerNetwork() { }

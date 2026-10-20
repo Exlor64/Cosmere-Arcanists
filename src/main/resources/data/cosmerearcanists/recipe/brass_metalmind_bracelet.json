@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "cosmerearcanists:brass_ingot"
+    }
+  ],
+  "result": {
+    "id": "cosmerearcanists:brass_metalmind_bracelet",
+    "count": 1
+  }
+}
