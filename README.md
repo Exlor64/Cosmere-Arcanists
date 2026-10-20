@@ -1208,8 +1208,8 @@ Hold exactly **one** iron nugget, ingot, or storage-block item in either hand,
 or wear iron metalmind jewelry with Curios. You cannot store into or tap a
 stack of two or more; nothing is split automatically. First storage makes a
 denomination non-stackable and binds its charge to your UUID. Dedicated
-metalminds are non-stackable even before charging. Empty bound pieces retain
-identity and cannot be recycled by crafting, filing, smelting, or placement.
+metalminds are non-stackable even before charging. Empty pieces lose their owner and power/sense binding, retain their non-stackable
+status, and can be reused. Charged pieces cannot be recycled.
 Charge belongs to the item, survives saving, and is not an Allomantic reserve.
 
 All16ordinary metals have ring, bracelet and necklace items; their effects are
@@ -1405,8 +1405,8 @@ Tin stores **sight, hearing and touch separately**. Hold its assigned activation
 (primary or secondary) and scroll to switch senses. Switching stops the current
 storing/tapping state; select a new level to resume. The power HUD names the
 selected sense, its accessible reserve and actual sensory percentage.
-A singleton tin nugget/ingot/block or tin jewelry piece is permanently keyed to
-its first stored sense. Carry separate tinminds for each sense; their charge
+A singleton tin nugget/ingot/block or tin jewelry piece is keyed to
+its stored sense while it contains charge; draining it completely removes the owner and sense binding. Carry separate tinminds for each sense; their charge
 cannot be exchanged. Tooltips identify the sense, charge and owner.
 Defaults match other Feruchemy:30% storable per attribute,95% ceiling,10tap levels
 per attribute,15% sense enhancement per level,20x cap and0.25 compression exponent.
@@ -1439,3 +1439,12 @@ tin charge remains saved but cannot be spent as a newly keyed sensory reserve.
 **Protocol20 requires matching client and server versions** (TinStatus now includes sense).
 Automated graphical client startup verifies sound/resource and client-hook loading.
 Actual appearance, audio balance and custom renderer/shader compatibility still need in-game testing.
+
+### Empty metalminds (0.33.1)
+Fully draining any metalmind removes its owner and stored power/sense binding.
+Another player may then store into it, and an empty tinmind may store a different
+sense. A partially charged piece keeps its binding. Empty pieces retain their
+captured capacity and non-stackable status. Empty denominations can be crafted,
+filed or placed again; charged pieces remain protected. Saved empty pieces from
+older versions are treated as unkeyed and cleaned when accessed. The physical
+metal still determines which Feruchemical power the piece can hold.
