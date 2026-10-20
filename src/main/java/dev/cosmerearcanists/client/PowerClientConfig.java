@@ -9,8 +9,8 @@ public final class PowerClientConfig {
     public static final ModConfigSpec.EnumValue<PulseInstrument> SEEKING_INSTRUMENT;
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.BooleanValue HUD, HIDE_HUD, LINES, THROUGH_WALLS, PEWTER_HEARTS, TIN_ECHOES, TIN_MODELS, TIN_ZOOM, FUTURES, FUTURE_MODELS, FUTURE_WARNINGS, SEEKING_HUD, SEEKING_SOUNDS, EMOTION_HUD, EMOTION_TARGET, TIN_LIGHTMAP;
-    public static final ModConfigSpec.IntValue HUD_X, HUD_Y, HOLD_TICKS, TIN_ECHO_LIMIT, SEEKING_LIMIT, TIN_BLUR_LIMIT;
-    public static final ModConfigSpec.DoubleValue LINE_WIDTH, TIN_WIDTH, TIN_OPACITY, FUTURE_OPACITY, SEEKING_VOLUME, TIN_BRIGHTNESS, TIN_WIDTH_SCALE, TIN_HOLD, TIN_PULSE_STRENGTH, TIN_WAVE_SPEED, FUTURE_PROMINENCE, HUD_SCALE, TIN_VISION_SCALE, TIN_VISION_FADE, TIN_BLUR_OPACITY, TIN_BLUR_SIZE;
+    public static final ModConfigSpec.IntValue HUD_X, HUD_Y, HOLD_TICKS, TIN_ECHO_LIMIT, SEEKING_LIMIT, TIN_BLUR_LIMIT, TIN_SOFT_SURFACES;
+    public static final ModConfigSpec.DoubleValue LINE_WIDTH, TIN_WIDTH, TIN_OPACITY, FUTURE_OPACITY, SEEKING_VOLUME, TIN_BRIGHTNESS, TIN_WIDTH_SCALE, TIN_HOLD, TIN_PULSE_STRENGTH, TIN_WAVE_SPEED, FUTURE_PROMINENCE, HUD_SCALE, TIN_VISION_SCALE, TIN_VISION_FADE, TIN_BLUR_OPACITY, TIN_BLUR_SIZE, TIN_SOFT_MOB, TIN_SOFT_TERRAIN, TIN_SOFT_FILL;
     static {
         var b = new ModConfigSpec.Builder();
         HUD = b.comment("Show or hide the entire blue power panel, including the secondary panel, text and icons.").define("selectedPowerIcon", true); LINES = b.define("blueLines", true);
@@ -23,7 +23,11 @@ public final class PowerClientConfig {
         HOLD_TICKS = b.comment("A shorter press cycles state; hold opens selection.").defineInRange("menuHoldTicks", 4, 1, 20);
         LINE_WIDTH = b.defineInRange("lineWidth", 2.0, 1.0, 5.0);
         b.push("tin");
-        TIN_ECHO_STYLE=b.comment("SOFT_BLUR shows faint white sound impressions; WIREFRAME restores the original mesh/block outlines.").defineEnum("echoStyle",TinEchoStyle.SOFT_BLUR);
+        TIN_ECHO_STYLE=b.comment("SOFT_BLUR shows readable white silhouettes and softened terrain contours; WIREFRAME restores the original mesh/block outlines.").defineEnum("echoStyle",TinEchoStyle.SOFT_BLUR);
+        TIN_SOFT_MOB=b.comment("White filled mob silhouette opacity at strong tin, independent of faint blur backdrop.").defineInRange("softMobOpacity",.45,0.0,.8);
+        TIN_SOFT_TERRAIN=b.defineInRange("softTerrainOpacity",.45,0.0,.8);
+        TIN_SOFT_FILL=b.defineInRange("softTerrainFillOpacity",.06,0.0,.2);
+        TIN_SOFT_SURFACES=b.defineInRange("maxSoftSurfaces",256,16,512);
         TIN_BLUR_OPACITY=b.comment("Maximum opacity per soft impression before fading/obstruction and overlap reduction.").defineInRange("blurOpacity",.16,.01,.35);
         TIN_BLUR_SIZE=b.defineInRange("blurSize",1.0,.5,2.0);TIN_BLUR_LIMIT=b.defineInRange("maxBlurPuffs",64,8,128);
         TIN_LIGHTMAP=b.define("variableNightVision",true);

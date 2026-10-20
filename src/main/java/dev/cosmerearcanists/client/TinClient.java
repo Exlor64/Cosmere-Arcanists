@@ -135,10 +135,63 @@ public final class TinClient {
         }
         flushThroughWalls(buffers,type);
     }
+    private static void face(com.mojang.blaze3d.vertex.PoseStack pose,VertexConsumer v,float alpha,double[][] corners){
+        for(var p:corners)v.addVertex(pose.last().pose(),(float)p[0],(float)p[1],(float)p[2]).setColor(1f,1f,1f,alpha);
+    }
+    private static void fill(com.mojang.blaze3d.vertex.PoseStack pose,VertexConsumer v,AABB b,float a){
+        double x=b.minX,X=b.maxX,y=b.minY,Y=b.maxY,z=b.minZ,Z=b.maxZ;
+        face(pose,v,a,new double[][]{{x,y,z},{X,y,z},{X,Y,z},{x,Y,z}});face(pose,v,a,new double[][]{{X,y,Z},{x,y,Z},{x,Y,Z},{X,Y,Z}});
+        face(pose,v,a,new double[][]{{x,y,Z},{x,y,z},{x,Y,z},{x,Y,Z}});face(pose,v,a,new double[][]{{X,y,z},{X,y,Z},{X,Y,Z},{X,Y,z}});
+        face(pose,v,a,new double[][]{{x,Y,z},{X,Y,z},{X,Y,Z},{x,Y,Z}});face(pose,v,a,new double[][]{{x,y,Z},{X,y,Z},{X,y,z},{x,y,z}});
+    }
+    private static void softModel(RenderLevelStageEvent event,net.minecraft.world.entity.Entity entity,Vec3 position,float opacity,float scale){
+        var mc=Minecraft.getInstance();var pose=event.getPoseStack();var camera=event.getCamera().getPosition();var buffers=mc.renderBuffers().bufferSource();var type=TinRenderTypes.softModel();
+        MultiBufferSource silhouette=original->original.format().equals(DefaultVertexFormat.NEW_ENTITY)?buffers.getBuffer(type):DISCARD;
+        float partial=event.getPartialTick().getGameTimeDeltaPartialTick(false);pose.pushPose();
+        try{pose.translate(position.x-camera.x,position.y-camera.y,position.z-camera.z);pose.translate(0,entity.getBbHeight()*.5,0);pose.scale(scale,scale,scale);pose.translate(0,-entity.getBbHeight()*.5,0);
+            RenderSystem.setShaderColor(1,1,1,opacity);
+            mc.getEntityRenderDispatcher().getRenderer(entity).render(entity,Mth.rotLerp(partial,entity.yRotO,entity.getYRot()),partial,pose,silhouette,LightTexture.FULL_BRIGHT);
+            flushThroughWalls(buffers,type);
+        }finally{RenderSystem.setShaderColor(1,1,1,1);pose.popPose();}
+    }
+    /** Readable geometry is independent of the old low-opacity, crowd-dimmed cloud backdrop. */
+    private static void softShapes(RenderLevelStageEvent event){
+        var mc=Minecraft.getInstance();var camera=event.getCamera().getPosition();var pose=event.getPoseStack();var buffers=mc.renderBuffers().bufferSource();float partial=event.getPartialTick().getGameTimeDeltaPartialTick(false);double now=mc.level.getGameTime()+partial;
+        var surfaces=new HashMap<AABB,Float>();var strongest=new HashMap<Integer,Echo>();
+        for(var echo:ECHOES){double age=now-echo.started;float strength=alpha(echo,age);
+            for(var box:echo.packet.surfaces()){
+                if(box.contains(camera) || box.getCenter().distanceToSqr(camera)<.35*.35)continue;
+                float reveal=(float)TinMath.waveReveal(age,box.getCenter().distanceTo(echo.packet.position()),PowerClientConfig.TIN_WAVE_SPEED.get());float value=strength*reveal;
+                if(value>.003)surfaces.merge(box,value,Math::max);
+            }
+            if(echo.packet.entityId()>=0){var old=strongest.get(echo.packet.entityId());if(old==null || mobAlpha(echo,age)>mobAlpha(old,now-old.started))strongest.put(echo.packet.entityId(),echo);}
+        }
+        var terrain=new ArrayList<>(surfaces.entrySet());terrain.sort(Comparator.comparingDouble(e->e.getKey().getCenter().distanceToSqr(camera)));
+        if(terrain.size()>PowerClientConfig.TIN_SOFT_SURFACES.get())terrain.subList(PowerClientConfig.TIN_SOFT_SURFACES.get(),terrain.size()).clear();
+        var fill=TinRenderTypes.softFill();var halo=TinRenderTypes.softHalo();var edge=TinRenderTypes.softEdge();
+        for(var surface:terrain)fill(pose,buffers.getBuffer(fill),surface.getKey().move(camera.scale(-1)),surface.getValue()*PowerClientConfig.TIN_SOFT_FILL.get().floatValue());
+        flushThroughWalls(buffers,fill);
+        for(var surface:terrain)LevelRenderer.renderLineBox(pose,buffers.getBuffer(halo),surface.getKey().move(camera.scale(-1)),1,1,1,surface.getValue()*PowerClientConfig.TIN_SOFT_TERRAIN.get().floatValue()*.22f);
+        flushThroughWalls(buffers,halo);
+        for(var surface:terrain)LevelRenderer.renderLineBox(pose,buffers.getBuffer(edge),surface.getKey().move(camera.scale(-1)),1,1,1,surface.getValue()*PowerClientConfig.TIN_SOFT_TERRAIN.get().floatValue());
+        flushThroughWalls(buffers,edge);
+        for(var echo:strongest.values()){
+            var entity=mc.level.getEntity(echo.packet.entityId());if(entity==mc.player)continue;float strength=mobAlpha(echo,now-echo.started);if(strength<.003)continue;
+            var position=anchor(echo,partial);if(position.add(0,echo.packet.sourceBox().getYsize()*.5,0).distanceToSqr(camera)<.5*.5)continue;
+            float opacity=strength*PowerClientConfig.TIN_SOFT_MOB.get().floatValue();
+            if(entity!=null && PowerClientConfig.TIN_MODELS.get()){
+                softModel(event,entity,position,opacity*.10f,1.06f);softModel(event,entity,position,opacity*.16f,1.025f);softModel(event,entity,position,opacity,1);
+            }else{
+                var box=echo.packet.sourceBox().move(position.subtract(feet(echo.packet.sourceBox()))).move(camera.scale(-1));
+                fill(pose,buffers.getBuffer(fill),box,opacity*.4f);flushThroughWalls(buffers,fill);
+                LevelRenderer.renderLineBox(pose,buffers.getBuffer(edge),box,1,1,1,opacity);flushThroughWalls(buffers,edge);
+            }
+        }
+    }
     @SubscribeEvent public void render(RenderLevelStageEvent event) {
         var mc=Minecraft.getInstance();
         if(event.getStage()!=RenderLevelStageEvent.Stage.AFTER_PARTICLES || !wireActive() || !PowerClientConfig.TIN_ECHOES.get() || ECHOES.isEmpty())return;
-        if(PowerClientConfig.TIN_ECHO_STYLE.get()==PowerClientConfig.TinEchoStyle.SOFT_BLUR){softEchoes(event);return;}
+        if(PowerClientConfig.TIN_ECHO_STYLE.get()==PowerClientConfig.TinEchoStyle.SOFT_BLUR){softEchoes(event);softShapes(event);return;}
         var camera=event.getCamera().getPosition();var pose=event.getPoseStack();var buffers=mc.renderBuffers().bufferSource();
         float partial=event.getPartialTick().getGameTimeDeltaPartialTick(false);double now=mc.level.getGameTime()+partial;
         var strongest=new HashMap<Integer,Echo>();

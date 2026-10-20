@@ -908,3 +908,19 @@ look, or keep `"SOFT_BLUR"`. `blurOpacity` defaults0.16, `blurSize` defaults1, a
 overlapping sounds, opacity is reduced during multiple echoes, and clouds very
 near the camera are skipped to keep vision clear. Existing echo visibility
 controls still apply. No protocol or saved-data changes (protocol16).
+
+### Readable soft tin silhouettes (0.24.2)
+
+The soft echo style now includes recognizable **white mob silhouettes** and
+**terrain contours through walls**, with a faint filled surface and soft halo.
+The Gaussian clouds remain a subtle backdrop. Strong tin reaches45% mob/contour
+opacity by default; multiple sounds no longer dim these shapes. Baseline flaring
+still provides a weaker glimpse, and obstruction/fade/strength gating still apply.
+
+Existing `echoStyle = "SOFT_BLUR"` automatically uses the improved rendering,
+including previously saved low `blurOpacity` settings. New client settings
+`tin.softMobOpacity`, `tin.softTerrainOpacity`, `tin.softTerrainFillOpacity` and
+`tin.maxSoftSurfaces` control the readable shapes independently of cloud opacity.
+Repeated surface shapes and mob sources are merged; up to256 exact surface
+shapes are displayed per frame. `WIREFRAME` remains available. Protocol16 and
+saved data are unchanged.

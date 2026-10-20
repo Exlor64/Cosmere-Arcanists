@@ -17,6 +17,22 @@ public final class TinRenderTypes extends RenderType {
         CompositeState.builder().setShaderState(new ShaderStateShard(()->blurShader)).setTransparencyState(TRANSLUCENT_TRANSPARENCY)
         .setDepthTestState(NO_DEPTH_TEST).setCullState(NO_CULL).setWriteMaskState(COLOR_WRITE).createCompositeState(false));
     public static RenderType blur(){return BLUR;}
+    private static final RenderType SOFT_MODEL=create("cosmere_tin_soft_silhouette",DefaultVertexFormat.NEW_ENTITY,VertexFormat.Mode.QUADS,4096,false,false,
+        CompositeState.builder().setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
+        .setTextureState(new TextureStateShard(ResourceLocation.withDefaultNamespace("textures/block/white_concrete.png"),false,false))
+        .setLightmapState(LIGHTMAP).setOverlayState(OVERLAY).setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+        .setDepthTestState(NO_DEPTH_TEST).setCullState(CULL).setWriteMaskState(COLOR_WRITE).createCompositeState(false));
+    public static RenderType softModel(){return SOFT_MODEL;}
+    private static final RenderType SOFT_FILL=create("cosmere_tin_soft_surface",DefaultVertexFormat.POSITION_COLOR,VertexFormat.Mode.QUADS,4096,false,false,
+        CompositeState.builder().setShaderState(POSITION_COLOR_SHADER).setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+        .setDepthTestState(NO_DEPTH_TEST).setCullState(NO_CULL).setWriteMaskState(COLOR_WRITE).createCompositeState(false));
+    public static RenderType softFill(){return SOFT_FILL;}
+    private static RenderType contour(double width){return create("cosmere_tin_contour_"+(int)width,DefaultVertexFormat.POSITION_COLOR_NORMAL,VertexFormat.Mode.LINES,4096,false,false,
+        CompositeState.builder().setShaderState(RENDERTYPE_LINES_SHADER).setLineState(new LineStateShard(OptionalDouble.of(width)))
+        .setTransparencyState(TRANSLUCENT_TRANSPARENCY).setDepthTestState(NO_DEPTH_TEST).setCullState(NO_CULL).setWriteMaskState(COLOR_WRITE).createCompositeState(false));}
+    private static final RenderType SOFT_EDGE=contour(1.75),SOFT_HALO=contour(5);
+    public static RenderType softEdge(){return SOFT_EDGE;}
+    public static RenderType softHalo(){return SOFT_HALO;}
     private static RenderType lines;private static double width;
     public static RenderType lines(){
         if(lines==null || width!=echoWidth()) {

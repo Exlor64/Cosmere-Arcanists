@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-19 UTC**. Current mod version: **0.24.1-alpha**.
+Last updated: **2026-10-20 UTC**. Current mod version: **0.24.2-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -8,6 +8,10 @@ Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
 Read this and `AGENTS.md` when beginning a session. The user requires this file to be updated after every change or project chat. Keep it current rather than appending conflicting summaries.
 
 ## Latest session and next action
+
+- 0.24.2 user reports blur too faint even high tin, wants recognizable enemy outlines and terrain through walls. SOFT_BLUR now layers actual white filled entity models with two subtle expanded silhouette halos, exact server surface-box contours with wider faint halo and6% fill, over retained Gaussian cloud backdrop. Strong tin silhouette/core contour max45% each, no concurrent-echo dimming on geometry; strength/audibility/wave/fade gates preserved. Source strongest echo only; exact AABB surfaces merged (preserves stair/slab details) bounded256 nearest shapes. Dedicated translucent COLOR_WRITE/no-depth render types; every pass explicitly flushes with depth disabled/restored; no global polygon wire mode in soft path. Fallback source box when entity renderer unavailable/disabled. Camera-containing surfaces skipped; world remains visible.
+- New client tin.softMobOpacity/softTerrainOpacity/softTerrainFillOpacity/maxSoftSurfaces independent of existing low blurOpacity; existing SOFT_BLUR saved configs automatically improve without reset. WIREFRAME unchanged. Protocol16/no save/gameplay migration. Build/server checks pending; graphical Minecraft readability still needs user validation.
+
 
 - 0.24.1 user requests a translucent white blur instead of tin wireframes and may want reversal. Default client tin.echoStyle=SOFT_BLUR uses custom Gaussian billboard shader for softly connected mob impressions and vague surface clouds. Retained exact previous wireframe path behind WIREFRAME setting; no gameplay/protocol/save change (16). Client blurOpacity .16 (.01..35%), blurSize1, maxBlurPuffs64 cap perframe; deduplicates surface blocks, strongest source echo only, scales opacity down with concurrent echoes, skips clouds within.75blocks of camera. World/GUI not blurred; no full-screen render targets. Uses existing interpolated sound-source anchors, wave arrival, fade, strength/flare eligibility and obstruction, explicit through-wall batch flush with depth restoration. Client shader reload via RegisterShadersEvent. Night vision/zoom unchanged. Verification: Java21 GitHub Actions run39335572012 for gameplay commita1ff2a493e5e26341c87c3424b083677096c1a54 passed build/JUnit (55 registered unit methods), explicitly logged All74requiredtestspassed, and uploaded artifacts. Local surfaceless Mesa llvmpipe OpenGL compiled/linked both actual shader files and rendered a test quad: white center RGB41/255 (~16.1% blend at opacity.16), corners transparent RGB0. Full Minecraft placement/through-wall/shader-pack appearance still needs user testing. Next: user assesses readability and can restore tin.echoStyle=WIREFRAME immediately.
 
