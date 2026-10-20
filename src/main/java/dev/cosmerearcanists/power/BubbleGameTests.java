@@ -30,5 +30,21 @@ public final class BubbleGameTests {
     @GameTest(template="empty") public static void boundaryDeflectionsAreSmallAndPreserveMomentum(GameTestHelper h){var random=net.minecraft.util.RandomSource.create(4);var v=new Vec3(3,.4,1);for(int i=0;i<100;i++){var changed=BubbleService.deflect(v,random);h.assertTrue(Math.abs(changed.length()-v.length())<1e-7&&changed.normalize().dot(v.normalize())>=Math.cos(Math.toRadians(BubbleConfig.DEFLECTION_DEGREES.get()))-1e-8,"Random deviation stays inside configured angle and preserves speed");}var p=caster(h,"bendalloy");var mob=new Walker(h.getLevel());try{BubbleService.create(p,"bendalloy");var center=BubbleService.bubbles(h.getLevel()).getFirst().center();mob.setPos(center);mob.setDeltaMovement(v);BubbleService.crossed(mob,center.add(-6,0,0),center.add(6,0,0));h.assertTrue(!mob.getDeltaMovement().equals(v)&&Math.abs(mob.getDeltaMovement().length()-v.length())<1e-7,"Sweeping fully across a bubble applies boundary deviation");}finally{mob.discard();BubbleService.clearPlayer(p);}h.succeed();}
     @GameTest(template="empty") public static void disabledBubblesAndFuelDepletionPreserveAttributes(GameTestHelper h){var p=caster(h,"bendalloy");boolean enabled=BubbleConfig.ENABLED.get();try{BubbleService.create(p,"bendalloy");double fuel=PowerData.reserve(p,"bendalloy");BubbleConfig.ENABLED.set(false);BubbleService.tickPlayer(p);h.assertTrue(BubbleService.bubbles(h.getLevel()).isEmpty()&&PowerData.reserve(p,"bendalloy")==fuel&&PowerAttributes.strength(p,"a:bendalloy")==1,"Disabling collapses effects and preserves saved data");BubbleConfig.ENABLED.set(true);PowerData.reserve(p,"bendalloy",.001);BubbleService.tickPlayer(p);h.assertTrue(PowerData.state(p,"a:bendalloy")==0,"Fuel depletion stops burning");}finally{BubbleConfig.ENABLED.set(enabled);BubbleService.clearPlayer(p);}h.succeed();}
     @GameTest(template="empty") public static void bubblePacketRoundTripsAndRejectsUnboundedData(GameTestHelper h){var p=player(h);var packet=new BubblePacket(p.level().dimension().location().toString(),.5,List.of(new BubblePacket.Sphere(p.getUUID(),"bendalloy",p.position(),4,.5)));var b=new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(),h.getLevel().registryAccess());try{BubblePacket.CODEC.encode(b,packet);h.assertTrue(BubblePacket.CODEC.decode(b).equals(packet),"Visual sphere and recipient time rate round trip");}finally{b.release();}boolean rejected=false;try{new BubblePacket("minecraft:overworld",Double.NaN,List.of());}catch(IllegalArgumentException expected){rejected=true;}h.assertTrue(rejected,"Invalid time rate rejected");h.succeed();}
+    @GameTest(template="empty") public static void droppedItemPredictionUsesBubbleClockAndContinuousGravity(GameTestHelper h){
+        for(String metal:List.of("bendalloy","cadmium")){
+            var p=caster(h,metal);
+            var item=new net.minecraft.world.entity.item.ItemEntity(h.getLevel(),p.getX()+1,p.getY(),p.getZ(),new net.minecraft.world.item.ItemStack(Items.IRON_NUGGET));
+            var mob=new Walker(h.getLevel());
+            try{
+                BubbleService.create(p,metal);item.setDeltaMovement(0,-.01,0);
+                h.assertTrue(BubbleService.predictsLocally(item)&&!BubbleService.predictsLocally(mob),"Dropped items use client bubble prediction without changing living-entity interpolation");
+                int frames=metal.equals("bendalloy")?10:4,logicalTicks=metal.equals("bendalloy")?5:8;
+                for(int i=0;i<frames;i++){double before=item.getY();h.getLevel().tickNonPassenger(item);h.assertTrue(item.getY()<before,"Airborne item advances downward on every bubble frame");}
+                double velocity=-.01;for(int i=0;i<logicalTicks;i++)velocity=(velocity-.04)*.98;
+                h.assertTrue(item.tickCount==logicalTicks&&Math.abs(item.getDeltaMovement().y-velocity)<1e-6,"Item age and intrinsic gravity advance on the same fractional clock used by client prediction");
+            }finally{item.discard();mob.discard();BubbleService.clearPlayer(p);}
+        }
+        h.succeed();
+    }
     private BubbleGameTests(){}
 }

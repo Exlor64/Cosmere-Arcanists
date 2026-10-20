@@ -19,6 +19,8 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 public final class BubbleService {
+    /** Entities whose vanilla clients simulate motion rather than remote living-entity interpolation. */
+    public static boolean predictsLocally(Entity entity){return entity instanceof net.minecraft.world.entity.item.ItemEntity || entity instanceof Projectile;}
     private record Key(UUID owner,String metal){}
     public record Bubble(ServerPlayer owner,String metal,String dimension,Vec3 center,double radius,double rate){}
     private static boolean dirty;

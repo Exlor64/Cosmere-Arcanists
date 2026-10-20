@@ -1130,3 +1130,9 @@ New bubble-server switches: `affectRandomBlockTicks`, `affectRandomFluidTicks`,
 `maximumScheduledEntriesProcessedPerWorldTick` bounds extra work (default16384);
 entries beyond that per-frame processing limit retain ordinary scheduling.
 Protocol remains18; matching0.28.1 client/server installs are recommended.
+
+### Dropped-item bubble prediction (0.28.2)
+
+Dropped items now simulate bubble time on the client as well as the server,
+preventing normal-speed falling followed by repeated upward corrections. Both
+slowing and acceleration use the shared entity clock. Protocol remains18.

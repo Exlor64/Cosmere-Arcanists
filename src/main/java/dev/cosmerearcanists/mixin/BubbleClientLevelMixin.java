@@ -4,11 +4,10 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import dev.cosmerearcanists.power.BubbleService;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.projectile.Projectile;
 import org.spongepowered.asm.mixin.Mixin;
-/** Match predicted projectile substeps to the server; ordinary remote-mob interpolation stays untouched. */
+/** Match predicted dropped-item and projectile substeps to the server; ordinary remote-mob interpolation stays untouched. */
 @Mixin(ClientLevel.class)
 public abstract class BubbleClientLevelMixin {
     @WrapMethod(method="tickNonPassenger")
-    private void cosmerearcanists$projectileTime(Entity entity,Operation<Void> original){if(entity instanceof Projectile)BubbleService.tickEntity(entity,()->original.call(entity));else original.call(entity);}
+    private void cosmerearcanists$predictedEntityTime(Entity entity,Operation<Void> original){if(BubbleService.predictsLocally(entity))BubbleService.tickEntity(entity,()->original.call(entity));else original.call(entity);}
 }
