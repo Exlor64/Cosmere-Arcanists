@@ -14,14 +14,17 @@ public final class EnhancementService {
     private static int state(ServerPlayer p,String metal){int state=PowerData.state(p,"a:"+metal);return state==3&&!PowerConfig.FLARING.get()?2:state;}
     private static boolean usable(ServerPlayer p,String metal){return configured(metal) && p.isAlive() && !p.isSpectator() && PowerAttributes.strength(p,"a:"+metal)>0 && state(p,metal)>0 && (!PowerConfig.CONSUMPTION.get() || PowerData.reserve(p,metal)>0);}
     public static double strength(ServerPlayer p,String metal){return usable(p,metal)?PowerAttributes.strength(p,"a:"+metal)*PowerRules.levelMultiplier(state(p,metal),PowerConfig.LOW_STRENGTH.get(),PowerConfig.BURN_STRENGTH.get(),PowerConfig.FLARE_STRENGTH.get()):0;}
-    public static double multiplier(ServerPlayer p,String power){
+    public static double multiplier(ServerPlayer p,String power){return Math.max(selfMultiplier(p,power),ContactService.multiplier(p,power));}
+    private static double selfMultiplier(ServerPlayer p,String power){
         if(!power.startsWith("a:") || power.equals("a:aluminum") || power.equals("a:duralumin") || !configured("duralumin") || PowerAttributes.strength(p,"a:duralumin")<=0 || !p.isAlive() || p.isSpectator())return 1;
         var bursts=BURSTS.get(p.getUUID());var burst=bursts==null?null:bursts.get(power.substring(2));
         if(burst!=null && p.level().getGameTime()<burst.start+burst.ticks)return boost(EnhancementConfig.FLARE_POWER.get(),PowerAttributes.strength(p,"a:duralumin"));
         if(!usable(p,"duralumin"))return 1;
         return switch(state(p,"duralumin")){case 1->boost(EnhancementConfig.LOW_POWER.get(),PowerAttributes.strength(p,"a:duralumin"));case 2->boost(EnhancementConfig.BURN_POWER.get(),PowerAttributes.strength(p,"a:duralumin"));default->1;};
     }
+    public static boolean committed(ServerPlayer p,String metal){var map=BURSTS.get(p.getUUID());return map!=null && map.containsKey(metal);}
     public static void consume(ServerPlayer p,String metal,double amount){
+        if(ContactService.committed(p,metal))return;
         var bursts=BURSTS.get(p.getUUID());if(bursts!=null && bursts.containsKey(metal))return;
         double multiplier=usable(p,"duralumin") && !metal.equals("duralumin")?switch(state(p,"duralumin")){case 1->EnhancementConfig.LOW_DRAIN.get();case 2->EnhancementConfig.BURN_DRAIN.get();default->1;}:1;
         if(multiplier>1)multiplier=Math.max(1,multiplier/efficiency(PowerAttributes.strength(p,"a:duralumin")));
@@ -43,14 +46,14 @@ public final class EnhancementService {
         return new Profile(boost(base,strength),state==3?1:Math.max(1,drain/efficiency),(int)Math.ceil(EnhancementConfig.FLARE_TICKS.get()*efficiency),state==3);
     }
     public static int flareTicks(double reserves,double maximum,int fullTicks){return EnhancementMath.flareTicks(reserves,maximum,fullTicks);}
-    private static boolean featureEnabled(String metal){return switch(metal){
-        case "iron","steel"->PowerConfig.IRON_STEEL.get();case "tin"->TinConfig.ENABLED.get();case "pewter"->PewterService.configured();
+    public static boolean featureEnabled(String metal){return switch(metal){
+        case "chromium","nicrosil"->ContactService.configured(metal);case "iron","steel"->PowerConfig.IRON_STEEL.get();case "tin"->TinConfig.ENABLED.get();case "pewter"->PewterService.configured();
         case "atium"->TemporalConfig.ENABLED.get() && TemporalConfig.ATIUM.get();case "electrum"->TemporalConfig.ENABLED.get() && TemporalConfig.ELECTRUM.get();
         case "zinc","brass"->EmotionService.configured("a:"+metal);case "bronze"->SeekingConfig.ENABLED.get() && SeekingConfig.BRONZE.get();case "copper"->SeekingConfig.ENABLED.get() && SeekingConfig.COPPER.get();default->true;};}
     public static void begin(ServerPlayer p){
         if(!p.isAlive() || p.isSpectator()){clear(p);return;}
         if(usable(p,"aluminum")){
-            clear(p);
+            clear(p);ContactService.clearTarget(p);
             if(EnhancementConfig.PURGE.get()){var reserves=PowerData.data(p).getCompound("reserves");for(String metal:new HashSet<>(reserves.getAllKeys()))PowerData.reserve(p,metal,0);for(String power:PowerAttributes.keys())if(power.startsWith("a:"))PowerData.state(p,power,0);}
             else PowerData.state(p,"a:aluminum",0);
             if(EnhancementConfig.CLEANSE.get())NeoForge.EVENT_BUS.post(new InvestitureCleanseEvent(p));
@@ -60,7 +63,7 @@ public final class EnhancementService {
         var existing=BURSTS.get(p.getUUID());if(existing!=null){var available=PowerData.available(p);existing.keySet().removeIf(m->!available.contains("a:"+m) || !featureEnabled(m));if(existing.isEmpty())BURSTS.remove(p.getUUID());}
         if(!BURSTS.containsKey(p.getUUID()) && usable(p,"duralumin") && state(p,"duralumin")==3){
             var bursts=new HashMap<String,Burst>();int longest=0;long now=p.level().getGameTime();
-            for(String power:PowerData.available(p))if(power.startsWith("a:") && !power.equals("a:duralumin") && !power.equals("a:aluminum") && PowerRules.implemented(power) && SeekingService.activeStrength(p,power)>0){
+            for(String power:PowerData.available(p))if(power.startsWith("a:") && !power.equals("a:duralumin") && !power.equals("a:aluminum") && !ContactService.committed(p,power.substring(2)) && PowerRules.implemented(power) && SeekingService.activeStrength(p,power)>0){
                 String metal=power.substring(2);double fuel=PowerData.reserve(p,metal);int ticks=flareTicks(fuel,PowerConfig.RESERVE_CAP.get(),(int)Math.ceil(EnhancementConfig.FLARE_TICKS.get()*efficiency(PowerAttributes.strength(p,"a:duralumin"))));if(ticks>0){bursts.put(metal,new Burst(fuel,ticks,now));longest=Math.max(longest,ticks);}
             }
             if(!bursts.isEmpty()){bursts.put("duralumin",new Burst(PowerData.reserve(p,"duralumin"),longest,now));BURSTS.put(p.getUUID(),bursts);}

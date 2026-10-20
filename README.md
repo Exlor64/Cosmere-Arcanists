@@ -11,7 +11,7 @@ For current project status, accepted design decisions, verification and continua
 - Data survives death and relogging. Config changes do not reroll saved origins.
 - Hemalurgy is acquired rather than a birth power; its switch reserves the future feature gate.
 
-**Iron/steel/tin/pewter/electrum/atium/bronze/copper/zinc/brass Allomancy and the power selector are implemented. Other magic effects, custom dimensions, planetary travel, and the origin selection screen remain in development.** Scadrial will be Era 2 with an Overworld-like environment. The ancestry mode currently uses only a Scadrian-human probability multiplier; family inheritance and additional races are future work.
+**Iron/steel/tin/pewter/electrum/atium/bronze/copper/zinc/brass/aluminum/duralumin/chromium/nicrosil Allomancy and the power selector are implemented. Other magic effects, custom dimensions, planetary travel, and the origin selection screen remain in development.** Scadrial will be Era 2 with an Overworld-like environment. The ancestry mode currently uses only a Scadrian-human probability multiplier; family inheritance and additional races are future work.
 
 ## Build and run
 Install JDK 21 and import the root Gradle project into IntelliJ.
@@ -963,3 +963,44 @@ and domination behavior is unchanged. In the emotions server config,
 attack preservation restores the old forced combat behavior. Temporary anger
 targets clear when the target-only goal ends; normal targeting can resume.
 No save/network changes (protocol16).
+
+
+### Chromium and nicrosil (0.26.0)
+
+Burn the selected metal, aim at a living target within **3 blocks**, and hold its
+activation key (**G** for primary or **H** for secondary). Contact is checked on
+the server and requires an unobstructed ray to the nearest body. Creative and
+spectator targets are protected; server PvP and team friendly-fire rules apply
+by default. Ordinary mobs currently have no metal reserves to affect.
+
+- **Chromium** empties the target's stored metal reserves, ends their Allomantic
+  burns, and cancels active duralumin/nicrosil bursts. It preserves permanent
+  power attributes, Feruchemy states, spiritual integrity, and ordinary potions.
+- **Nicrosil** commits the target's currently burning implemented metals to a
+  finite burst. At attribute1, low burn gives **1.75x**, burning **2.5x**, and
+  flaring **5x** effective strength. Each metal spends its captured reserves over
+  **100 ticks × current/max reserves**. Higher nicrosil strength primarily
+  improves duration/efficiency with a smaller increase in peak strength.
+  Stopping a burn does not evade its committed fuel cost; refills are preserved
+  beyond that cost and do not extend it. Repeated touches cannot refresh an
+  existing commitment. Aluminum, duralumin, chromium, and nicrosil are excluded
+  from the recipient burst to avoid enhancer loops. Duralumin and nicrosil use
+  the stronger effect rather than multiplying together.
+
+Successful contacts cost **10 reserve**, scale down with effective strength,
+and have a **20-tick cooldown** per source and metal. Burning either contact
+metal also consumes **1 reserve/second**, scaled by burn level and duralumin.
+Misses and contacts with no eligible effect have no extra contact cost.
+
+`<world>/serverconfig/cosmerearcanists-contact-server.toml` controls both powers,
+range, player/mob targeting, PvP rules, cost, cooldown, consumption, nicrosil
+multipliers/duration/scaling, messages, and foreign-art hooks. Disabling a
+feature clears its transient boost while preserving saved attributes and
+unspent reserves. Bursts also end on death, logout, dimension change, or restart.
+The cancellable `InvestitureContactEvent` lets later invested arts queue their
+own resource effects after validation; nicrosil integrations must snapshot and
+spend their own finite fuel budgets. Chromium does not generically remove
+external influences as aluminum does.
+
+Gold, cadmium, and bendalloy are the remaining ordinary Allomantic effects.
+Pure-atium and lerasium powers remain future work.
