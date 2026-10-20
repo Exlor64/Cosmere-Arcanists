@@ -1088,7 +1088,9 @@ block/fluid/redstone ticks retain normal world time.
 
 Other players keep normal network/input ticks; their movement, gravity, attack
 cooldown, mining, item use, base vital/effect timers and hunger timers are scaled
-separately. Menus and other mods' independent timers are not globally retimed.
+separately. Menus, power fuel/burst windows, and independent mod timers keep server time.
+Boundary response is evaluated at entity movement updates rather than a fully
+continuous physics simulation.
 Movement changes ease over several ticks, with a soft transition just inside
 the sphere boundary. Overlapping time factors multiply within configured caps;
 own-bubble exemption applies individually. No forced chunk loading or saved
