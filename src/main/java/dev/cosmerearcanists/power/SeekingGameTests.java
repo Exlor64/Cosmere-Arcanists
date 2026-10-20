@@ -22,11 +22,11 @@ public final class SeekingGameTests {
     private static InvestitureSignals.Signal signal(Vec3 p){return new InvestitureSignals.Signal(InvestitureSignals.ALLOMANCY,ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,"steel"),UUID.randomUUID(),p,1,1,24,2,true);}
     @GameTest(template="empty") public static void onlyActiveImplementedEffectsEmitAndBronzeSeesThroughWalls(GameTestHelper h) {
         var source=player(h,"steel");
-        for(String m:List.of("iron","tin","pewter","electrum","atium","bronze","copper","gold"))grant(source,m);
-        h.assertTrue(SeekingService.signalsFor(source).size()==6,"Unheld future-sight metals emit no active signal");
+        for(String m:List.of("iron","tin","pewter","electrum","atium","bronze","copper","gold","cadmium"))grant(source,m);
+        h.assertTrue(SeekingService.signalsFor(source).size()==7,"Unheld future-sight metals emit no active signal");
         PowerData.assignSlot(source,"a:atium",0);PowerData.assignSlot(source,"a:electrum",1);PowerService.control(source,new PowerNetwork.Control(2,"",1));PowerService.control(source,new PowerNetwork.Control(7,"",1));
         var emissions=SeekingService.signalsFor(source);
-        h.assertTrue(emissions.size()==8 && emissions.stream().noneMatch(s->s.effect().getPath().equals("gold")),"Only eight implemented actively burning effects emit, not placeholder gold");
+        h.assertTrue(emissions.size()==9 && emissions.stream().anyMatch(s->s.effect().getPath().equals("gold")) && emissions.stream().noneMatch(s->s.effect().getPath().equals("cadmium")),"Gold now emits alongside the other active effects; placeholder cadmium remains silent");
         PowerData.state(source,"a:steel",0);h.assertTrue(SeekingService.signalsFor(source).stream().noneMatch(s->s.effect().getPath().equals("steel")),"Possessing the attribute and reserves does not emit while off");
         var seeker=player(h,"bronze");var pulse=signal(seeker.position().add(4,0,0));
         var wall=BlockPos.containing(seeker.position().add(2,1,0));h.getLevel().setBlock(wall,net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(),3);
