@@ -28,13 +28,13 @@ public final class BronzeFeruchemyGameTests {
         PowerAttributes.set(p, "f:bronze", 1);
         return p;
     }
-    private static ItemStack mind(FakePlayer p) {
+    private static ItemStack mind(net.minecraft.server.level.ServerPlayer p) {
         var item = new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID, "bronze_metalmind_ring")));
         p.setItemInHand(InteractionHand.OFF_HAND, item);
         return item;
     }
-    private static int rest(FakePlayer p) { return p.getStats().getValue(Stats.CUSTOM.get(Stats.TIME_SINCE_REST)); }
-    private static void rest(FakePlayer p, int value) { p.getStats().setValue(p, Stats.CUSTOM.get(Stats.TIME_SINCE_REST), value); }
+    private static int rest(net.minecraft.server.level.ServerPlayer p) { return p.getStats().getValue(Stats.CUSTOM.get(Stats.TIME_SINCE_REST)); }
+    private static void rest(net.minecraft.server.level.ServerPlayer p, int value) { p.getStats().setValue(p, Stats.CUSTOM.get(Stats.TIME_SINCE_REST), value); }
     private static void close(GameTestHelper h, double actual, double expected, String message) { h.assertTrue(Math.abs(actual - expected) < 1e-7, message + ": " + actual + " expected " + expected); }
 
     @GameTest(template="empty") public static void bronzeStorageConservesWakefulnessAndSlowsPhysicalActions(GameTestHelper h) {
@@ -133,14 +133,15 @@ public final class BronzeFeruchemyGameTests {
         p.getAttribute(Attributes.MOVEMENT_SPEED).removeModifier(other); h.succeed();
     }
     @GameTest(template="empty") public static void bronzeDispatchCorrectsTheNativeServerPlayerRestClock(GameTestHelper h) {
-        // Restore awardStat, which FakePlayer normally suppresses, then exercise native doTick and PlayerTickEvent.Post.
-        var p = new FakePlayer(h.getLevel(), new GameProfile(UUID.randomUUID(), "BronzeNative")) {
-            @Override public void awardStat(Stat<?> stat, int amount) { getStats().increment(this, stat, amount); }
-        };
-        p.setGameMode(GameType.SURVIVAL); p.setPos(Vec3.atCenterOf(h.absolutePos(new BlockPos(1, 30, 1))));
+        // Use a real ServerPlayer and advance the outer entity tick counter as ServerLevel does.
+        // FakePlayer suppresses native lifecycle/stat behavior and cannot model the full rest clock.
+        var profile=new GameProfile(UUID.randomUUID(),"BronzeNative");
+        var p=new net.minecraft.server.level.ServerPlayer(h.getLevel().getServer(),h.getLevel(),profile,net.minecraft.server.level.ClientInformation.createDefault());
+        p.connection=new FakePlayer(h.getLevel(),profile).connection;
+        p.setGameMode(GameType.SURVIVAL); p.setNoGravity(true); p.setPos(Vec3.atCenterOf(h.absolutePos(new BlockPos(1, 30, 1))));
         PowerAttributes.set(p, "f:bronze", 1); var item = mind(p); Metalminds.transfer(item, p.getUUID(), "bronze", 100);
         rest(p, 72020); PowerData.state(p, "f:bronze", 10);
-        for (int i = 0; i < 60; i++) p.doTick();
+        for (int i = 0; i < 60; i++) { p.tickCount++; p.tick(); p.doTick(); }
         h.assertTrue(rest(p) == 71990, "Actual server player ticks restore insomnia below the vanilla three-day phantom threshold; actualRest=" + rest(p) + ", charge=" + Metalminds.charge(item) + ", state=" + PowerData.state(p,"f:bronze") + ", tickCount=" + p.tickCount);
         close(h, Metalminds.charge(item), 100 - 3 * 1.5 * Math.pow(1.5, .25), "Native dispatch funds exactly one bronze update per tick");
         BronzeFeruchemy.clear(p); h.succeed();
