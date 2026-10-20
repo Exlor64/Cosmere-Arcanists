@@ -11,7 +11,7 @@ For current project status, accepted design decisions, verification and continua
 - Data survives death and relogging. Config changes do not reroll saved origins.
 - Hemalurgy is acquired rather than a birth power; its switch reserves the future feature gate.
 
-**Iron/steel/tin/pewter/electrum/atium/bronze/copper/zinc/brass/aluminum/duralumin/chromium/nicrosil Allomancy and the power selector are implemented. Other magic effects, custom dimensions, planetary travel, and the origin selection screen remain in development.** Scadrial will be Era 2 with an Overworld-like environment. The ancestry mode currently uses only a Scadrian-human probability multiplier; family inheritance and additional races are future work.
+**Iron/steel/tin/pewter/electrum/atium/bronze/copper/zinc/brass/aluminum/duralumin/chromium/nicrosil/gold Allomancy and the power selector are implemented. Other magic effects, custom dimensions, planetary travel, and the origin selection screen remain in development.** Scadrial will be Era 2 with an Overworld-like environment. The ancestry mode currently uses only a Scadrian-human probability multiplier; family inheritance and additional races are future work.
 
 ## Build and run
 Install JDK 21 and import the root Gradle project into IntelliJ.
@@ -1002,5 +1002,42 @@ own resource effects after validation; nicrosil integrations must snapshot and
 spend their own finite fuel budgets. Chromium does not generically remove
 external influences as aluminum does.
 
-Gold, cadmium, and bendalloy are the remaining ordinary Allomantic effects.
+Cadmium and bendalloy are the remaining ordinary Allomantic effects.
 Pure-atium and lerasium powers remain future work.
+
+
+### Gold: character version history (0.27.0)
+
+Burn gold and hold its assigned **G/H** activation key to see a private golden
+past-self beside you. **Alt + Activate** selects an older recorded version once
+per press; release and press again to cycle. This is the chosen game adaptation
+of gold's personal-past theme, rather than alternate-action prediction.
+
+The vision uses your current skin and the equipment types you wore in that
+version. Labels show its age, experience level, origin, power strengths, and
+spiritual integrity. Equipment components, enchantments, dyes, item contents,
+and historical skins are not recorded. The display never restores items,
+experience, health, powers or spiritual integrity. It cannot scout or simulate
+alternate fights, and it does not load your former surroundings.
+
+Recording starts for all players, including those without gold, so later Augurs
+can see their earlier versions. Only post-install history exists. The initial
+state is saved, meaningful descriptive changes may save after a one-minute
+cooldown, and periodic records occur every five minutes of server game time.
+Checks run every40ticks. History retains the newest16 versions by default and
+survives logout, restart and respawn. Older entries expire at the configured cap.
+There are no position histories or saved inventories. The initial record can
+represent your current self until another version has been captured.
+
+Baseline low/burning/flaring strengths expose2/4/5 recent versions respectively;
+stronger effective gold increases access up to the retention cap and makes the
+vision clearer. Default fuel use is1reserve/second at Burning, with common burn
+and enhancement modifiers. Duralumin/nicrosil enhance gold normally and bronze
+can detect its active burning. Views end on release, empty reserves, death,
+spectator mode, dimension change or feature disable; saved history is preserved.
+
+`cosmerearcanists-gold-server.toml` controls the feature, recording, retention,
+snapshot cooldown/period, equipment/details, activation requirement, accessible
+history, shadow distance, updates, and fuel use. Client `gold.historyShadow`,
+`historyLabels` and `opacityMultiplier` control presentation independently.
+Network protocol17 requires matching mod versions on client and server.

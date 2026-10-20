@@ -21,6 +21,7 @@ public final class PowerData {
         return tag;
     }
     private static boolean enabled(String power) {
+        if(power.equals("a:gold")&&!GoldService.configured())return false;
         if ((power.equals("a:chromium") || power.equals("a:nicrosil")) && !ContactService.configured(power.substring(2)))return false;
         if ((power.equals("a:aluminum") || power.equals("a:duralumin")) && !EnhancementService.configured(power.substring(2)))return false;
         if (Emotion.power(power) && !EmotionService.configured(power)) return false;

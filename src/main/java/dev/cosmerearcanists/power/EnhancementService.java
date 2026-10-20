@@ -47,7 +47,7 @@ public final class EnhancementService {
     }
     public static int flareTicks(double reserves,double maximum,int fullTicks){return EnhancementMath.flareTicks(reserves,maximum,fullTicks);}
     public static boolean featureEnabled(String metal){return switch(metal){
-        case "chromium","nicrosil"->ContactService.configured(metal);case "iron","steel"->PowerConfig.IRON_STEEL.get();case "tin"->TinConfig.ENABLED.get();case "pewter"->PewterService.configured();
+        case "gold"->GoldService.configured();case "chromium","nicrosil"->ContactService.configured(metal);case "iron","steel"->PowerConfig.IRON_STEEL.get();case "tin"->TinConfig.ENABLED.get();case "pewter"->PewterService.configured();
         case "atium"->TemporalConfig.ENABLED.get() && TemporalConfig.ATIUM.get();case "electrum"->TemporalConfig.ENABLED.get() && TemporalConfig.ELECTRUM.get();
         case "zinc","brass"->EmotionService.configured("a:"+metal);case "bronze"->SeekingConfig.ENABLED.get() && SeekingConfig.BRONZE.get();case "copper"->SeekingConfig.ENABLED.get() && SeekingConfig.COPPER.get();default->true;};}
     public static void begin(ServerPlayer p){
