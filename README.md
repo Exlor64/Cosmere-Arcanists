@@ -1077,7 +1077,8 @@ team protections by default; creative/spectator players are excluded.
 
 Mobs, items, TNT and other non-player entities receive fractional or additional
 logical ticks. Slowed entities still take movement steps every server frame;
-projectiles continue raycasting on skipped logic frames. Native projectile
+projectiles continue raycasting on skipped logic frames. Client projectile
+prediction uses matching time steps while remote mobs keep ordinary interpolation. Native projectile
 physics and mod-specific behavior can introduce approximation, particularly for
 custom accelerating projectiles and passenger physics. Steel-shot damage uses
 intrinsic velocity so a temporary movement subdivision does not change its

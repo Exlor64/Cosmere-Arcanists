@@ -28,6 +28,7 @@
   },
   "client": [
     "TinLightTextureMixin",
-    "BubblePlayerMoveMixin"
+    "BubblePlayerMoveMixin",
+    "BubbleClientLevelMixin"
   ]
 }
