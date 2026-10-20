@@ -1172,8 +1172,8 @@ Normal burning at default settings, without enhancement or extra activation cost
 | Copper | 0.04167 | 40 minutes |
 | Tin | 0.08333 | 20 minutes |
 | Bronze, brass, zinc | 0.16667 | 10 minutes |
-| Iron, steel | 0.33333 | 5 minutes |
-| Pewter | 0.66667 | 2 minutes30 seconds |
+| Iron, steel | 0.16667 | 10 minutes |
+| Pewter | 0.33333 | 5 minutes |
 | Gold | 1 | 1 minute40 seconds |
 | Electrum | 0.5 | 3 minutes20 seconds |
 | Atium-electrum alloy | 4 | 25 seconds |
@@ -1191,3 +1191,9 @@ measurements; underspecified Era2 rates are provisional. The powers-server
 `burnRates` section independently configures each metal or disables the profile.
 Its multipliers combine with existing per-power drains and reserve normalization;
 they affect passive burning, leaving flat shot/contact prices unchanged.
+
+As of0.28.6, `burnRates.physicalBurnRateMultiplier` defaults to0.5 and
+multiplies the individual iron/steel/pewter profiles. This doubles their normal
+full-reserve durations to10/10/5 minutes in existing worlds as well as new ones.
+At low burning these are20/20/10 minutes; flaring gives3m20s/3m20s/1m40s.
+Other metals and flat activation costs retain their existing rates.

@@ -23,8 +23,9 @@ public final class PowerGameTests {
         var bases=java.util.Map.ofEntries(java.util.Map.entry("copper",.25),java.util.Map.entry("tin",1.0),java.util.Map.entry("bronze",.5),java.util.Map.entry("brass",1.0),java.util.Map.entry("zinc",1.0),java.util.Map.entry("iron",1.0),java.util.Map.entry("steel",1.0),java.util.Map.entry("pewter",1.0),java.util.Map.entry("gold",1.0),java.util.Map.entry("electrum",1.0),java.util.Map.entry("atium",4.0),java.util.Map.entry("cadmium",2.0),java.util.Map.entry("bendalloy",2.0),java.util.Map.entry("chromium",1.0),java.util.Map.entry("nicrosil",1.0),java.util.Map.entry("duralumin",1.0));
         var actual=new java.util.HashMap<String,Double>();
         for(var e:bases.entrySet()){PowerData.reserve(p,e.getKey(),100);EnhancementService.burn(p,e.getKey(),e.getValue()/20);actual.put(e.getKey(),(100-PowerData.reserve(p,e.getKey()))*20);}
-        var order=java.util.List.of("copper","tin","bronze","iron","pewter","gold","atium");for(int i=1;i<order.size();i++)h.assertTrue(actual.get(order.get(i))>actual.get(order.get(i-1)),"Actual passive costs follow known metal ordering");
+        var order=java.util.List.of("copper","tin","bronze","iron","pewter","gold","atium");for(int i=1;i<order.size();i++)h.assertTrue(actual.get(order.get(i))>=actual.get(order.get(i-1))-1e-7,"Actual passive costs follow known metal ordering");
         h.assertTrue(Math.abs(actual.get("iron")-actual.get("steel"))<1e-7&&actual.get("cadmium")<actual.get("bendalloy")&&Math.abs(actual.get("bendalloy")-2)<1e-7,"Paired physical rates match and temporal metals use distinct rates");
+        h.assertTrue(Math.abs(100/actual.get("iron")-600)<1e-5&&Math.abs(100/actual.get("steel")-600)<1e-5&&Math.abs(100/actual.get("pewter")-300)<1e-5,"Default iron/steel reserves last ten minutes and pewter five minutes at normal burn");
         double before=PowerData.reserve(p,"gold");EnhancementService.consume(p,"gold",3);h.assertTrue(Math.abs(before-PowerData.reserve(p,"gold")-1)<1e-7,"Relative metal rates never multiply flat costs");
         boolean enabled=PowerConfig.METAL_BURN_RATES.get();try{PowerConfig.METAL_BURN_RATES.set(false);before=PowerData.reserve(p,"gold");EnhancementService.burn(p,"gold",3);h.assertTrue(Math.abs(before-PowerData.reserve(p,"gold")-1)<1e-7,"Disabling the profile restores legacy relative rates");}finally{PowerConfig.METAL_BURN_RATES.set(enabled);}
         h.succeed();
@@ -40,8 +41,8 @@ public final class PowerGameTests {
         h.assertTrue(PowerData.reserve(p,"iron")==50&&PowerData.reserve(p,"unimplemented_metal")==100,"Existing reserves convert proportionally including disabled/unknown metals");
         h.assertTrue(PowerData.reserve(p,"iron")==50,"Repeated access never converts twice");
         PowerData.reserve(p,"iron",1000);h.assertTrue(PowerData.reserve(p,"iron")==100,"Refills clamp to the new cap");
-        EnhancementService.consume(p,"iron",1);h.assertTrue(Math.abs(PowerData.reserve(p,"iron")-(100-1.0/3))<1e-7,"A normal one-second burn consumes one third of a reserve unit");
-        h.assertTrue(Math.abs(100/PowerConfig.reserveCost(1)-300)<1e-7,"Full-reserve normal burn duration remains300 seconds");
+        EnhancementService.burn(p,"iron",1);h.assertTrue(Math.abs(PowerData.reserve(p,"iron")-(100-1.0/6))<1e-7,"A normal one-second iron burn consumes one sixth of a reserve unit");
+        h.assertTrue(Math.abs(100/PowerConfig.burnCost("iron",1)-600)<1e-7,"Full-reserve normal iron burn duration is600 seconds");
         var clone=new ServerPlayer(level.getServer(),level,new GameProfile(UUID.randomUUID(),"ReserveClone"),ClientInformation.createDefault());PowerData.clonePlayer(p,clone);h.assertTrue(PowerData.reserve(clone,"iron")==PowerData.reserve(p,"iron"),"Clone retains conversion marker and current reserves");
         h.succeed();
     }
