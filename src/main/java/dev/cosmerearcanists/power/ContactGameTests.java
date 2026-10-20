@@ -30,7 +30,7 @@ public final class ContactGameTests {
     private static void remove(GameTestHelper h,ServerPlayer... players){for(var p:players){ContactService.clear(p);EnhancementService.clear(p);h.getLevel().removePlayerImmediately(p,net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);}}
     @GameTest(template="empty") public static void chromiumLeechesReservesWithoutDeletingPowersOrOrdinaryEffects(GameTestHelper h){
         var source=player(h,true);var target=target(h,source);try{
-            PowerData.state(source,"a:chromium",2);PowerData.state(target,"a:tin",2);PowerData.state(target,"f:iron",2);PowerData.reserve(target,"lerasium",123);SpiritualIntegrity.set(target,.4);target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED,200,0));
+            PowerData.state(source,"a:chromium",2);PowerData.state(target,"a:tin",2);PowerAttributes.set(target,"f:iron",1);PowerData.state(target,"f:iron",2);PowerData.reserve(target,"lerasium",123);SpiritualIntegrity.set(target,.4);target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED,200,0));
             double fuel=PowerData.reserve(source,"chromium");h.assertTrue(ContactService.target(source)==target,"Server ray resolves the touched body");h.assertTrue(touch(source,target,"a:chromium"),"Chromium contact succeeds");
             h.assertTrue(PowerData.reserve(target,"tin")==0 && PowerData.reserve(target,"lerasium")==0 && PowerData.state(target,"a:tin")==0,"All saved reserves are removed and burns stop");
             h.assertTrue(PowerAttributes.strength(target,"a:tin")==1 && PowerData.state(target,"f:iron")==2 && target.hasEffect(MobEffects.MOVEMENT_SPEED) && SpiritualIntegrity.get(target)==.4,"Powers, feruchemy, potion effects and spiritual integrity survive");

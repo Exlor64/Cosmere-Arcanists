@@ -709,7 +709,8 @@ public final class PowerGameTests {
         states.putInt("a:iron",1); states.putInt("a:steel",2); states.putInt("f:iron",3);
         legacy.put("states",states); player.getPersistentData().put(PowerData.KEY,legacy);
         helper.assertTrue(PowerData.state(player,"a:iron")==2 && PowerData.state(player,"a:steel")==3, "Old burning/flaring states must retain their meanings");
-        helper.assertTrue(PowerData.state(player,"f:iron")==3, "Feruchemy levels must be preserved");
+        PowerAttributes.set(player,"f:iron",1);
+        helper.assertTrue(PowerData.state(player,"f:iron")==3, "Feruchemy levels within the Ferring attribute limit must be preserved");
         PowerAttributes.set(player,"a:iron",1);
         double burning = PowerService.powerForce(player,"a:iron");
         PowerData.state(player,"a:iron",1);
