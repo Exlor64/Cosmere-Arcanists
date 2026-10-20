@@ -11,7 +11,7 @@ For current project status, accepted design decisions, verification and continua
 - Data survives death and relogging. Config changes do not reroll saved origins.
 - Hemalurgy is acquired rather than a birth power; its switch reserves the future feature gate.
 
-**Iron/steel/tin/pewter/electrum/atium/bronze/copper/zinc/brass/aluminum/duralumin/chromium/nicrosil/gold Allomancy and the power selector are implemented. Other magic effects, custom dimensions, planetary travel, and the origin selection screen remain in development.** Scadrial will be Era 2 with an Overworld-like environment. The ancestry mode currently uses only a Scadrian-human probability multiplier; family inheritance and additional races are future work.
+**Iron/steel/tin/pewter/electrum/atium/bronze/copper/zinc/brass/aluminum/duralumin/chromium/nicrosil/gold/bendalloy/cadmium Allomancy and the power selector are implemented. Other magic effects, custom dimensions, planetary travel, and the origin selection screen remain in development.** Scadrial will be Era 2 with an Overworld-like environment. The ancestry mode currently uses only a Scadrian-human probability multiplier; family inheritance and additional races are future work.
 
 ## Build and run
 Install JDK 21 and import the root Gradle project into IntelliJ.
@@ -1002,7 +1002,7 @@ own resource effects after validation; nicrosil integrations must snapshot and
 spend their own finite fuel budgets. Chromium does not generically remove
 external influences as aluminum does.
 
-Cadmium and bendalloy are the remaining ordinary Allomantic effects.
+All sixteen ordinary Allomantic metals now have implemented effects.
 Pure-atium and lerasium powers remain future work.
 
 
@@ -1043,3 +1043,57 @@ snapshot cooldown/period, equipment/details, activation requirement, accessible
 history, shadow distance, updates, and fuel use. Client `gold.historyShadow`,
 `historyLabels` and `opacityMultiplier` control presentation independently.
 Network protocol17 requires matching mod versions on client and server.
+
+
+### Anchored temporal bubbles (0.28.0)
+
+This follows the requested gameplay mapping: **bendalloy slows others inside**;
+**cadmium speeds others inside**. Burn the metal and **hold its G/H activation
+key** to create a sphere at your current body center. The center stays fixed.
+You move normally inside your own sphere. **Release the key, leave its radius,
+stop burning, or exhaust the metal and the bubble collapses.** Death, logout,
+spectator mode, dimension changes and disabled features also remove bubbles.
+Returning to the old center does not restore one; activate again to create it.
+
+At attribute1, low/burning/flaring time rates for bendalloy are2/3,1/2,1/3;
+for cadmium they are1.5x,2x,3x. Radius is4blocks times the square root of effective
+strength, capped at16. Default minimum time rate is1/8; acceleration is capped at4x.
+Burn levels, attributes and duralumin/nicrosil affect both strength and radius;
+changes keep the original center. Burning uses2reserve/second at Burning with
+common burn/enhancement modifiers. Existing vials, refill, selection and bronze
+signals support both metals.
+
+Nearby players see a **shimmering translucent sphere**: blue for bendalloy,
+amber for cadmium. Animated ripples and moving brightness bands mark the shell
+from inside and outside without an opaque screen. Client `timeBubbles` settings
+control visibility, opacity, ripple size, sphere detail and visible-sphere limit.
+Normal depth testing lets terrain obscure parts of the boundary.
+
+Crossing either boundary adds a random deviation within a4degree cone by
+default, preserving speed. Swept tests detect both crossings when a fast entity
+passes completely through a sphere between updates. The owner and their mount
+group are exempt from their own sphere. Other player effects respect PvP and
+team protections by default; creative/spectator players are excluded.
+
+Mobs, items, TNT and other non-player entities receive fractional or additional
+logical ticks. Slowed entities still take movement steps every server frame;
+projectiles continue raycasting on skipped logic frames. Native projectile
+physics and mod-specific behavior can introduce approximation, particularly for
+custom accelerating projectiles and passenger physics. Steel-shot damage uses
+intrinsic velocity so a temporary movement subdivision does not change its
+metal/launch damage calculation. Ticking block entities such as furnaces also
+use local time. Global daylight, weather, chunk random ticks and scheduled
+block/fluid/redstone ticks retain normal world time.
+
+Other players keep normal network/input ticks; their movement, gravity, attack
+cooldown, mining, item use, base vital/effect timers and hunger timers are scaled
+separately. Menus and other mods' independent timers are not globally retimed.
+Movement changes ease over several ticks, with a soft transition just inside
+the sphere boundary. Overlapping time factors multiply within configured caps;
+own-bubble exemption applies individually. No forced chunk loading or saved
+bubble entities are used; bubbles are transient and never survive a restart.
+
+`cosmerearcanists-bubbles-server.toml` controls feature/metal switches, affected
+entities/players/block entities/player vitals, PvP, strength/radius caps, fuel,
+transition/boundary blending, deflection, update frequency and work limits.
+Network protocol18 requires matching client/server versions.

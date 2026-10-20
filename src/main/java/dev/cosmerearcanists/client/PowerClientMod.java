@@ -28,6 +28,9 @@ public final class PowerClientMod {
         NeoForge.EVENT_BUS.register(new TemporalClient());
         dev.cosmerearcanists.power.GoldPacket.receiver=GoldClient::receive;
         NeoForge.EVENT_BUS.register(new GoldClient());
+        dev.cosmerearcanists.power.BubbleService.clientRate=p->p==net.minecraft.client.Minecraft.getInstance().player?BubbleClient.rate():1;
+        dev.cosmerearcanists.power.BubblePacket.receiver=BubbleClient::receive;
+        NeoForge.EVENT_BUS.register(new BubbleClient());
         PowerNetwork.tinReceiver = TinClient::status;
         PowerNetwork.echoReceiver = TinClient::echo;
         NeoForge.EVENT_BUS.register(new TinClient());

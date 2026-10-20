@@ -1,0 +1,16 @@
+package dev.cosmerearcanists.client;
+import dev.cosmerearcanists.power.*;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.*;
+public final class BubbleClient {
+    private static BubblePacket packet;private static long received;private static double rate=1;
+    public static void receive(BubblePacket p){var mc=Minecraft.getInstance();if(mc.level==null||!p.dimension().equals(mc.level.dimension().location().toString()))return;packet=p;received=mc.level.getGameTime();}
+    public static double rate(){return active()?rate:1;}
+    private static boolean active(){var mc=Minecraft.getInstance();return packet!=null&&mc.level!=null&&mc.player!=null&&mc.player.isAlive()&&!mc.player.isSpectator()&&packet.dimension().equals(mc.level.dimension().location().toString())&&mc.level.getGameTime()-received<30;}
+    @SubscribeEvent public void tick(ClientTickEvent.Post e){if(!active()){packet=null;rate=1;return;}rate=BubbleMath.blend(rate,packet.playerRate(),2);}
+    private static void vertex(VertexConsumer v,org.joml.Matrix4f pose,Vec3 center,double radius,double latitude,double longitude,double time,Vec3 camera,boolean slow){double y=Math.sin(latitude),c=Math.cos(latitude),x=c*Math.cos(longitude),z=c*Math.sin(longitude);var normal=new Vec3(x,y,z);var position=center.add(normal.scale(radius));double facing=Math.abs(normal.dot(camera.subtract(position).normalize()));double edge=Math.pow(1-facing,2),wave=.5+.5*Math.sin(longitude*7+latitude*9-time*.055),ripple=Math.sin(latitude*16-longitude*4+time*.045);double displacement=PowerClientConfig.BUBBLE_RIPPLE.get()*(.5+.5*wave)*ripple;position=center.add(normal.scale(radius+displacement));float alpha=(float)(PowerClientConfig.BUBBLE_OPACITY.get()*(.2+.55*edge+.25*wave));v.addVertex(pose,(float)(position.x-camera.x),(float)(position.y-camera.y),(float)(position.z-camera.z)).setColor(slow?.45f:.95f,slow?.8f:.7f,slow?1f:.4f,alpha);}
+    @SubscribeEvent public void render(RenderLevelStageEvent e){if(e.getStage()!=RenderLevelStageEvent.Stage.AFTER_PARTICLES||!active()||!PowerClientConfig.BUBBLES.get())return;var mc=Minecraft.getInstance();var camera=e.getCamera().getPosition();var buffers=mc.renderBuffers().bufferSource();var v=buffers.getBuffer(BubbleRenderType.SHELL);var pose=e.getPoseStack().last().pose();double time=mc.level.getGameTime()+e.getPartialTick().getGameTimeDeltaPartialTick(false);int longitude=PowerClientConfig.BUBBLE_SEGMENTS.get(),latitude=longitude/2,count=0;for(var sphere:packet.bubbles()){if(sphere.center().distanceToSqr(camera)>Math.pow(sphere.radius()+96,2))continue;if(++count>PowerClientConfig.BUBBLE_LIMIT.get())break;for(int i=0;i<latitude;i++){double a=-Math.PI/2+Math.PI*i/latitude,b=-Math.PI/2+Math.PI*(i+1)/latitude;for(int j=0;j<longitude;j++){double c=2*Math.PI*j/longitude,d=2*Math.PI*(j+1)/longitude;boolean slow=sphere.metal().equals("bendalloy");vertex(v,pose,sphere.center(),sphere.radius(),a,c,time,camera,slow);vertex(v,pose,sphere.center(),sphere.radius(),b,c,time,camera,slow);vertex(v,pose,sphere.center(),sphere.radius(),b,d,time,camera,slow);vertex(v,pose,sphere.center(),sphere.radius(),a,d,time,camera,slow);}}}buffers.endBatch(BubbleRenderType.SHELL);}
+}

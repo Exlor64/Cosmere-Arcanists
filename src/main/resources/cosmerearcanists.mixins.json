@@ -15,12 +15,19 @@
     "EmotionVillagerMixin",
     "EmotionSwellGoalMixin",
     "NavigationAccessor",
-    "AngerBrainTargetMixin"
+    "AngerBrainTargetMixin",
+    "BubbleLevelMixin",
+    "BubbleMoveMixin",
+    "BubbleProjectileAccess",
+    "BubbleBlockEntityMixin",
+    "BubblePlayerVitalsMixin",
+    "BubbleFoodMixin"
   ],
   "injectors": {
     "defaultRequire": 1
   },
   "client": [
-    "TinLightTextureMixin"
+    "TinLightTextureMixin",
+    "BubblePlayerMoveMixin"
   ]
 }

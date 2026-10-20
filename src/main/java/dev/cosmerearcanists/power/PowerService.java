@@ -47,6 +47,8 @@ public final class PowerService {
         };
         ABILITIES.register("a:iron", ironSteel);
         ABILITIES.register("a:steel", ironSteel);
+        ABILITIES.register("a:bendalloy",(p,key,phase,targets)->BubbleService.activate(p,key,phase));
+        ABILITIES.register("a:cadmium",(p,key,phase,targets)->BubbleService.activate(p,key,phase));
         ABILITIES.register("a:gold",(p,key,phase,targets)->GoldService.activate(p,key,phase));
         ABILITIES.register("a:chromium",(p,key,phase,targets)->ContactService.activate(p,key,phase));
         ABILITIES.register("a:nicrosil",(p,key,phase,targets)->ContactService.activate(p,key,phase));
@@ -132,6 +134,7 @@ public final class PowerService {
         PewterService.tick(p);
         TinService.tick(p);
         GoldService.tick(p);
+        BubbleService.tickPlayer(p);
         TemporalService.tick(p);
         ScoutService.tick(p);
         SeekingService.tick(p);
@@ -389,7 +392,7 @@ public final class PowerService {
             }))))
             .then(Commands.literal("refill").then(Commands.argument("player", EntityArgument.player()).executes(ctx -> {
                 var p = EntityArgument.getPlayer(ctx, "player");
-                PowerData.reserve(p,"gold",PowerConfig.RESERVE_CAP.get());PowerData.reserve(p,"chromium",PowerConfig.RESERVE_CAP.get());PowerData.reserve(p,"nicrosil",PowerConfig.RESERVE_CAP.get());PowerData.reserve(p,"aluminum",PowerConfig.RESERVE_CAP.get());PowerData.reserve(p,"duralumin",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "iron", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "steel", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "pewter", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "tin", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"zinc",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"brass",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"bronze",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"copper",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"atium",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"electrum",PowerConfig.RESERVE_CAP.get()); PowerNetwork.sync(p, List.of()); return 1;
+                PowerData.reserve(p,"bendalloy",PowerConfig.RESERVE_CAP.get());PowerData.reserve(p,"cadmium",PowerConfig.RESERVE_CAP.get());PowerData.reserve(p,"gold",PowerConfig.RESERVE_CAP.get());PowerData.reserve(p,"chromium",PowerConfig.RESERVE_CAP.get());PowerData.reserve(p,"nicrosil",PowerConfig.RESERVE_CAP.get());PowerData.reserve(p,"aluminum",PowerConfig.RESERVE_CAP.get());PowerData.reserve(p,"duralumin",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "iron", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "steel", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "pewter", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p, "tin", PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"zinc",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"brass",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"bronze",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"copper",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"atium",PowerConfig.RESERVE_CAP.get()); PowerData.reserve(p,"electrum",PowerConfig.RESERVE_CAP.get()); PowerNetwork.sync(p, List.of()); return 1;
             })))));
     }
     private boolean validPower(String key) {

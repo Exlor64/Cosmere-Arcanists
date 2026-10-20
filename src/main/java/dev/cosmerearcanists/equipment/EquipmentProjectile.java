@@ -93,7 +93,7 @@ public final class EquipmentProjectile extends ThrowableItemProjectile implement
             if(kind()!=HOOK && !spent){
                 var target=entityHit.getEntity();
                 boolean allowed=!(target instanceof Player victim) || PowerConfig.PLAYER_TARGETS.get() && (!(getOwner() instanceof Player owner)||owner.canHarmPlayer(victim));
-                double speed=getDeltaMovement().length();
+                double speed=BubbleService.intrinsicVelocity(this).length();
                 float damage=(float)(kind()==SPIKE?Math.min(100,speed*EquipmentConfig.SPIKE_DAMAGE.get()):MetalProjectilePhysics.damage(units,speed,PowerConfig.NUGGET_SPEED.get(),PowerConfig.NUGGET_DAMAGE.get(),PowerConfig.PROJECTILE_DAMAGE_CAP.get()));
                 if(allowed)target.hurt(damageSources().thrown(this,getOwner()),damage);
                 spent=true;

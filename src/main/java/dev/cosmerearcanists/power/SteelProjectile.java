@@ -39,7 +39,7 @@ public final class SteelProjectile extends ThrowableItemProjectile implements Al
         if(level().isClientSide)return;
         var target=hit.getEntity();
         if(target instanceof Player victim && (!PowerConfig.PLAYER_TARGETS.get() || getOwner() instanceof Player owner && !owner.canHarmPlayer(victim)))return;
-        double speed=getDeltaMovement().length();
+        double speed=BubbleService.intrinsicVelocity(this).length();
         float damage=(float)MetalProjectilePhysics.damage(metalUnits,speed,referenceSpeed,nuggetDamage,damageCap);
         boolean accepted=target.hurt(damageSources().thrown(this,getOwner()),damage);
         if(accepted && target instanceof LivingEntity living) {

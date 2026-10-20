@@ -8,11 +8,12 @@ public final class PowerClientConfig {
     public enum PulseInstrument { BASS_DRUM, BASS, HARP, SNARE, HAT, BELL, CHIME, FLUTE }
     public static final ModConfigSpec.EnumValue<PulseInstrument> SEEKING_INSTRUMENT;
     public static final ModConfigSpec SPEC;
-    public static final ModConfigSpec.BooleanValue GOLD_SHADOW,GOLD_DETAILS,HUD, HIDE_HUD, LINES, THROUGH_WALLS, PEWTER_HEARTS, TIN_ECHOES, TIN_MODELS, TIN_ZOOM, FUTURES, FUTURE_MODELS, FUTURE_WARNINGS, SEEKING_HUD, SEEKING_SOUNDS, EMOTION_HUD, EMOTION_TARGET, TIN_LIGHTMAP;
-    public static final ModConfigSpec.IntValue HUD_X, HUD_Y, HOLD_TICKS, TIN_ECHO_LIMIT, SEEKING_LIMIT, TIN_BLUR_LIMIT, TIN_SOFT_SURFACES;
-    public static final ModConfigSpec.DoubleValue GOLD_OPACITY,LINE_WIDTH, TIN_WIDTH, TIN_OPACITY, FUTURE_OPACITY, SEEKING_VOLUME, TIN_BRIGHTNESS, TIN_WIDTH_SCALE, TIN_HOLD, TIN_PULSE_STRENGTH, TIN_WAVE_SPEED, FUTURE_PROMINENCE, HUD_SCALE, TIN_VISION_SCALE, TIN_VISION_FADE, TIN_BLUR_OPACITY, TIN_BLUR_SIZE, TIN_SOFT_MOB, TIN_SOFT_TERRAIN, TIN_SOFT_FILL;
+    public static final ModConfigSpec.BooleanValue BUBBLES,GOLD_SHADOW,GOLD_DETAILS,HUD, HIDE_HUD, LINES, THROUGH_WALLS, PEWTER_HEARTS, TIN_ECHOES, TIN_MODELS, TIN_ZOOM, FUTURES, FUTURE_MODELS, FUTURE_WARNINGS, SEEKING_HUD, SEEKING_SOUNDS, EMOTION_HUD, EMOTION_TARGET, TIN_LIGHTMAP;
+    public static final ModConfigSpec.IntValue BUBBLE_SEGMENTS,BUBBLE_LIMIT,HUD_X, HUD_Y, HOLD_TICKS, TIN_ECHO_LIMIT, SEEKING_LIMIT, TIN_BLUR_LIMIT, TIN_SOFT_SURFACES;
+    public static final ModConfigSpec.DoubleValue BUBBLE_OPACITY,BUBBLE_RIPPLE,GOLD_OPACITY,LINE_WIDTH, TIN_WIDTH, TIN_OPACITY, FUTURE_OPACITY, SEEKING_VOLUME, TIN_BRIGHTNESS, TIN_WIDTH_SCALE, TIN_HOLD, TIN_PULSE_STRENGTH, TIN_WAVE_SPEED, FUTURE_PROMINENCE, HUD_SCALE, TIN_VISION_SCALE, TIN_VISION_FADE, TIN_BLUR_OPACITY, TIN_BLUR_SIZE, TIN_SOFT_MOB, TIN_SOFT_TERRAIN, TIN_SOFT_FILL;
     static {
         var b = new ModConfigSpec.Builder();
+        b.push("timeBubbles");BUBBLES=b.define("shimmeringShells",true);BUBBLE_OPACITY=b.defineInRange("shellOpacity",.16,.01,.5);BUBBLE_RIPPLE=b.defineInRange("rippleDisplacement",.025,0.0,.1);BUBBLE_SEGMENTS=b.defineInRange("sphereSegments",48,16,96);BUBBLE_LIMIT=b.defineInRange("maximumVisibleBubbles",16,1,64);b.pop();
         b.push("gold");GOLD_SHADOW=b.define("historyShadow",true);GOLD_DETAILS=b.define("historyLabels",true);GOLD_OPACITY=b.defineInRange("opacityMultiplier",1.0,.05,1.5);b.pop();
         HUD = b.comment("Show or hide the entire blue power panel, including the secondary panel, text and icons.").define("selectedPowerIcon", true); LINES = b.define("blueLines", true);
         HIDE_HUD=b.comment("Hide the entire blue power indicator group. Selection menus and world emotion labels are separate.").define("hidePowerIndicator",false);

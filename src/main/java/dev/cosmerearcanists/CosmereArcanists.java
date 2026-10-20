@@ -39,6 +39,8 @@ public final class CosmereArcanists {
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.power.ContactService());
         container.registerConfig(ModConfig.Type.SERVER, dev.cosmerearcanists.power.GoldConfig.SPEC, "cosmerearcanists-gold-server.toml");
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.power.GoldService());
+        container.registerConfig(ModConfig.Type.SERVER, dev.cosmerearcanists.power.BubbleConfig.SPEC, "cosmerearcanists-bubbles-server.toml");
+        NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.power.BubbleService());
         bus.addListener(dev.cosmerearcanists.power.PowerNetwork::register);
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.power.PowerService());
     }
