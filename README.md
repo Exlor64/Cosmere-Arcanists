@@ -1437,4 +1437,5 @@ Damage/shake/blur/range/opacity responses are configurable. Taste and smell are 
 implemented yet. Old externally created generic
 tin charge remains saved but cannot be spent as a newly keyed sensory reserve.
 **Protocol20 requires matching client and server versions** (TinStatus now includes sense).
-Client audio/rendering and custom renderer/shader compatibility require in-game testing.
+Automated graphical client startup verifies sound/resource and client-hook loading.
+Actual appearance, audio balance and custom renderer/shader compatibility still need in-game testing.
