@@ -121,7 +121,7 @@ public final class PowerService {
     }
     @SubscribeEvent public void clonePlayer(PlayerEvent.Clone event) {
         if (event.getOriginal() instanceof ServerPlayer old && event.getEntity() instanceof ServerPlayer p) {
-            dev.cosmerearcanists.feruchemy.BrassFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.BrassFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.TinFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.TinFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.GoldFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.GoldFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.PewterFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.PewterFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.SteelFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.SteelFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.IronFeruchemy.mass(old,1);dev.cosmerearcanists.feruchemy.IronFeruchemy.mass(p,1);
+            dev.cosmerearcanists.feruchemy.BronzeFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.BronzeFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.BrassFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.BrassFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.TinFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.TinFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.GoldFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.GoldFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.PewterFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.PewterFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.SteelFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.SteelFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.IronFeruchemy.mass(old,1);dev.cosmerearcanists.feruchemy.IronFeruchemy.mass(p,1);
             EnhancementService.clear(old); stopActivation(old); PowerData.clonePlayer(old, p); SESSIONS.remove(p.getUUID());
         }
     }
@@ -138,6 +138,7 @@ public final class PowerService {
         dev.cosmerearcanists.feruchemy.GoldFeruchemy.tick(p);
         dev.cosmerearcanists.feruchemy.TinFeruchemy.tick(p);
         dev.cosmerearcanists.feruchemy.BrassFeruchemy.tick(p);
+        dev.cosmerearcanists.feruchemy.BronzeFeruchemy.tick(p);
         EnhancementService.begin(p);
         PewterService.tick(p);
         TinService.tick(p);

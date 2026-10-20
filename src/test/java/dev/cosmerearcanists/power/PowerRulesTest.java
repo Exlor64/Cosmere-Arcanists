@@ -35,6 +35,6 @@ class PowerRulesTest {
     }
     @Test void onlyWorkingPowersClaimImplementedEffects() {
         for(String metal:new String[]{"iron","steel","tin","pewter","electrum","atium","bronze","copper","zinc","brass","aluminum","duralumin","chromium","nicrosil","gold","bendalloy","cadmium"})assertTrue(PowerRules.implemented("a:"+metal));
-        assertTrue(PowerRules.implemented("f:iron"));assertFalse(PowerRules.implemented("f:cadmium"));
+        for(String metal:new String[]{"iron","steel","pewter","gold","tin","brass","bronze"})assertTrue(PowerRules.implemented("f:"+metal));assertFalse(PowerRules.implemented("f:cadmium"));
     }
 }

@@ -50,7 +50,7 @@ Ores require an iron-tier pickaxe, support Silk Touch/Fortune, and smelt/blast i
 The Cosmere Metals creative tab contains the new materials. Textures are initial distinct pixel palettes. `cosmerearcanists:metals` and `cosmerearcanists:aluminum_containing` item tags seed iron/steel detection. Duralumin is included in the aluminum exclusion tag.
 
 ## Iron/steel and power controls (0.3.0)
-All sixteen ordinary Allomantic metals and atium-electrum alloy are implemented. Feruchemical iron, steel, pewter, gold, tin and brass support item-owned metalmind storage/tapping. Other assigned Feruchemy powers appear in the selector with **effects pending**.
+All sixteen ordinary Allomantic metals and atium-electrum alloy are implemented. Feruchemical iron, steel, pewter, gold, tin, brass and bronze support item-owned metalmind storage/tapping. Other assigned Feruchemy powers appear in the selector with **effects pending**.
 
 Default keys (all rebindable):
 - Hold **R**, scroll to a power, then release R to select it. Tap R to cycle that power's state. Left-click while the menu is open also cycles the highlighted power's state.
@@ -83,7 +83,7 @@ All 16 ordinary Allomantic and 16 Feruchemical powers have player attributes nam
 The atium–electrum alloy additionally has `cosmerearcanists:allomancy_atium`.
 Zero means no power; 1 is normal strength. Positive effective values grant access,
 and iron/steel force scales with the effective value (including attribute modifiers).
-Powers other than iron, steel, tin, pewter, electrum, atium, bronze, copper, zinc and brass still have selection/state support only. Config switches still gate access.
+All ordinary Allomantic metals plus atium-electrum alloy have effects. Feruchemy currently implements iron, steel, pewter, gold, tin, brass and bronze; other Feruchemical powers have selection/state support only. Config switches gate access.
 
 Operator examples:
 ```mcfunction
@@ -1213,7 +1213,7 @@ status, and can be reused. Charged pieces cannot be recycled.
 Charge belongs to the item, survives saving, and is not an Allomantic reserve.
 
 All16ordinary metals have ring, bracelet and necklace items; their effects are
-implemented as each Feruchemical metal is added. **Iron, steel, pewter, gold and tin are active.**
+implemented as each Feruchemical metal is added. **Iron, steel, pewter, gold, tin, brass and bronze are active.**
 Existing nugget/ingot/block denominations use the same storage foundation.
 
 | Metalmind form | Crafting material | Default capacity |
@@ -1556,3 +1556,82 @@ Currency config controls trade scope, pricing, exchange, coin mass, embedding,
 pickup, iron recall, range/speed and lifespan. Network protocol21 requires
 matching client/server versions because metal projectile tracking gained
 embedded-state data.
+
+
+### Feruchemical bronze: wakefulness (0.37.0)
+
+Select `f:bronze` and use the existing state controls: negative levels store,
+positive levels tap. No held activation is required. Use single bronze denominations
+or bronze rings, bracelets and necklaces, with the usual contact, ownership,
+Curios, optional inventory-access and five-minute storage inactivity rules.
+One charge is one full normal wakefulness-second. Storage limits default to30%
+per attribute point, capped at95%; tapping unlocks10levels per attribute point,
+with15% extra wakefulness per level, a20x total output cap and the usual .25
+compression exponent. Attribute1.5 permits45% storage and tapping15.
+
+Storing causes drowsiness: movement, attack recovery and mining are multiplied by
+`1 - 0.5 * actualStoredFraction` (85% speed at30% storage). It also adds the
+actual stored fraction to vanilla's time-since-rest counter each tick. Tapping
+subtracts its actual extra wakefulness from that counter, offsetting vanilla's
+normal increase. At default rates, tapping1 slows insomnia growth by15%,
+tapping7 prevents further buildup, and tapping10 reduces existing buildup by
+about0.5ticks per tick. Lowering the native counter below three Minecraft days
+removes the insomnia requirement for **new** phantom spawning; existing phantoms
+remain. Other vanilla spawning rules and the insomnia gamerule still apply.
+These rates and action penalties are gameplay balance choices.
+
+Only successful transfers apply effects. Partial reserves/capacity scale output;
+empty/full/inaccessible pieces stop the power. No unused rest is banked below
+zero. Fractional counter corrections survive switching off and relogging. Ordinary
+beds retain their rest behavior. Sleeping does not create charge for skipped night
+time, and the shared idle-storage limit still applies. Tapping does not accelerate
+physical actions, refill hunger or heal. Off, death, logout, dimension change,
+revocation or disabling removes bronze's transient modifiers and signals while
+preserving item-owned charge. Stored charge appears in the existing HUD.
+
+All major features and rates are configurable in
+`cosmerearcanists-feruchemy-server.toml`: `bronze`, `bronzeStorageDrowsiness`,
+`bronzeAffectsSleeplessness`, storage/tapping limits, output cap/compression,
+`bronzeActionPenaltyPerStoredFraction` and `bronzeSleeplessnessCorrectionRate`.
+The original0.37.0 introduced no packet change;0.37.1 below upgrades the protocol
+to22. Both sides should run the same mod version. Example grant: `/cosmere power grant @s f:bronze`.
+
+
+### Bronze alertness and danger blur (0.37.1)
+
+Funded bronze tapping now shortens **Mining Fatigue and Nausea**. Extra expiration
+speed defaults to0.1duration ticks per actual tap level each server tick: level1
+is1.1x normal expiration, level10 is2x, and level20 is3x. The extra rate is
+capped at20ticks/tick by default. Only the paid output applies; empty metalminds,
+storing and lost contact give no reduction. Existing amplifiers, hidden weaker
+effects, normal removal hooks and unrelated potions are preserved. Infinite-duration
+effects remain infinite. Clients receive periodic remaining-duration updates.
+
+At **actual funded tap level10 or higher**, nearby perceptible threats produce a
+**directional blur at the edges of the screen**. Left/right threats blur those
+edges; forward/above threats use the upper edge, rear/below threats the lower edge.
+The center and HUD stay clear. Higher tapping increases warning strength and range:
+12blocks at level10, scaling with the square root of level/10, capped at24blocks.
+Warnings detect close engaged enemies, charging ranged enemies, swelling creepers,
+and approaching projectiles on a short collision course. This is an alertness cue,
+not exact future sight or guaranteed attack prediction. Invisible threats, opaque
+walls, own/allied projectiles and receding projectiles do not produce warnings.
+No auto-dodge or entity outlines are added. Server scans are bounded to128candidates
+and8warning directions, refreshed every2ticks; private packets expire after6ticks.
+Warnings clear on stopping, depletion, death, dimension change or loss of contact.
+
+The existing insomnia benefit remains: lower levels reduce buildup, stronger
+levels reduce accumulated sleeplessness and can restore the native rested state.
+Phantom spawning uses the resulting vanilla counter; already spawned phantoms stay.
+No XP bonus or global tiredness system was added.
+
+Server configuration adds `bronzeShortensFatigueAndNausea`,
+`bronzeExtraDebuffTicksPerTapLevel`, `bronzeMaximumExtraDebuffTicks`,
+`bronzeDangerWarnings`, `bronzeDangerWarningTapLevel`,
+`bronzeDangerWarningBaseRange` and `bronzeDangerWarningMaximumRange`.
+Client `feruchemicalBronze` settings control `dangerEdgeBlur`,
+`maximumBlurRadiusPixels`, `edgeWidthFraction` and `warningStrengthMultiplier`.
+The warning is an actual scene-sampling blur and uses one reusable framebuffer,
+allocated only when needed and resized with the game window. Post-processing/shader
+pack compatibility requires in-game testing. **Network protocol22** requires matching
+client/server versions; existing power attributes and item charge need no migration.

@@ -95,7 +95,8 @@ public final class PowerNetwork {
         @Override public Type<Impulse> type() { return TYPE; }
     }
     public static void register(RegisterPayloadHandlersEvent event) {
-        var r = event.registrar("21");
+        var r = event.registrar("22");
+        r.playToClient(BronzeWarningPacket.TYPE,BronzeWarningPacket.CODEC,(packet,context)->context.enqueueWork(()->BronzeWarningPacket.receiver.accept(packet)));
         r.playToClient(BubblePacket.TYPE,BubblePacket.CODEC,(packet,context)->context.enqueueWork(()->BubblePacket.receiver.accept(packet)));
         r.playToClient(GoldPacket.TYPE,GoldPacket.CODEC,(packet,context)->context.enqueueWork(()->GoldPacket.receiver.accept(packet)));
         r.playToClient(EmotionPacket.TYPE,EmotionPacket.CODEC,(packet,context)->context.enqueueWork(()->EmotionPacket.receiver.accept(packet)));

@@ -16,6 +16,9 @@ public final class PowerClientMod {
         container.registerConfig(ModConfig.Type.CLIENT, PowerClientConfig.SPEC);
         bus.addListener(this::keys);
         bus.addListener(TinRenderTypes::registerShaders);
+        bus.addListener(BronzeDangerClient::registerShaders);
+        dev.cosmerearcanists.power.BronzeWarningPacket.receiver=BronzeDangerClient::receive;
+        NeoForge.EVENT_BUS.register(new BronzeDangerClient());
         bus.addListener(this::renderers);
         bus.addListener(this::setup);
         dev.cosmerearcanists.power.EmotionPacket.receiver=EmotionClient::receive;

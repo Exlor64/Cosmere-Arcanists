@@ -27,7 +27,8 @@
     "BubbleScheduledMixin",
     "BubbleRandomBlockMixin",
     "BubbleRandomFluidMixin",
-    "ScadrialCurrencyMixin"
+    "ScadrialCurrencyMixin",
+    "BronzeEffectAccess"
   ],
   "injectors": {
     "defaultRequire": 1
