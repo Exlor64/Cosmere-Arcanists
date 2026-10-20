@@ -26,6 +26,7 @@ jobs:
         if: matrix.curios == false
         env:
           LIBGL_ALWAYS_SOFTWARE: 'true'
+          ALSOFT_DRIVERS: 'null'
         run: |
           set +e
           timeout --signal=TERM 180s xvfb-run -a ./gradlew runClient --no-daemon -PwithCurios=false > client-smoke.log 2>&1
