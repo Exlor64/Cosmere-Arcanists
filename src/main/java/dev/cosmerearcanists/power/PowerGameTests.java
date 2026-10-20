@@ -29,6 +29,8 @@ public final class PowerGameTests {
         h.assertTrue(PowerService.withinRange(p,target,PowerService.metalRange(p,"a:steel"))&&!PowerService.withinRange(p,target,PowerService.metalRange(p,"a:iron")),"A shared visible anchor cannot extend the weaker power's activation range");
         var wall=block.offset(-1,0,0);level.setBlockAndUpdate(wall,net.minecraft.world.level.block.Blocks.OBSIDIAN.defaultBlockState());
         try{h.assertTrue(!PowerService.withinRange(p,target,PowerService.metalRange(p,"a:steel")),"Hardness still consumes scaled reach");}finally{level.setBlockAndUpdate(wall,net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());}
+        var enabled=dev.cosmerearcanists.ServerConfig.ALLOMANCY.metals().get(dev.cosmerearcanists.Metal.STEEL);boolean old=enabled.get();
+        try{enabled.set(false);h.assertTrue(Math.abs(PowerService.detectionRange(p)-9.6)<1e-6,"A disabled stronger metal cannot extend detection");}finally{enabled.set(old);}
         PowerData.state(p,"a:steel",0);h.assertTrue(Math.abs(PowerService.detectionRange(p)-9.6)<1e-6,"Stopping the stronger metal shrinks shared detection immediately");
         h.succeed();
     }

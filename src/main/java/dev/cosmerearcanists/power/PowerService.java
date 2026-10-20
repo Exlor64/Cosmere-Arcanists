@@ -177,6 +177,9 @@ public final class PowerService {
         a.pulse=false;
     }
     public static double metalRange(ServerPlayer p,String power){
+        if(!PowerConfig.ENABLED.get()||!PowerConfig.IRON_STEEL.get()||!dev.cosmerearcanists.ServerConfig.ALLOMANCY.enabled().get())return 0;
+        var metal=power.equals("a:iron")?Metal.IRON:power.equals("a:steel")?Metal.STEEL:null;
+        if(metal==null||!dev.cosmerearcanists.ServerConfig.ALLOMANCY.metals().get(metal).get())return 0;
         int state=PowerData.state(p,power);
         if(state==3&&!PowerConfig.FLARING.get())state=2;
         return AllomanticPhysics.range(PowerConfig.RANGE.get(),PowerAttributes.strength(p,power),PowerRules.levelMultiplier(state,PowerConfig.LOW_RANGE.get(),PowerConfig.BURN_RANGE.get(),PowerConfig.FLARE_RANGE.get()),PowerConfig.RANGE_EXPONENT.get(),PowerConfig.RANGE_CAP.get());
@@ -266,11 +269,12 @@ public final class PowerService {
     }
     public static Vec3 chest(Entity p) { return p.position().add(0, p.getBbHeight() * .65, 0); }
     private void apply(ServerPlayer p, String power, List<MetalTarget> targets) {
+        double range=metalRange(p,power);
         MetalTarget best = null; double score = -1, threshold = Math.cos(Math.toRadians(PowerConfig.AIM_ANGLE.get()));
-        var hit = p.level().clip(new net.minecraft.world.level.ClipContext(p.getEyePosition(), p.getEyePosition().add(p.getLookAngle().scale(metalRange(p,power))), net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, p));
+        var hit = p.level().clip(new net.minecraft.world.level.ClipContext(p.getEyePosition(), p.getEyePosition().add(p.getLookAngle().scale(range)), net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, p));
         BlockPos aimedBlock = hit.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK ? hit.getBlockPos() : null;
         for (var target : targets) {
-            if(!withinRange(p,target,metalRange(p,power)))continue;
+            if(!withinRange(p,target,range))continue;
             Vec3 point = target.position(p.level(), 1); if (point == null) continue;
             Vec3 offset = point.subtract(p.getEyePosition()); double distance = offset.length(); if (distance < .1) continue;
             double dot = offset.normalize().dot(p.getLookAngle());
@@ -312,6 +316,7 @@ public final class PowerService {
         return (power.equals("a:iron") ? anchor.subtract(chest) : chest.subtract(anchor)).normalize();
     }
     private void assistMovement(ServerPlayer p, String power, List<MetalTarget> targets) {
+        double range=metalRange(p,power);
         int input = activationForPower(p,power).movementInputs;
         double forward = ((input & 4) != 0 ? 1 : 0) - ((input & 8) != 0 ? 1 : 0);
         double left = ((input & 16) != 0 ? 1 : 0) - ((input & 32) != 0 ? 1 : 0);
@@ -323,7 +328,7 @@ public final class PowerService {
         var anchors = new ArrayList<MetalTarget>(); var directions = new ArrayList<Vec3>(); var strengths = new ArrayList<Double>();
         var usedEntities = new HashSet<Integer>();
         for (var target : targets) {
-            if(!withinRange(p,target,metalRange(p,power)))continue;
+            if(!withinRange(p,target,range))continue;
             // Multiple pieces of equipment on one entity are one physical anchor.
             if (target.entityId() >= 0 && (!PowerConfig.RECOIL.get() || !usedEntities.add(target.entityId()))) continue;
             var point = target.position(p.level(), 1); if (point == null || point.distanceTo(chest(p)) < .3) continue;
