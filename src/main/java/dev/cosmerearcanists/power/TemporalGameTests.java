@@ -24,6 +24,39 @@ public final class TemporalGameTests {
         // The tiny shared template does not clear a full flight arena. Stay above test infrastructure.
         for(int x=0;x<7;x++)for(int z=0;z<5;z++) {h.setBlock(new BlockPos(x,19,z),Blocks.STONE);for(int y=20;y<29;y++)h.setBlock(new BlockPos(x,y,z),Blocks.AIR);}
     }
+    private static net.minecraft.world.level.pathfinder.Path path(GameTestHelper h,int[][] coordinates){
+        var nodes=new ArrayList<net.minecraft.world.level.pathfinder.Node>();for(var xyz:coordinates){var b=h.absolutePos(new BlockPos(xyz[0],xyz[1],xyz[2]));nodes.add(new net.minecraft.world.level.pathfinder.Node(b.getX(),b.getY(),b.getZ()));}
+        var end=nodes.getLast();return new net.minecraft.world.level.pathfinder.Path(nodes,new BlockPos(end.x,end.y,end.z),true);
+    }
+    @GameTest(template="empty") public static void navigationForecastTurnsStopsAndNeverMutatesMobOrPath(GameTestHelper h){
+        floor(h);var cow=h.spawn(EntityType.COW,new BlockPos(1,20,1));cow.setPos(origin(h));cow.setOnGround(true);cow.setDeltaMovement(.2,0,0);
+        for(int z=1;z<=2;z++)for(int y=20;y<=21;y++)h.setBlock(new BlockPos(2,y,z),Blocks.STONE);
+        var route=path(h,new int[][]{{1,20,1},{1,20,3},{4,20,3}});h.assertTrue(cow.getNavigation().moveTo(route,1),"Fixture installs a real navigation route");
+        var position=cow.position();var velocity=cow.getDeltaMovement();int index=route.getNextNodeIndex();var frames=TemporalService.predict(cow,40);var end=frames.getLast().position();var destination=Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(4,20,3)));
+        h.assertTrue(frames.get(4).position().z>position.z+.5,"Navigation intention turns the future away from current straight-line motion");
+        h.assertTrue(end.distanceTo(destination)<.15 && end.distanceTo(frames.get(frames.size()-5).position())<.01,"Future follows the bend and stops at the destination");
+        h.assertTrue(frames.stream().allMatch(f->f.position().x<h.absolutePos(new BlockPos(2,20,1)).getX()-.44 || f.position().z>h.absolutePos(new BlockPos(3,20,3)).getZ()+.44),"Route does not cut through the intervening wall");
+        h.assertTrue(cow.position().equals(position) && cow.getDeltaMovement().equals(velocity) && cow.getNavigation().getPath()==route && route.getNextNodeIndex()==index,"Reading futures leaves real entity, motion, navigation and node index untouched");
+        var observer=player(h,"PathSeer",origin(h),"atium");var shadow=TemporalService.forecast(observer).shadows().stream().filter(v->v.entity()==cow.getId() && v.kind()==TemporalPacket.OTHER).findFirst();
+        h.assertTrue(shadow.isPresent() && shadow.get().points().getLast().position().z>position.z+1,"Brighter atium forecast actually uses navigation prediction");cow.discard();h.succeed();
+    }
+    @GameTest(template="empty") public static void navigationForecastRefreshesAndPreservesPhysicsFallbacks(GameTestHelper h){
+        floor(h);var cow=h.spawn(EntityType.COW,new BlockPos(1,20,1));cow.setPos(origin(h));cow.setOnGround(true);cow.setDeltaMovement(Vec3.ZERO);
+        cow.getNavigation().moveTo(path(h,new int[][]{{1,20,1},{1,20,3}}),1);var first=TemporalService.predict(cow,8);
+        cow.getNavigation().moveTo(path(h,new int[][]{{1,20,1},{4,20,1}}),1);var changed=TemporalService.predict(cow,8);
+        h.assertTrue(first.getLast().position().z>cow.getZ()+.5 && changed.getLast().position().x>cow.getX()+.5,"Fresh path snapshot responds to rerouting without a cached old destination");
+        boolean enabled=TemporalConfig.NAVIGATION.get();try{TemporalConfig.NAVIGATION.set(false);h.assertTrue(TemporalService.predict(cow,8).equals(TemporalService.trace(cow,Vec3.ZERO,8)),"Config restores motion-only forecasts");}finally{TemporalConfig.NAVIGATION.set(enabled);}
+        cow.setDeltaMovement(.9,.1,0);h.assertTrue(TemporalService.predict(cow,8).equals(TemporalService.trace(cow,cow.getDeltaMovement(),8)),"Strong knockback retains physics instead of steering onto path");
+        cow.setOnGround(false);cow.setDeltaMovement(.2,.4,0);h.assertTrue(TemporalService.predict(cow,8).equals(TemporalService.trace(cow,cow.getDeltaMovement(),8)),"Airborne jump motion remains ballistic");
+        cow.setOnGround(true);cow.setDeltaMovement(Vec3.ZERO);cow.getNavigation().stop();h.assertTrue(TemporalService.predict(cow,8).equals(TemporalService.trace(cow,Vec3.ZERO,8)),"Missing navigation safely falls back");cow.discard();h.succeed();
+    }
+    @GameTest(template="empty") public static void navigationForecastRespectsNewObstaclesAndLeavesAlternateBranches(GameTestHelper h){
+        floor(h);var cow=h.spawn(EntityType.COW,new BlockPos(1,20,1));cow.setPos(origin(h));cow.setOnGround(true);cow.setDeltaMovement(Vec3.ZERO);cow.getNavigation().moveTo(path(h,new int[][]{{1,20,1},{5,20,1}}),1);
+        h.setBlock(new BlockPos(3,20,1),Blocks.STONE);h.setBlock(new BlockPos(3,21,1),Blocks.STONE);
+        var frames=TemporalService.predict(cow,40);h.assertTrue(frames.stream().allMatch(f->f.position().x<=h.absolutePos(new BlockPos(3,20,1)).getX()-.44),"A stale route cannot predict movement through a newly solid block");
+        var observer=player(h,"BranchSeer",origin(h),"atium");PowerService.control(observer,new PowerNetwork.Control(2,"",3));var shadows=TemporalService.forecast(observer).shadows().stream().filter(v->v.entity()==cow.getId()).toList();
+        h.assertTrue(shadows.size()==3 && shadows.stream().filter(v->v.kind()==TemporalPacket.BRANCH).count()==2,"Navigation still yields one main prediction and two uncertain alternatives");cow.discard();h.succeed();
+    }
     @GameTest(template="empty") public static void alloyPowerPersistsAndFuelAndConfigGateEffects(GameTestHelper h) {
         var p=player(h,"AlloySeer",origin(h),"atium");
         h.assertTrue(PowerData.available(p).contains("a:atium") && !PowerAttributes.keys().contains("f:atium"),"Alloy gets its own Allomantic attribute without inventing god-metal Feruchemy");

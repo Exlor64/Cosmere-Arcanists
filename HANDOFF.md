@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-20 UTC**. Current mod version: **0.24.2-alpha**.
+Last updated: **2026-10-20 UTC**. Current mod version: **0.25.0-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -8,6 +8,10 @@ Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
 Read this and `AGENTS.md` when beginning a session. The user requires this file to be updated after every change or project chat. Keep it current rather than appending conflicting summaries.
 
 ## Latest session and next action
+
+- 0.25.0 user approved navigation-based mob future shadows after discussion. TemporalService.predict takes bounded read-only snapshots of active ground-mob Path nodes starting at next index, respecting node-adjusted entity position and navigation speed accessor. Existing trace handles per-tick waypoint steering, turns, destination stop, gravity/collision and approximate upward-node jumps. Uses observed horizontal motion where present, otherwise requested navigation modifier*movement-speed attribute, cap1block/tick. No AI/path mutation/new pathfinding/chunk loads. Airborne/swimming/flying/no-path/noAI/passenger/strong-or-opposing impulse fallback to unchanged raw physics. Truncated loaded/node-budget route marked uncertain at copied endpoint. Primary atium and internal mob threat forecasts use predict; alternative headings derive from main early tangent. Counter-art/visibility/electrum privacy unchanged.
+- Config temporal-server mobNavigationPredictions=true/maxPredictionPathNodes64(4..128); no save/network change (16). Ground-navigation approximation, not complete species AI or guaranteed future. Added real Path/PathNavigation tests for turns/destination stop/read-only state, forecast packet integration, reroute, collision with newly placed walls, disabled/no-path/airborne/impulse fallbacks and alternate branches; Java21 CI pending; actual client appearance untested locally.
+
 
 - 0.24.2 user reports blur too faint even high tin, wants recognizable enemy outlines and terrain through walls. SOFT_BLUR now layers actual white filled entity models with two subtle expanded silhouette halos, exact server surface-box contours with wider faint halo and6% fill, over retained Gaussian cloud backdrop. Strong tin silhouette/core contour max45% each, no concurrent-echo dimming on geometry; strength/audibility/wave/fade gates preserved. Source strongest echo only; exact AABB surfaces merged (preserves stair/slab details) bounded256 nearest shapes. Dedicated translucent COLOR_WRITE/no-depth render types; every pass explicitly flushes with depth disabled/restored; no global polygon wire mode in soft path. Fallback source box when entity renderer unavailable/disabled. Camera-containing surfaces skipped; world remains visible.
 - New client tin.softMobOpacity/softTerrainOpacity/softTerrainFillOpacity/maxSoftSurfaces independent of existing low blurOpacity; existing SOFT_BLUR saved configs automatically improve without reset. WIREFRAME unchanged. Protocol16/no save/gameplay migration. Verification: Java21 GitHub Actions run39352990373 for gameplay commit551a25de224445c55a64da20205480ed01d9dfc2 passed build/JUnit (55 registered unit methods), explicitly logged All74requiredtestspassed, and uploaded artifacts. No graphical Minecraft validation claimed. Next: user compares strong-tin mob silhouettes and terrain through walls; existing SOFT_BLUR uses new settings automatically, no config reset.

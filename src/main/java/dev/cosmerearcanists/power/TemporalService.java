@@ -116,14 +116,55 @@ public final class TemporalService {
                 || state.is(Blocks.CACTUS)||state.is(Blocks.SWEET_BERRY_BUSH)||state.is(Blocks.WITHER_ROSE)||state.is(Blocks.POWDER_SNOW))return TemporalPacket.HAZARD;
         }return 0;
     }
-    public static List<Frame> trace(Entity entity,Vec3 initialVelocity,int ticks) {
+    private record Route(List<Vec3> points,double speed,boolean complete) { }
+    /** Snapshot only an existing route; never create, tick, advance or request a new path. */
+    private static Route route(Mob mob,Vec3 motion){
+        if(!TemporalConfig.NAVIGATION.get() || mob.isNoAi() || !mob.onGround() || mob.isNoGravity() || mob.isPassenger() || mob.isInWaterOrBubble()
+            || !(mob.getNavigation() instanceof net.minecraft.world.entity.ai.navigation.GroundPathNavigation))return null;
+        var navigation=mob.getNavigation();var path=navigation.getPath();if(path==null || path.isDone())return null;
+        double modifier=((dev.cosmerearcanists.mixin.NavigationAccessor)navigation).cosmerearcanists$speedModifier();
+        double planned=mob.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED)*modifier;
+        if(!Double.isFinite(planned)||planned<=0 || Math.abs(motion.y)>.12)return null;
+        // Preserve large impulses and motion opposite to navigation rather than steering them away.
+        if(motion.horizontalDistance()>Math.max(.45,planned*1.8))return null;
+        var points=new ArrayList<Vec3>();int index=path.getNextNodeIndex(),end=Math.min(path.getNodeCount(),index+TemporalConfig.PATH_NODES.get());
+        for(int j=index;j<end;j++){
+            var point=path.getEntityPosAtNode(mob,j);if(!Double.isFinite(point.x)||!Double.isFinite(point.y)||!Double.isFinite(point.z)||point.distanceToSqr(mob.position())>128*128 || !mob.level().hasChunkAt(BlockPos.containing(point)))break;
+            points.add(point);
+        }
+        if(points.isEmpty() || points.getFirst().distanceToSqr(mob.position())>64)return null;
+        var first=points.stream().map(p->p.subtract(mob.position()).multiply(1,0,1)).filter(v->v.lengthSqr()>.04).findFirst().orElse(Vec3.ZERO);
+        if(first.lengthSqr()>0 && motion.horizontalDistance()>.04 && first.normalize().dot(motion.normalize())<-.25)return null;
+        double speed=motion.horizontalDistance()>.02?motion.horizontalDistance():planned;
+        return new Route(List.copyOf(points),Math.clamp(speed,.01,1.0),index+points.size()==path.getNodeCount());
+    }
+    public static List<Frame> predict(Entity entity,int ticks){
+        var motion=velocity(entity);var route=entity instanceof Mob mob?route(mob,motion):null;
+        return trace(entity,motion,ticks,route);
+    }
+    public static List<Frame> trace(Entity entity,Vec3 initialVelocity,int ticks) {return trace(entity,initialVelocity,ticks,null);}
+    private static List<Frame> trace(Entity entity,Vec3 initialVelocity,int ticks,Route route) {
         if(!(entity.level() instanceof ServerLevel level))return List.of();
         var frames=new ArrayList<Frame>();var position=entity.position();var box=entity.getBoundingBox();var v=initialVelocity;double fallen=entity.fallDistance,g=gravity(entity);
         if(!Double.isFinite(v.x) || !Double.isFinite(v.y) || !Double.isFinite(v.z) || v.lengthSqr()>256 || entity.getBbWidth()>8 || entity.getBbHeight()>8)return List.of(new Frame(position,TemporalPacket.UNCERTAIN));
+        int waypoint=0;boolean grounded=entity.onGround();
         for(int tick=0;tick<Math.min(60,ticks);tick++) {
+            if(route!=null && grounded){
+                while(waypoint<route.points.size()){
+                    var delta=route.points.get(waypoint).subtract(position);
+                    if(delta.horizontalDistance()<=.08 && Math.abs(delta.y)<=.6)waypoint++;else break;
+                }
+                if(waypoint<route.points.size()){
+                    var delta=route.points.get(waypoint).subtract(position);double distance=delta.horizontalDistance(),step=Math.min(route.speed,distance);
+                    var horizontal=distance<1e-8?Vec3.ZERO:new Vec3(delta.x/distance*step,0,delta.z/distance*step);
+                    v=new Vec3(horizontal.x,delta.y>.5?.42:Math.min(0,v.y),horizontal.z);
+                }else v=new Vec3(0,Math.min(0,v.y),0);
+            }
             var obstacles=collisions(level,box.expandTowards(v),entity);if(obstacles==null){frames.add(new Frame(position,TemporalPacket.UNCERTAIN));break;}
             var step=move(box,v,obstacles);boolean landed=v.y<0 && step.y>v.y+1e-6;
             position=position.add(step);box=box.move(step);int flags=hazard(level,box,entity);
+            if(route!=null && waypoint>=route.points.size() && !route.complete)flags|=TemporalPacket.UNCERTAIN;
+            grounded=landed || grounded && Math.abs(v.y)<1e-8 && Math.abs(step.y)<1e-8;
             boolean water=level.getFluidState(BlockPos.containing(position)).is(FluidTags.WATER);
             if(water)fallen=0;else if(step.y<0)fallen-=step.y;
             if(landed) {
@@ -175,7 +216,7 @@ public final class TemporalService {
     }
     /** Interference deliberately replaces a useful line with divergent possibilities, not a hidden exact line beneath branches. */
     private static List<Frame> branch(Entity e,Vec3 velocity,int ticks,int sign) {
-        double speed=Math.max(.12,Math.min(.4,velocity.horizontalDistance()));double yaw=Math.toRadians(e.getYRot()+sign*70);
+        double speed=Math.max(.12,Math.min(.4,velocity.horizontalDistance()));double heading=velocity.horizontalDistance()>.01?Math.toDegrees(Math.atan2(-velocity.x,velocity.z)):e.getYRot();double yaw=Math.toRadians(heading+sign*70);
         return trace(e,new Vec3(-Math.sin(yaw)*speed,velocity.y,Math.cos(yaw)*speed),ticks);
     }
     public static TemporalPacket forecast(ServerPlayer observer) {
@@ -191,7 +232,7 @@ public final class TemporalService {
         int targets=0;
         for(var entity:candidates) {
             if(targets++>=TemporalConfig.TARGETS.get())break;
-            var frames=trace(entity,velocity(entity),horizon(atium>0?atium:electrum));if(frames.isEmpty())continue;
+            var frames=predict(entity,horizon(atium>0?atium:electrum));if(frames.isEmpty())continue;
             boolean split=interferes(entity);int threat=0;
             if(warnings && !split && entity instanceof Projectile projectile && projectile.getOwner()!=observer) {
                 for(int i=0;i<Math.min(frames.size(),self.size());i++) {
@@ -213,17 +254,18 @@ public final class TemporalService {
             }
             if(warnings && electrum>0 && !split && entity instanceof Mob mob && mayAggro(mob,observer)){aggro(observer,mob,self,frames);aggroSources.put(mob,frames);}
             if(atium<=0 || !visible(observer,entity) || !TemporalConfig.SHADOWS.get() && threat==0)continue;
+            int lead=Math.min(4,frames.size());var intent=frames.get(lead-1).position.subtract(entity.position()).scale(1.0/lead);
             boolean alternate=TemporalConfig.MULTI_SHADOWS.get() && PowerService.holdingAlternateAbility(observer,"a:atium");
             if(split) {
                 if(TemporalConfig.SHADOWS.get())for(int sign:new int[]{-1,1}) {
-                    var possibilities=branch(entity,velocity(entity),horizon(atium),sign);
+                    var possibilities=branch(entity,intent,horizon(atium),sign);
                     if(!possibilities.isEmpty())shadows.add(shadow(entity,TemporalPacket.BRANCH,possibilities,false,TemporalPacket.UNCERTAIN));
                 }
                 if(alternate && TemporalConfig.SHADOWS.get())shadows.add(shadow(entity,TemporalPacket.BRANCH,frames,false,TemporalPacket.UNCERTAIN));
             } else {
                 shadows.add(shadow(entity,entity instanceof Projectile?TemporalPacket.PROJECTILE:TemporalPacket.OTHER,frames,warnings,threat));
                 if(alternate && TemporalConfig.SHADOWS.get())for(int sign:new int[]{-1,1}){
-                    var possibilities=branch(entity,velocity(entity),horizon(atium),sign);
+                    var possibilities=branch(entity,intent,horizon(atium),sign);
                     if(!possibilities.isEmpty())shadows.add(shadow(entity,TemporalPacket.BRANCH,possibilities,false,TemporalPacket.UNCERTAIN));
                 }
             }

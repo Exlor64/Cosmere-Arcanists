@@ -924,3 +924,24 @@ including previously saved low `blurOpacity` settings. New client settings
 Repeated surface shapes and mob sources are merged; up to256 exact surface
 shapes are displayed per frame. `WIREFRAME` remains available. Protocol16 and
 saved data are unchanged.
+
+### Mob navigation forecasts (0.25.0)
+
+Atium's brighter mob shadow now follows the mob's **current AI navigation route**
+around corners and stops at its path destination. It uses observed movement
+speed, or the requested navigation speed and movement attribute when starting
+from rest. The two alternate shadows diverge from that predicted heading. Mob
+attack/proximity warnings also use the improved movement forecast; electrum
+continues to send only the observer's own future.
+
+Only a bounded, read-only snapshot of an existing ground-navigation route is
+used. Forecasting never runs AI, advances path nodes, computes a new path, or
+loads chunks. Collision, gravity and short upward-node jump approximations still
+apply. Players, projectiles, airborne/swimming/flying mobs, missing paths and
+strong/opposing knockback retain movement forecasts. Intent can change, so the
+existing frequent updates remain important. No exact future input is known.
+
+Temporal server config: `mobNavigationPredictions` (defaulttrue) restores motion
+forecasts when disabled; `maxPredictionPathNodes` (default64) bounds copied
+waypoints. Existing target, time and loaded-geometry limits remain. No packet or
+save changes; protocol16.

@@ -13,7 +13,8 @@
     "EmotionAvoidGoalMixin",
     "EmotionPanicGoalMixin",
     "EmotionVillagerMixin",
-    "EmotionSwellGoalMixin"
+    "EmotionSwellGoalMixin",
+    "NavigationAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
