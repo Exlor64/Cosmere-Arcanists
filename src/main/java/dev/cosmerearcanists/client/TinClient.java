@@ -22,6 +22,7 @@ import org.lwjgl.opengl.GL11;
 
 public final class TinClient {
     private static PowerNetwork.TinStatus status=new PowerNetwork.TinStatus("",0,1,false);
+    public static int sense(){return status.sense();}
     private static long statusReceived;
     private static float vision,previousVision;
     private record Echo(PowerNetwork.TinEcho packet,long started,Vec3 from) { }

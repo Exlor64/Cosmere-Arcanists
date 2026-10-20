@@ -35,6 +35,7 @@ public final class PowerClientMod {
         PowerNetwork.tinReceiver = TinClient::status;
         PowerNetwork.echoReceiver = TinClient::echo;
         NeoForge.EVENT_BUS.register(new TinClient());
+        NeoForge.EVENT_BUS.register(new TinTouchClient());
         PowerNetwork.clientReceiver = PowerClient::receive;
         PowerNetwork.pewterReceiver = PewterClient::receive;
         NeoForge.EVENT_BUS.register(new PewterClient());

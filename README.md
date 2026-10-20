@@ -50,7 +50,7 @@ Ores require an iron-tier pickaxe, support Silk Touch/Fortune, and smelt/blast i
 The Cosmere Metals creative tab contains the new materials. Textures are initial distinct pixel palettes. `cosmerearcanists:metals` and `cosmerearcanists:aluminum_containing` item tags seed iron/steel detection. Duralumin is included in the aluminum exclusion tag.
 
 ## Iron/steel and power controls (0.3.0)
-All sixteen ordinary Allomantic metals and atium-electrum alloy are implemented. Feruchemical iron, steel, pewter and gold support item-owned metalmind storage/tapping. Other assigned Feruchemy powers appear in the selector with **effects pending**.
+All sixteen ordinary Allomantic metals and atium-electrum alloy are implemented. Feruchemical iron, steel, pewter, gold and tin support item-owned metalmind storage/tapping. Other assigned Feruchemy powers appear in the selector with **effects pending**.
 
 Default keys (all rebindable):
 - Hold **R**, scroll to a power, then release R to select it. Tap R to cycle that power's state. Left-click while the menu is open also cycles the highlighted power's state.
@@ -1213,7 +1213,7 @@ identity and cannot be recycled by crafting, filing, smelting, or placement.
 Charge belongs to the item, survives saving, and is not an Allomantic reserve.
 
 All16ordinary metals have ring, bracelet and necklace items; their effects are
-implemented as each Feruchemical metal is added. **Iron, steel, pewter and gold are active.**
+implemented as each Feruchemical metal is added. **Iron, steel, pewter, gold and tin are active.**
 Existing nugget/ingot/block denominations use the same storage foundation.
 
 | Metalmind form | Crafting material | Default capacity |
@@ -1399,3 +1399,42 @@ Server config adds `gold`, storage/tap limits/rates, healing cap/compression,
 `goldMinimumMaximumHealth`, `goldPreventsLethalDamage`,
 `goldDeathPreventionThreshold` (strictly greater, default10), and
 `goldDeathPreventionCostMultiplier` (default5). Protocol19 unchanged.
+
+### Feruchemical tin: sight, hearing and touch (0.33.0)
+Tin stores **sight, hearing and touch separately**. Hold its assigned activation button
+(primary or secondary) and scroll to switch senses. Switching stops the current
+storing/tapping state; select a new level to resume. The power HUD names the
+selected sense, its accessible reserve and actual sensory percentage.
+A singleton tin nugget/ingot/block or tin jewelry piece is permanently keyed to
+its first stored sense. Carry separate tinminds for each sense; their charge
+cannot be exchanged. Tooltips identify the sense, charge and owner.
+Defaults match other Feruchemy:30% storable per attribute,95% ceiling,10tap levels
+per attribute,15% sense enhancement per level,20x cap and0.25 compression exponent.
+Ownership, Curios, inventory option, idle cutoff and capacity rules still apply.
+Storing sight dims world lighting without darkening menus. Tapping improves
+low-light vision; hold activation for zoom. **Beyond sight tap10**, normally
+tracked invisible living entities become faintly visible within32blocks and
+line of sight; clarity rises to85% opacity at tap30. Invisibility itself stays
+active, walls still block sight, and other players do not gain the reveal.
+Storing hearing reduces world-sound volume; tapping amplifies world sounds.
+Music, records and relative/interface sounds are excluded. **Hearing tap5**
+starts weak versions of Allomantic tin's sound waves, mob silhouettes and terrain
+echoes; stronger tapping improves range/detail, reaching full pulse potential at
+tap20. Existing occlusion/wool, sound-source identification and render budgets apply.
+This does not require burning Allomantic tin. Existing Allomantic tin flare gating
+remains unchanged. The arts combine through their separate sight/hearing factors.
+All major rates, sense toggles, invisible threshold/full clarity/opacity/range,
+and hearing pulse first/full levels are in the Feruchemy server config. Existing
+Allomantic tin hearing/vision and client display settings also govern shared effects.
+Touch storing reduces hurt-camera shake in proportion to lost sensation and reduces
+damage taken by1% per storing level. Touch tapping increases damage taken by1% per
+tap level, but reveals moving nearby tracked entities as subtle white airborne blurs.
+Their visibility rises with actual displacement speed and funded tapping level;
+stationary entities give no blur. Default range8*sqrt(touch multiplier), capped32,
+opacity cap35%, at most64 impressions. Movement can be felt through walls by default
+(configurable); this does not reveal the entity model or load untracked entities.
+Damage/shake/blur/range/opacity responses are configurable. Taste and smell are not
+implemented yet. Old externally created generic
+tin charge remains saved but cannot be spent as a newly keyed sensory reserve.
+**Protocol20 requires matching client and server versions** (TinStatus now includes sense).
+Client audio/rendering and custom renderer/shader compatibility require in-game testing.

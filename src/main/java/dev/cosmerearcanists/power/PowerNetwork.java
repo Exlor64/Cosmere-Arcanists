@@ -51,13 +51,14 @@ public final class PowerNetwork {
     }
     public static Consumer<TinStatus> tinReceiver = packet -> { };
     public static Consumer<TinEcho> echoReceiver = packet -> { };
-    public record TinStatus(String dimension,double strength,double zoom,boolean wireframes,float vision) implements CustomPacketPayload {
-        public TinStatus(String dimension,double strength,double zoom,boolean wireframes){this(dimension,strength,zoom,wireframes,0);}
-        public TinStatus {if(!Double.isFinite(strength)||strength<0||!Double.isFinite(zoom)||zoom<1||zoom>20||!Float.isFinite(vision)||vision<0||vision>1)throw new IllegalArgumentException("Invalid tin status");}
+    public record TinStatus(String dimension,double strength,double zoom,boolean wireframes,float vision,int sense) implements CustomPacketPayload {
+        public TinStatus(String dimension,double strength,double zoom,boolean wireframes){this(dimension,strength,zoom,wireframes,0,0);}
+        public TinStatus(String dimension,double strength,double zoom,boolean wireframes,float vision){this(dimension,strength,zoom,wireframes,vision,0);}
+        public TinStatus {if(!Double.isFinite(strength)||strength<0||!Double.isFinite(zoom)||zoom<1||zoom>20||!Float.isFinite(vision)||vision<0||vision>1||sense<0||sense>2)throw new IllegalArgumentException("Invalid tin status");}
         public static final Type<TinStatus> TYPE=new Type<>(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,"tin_status"));
         public static final StreamCodec<RegistryFriendlyByteBuf,TinStatus> CODEC=new StreamCodec<>() {
-            public TinStatus decode(RegistryFriendlyByteBuf b){return new TinStatus(b.readUtf(128),b.readDouble(),b.readDouble(),b.readBoolean(),b.readFloat());}
-            public void encode(RegistryFriendlyByteBuf b,TinStatus p){b.writeUtf(p.dimension,128);b.writeDouble(p.strength);b.writeDouble(p.zoom);b.writeBoolean(p.wireframes);b.writeFloat(p.vision);}
+            public TinStatus decode(RegistryFriendlyByteBuf b){return new TinStatus(b.readUtf(128),b.readDouble(),b.readDouble(),b.readBoolean(),b.readFloat(),b.readVarInt());}
+            public void encode(RegistryFriendlyByteBuf b,TinStatus p){b.writeUtf(p.dimension,128);b.writeDouble(p.strength);b.writeDouble(p.zoom);b.writeBoolean(p.wireframes);b.writeFloat(p.vision);b.writeVarInt(p.sense);}
         };
         @Override public Type<TinStatus> type(){return TYPE;}
     }
@@ -75,7 +76,7 @@ public final class PowerNetwork {
         };
         @Override public Type<TinEcho> type(){return TYPE;}
     }
-    /** action: 0 select, 1 set state, 2 activate selected ability hold, 3 cycle state, 4 request snapshot, 5 primary pulse, 6 toggle highlighted power slot, 7 secondary hold, 8 secondary pulse, 9 grapple Space input, 10 set emotional mode. Activation value bits: held=1, alternate=2, forward=4, back=8, left=16, right=32, jump=64, descend=128. */
+    /** action: 0 select, 1 set state, 2 activate selected ability hold, 3 cycle state, 4 request snapshot, 5 primary pulse, 6 toggle highlighted power slot, 7 secondary hold, 8 secondary pulse, 9 grapple Space input, 10 set emotional mode, 11 set Feruchemical tin sense (0 sight, 1 hearing, 2 touch). Activation value bits: held=1, alternate=2, forward=4, back=8, left=16, right=32, jump=64, descend=128. */
     public record Control(int action, String power, int value) implements CustomPacketPayload {
         public static final Type<Control> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID, "power_control"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Control> CODEC = new StreamCodec<>() {
@@ -94,7 +95,7 @@ public final class PowerNetwork {
         @Override public Type<Impulse> type() { return TYPE; }
     }
     public static void register(RegisterPayloadHandlersEvent event) {
-        var r = event.registrar("19");
+        var r = event.registrar("20");
         r.playToClient(BubblePacket.TYPE,BubblePacket.CODEC,(packet,context)->context.enqueueWork(()->BubblePacket.receiver.accept(packet)));
         r.playToClient(GoldPacket.TYPE,GoldPacket.CODEC,(packet,context)->context.enqueueWork(()->GoldPacket.receiver.accept(packet)));
         r.playToClient(EmotionPacket.TYPE,EmotionPacket.CODEC,(packet,context)->context.enqueueWork(()->EmotionPacket.receiver.accept(packet)));
@@ -112,11 +113,11 @@ public final class PowerNetwork {
         }));
     }
     public static void sync(ServerPlayer p, List<MetalTarget> targets) {
-        double tin=TinService.strength(p);
-        PacketDistributor.sendToPlayer(p,new TinStatus(p.level().dimension().location().toString(),tin,tin>0 && TinConfig.ZOOM.get() && PowerService.holdingAbility(p,"a:tin")?TinMath.zoom(tin,TinConfig.ZOOM_STRENGTH.get(),TinConfig.MAX_ZOOM.get()):1,TinService.revealStrength(p)>0,(float)TinService.nightVision(p)));
+        double tin=Math.max(TinService.sightStrength(p),TinService.hearingStrength(p));double sight=TinService.sightStrength(p);
+        PacketDistributor.sendToPlayer(p,new TinStatus(p.level().dimension().location().toString(),tin,sight>0 && TinConfig.ZOOM.get() && (PowerService.holdingAbility(p,"a:tin")||dev.cosmerearcanists.feruchemy.TinFeruchemy.sense(p)==0&&PowerService.holdingAbility(p,"f:tin"))?TinMath.zoom(sight,TinConfig.ZOOM_STRENGTH.get(),TinConfig.MAX_ZOOM.get()):1,TinService.revealStrength(p)>0,(float)TinService.nightVision(p),dev.cosmerearcanists.feruchemy.TinFeruchemy.sense(p)));
         double pewter=PewterService.strength(p);
         PacketDistributor.sendToPlayer(p,new PewterStatus(p.level().dimension().location().toString(),PewterService.debt(p),pewter>0,pewter));
-        var list = PowerData.available(p).stream().map(power -> new Entry(power, PowerData.state(p, power), power.startsWith("a:") ? PowerData.reserve(p, power.substring(2)) : dev.cosmerearcanists.feruchemy.Metalminds.accessibleCharge(p,power.substring(2)),PowerData.storeLevels(p,power),PowerData.tapLevels(p,power))).toList();
+        var list = PowerData.available(p).stream().map(power -> new Entry(power, PowerData.state(p, power), power.startsWith("a:") ? PowerData.reserve(p, power.substring(2)) : dev.cosmerearcanists.feruchemy.Metalminds.accessibleCharge(p,power.equals("f:tin")?dev.cosmerearcanists.feruchemy.TinFeruchemy.channel(p):power.substring(2)),PowerData.storeLevels(p,power),PowerData.tapLevels(p,power))).toList();
         PacketDistributor.sendToPlayer(p, new Snapshot(p.level().dimension().location().toString(), PowerData.selected(p), PowerData.secondary(p), PowerConfig.FERUCHEMY_LEVELS.get(), list, targets));
     }
     private PowerNetwork() { }

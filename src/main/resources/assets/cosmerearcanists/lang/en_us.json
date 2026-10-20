@@ -182,5 +182,8 @@
   "item.cosmerearcanists.bendalloy_metalmind_bracelet": "Bendalloy Metalmind Bracelet",
   "item.cosmerearcanists.bendalloy_metalmind_necklace": "Bendalloy Metalmind Necklace",
   "attribute.cosmerearcanists.physical_mass_multiplier": "Physical Mass Multiplier",
-  "attribute.cosmerearcanists.physical_strength_multiplier": "Physical strength multiplier"
+  "attribute.cosmerearcanists.physical_strength_multiplier": "Physical strength multiplier",
+  "attribute.cosmerearcanists.physical_sight_multiplier": "Physical sight multiplier",
+  "attribute.cosmerearcanists.physical_hearing_multiplier": "Physical hearing multiplier",
+  "attribute.cosmerearcanists.physical_touch_multiplier": "Physical touch multiplier"
 }

@@ -32,6 +32,9 @@
     "defaultRequire": 1
   },
   "client": [
+    "TinHurtCameraMixin",
+    "TinSoundMixin",
+    "TinInvisibleRendererMixin",
     "PewterMuscleMixin",
     "TinLightTextureMixin",
     "BubblePlayerMoveMixin",

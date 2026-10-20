@@ -34,8 +34,10 @@ public final class TinService {
         int state=PowerData.state(p,"a:tin");if(state==3&&!PowerConfig.FLARING.get())state=2;
         return PowerAttributes.effectiveStrength(p,"a:tin")*PowerRules.levelMultiplier(state,PowerConfig.LOW_STRENGTH.get(),PowerConfig.BURN_STRENGTH.get(),PowerConfig.FLARE_STRENGTH.get());
     }
-    public static double revealStrength(ServerPlayer p){return TinConfig.REQUIRE_FLARING.get() && (PowerData.state(p,"a:tin")!=3 || !PowerConfig.FLARING.get())?0:TinMath.reveal(strength(p),TinConfig.REVEAL_THRESHOLD.get(),TinConfig.FULL_REVEAL.get());}
-    public static double nightVision(ServerPlayer p){return TinConfig.NIGHT_VISION.get()?TinMath.nightVision(strength(p),TinConfig.VISION_RESPONSE.get(),TinConfig.VISION_CAP.get()):0;}
+    public static double sightStrength(ServerPlayer p){double factor=dev.cosmerearcanists.feruchemy.TinFeruchemy.factor(p,true);return strength(p)*factor+Math.max(0,factor-1)*dev.cosmerearcanists.feruchemy.FeruchemyConfig.TIN_VISION_POWER.get();}
+    public static double hearingStrength(ServerPlayer p){double factor=dev.cosmerearcanists.feruchemy.TinFeruchemy.factor(p,false);return strength(p)*factor+Math.max(0,factor-1)*dev.cosmerearcanists.feruchemy.FeruchemyConfig.TIN_HEARING_POWER.get();}
+    public static double revealStrength(ServerPlayer p){double factor=dev.cosmerearcanists.feruchemy.TinFeruchemy.factor(p,false);double allomantic=TinConfig.REQUIRE_FLARING.get()&&(PowerData.state(p,"a:tin")!=3||!PowerConfig.FLARING.get())?0:strength(p)*factor;double level=Math.max(0,(factor-1)/dev.cosmerearcanists.feruchemy.FeruchemyConfig.TIN_TAP_STEP.get());double feruchemical=TinMath.invisibleClarity(level,dev.cosmerearcanists.feruchemy.FeruchemyConfig.TIN_PULSE_FIRST.get()-1,dev.cosmerearcanists.feruchemy.FeruchemyConfig.TIN_PULSE_FULL.get(),1);return Math.max(TinMath.reveal(allomantic,TinConfig.REVEAL_THRESHOLD.get(),TinConfig.FULL_REVEAL.get()),feruchemical);}
+    public static double nightVision(ServerPlayer p){return TinConfig.NIGHT_VISION.get()?TinMath.nightVision(sightStrength(p),TinConfig.VISION_RESPONSE.get(),TinConfig.VISION_CAP.get()):0;}
     private static boolean looksOwned(MobEffectInstance effect){return effect!=null && effect.getAmplifier()==0 && effect.isAmbient() && !effect.isVisible() && !effect.showIcon() && effect.getDuration()<=320;}
     public static void tick(ServerPlayer p) {
         double power=strength(p);
@@ -80,7 +82,7 @@ public final class TinService {
         return List.copyOf(boxes);
     }
     public static PowerNetwork.TinEcho echo(ServerPlayer listener,Vec3 position,Entity source,float volume) {
-        double power=strength(listener);if(power<=0 || !TinConfig.HEARING.get() || !Float.isFinite(volume) || volume<=0)return null;
+        double power=hearingStrength(listener);if(power<=0 || !TinConfig.HEARING.get() || !Float.isFinite(volume) || volume<=0)return null;
         double potential=revealStrength(listener);if(potential<=0)return null;
         double range=TinMath.range(power,volume,TinConfig.RANGE.get()*TinConfig.ECHO_RANGE.get(),TinConfig.MAX_RANGE.get()*TinConfig.ECHO_RANGE.get())*(.5+.5*potential);double distance=listener.getEyePosition().distanceTo(position);
         if(distance>=range)return null;

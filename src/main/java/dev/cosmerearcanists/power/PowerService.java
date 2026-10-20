@@ -91,6 +91,7 @@ public final class PowerService {
         if (packet.action() == 4) { PowerNetwork.sync(p, s.targets); return; }
         if (!p.isAlive() || p.isSpectator() || !PowerData.available(p).contains(packet.power())) return;
         switch (packet.action()) {
+            case 11 -> {if(packet.power().equals("f:tin"))dev.cosmerearcanists.feruchemy.TinFeruchemy.sense(p,packet.value());}
             case 10 -> EmotionService.mode(p,packet.power(),packet.value());
             case 0 -> PowerData.assignSlot(p,packet.power(),0);
             case 6 -> PowerData.assignSlot(p,packet.power(),PowerData.secondary(p).equals(packet.power())?0:1);
@@ -120,7 +121,7 @@ public final class PowerService {
     }
     @SubscribeEvent public void clonePlayer(PlayerEvent.Clone event) {
         if (event.getOriginal() instanceof ServerPlayer old && event.getEntity() instanceof ServerPlayer p) {
-            dev.cosmerearcanists.feruchemy.GoldFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.GoldFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.PewterFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.PewterFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.SteelFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.SteelFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.IronFeruchemy.mass(old,1);dev.cosmerearcanists.feruchemy.IronFeruchemy.mass(p,1);
+            dev.cosmerearcanists.feruchemy.TinFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.TinFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.GoldFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.GoldFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.PewterFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.PewterFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.SteelFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.SteelFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.IronFeruchemy.mass(old,1);dev.cosmerearcanists.feruchemy.IronFeruchemy.mass(p,1);
             EnhancementService.clear(old); stopActivation(old); PowerData.clonePlayer(old, p); SESSIONS.remove(p.getUUID());
         }
     }
@@ -135,6 +136,7 @@ public final class PowerService {
         dev.cosmerearcanists.feruchemy.SteelFeruchemy.tick(p);
         dev.cosmerearcanists.feruchemy.PewterFeruchemy.tick(p);
         dev.cosmerearcanists.feruchemy.GoldFeruchemy.tick(p);
+        dev.cosmerearcanists.feruchemy.TinFeruchemy.tick(p);
         EnhancementService.begin(p);
         PewterService.tick(p);
         TinService.tick(p);

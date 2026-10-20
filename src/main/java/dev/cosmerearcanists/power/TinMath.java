@@ -20,5 +20,8 @@ public final class TinMath {
         red+=(int)Math.round((255-red)*amount);green+=(int)Math.round((255-green)*amount);blue+=(int)Math.round((255-blue)*amount);
         return color&0xFF000000 | blue<<16 | green<<8 | red;
     }
+    public static int dimLightmap(int color,double factor){if(!Double.isFinite(factor)||factor>=1)return color;factor=Math.clamp(factor,0,1);return color&0xFF000000|((int)Math.round((color&255)*factor))|((int)Math.round((color>>>8&255)*factor)<<8)|((int)Math.round((color>>>16&255)*factor)<<16);}
+    public static double invisibleClarity(double tapLevel,double threshold,double full,double cap){return !Double.isFinite(tapLevel)||tapLevel<=threshold+1e-7?0:Math.clamp(cap,0,1)*Math.clamp((tapLevel-threshold)/Math.max(.001,full-threshold),0,1);}
+    public static double movementBlur(double speed,double level,double speedResponse,double powerResponse,double cap){return speed<=0||level<=0?0:Math.clamp(cap,0,1)*-Math.expm1(-Math.max(0,speed)*speedResponse)*-Math.expm1(-level*powerResponse);}
     private TinMath() { }
 }

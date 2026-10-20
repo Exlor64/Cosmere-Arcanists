@@ -20,8 +20,10 @@ public final class Metalminds {
     public static UUID owner(ItemStack s){var t=data(s).getCompound(KEY);return t.hasUUID("owner")?t.getUUID("owner"):null;}
     public static double charge(ItemStack s){double value=data(s).getCompound(KEY).getDouble("charge");return Double.isFinite(value)?Math.max(0,value):0;}
     public static double capacity(ItemStack s){var t=data(s).getCompound(KEY);double value=t.getDouble("capacity");var source=source(s);return bound(s)?Double.isFinite(value)?Math.max(0,value):0:source==null?0:source.nuggetUnits()*FeruchemyConfig.CAPACITY.get();}
+    public static String storedMetal(ItemStack s){return data(s).getCompound(KEY).getString("metal");}
+    private static String physical(String metal){return metal.equals("tin:sight")||metal.equals("tin:hearing")||metal.equals("tin:touch")?"tin":metal;}
     public static boolean usable(ItemStack s,UUID user,String metal){
-        var source=source(s);if(s.getCount()!=1||source==null||!source.metal().equals(metal))return false;
+        var source=source(s);if(s.getCount()!=1||source==null||!source.metal().equals(physical(metal)))return false;
         if(!bound(s))return true;var root=data(s).getCompound(KEY);
         return root.getString("metal").equals(metal)&&owner(s)!=null&&(!FeruchemyConfig.OWNERSHIP.get()||user.equals(owner(s)));
     }

@@ -52,4 +52,7 @@ class TinMathTest {
         assertTrue(TinMath.zoom(2,1.5,8)>2.5);
         assertEquals(8,TinMath.zoom(1024,1.5,8));
     }
+    @Test void storedSightDimsWorldLightAndPreservesPixelAlpha(){assertEquals(0x7F402010,TinMath.dimLightmap(0x7F804020,.5));assertEquals(0x7F804020,TinMath.dimLightmap(0x7F804020,2));assertEquals(0x7F000000,TinMath.dimLightmap(0x7F804020,0));}
+    @Test void invisibleSightIsStrictlyBeyondTenAndBecomesClearer(){assertEquals(0,TinMath.invisibleClarity(10,10,30,.85));assertEquals(0,TinMath.invisibleClarity(10+1e-10,10,30,.85));assertTrue(TinMath.invisibleClarity(11,10,30,.85)>0);assertTrue(TinMath.invisibleClarity(20,10,30,.85)>TinMath.invisibleClarity(11,10,30,.85));assertEquals(.85,TinMath.invisibleClarity(100,10,30,.85));assertEquals(0,TinMath.invisibleClarity(Double.NaN,10,30,.85));}
+    @Test void movementBlurRequiresMotionAndTappingAndScalesWithBoth(){assertEquals(0,TinMath.movementBlur(0,10,4,.08,.35));assertEquals(0,TinMath.movementBlur(.2,0,4,.08,.35));double weak=TinMath.movementBlur(.1,5,4,.08,.35);assertTrue(weak>0);assertTrue(TinMath.movementBlur(.3,5,4,.08,.35)>weak);assertTrue(TinMath.movementBlur(.1,20,4,.08,.35)>weak);assertTrue(TinMath.movementBlur(8,10000,4,.08,.35)<=.35);}
 }

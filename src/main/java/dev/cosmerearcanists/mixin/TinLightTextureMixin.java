@@ -13,6 +13,6 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class TinLightTextureMixin {
     @ModifyArg(method="updateLightTexture",at=@At(value="INVOKE",target="Lcom/mojang/blaze3d/platform/NativeImage;setPixelRGBA(III)V"),index=2)
     private int cosmerearcanists$tinLight(int color){
-        return TinMath.liftLightmap(color,TinClient.nightVision(Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false)));
+        var mc=Minecraft.getInstance();int enhanced=TinMath.liftLightmap(color,TinClient.nightVision(mc.getTimer().getGameTimeDeltaPartialTick(false)));double sight=mc.player==null?1:dev.cosmerearcanists.feruchemy.TinFeruchemy.factor(mc.player,true);return TinMath.dimLightmap(enhanced,sight);
     }
 }

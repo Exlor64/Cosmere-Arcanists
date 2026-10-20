@@ -46,6 +46,7 @@ public final class CosmereArcanists {
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.feruchemy.SteelFeruchemy());
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.feruchemy.PewterFeruchemy());
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.feruchemy.GoldFeruchemy());
+        NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.feruchemy.TinFeruchemy());
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.feruchemy.MetalmindEvents());
         bus.addListener((net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event)->{if(net.neoforged.fml.ModList.get().isLoaded("curios"))event.enqueueWork(dev.cosmerearcanists.feruchemy.CuriosMetalminds::register);});
         bus.addListener(dev.cosmerearcanists.power.PowerNetwork::register);
