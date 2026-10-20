@@ -296,13 +296,17 @@ public final class PowerService {
         var point = best.position(p.level(), 1); var offset = point.subtract(chest(p)); double distance = offset.length();
         if (distance < .3) return;
         Vec3 direction = anchorDirection(chest(p), point, power);
-        accelerate(p, targetImpulse(p, best, direction, powerForce(p, power)));
+        accelerate(p, targetImpulse(p, best, direction, powerForce(p, power),power));
     }
     public static double powerForce(ServerPlayer p, String power) {
         return PowerConfig.FORCE.get() * (power.equals("a:iron") ? PowerConfig.IRON_STRENGTH.get() : power.equals("a:steel") ? PowerConfig.STEEL_STRENGTH.get() : 1) * PowerAttributes.effectiveStrength(p, power) * PowerRules.levelMultiplier(PowerData.state(p, power), PowerConfig.LOW_STRENGTH.get(), PowerConfig.BURN_STRENGTH.get(), PowerConfig.FLARE_STRENGTH.get());
     }
     static Vec3 targetImpulse(ServerPlayer p, MetalTarget best, Vec3 direction, double force) {
-        var point = best.position(p.level(), 1); if (point == null) return Vec3.ZERO;
+        var point=best.position(p.level(),1);String power=point!=null&&direction.dot(point.subtract(chest(p)))>0?"a:iron":"a:steel";
+        return targetImpulse(p,best,direction,force,power);
+    }
+    static Vec3 targetImpulse(ServerPlayer p,MetalTarget best,Vec3 direction,double force,String power){
+        var point=best.position(p.level(),1);if(point==null||force<=0)return Vec3.ZERO;
         double distance = point.distanceTo(chest(p));
         double accel = AllomanticPhysics.acceleration(force, distance, PowerConfig.RANGE.get(), dev.cosmerearcanists.feruchemy.IronFeruchemy.allomanticMass(p));
         // Fixed blocks anchor the force: iron draws the player in; steel pushes them away.
@@ -311,6 +315,10 @@ public final class PowerService {
         if (entity instanceof ItemEntity item && !MetalDetector.detects(p.server, item.getItem())) return Vec3.ZERO;
         if (entity instanceof AllomanticProjectile projectile && !projectile.allomanticallyDetectable(p.server)) return Vec3.ZERO;
         if (entity instanceof LivingEntity living && (best.slot() < 0 || best.slot() >= SLOTS.length || !MetalDetector.detects(p.server, living.getItemBySlot(SLOTS[best.slot()])))) return Vec3.ZERO;
+        if(entity instanceof SteelProjectile coin&&power.equals("a:iron")&&coin.coin()&&dev.cosmerearcanists.currency.CurrencyConfig.RECALL.get()){
+            if(coin.pullAsItem(p,force)!=null)return PowerConfig.RECOIL.get()?direction.scale(accel):Vec3.ZERO;
+            return Vec3.ZERO;
+        }
         if(entity instanceof AllomanticProjectile projectile){
             if(projectile.fixedMetalAnchor())return direction.scale(accel);
             projectile.beforeAllomanticForce();
@@ -348,7 +356,7 @@ public final class PowerService {
             strengths.stream().mapToDouble(Double::doubleValue).toArray(), Math.cos(Math.toRadians(PowerConfig.MOVEMENT_ANGLE.get())));
         Vec3 impulse = Vec3.ZERO;
         for (int i=0;i<weights.length;i++) if (weights[i]>1e-6)
-            impulse = impulse.add(targetImpulse(p, anchors.get(i), directions.get(i), powerForce(p,power)*weights[i]));
+            impulse = impulse.add(targetImpulse(p, anchors.get(i), directions.get(i), powerForce(p,power)*weights[i],power));
         if (impulse.lengthSqr()>1e-12) accelerate(p,impulse);
     }
     public static void externalImpulse(ServerPlayer player,Vec3 impulse){accelerate(player,impulse);}

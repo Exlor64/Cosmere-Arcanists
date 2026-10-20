@@ -36,6 +36,7 @@ public final class MetalAmounts {
     }
     public static double units(MinecraftServer server,ItemStack stack) {
         if(!MetalDetector.detects(server,stack))return 0;
+        if(dev.cosmerearcanists.currency.Coins.coin(stack))return dev.cosmerearcanists.currency.Coins.units(stack);
         if(dev.cosmerearcanists.filing.Filings.dynamic(stack) || dev.cosmerearcanists.filing.Filings.filed(stack))return dev.cosmerearcanists.filing.Filings.units(stack);
         double perItem=amounts.getOrDefault(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(),PowerConfig.UNKNOWN_METAL_UNITS.get());
         return Math.max(.001,perItem)*stack.getCount();

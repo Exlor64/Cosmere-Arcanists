@@ -13,6 +13,8 @@ public final class CosmereArcanists {
         container.registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC);
         dev.cosmerearcanists.equipment.EquipmentContent.register(bus);
         ModMetals.register(bus);
+        container.registerConfig(ModConfig.Type.SERVER,dev.cosmerearcanists.currency.CurrencyConfig.SPEC,"cosmerearcanists-currency-server.toml");
+        NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.currency.CoinRecall());
         container.registerConfig(ModConfig.Type.SERVER, dev.cosmerearcanists.filing.FilingConfig.SPEC, "cosmerearcanists-filings-server.toml");
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.filing.FilingEvents());
         container.registerConfig(ModConfig.Type.SERVER, dev.cosmerearcanists.equipment.EquipmentConfig.SPEC, "cosmerearcanists-equipment-server.toml");

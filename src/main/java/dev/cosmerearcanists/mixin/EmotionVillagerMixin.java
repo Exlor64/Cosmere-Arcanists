@@ -12,5 +12,5 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Villager.class)
 public abstract class EmotionVillagerMixin {
     @Inject(method="updateSpecialPrices",at=@At("TAIL"))
-    private void cosmerearcanists$trustPrices(Player player,CallbackInfo ci){EmotionService.discount((Villager)(Object)this,player);}
+    private void cosmerearcanists$trustPrices(Player player,CallbackInfo ci){EmotionService.discount((Villager)(Object)this,player);dev.cosmerearcanists.currency.CurrencyTrades.resetExchangePrices(((Villager)(Object)this).getOffers());}
 }

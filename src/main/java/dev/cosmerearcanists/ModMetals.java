@@ -18,6 +18,8 @@ public final class ModMetals {
     public static final net.neoforged.neoforge.registries.DeferredItem<dev.cosmerearcanists.power.MetalVialItem> METAL_VIAL=ITEMS.register("metal_vial",()->new dev.cosmerearcanists.power.MetalVialItem());
     public static final net.neoforged.neoforge.registries.DeferredItem<dev.cosmerearcanists.filing.MetalFilingItem> METAL_FILING=ITEMS.register("metal_filing",dev.cosmerearcanists.filing.MetalFilingItem::new);
     public static final net.neoforged.neoforge.registries.DeferredItem<dev.cosmerearcanists.filing.MetalFileItem> METAL_FILE=ITEMS.register("metal_file",dev.cosmerearcanists.filing.MetalFileItem::new);
+    public static final net.neoforged.neoforge.registries.DeferredItem<Item> BOXING=ITEMS.registerSimpleItem("boxing",new Item.Properties());
+    public static final net.neoforged.neoforge.registries.DeferredItem<Item> CLIP=ITEMS.registerSimpleItem("clip",new Item.Properties());
     public static final String[] GOD_METALS = {"atium", "lerasium"};
     public static final String[] BASE = {"tin", "zinc", "aluminum", "chromium", "cadmium", "lead", "silver", "nickel"};
     static {

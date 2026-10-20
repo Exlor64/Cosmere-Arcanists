@@ -189,5 +189,7 @@
   "death.attack.cosmerearcanists.brass_fire_melee": "%1$s was seared by %2$s",
   "death.attack.cosmerearcanists.brass_fire_melee.player": "%1$s was seared by %2$s",
   "death.attack.cosmerearcanists.brass_overheat": "%1$s tapped too much warmth",
-  "death.attack.cosmerearcanists.brass_overheat.player": "%1$s overheated while fighting %2$s"
+  "death.attack.cosmerearcanists.brass_overheat.player": "%1$s overheated while fighting %2$s",
+  "item.cosmerearcanists.boxing": "Boxing",
+  "item.cosmerearcanists.clip": "Clip"
 }

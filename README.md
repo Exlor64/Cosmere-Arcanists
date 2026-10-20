@@ -1509,3 +1509,49 @@ world borders, build permissions and a10tick cooldown. It cannot replace occupie
 blocks. Independent feature toggles, thresholds, work times and cooldown are in
 `cosmerearcanists-feruchemy-server.toml`. Existing tapped warmth reserve cost
 and overheat risks still apply. Cold protection stays passive.
+
+### Scadrian currency and coinshots (0.36.0)
+
+`cosmerearcanists:boxing` is a gold coin; `cosmerearcanists:clip` is copper.
+Neither coin has a crafting or smelting recipe. They appear in the metals
+creative tab and are earned/spent through Scadrian villager trades.
+
+The Scadrial dimension is still future work. For now, mark a test villager:
+
+```mcfunction
+/tag @e[type=minecraft:villager,sort=nearest,limit=1] add cosmerearcanists.scadrial
+```
+
+Villagers in configured Scadrial dimensions also qualify; converted villagers
+keep the tag if moved. Ordinary Overworld villagers keep emeralds unless opted
+in. Configuration: `cosmerearcanists-currency-server.toml`. Defaults are
+100clips per boxing and a provisional gameplay rate of10clips per original
+emerald. Trades use clips, boxings, or both as space allows, retaining other
+inputs, output components, uses/limits, XP, demand and special-price state.
+Where vanilla's two input slots/single output cannot represent a price exactly,
+coin costs round up and payouts round down; extreme unrepresentable custom
+prices remain untouched. Config changes affect new emerald offers; existing
+coin trades and balances are preserved. Disabling conversion never deletes
+saved offers. A fixed, zero-XP clips-to-boxing trade accepts100clips as64+36
+and returns one boxing; emotional/gossip discounts do not alter this rate.
+
+Drop coins while actively Steelpushing with the existing activation+Q controls
+to fire them. Strength, metal mass, velocity, recoil and damage use the existing
+metal-shot system. Both coins default to one nugget-equivalent of physical metal
+each, independently configurable; money value does not determine mass.
+
+A fired coin striking a block stays embedded as a detectable projectile, usable
+as a fixed Steelpush anchor. Walking into it picks it up like an arrow after
+a short delay. Partial inventory space takes only the coins that fit; the rest
+stay in the projectile. Ironpulling an embedded **or airborne** coin turns its
+remaining physical cargo into one normal item entity and draws it toward the
+puller. Pickup by other players is allowed. Recall stops if the target is absent
+or out of range; the coin then behaves as a normal dropped item. Removing the
+support releases an embedded projectile to fall. Coin projectiles persist for
+12000loaded ticks by default, then recover as items instead of disappearing.
+Cargo/components and embedding survive saves; no chunks are forced to load.
+
+Currency config controls trade scope, pricing, exchange, coin mass, embedding,
+pickup, iron recall, range/speed and lifespan. Network protocol21 requires
+matching client/server versions because metal projectile tracking gained
+embedded-state data.

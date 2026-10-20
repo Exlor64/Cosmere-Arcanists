@@ -26,7 +26,8 @@
     "BubbleChunkTicksAccess",
     "BubbleScheduledMixin",
     "BubbleRandomBlockMixin",
-    "BubbleRandomFluidMixin"
+    "BubbleRandomFluidMixin",
+    "ScadrialCurrencyMixin"
   ],
   "injectors": {
     "defaultRequire": 1
