@@ -67,7 +67,7 @@ public final class FeruchemyGameTests {
     @GameTest(template="empty") public static void effectiveMassChangesAllomanticAccelerationKnockbackAndLightweightDrag(GameTestHelper h){
         var p=player(h);var target=MetalTarget.block(BlockPos.containing(PowerService.chest(p).add(2,0,0)));var direction=new Vec3(-1,0,0);
         var normal=PowerService.targetImpulse(p,target,direction,14);IronFeruchemy.mass(p,2);var heavy=PowerService.targetImpulse(p,target,direction,14);h.assertTrue(Math.abs(normal.length()-2*heavy.length())<1e-7,"Double mass halves acceleration against a fixed Allomantic anchor");
-        p.setDeltaMovement(Vec3.ZERO);p.knockback(1,1,0);double heavyKnockback=p.getDeltaMovement().horizontalDistance();IronFeruchemy.mass(p,1);p.setDeltaMovement(Vec3.ZERO);p.knockback(1,1,0);h.assertTrue(Math.abs(p.getDeltaMovement().horizontalDistance()-2*heavyKnockback)<1e-7,"Heavy bodies resist vanilla knockback");
+        var mind=new ItemStack(Items.IRON_INGOT);Metalminds.transfer(mind,p.getUUID(),"iron",10);p.setItemInHand(InteractionHand.OFF_HAND,mind);PowerData.state(p,"f:iron",10);IronFeruchemy.tick(p);p.setDeltaMovement(Vec3.ZERO);p.knockback(1,1,0);double heavyKnockback=p.getDeltaMovement().horizontalDistance();IronFeruchemy.mass(p,1);p.setDeltaMovement(Vec3.ZERO);p.knockback(1,1,0);h.assertTrue(Math.abs(p.getDeltaMovement().horizontalDistance()*.8-heavyKnockback)<1e-7,"Tap10 reduces vanilla knockback by20percent");
         double gravity=p.getGravity();IronFeruchemy.mass(p,.5);p.setDeltaMovement(0,-4,0);p.travel(Vec3.ZERO);h.assertTrue(p.getDeltaMovement().y>=-FeruchemyConfig.TERMINAL.get()*.5-1e-7&&p.getGravity()==gravity,"Lightweight air resistance caps falling velocity without changing gravity");
         var fall=new net.neoforged.neoforge.event.entity.living.LivingFallEvent(p,20,1);new IronFeruchemy().fall(fall);h.assertTrue(Math.abs(fall.getDamageMultiplier()-.5)<1e-7,"Lightweight impact mitigation scales with actual mass");IronFeruchemy.mass(p,1);h.succeed();
     }
@@ -102,6 +102,18 @@ public final class FeruchemyGameTests {
     }
     @GameTest(template="empty") public static void curiosSlotsAndWornMetalmindsWorkWhenInstalled(GameTestHelper h){
         if(net.neoforged.fml.ModList.get().isLoaded("curios"))dev.cosmerearcanists.feruchemy.CuriosMetalmindTests.verify(h);h.succeed();
+    }
+    @GameTest(template="empty") public static void ironCombatOnlyRewardsFundedTappingAndFallingCriticals(GameTestHelper h){
+        var p=player(h);var mind=new ItemStack(Items.IRON_INGOT);p.setItemInHand(InteractionHand.OFF_HAND,mind);Metalminds.transfer(mind,p.getUUID(),"iron",20);PowerData.state(p,"f:iron",10);IronFeruchemy.tick(p);
+        var critical=new net.neoforged.neoforge.event.entity.player.CriticalHitEvent(p,p,1.5f,true);new IronFeruchemy().critical(critical);h.assertTrue(Math.abs(critical.getDamageMultiplier()-2.25)<1e-6,"Tap10 adds50percent to falling critical damage");
+        var normal=new net.neoforged.neoforge.event.entity.player.CriticalHitEvent(p,p,1,false);normal.setCriticalHit(true);new IronFeruchemy().critical(normal);h.assertTrue(normal.getDamageMultiplier()==1,"Grounded or mod-forced criticals gain no bonus");
+        PowerData.state(p,"f:iron",0);h.assertTrue(IronFeruchemy.combatLevels(p)==0&&IronFeruchemy.knockbackMultiplier(p)==1,"Stopping immediately removes combat bonuses");
+        PowerData.state(p,"f:iron",-3);IronFeruchemy.tick(p);h.assertTrue(IronFeruchemy.combatLevels(p)==0,"Storing never grants critical damage");
+        p.setItemInHand(InteractionHand.OFF_HAND,ItemStack.EMPTY);PowerData.state(p,"f:iron",10);IronFeruchemy.tick(p);h.assertTrue(IronFeruchemy.combatLevels(p)==0,"Missing contact cannot grant free combat power");h.succeed();
+    }
+    @GameTest(template="empty") public static void maximumStoringStrengthScalesMetalmindFillRate(GameTestHelper h){
+        double[] attributes={1,2,4};double[] expected={.30,.60,.95};
+        for(int j=0;j<attributes.length;j++){var p=player(h);PowerAttributes.set(p,"f:iron",attributes[j]);var mind=new ItemStack(Items.IRON_INGOT);p.setItemInHand(InteractionHand.OFF_HAND,mind);PowerData.state(p,"f:iron",-100);for(int i=0;i<20;i++)IronFeruchemy.tick(p);h.assertTrue(Math.abs(Metalminds.charge(mind)-expected[j])<1e-7,"Maximum storing fills at the actual stored fraction per second, capped95percent");}h.succeed();
     }
     private FeruchemyGameTests(){}
 }

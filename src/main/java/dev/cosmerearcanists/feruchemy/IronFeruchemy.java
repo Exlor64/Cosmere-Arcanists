@@ -20,6 +20,19 @@ public final class IronFeruchemy {
     public static double allomanticMass(ServerPlayer p){return PowerConfig.PLAYER_MASS.get()*(FeruchemyConfig.MASS.get()?massMultiplier(p):1);}
     public static void mass(ServerPlayer p,double factor){var a=p.getAttribute(PowerAttributes.MASS);if(a==null)return;var old=a.getModifier(MODIFIER);double value=factor-1;if(old!=null&&Math.abs(old.amount()-value)<1e-10)return;a.removeModifier(MODIFIER);if(Math.abs(value)>1e-10)a.addTransientModifier(new AttributeModifier(MODIFIER,value,AttributeModifier.Operation.ADD_VALUE));}
     public static double strength(ServerPlayer p){return configured()&&p.isAlive()&&!p.isSpectator()&&PowerData.state(p,"f:iron")!=0&&Math.abs(massMultiplier(p)-1)>1e-8?PowerAttributes.strength(p,"f:iron")*Math.abs(massMultiplier(p)-1):0;}
+    /** Actual paid mass bounds the combat benefit, including partially funded final ticks. */
+    public static double combatLevels(Entity entity){
+        if(!(entity instanceof ServerPlayer p)||!configured()||!p.isAlive()||p.isSpectator()||PowerData.state(p,"f:iron")<=0||PowerAttributes.strength(p,"f:iron")<=0)return 0;
+        return Math.max(0,Math.min(PowerData.state(p,"f:iron"),(massMultiplier(p)-1)/FeruchemyConfig.TAP_STEP.get()));
+    }
+    public static double knockbackMultiplier(Entity entity){
+        if(!FeruchemyConfig.KNOCKBACK.get())return 1;
+        double mass=massMultiplier(entity);
+        return mass<1?1/mass:1-Math.min(FeruchemyConfig.KNOCKBACK_CAP.get(),combatLevels(entity)*FeruchemyConfig.KNOCKBACK_STEP.get());
+    }
+    @SubscribeEvent public void critical(net.neoforged.neoforge.event.entity.player.CriticalHitEvent event){
+        if(FeruchemyConfig.CRITICAL.get()&&event.isVanillaCritical()&&event.isCriticalHit())event.setDamageMultiplier((float)(event.getDamageMultiplier()*(1+combatLevels(event.getEntity())*FeruchemyConfig.CRITICAL_STEP.get())));
+    }
     public static void tick(ServerPlayer p){
         if(net.neoforged.fml.ModList.get().isLoaded("curios"))CuriosMetalminds.configureSlots(p);
         double factor=1;int state=PowerData.state(p,"f:iron");double strength=PowerAttributes.strength(p,"f:iron");

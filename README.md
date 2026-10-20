@@ -1244,7 +1244,7 @@ storing/tapping state remains active, as with Allomancy.
 Mass affects iron/steel acceleration and recoil (including other players
 pushing/pulling you), metal-shot/ball recoil, and vanilla knockback. Lighter
 bodies have more air resistance and reduced fall impacts. Gravitational
-acceleration stays the same; extra mass grants no melee-strength buff. Precise
+acceleration stays the same; extra mass grants a tapping bonus only to falling critical hits. Precise
 momentum changes and structural block crushing are future work.
 
 **Optional Curios compatibility:** install Curios API9.5.1+1.21.1 on client and
@@ -1305,3 +1305,12 @@ The selector receives separate storing/tapping limits for each power. Server
 validation enforces the same limits and clamps an active state when the
 attribute drops. Other Feruchemy powers remain pending. **Protocol19 requires
 matching0.29.2 client/server versions.**
+
+### Iron combat and filling (0.29.3)
+Tapping iron reduces incoming knockback by2% per funded tap level (default cap80%).
+Vanilla falling critical hits deal5% more critical damage per tap level; level10 adds50%.
+Ordinary attacks and grounded criticals gain no bonus. Both effects are configurable in
+`cosmerearcanists-feruchemy-server.toml`, including independent toggles and per-level rates.
+Lightweight storing retains increased knockback. Storing fills at the actual fraction
+stored per second: maximum30%/60%/95% stores0.30/0.60/0.95 weight-seconds each second.
+Higher maximum storage permits faster filling when that higher level is selected.

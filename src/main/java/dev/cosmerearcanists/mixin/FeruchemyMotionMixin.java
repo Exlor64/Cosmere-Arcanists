@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(LivingEntity.class)
 public abstract class FeruchemyMotionMixin {
     @ModifyVariable(method="knockback",at=@At("HEAD"),argsOnly=true,ordinal=0)
-    private double cosmerearcanists$massKnockback(double force){return FeruchemyConfig.KNOCKBACK.get()?force/IronFeruchemy.massMultiplier((LivingEntity)(Object)this):force;}
+    private double cosmerearcanists$massKnockback(double force){return force*IronFeruchemy.knockbackMultiplier((LivingEntity)(Object)this);}
     @Inject(method="travel",at=@At("TAIL"))
     private void cosmerearcanists$lightweightDrag(Vec3 input,CallbackInfo ci){var e=(LivingEntity)(Object)this;double mass=IronFeruchemy.massMultiplier(e);
         if(!FeruchemyConfig.DRAG.get()||mass>=1||e.isNoGravity()||e.isFallFlying()||e.isInWater()||e.isInLava())return;
