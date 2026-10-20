@@ -1013,7 +1013,7 @@ past-self beside you. **Alt + Activate** selects an older recorded version once
 per press; release and press again to cycle. This is the chosen game adaptation
 of gold's personal-past theme, rather than alternate-action prediction.
 
-The vision uses your current skin and the equipment types you wore in that
+The vision uses your current player model and the equipment types you wore in that
 version. Labels show its age, experience level, origin, power strengths, and
 spiritual integrity. Equipment components, enchantments, dyes, item contents,
 and historical skins are not recorded. The display never restores items,
