@@ -323,6 +323,7 @@ public final class PowerService {
             if(projectile.fixedMetalAnchor())return direction.scale(accel);
             projectile.beforeAllomanticForce();
         }
+        if(entity instanceof ItemEntity item)dev.cosmerearcanists.currency.CoinRecall.interrupt(item);
         double mass = entity instanceof AllomanticProjectile projectile ? projectile.allomanticMass() : entity instanceof ItemEntity item ? Math.max(.2, item.getItem().getCount() * .2)
             : entity instanceof ServerPlayer targetPlayer ? dev.cosmerearcanists.feruchemy.IronFeruchemy.allomanticMass(targetPlayer) : Math.max(10, entity.getBbWidth() * entity.getBbWidth() * entity.getBbHeight() * 100);
         accelerate(entity, direction.scale(-AllomanticPhysics.acceleration(force, distance, PowerConfig.RANGE.get(), mass)));

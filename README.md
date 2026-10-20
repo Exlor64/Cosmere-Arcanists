@@ -1546,7 +1546,8 @@ a short delay. Partial inventory space takes only the coins that fit; the rest
 stay in the projectile. Ironpulling an embedded **or airborne** coin turns its
 remaining physical cargo into one normal item entity and draws it toward the
 puller. Pickup by other players is allowed. Recall stops if the target is absent
-or out of range; the coin then behaves as a normal dropped item. Removing the
+or out of range; the coin then behaves as a normal dropped item. A new Ironpull
+or Steelpush on that item interrupts homing so it can be deflected normally. Removing the
 support releases an embedded projectile to fall. Coin projectiles persist for
 12000loaded ticks by default, then recover as items instead of disappearing.
 Cargo/components and embedding survive saves; no chunks are forced to load.

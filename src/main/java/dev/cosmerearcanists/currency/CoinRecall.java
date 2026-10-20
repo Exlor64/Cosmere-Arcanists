@@ -6,6 +6,7 @@ import net.neoforged.neoforge.event.tick.EntityTickEvent;
 public final class CoinRecall {
     private static final String TARGET="cosmerearcanists_coin_pull",SPEED="cosmerearcanists_coin_pull_speed";
     public static void start(ItemEntity item,ServerPlayer player,double speed){item.getPersistentData().putUUID(TARGET,player.getUUID());item.getPersistentData().putDouble(SPEED,speed);item.setNoGravity(true);item.setPickUpDelay(0);var offset=player.position().add(0,.5,0).subtract(item.position());item.setDeltaMovement(offset.normalize().scale(Math.min(Math.max(.05,speed),offset.length())));item.hurtMarked=true;}
+    public static void interrupt(ItemEntity item){if(item.getPersistentData().hasUUID(TARGET))stop(item);}
     private static void stop(ItemEntity item){item.getPersistentData().remove(TARGET);item.getPersistentData().remove(SPEED);item.setNoGravity(false);}
     public static void move(ItemEntity item){var data=item.getPersistentData();if(item.level().isClientSide||!data.hasUUID(TARGET))return;var player=item.level().getPlayerByUUID(data.getUUID(TARGET));
         if(!CurrencyConfig.RECALL.get()||!Coins.coin(item.getItem())||player==null||!player.isAlive()||player.isSpectator()||player.distanceToSqr(item)>Math.pow(CurrencyConfig.RETURN_RANGE.get(),2)){stop(item);return;}
