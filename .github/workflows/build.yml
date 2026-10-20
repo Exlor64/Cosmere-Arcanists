@@ -22,6 +22,24 @@ jobs:
           set -o pipefail
           ./gradlew runGameTestServer --no-daemon -PwithCurios=${{ matrix.curios }} | tee gametest.log
           python -c 'import re; assert re.search(r"All [1-9][0-9]* required tests passed", open("gametest.log").read()), "Server did not report completed required GameTests"'
+      - name: Smoke-test graphical client startup
+        if: matrix.curios == false
+        env:
+          LIBGL_ALWAYS_SOFTWARE: 'true'
+        run: |
+          set +e
+          timeout --signal=TERM 180s xvfb-run -a ./gradlew runClient --no-daemon -PwithCurios=false > client-smoke.log 2>&1
+          client_status=$?
+          set -e
+          cat client-smoke.log
+          if [ "$client_status" -ne 0 ] && [ "$client_status" -ne 124 ]; then exit "$client_status"; fi
+          python -c 'import re; s=open("client-smoke.log").read(); assert "Sound engine started" in s, "Client did not complete sound/resource startup"; assert not re.search(r"MixinApplyError|InjectionError|InvalidInjectionException|MixinTransformerError", s), "Client mixin startup failure"'
+      - name: Upload client startup log
+        if: always() && matrix.curios == false
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-startup-log
+          path: client-smoke.log
       - uses: actions/upload-artifact@v4
         with:
           name: Cosmere-Arcanists-curios-${{ matrix.curios }}
