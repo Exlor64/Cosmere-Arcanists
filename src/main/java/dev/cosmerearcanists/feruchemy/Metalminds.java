@@ -38,6 +38,7 @@ public final class Metalminds {
         var result=new java.util.ArrayList<Access>();
         if(FeruchemyConfig.CURIOS.get()&&net.neoforged.fml.ModList.get().isLoaded("curios"))result.addAll(CuriosMetalminds.touching(p));
         for(var hand:InteractionHand.values())result.add(new Access(p.getItemInHand(hand),()->p.getInventory().setChanged()));
+        if(FeruchemyConfig.INVENTORY.get())for(var stack:p.getInventory().items)result.add(new Access(stack,()->p.getInventory().setChanged()));
         return result;
     }
     public static double transferAccessible(ServerPlayer p,String metal,double amount){
@@ -50,6 +51,6 @@ public final class Metalminds {
         }
         return amount-remaining;
     }
-    public static double accessibleCharge(ServerPlayer p,String metal){double total=0;for(var access:touching(p)){var s=access.stack();if(usable(s,p.getUUID(),metal))total+=Math.min(charge(s),capacity(s));}return total;}
+    public static double accessibleCharge(ServerPlayer p,String metal){double total=0;var seen=java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<ItemStack,Boolean>());for(var access:touching(p)){var s=access.stack();if(seen.add(s)&&usable(s,p.getUUID(),metal))total+=Math.min(charge(s),capacity(s));}return total;}
     private Metalminds(){}
 }

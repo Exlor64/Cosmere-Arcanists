@@ -23,5 +23,19 @@ public final class CuriosMetalmindTests {
         var foreign=UUID.randomUUID();for(var access:CuriosMetalminds.touching(p))Metalminds.transfer(access.stack(),p.getUUID(),"iron",Metalminds.capacity(access.stack()));
         h.assertTrue(Metalminds.transfer(first,foreign,"iron",1)==0,"Worn storage retains identity ownership");IronFeruchemy.mass(p,1);
     }
+    public static void verifyConfigurableSlots(GameTestHelper h){
+        var p=new FakePlayer(h.getLevel(),new GameProfile(UUID.randomUUID(),"ConfiguredCurios"));p.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);PowerAttributes.set(p,"f:iron",1);
+        int rings=FeruchemyConfig.RING_SLOTS.get(),bracelets=FeruchemyConfig.BRACELET_SLOTS.get(),necklaces=FeruchemyConfig.NECKLACE_SLOTS.get();var inventory=CuriosApi.getCuriosInventory(p).orElseThrow();
+        try{
+            FeruchemyConfig.RING_SLOTS.set(3);FeruchemyConfig.BRACELET_SLOTS.set(4);FeruchemyConfig.NECKLACE_SLOTS.set(2);CuriosMetalminds.configureSlots(p);CuriosMetalminds.configureSlots(p);
+            var ring=inventory.getStacksHandler("ring").orElseThrow();h.assertTrue(ring.getSlots()==3&&inventory.getStacksHandler("bracelet").orElseThrow().getSlots()==4&&inventory.getStacksHandler("necklace").orElseThrow().getSlots()==2,"Configured counts update real Curios inventories without accumulating modifiers");
+            var piece=item("ring");ring.getStacks().setStackInSlot(2,piece);PowerData.state(p,"f:iron",-5);IronFeruchemy.tick(p);h.assertTrue(Math.abs(Metalminds.charge(piece)-.025)<1e-7,"Configured extra slots participate in storing beyond the old two-ring limit");
+            var external=ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,"test_other_slot_provider");inventory.addTransientSlotModifier("ring",external,1,net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE);ring.update();CuriosMetalminds.configureSlots(p);h.assertTrue(ring.getSlots()==4,"Unrelated mod slot bonuses remain intact");inventory.removeSlotModifier("ring",external);ring.update();
+            var cosmetic=item("ring");Metalminds.transfer(cosmetic,p.getUUID(),"iron",7);ring.getCosmeticStacks().setStackInSlot(2,cosmetic);
+            FeruchemyConfig.RING_SLOTS.set(0);FeruchemyConfig.BRACELET_SLOTS.set(0);FeruchemyConfig.NECKLACE_SLOTS.set(0);CuriosMetalminds.configureSlots(p);inventory.handleInvalidStacks();
+            h.assertTrue(ring.getSlots()==0&&inventory.getStacksHandler("bracelet").orElseThrow().getSlots()==0&&inventory.getStacksHandler("necklace").orElseThrow().getSlots()==0,"Zero removes this mod's default slots");
+            double recovered=p.getInventory().items.stream().filter(Metalminds::bound).mapToDouble(Metalminds::charge).sum();h.assertTrue(Math.abs(recovered-7.025)<1e-7,"Both functional and cosmetic jewelry displaced by shrinking keep their exact stored charge");
+        }finally{FeruchemyConfig.RING_SLOTS.set(rings);FeruchemyConfig.BRACELET_SLOTS.set(bracelets);FeruchemyConfig.NECKLACE_SLOTS.set(necklaces);CuriosMetalminds.configureSlots(p);IronFeruchemy.mass(p,1);}
+    }
     private CuriosMetalmindTests(){}
 }

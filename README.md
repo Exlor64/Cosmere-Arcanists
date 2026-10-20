@@ -1244,7 +1244,7 @@ jewelry in Curios. Active storing automatically fills worn matching pieces
 first, then held pieces, moving on when one fills. Tapping drains worn pieces
 similarly. There is one total transfer rate, regardless of how many pieces are
 worn. Cosmetic slots never store or tap. Other packs may alter visible slot
-counts; this integration uses the first2rings/2bracelets/1necklace. Without
+counts; this integration uses all functional matching slots as of0.29.1. Without
 Curios, held single-item denominations and jewelry work normally.
 
 Settings are in `cosmerearcanists-feruchemy-server.toml`. Features can be
@@ -1255,3 +1255,28 @@ Jewelry currently uses provisional vanilla item silhouettes.
 Development checks run both without Curios and with `-PwithCurios=true`.
 Protocol remains18; install matching0.29.0 client/server versions for the new
 registry entries and HUD semantics.
+
+### Inventory access and configurable jewelry slots (0.29.1)
+
+In `<world>/serverconfig/cosmerearcanists-feruchemy-server.toml`:
+
+```toml
+inventoryMetalminds = false
+defaultRingSlots = 2
+defaultBraceletSlots = 2
+defaultNecklaceSlots = 1
+```
+
+Enable `inventoryMetalminds` to store and tap directly from single matching
+pieces in the36main inventory/hotbar slots. Worn and held metalminds have
+priority. A selected hotbar piece is counted once, and the transfer rate stays
+the same regardless of how many pieces are available. Stacks remain invalid;
+backpacks/nested containers and armor slots are not scanned.
+
+Curios counts accept0..64 and apply to existing players on their next server
+tick after a config reload. Zero removes this mod's default allocation. Changes
+use this mod's own transient modifier relative to the bundled2/2/1 baseline;
+other mods/datapacks can still provide additional slots. All functional
+matching slots can participate. Curios returns displaced functional items;
+this mod also preserves displaced cosmetics, giving them to the inventory or
+dropping them if there is no room. Charges and ownership remain intact.

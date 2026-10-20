@@ -76,6 +76,19 @@ public final class FeruchemyGameTests {
         try{FeruchemyConfig.ENABLED.set(false);IronFeruchemy.tick(p);h.assertTrue(IronFeruchemy.massMultiplier(p)==1&&Metalminds.charge(item)==saved&&PowerAttributes.strength(p,"f:iron")==1,"Disabling removes transient effects and preserves charge and power attributes");}finally{FeruchemyConfig.ENABLED.set(enabled);}
         p.setItemInHand(InteractionHand.OFF_HAND,ItemStack.EMPTY);IronFeruchemy.tick(p);h.assertTrue(PowerData.state(p,"f:iron")==0&&Metalminds.charge(item)==saved,"Losing contact stops the power without destroying the item-owned reserve");h.succeed();
     }
+    @GameTest(template="empty") public static void inventoryStorageAndTappingAreOptInAndNeverDoubleCountHeldItems(GameTestHelper h){
+        var p=player(h);var single=new ItemStack(Items.IRON_NUGGET);var stack=new ItemStack(Items.IRON_INGOT,2);p.getInventory().items.set(2,single);p.getInventory().items.set(3,stack);boolean previous=FeruchemyConfig.INVENTORY.get();
+        try{
+            FeruchemyConfig.INVENTORY.set(false);PowerData.state(p,"f:iron",-5);IronFeruchemy.tick(p);h.assertTrue(!Metalminds.bound(single)&&IronFeruchemy.massMultiplier(p)==1,"Inventory-only items do not store by default");
+            FeruchemyConfig.INVENTORY.set(true);PowerData.state(p,"f:iron",-5);IronFeruchemy.tick(p);h.assertTrue(Math.abs(Metalminds.charge(single)-.025)<1e-7&&stack.getCount()==2&&!Metalminds.bound(stack),"Enabled inventory storage finds singletons without charging or splitting stacked denominations");
+            p.getInventory().selected=2;h.assertTrue(Math.abs(Metalminds.accessibleCharge(p,"iron")-.025)<1e-7,"Selected hotbar item is counted only once in held plus inventory access");IronFeruchemy.tick(p);h.assertTrue(Math.abs(Metalminds.charge(single)-.05)<1e-7,"One transfer budget applies even when the same item is reachable through two paths");
+            p.getInventory().selected=0;PowerData.state(p,"f:iron",1);IronFeruchemy.tick(p);h.assertTrue(Math.abs(Metalminds.charge(single)-.025)<1e-7&&Math.abs(IronFeruchemy.massMultiplier(p)-1.5)<1e-7,"Enabled inventory access also taps without holding the piece");
+            FeruchemyConfig.INVENTORY.set(false);IronFeruchemy.tick(p);h.assertTrue(PowerData.state(p,"f:iron")==0&&Metalminds.charge(single)>.02499&&IronFeruchemy.massMultiplier(p)==1,"Turning inventory access off stops effects and preserves stored charge");
+        }finally{FeruchemyConfig.INVENTORY.set(previous);IronFeruchemy.mass(p,1);}h.succeed();
+    }
+    @GameTest(template="empty") public static void configurableCuriosCountsUpdateSlotsAndPreserveDisplacedCharge(GameTestHelper h){
+        if(net.neoforged.fml.ModList.get().isLoaded("curios"))dev.cosmerearcanists.feruchemy.CuriosMetalmindTests.verifyConfigurableSlots(h);h.succeed();
+    }
     @GameTest(template="empty") public static void curiosSlotsAndWornMetalmindsWorkWhenInstalled(GameTestHelper h){
         if(net.neoforged.fml.ModList.get().isLoaded("curios"))dev.cosmerearcanists.feruchemy.CuriosMetalmindTests.verify(h);h.succeed();
     }
