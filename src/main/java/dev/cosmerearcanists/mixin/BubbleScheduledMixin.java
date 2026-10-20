@@ -12,7 +12,7 @@ public abstract class BubbleScheduledMixin<T> {
     @Shadow @Final private Long2ObjectMap<LevelChunkTicks<T>> allContainers;
     @Shadow @Final private Long2LongMap nextTickForContainer;
     @WrapMethod(method="schedule")
-    private void cosmerearcanists$schedule(ScheduledTick<T> tick,Operation<Void> original){original.call(tick);BubbleWorldService.scheduled(tick);}
+    private void cosmerearcanists$schedule(ScheduledTick<T> tick,Operation<Void> original){var actual=BubbleWorldService.prepare(tick);original.call(actual);BubbleWorldService.scheduled(actual);}
     @WrapMethod(method="tick")
-    private void cosmerearcanists$localTime(long time,int maximum,BiConsumer<BlockPos,T> consumer,Operation<Void> original){BubbleWorldService.scheduledFrame(allContainers,nextTickForContainer,time,maximum,(limit)->original.call(time,limit,consumer));}
+    private void cosmerearcanists$localTime(long time,int maximum,BiConsumer<BlockPos,T> consumer,Operation<Void> original){BubbleWorldService.scheduledFrame(this,allContainers,nextTickForContainer,time,maximum,(limit)->original.call(time,limit,consumer));}
 }

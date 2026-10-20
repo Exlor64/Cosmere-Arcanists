@@ -24,9 +24,12 @@ public final class BubbleWorldService {
     private static final class Work{long frame=Long.MIN_VALUE;int count;}
     public static void levelTick(ServerLevel level,Runnable original){var before=LEVEL.get();LEVEL.set(level);try{original.run();}finally{if(before==null)LEVEL.remove();else LEVEL.set(before);}}
     private static boolean enabled(Object type){return type instanceof Block?BubbleConfig.SCHEDULED_BLOCKS.get():type instanceof Fluid&&BubbleConfig.SCHEDULED_FLUIDS.get();}
+    /** Extra local substeps must not accelerate ordinary zero-delay chains outside the sphere. */
+    public static <T> ScheduledTick<T> prepare(ScheduledTick<T> tick){var level=LEVEL.get();var time=SCHEDULER_TIME.get();if(level!=null&&time!=null&&tick.triggerTick()<=time&&(!enabled(tick.type())||Math.abs(BubbleService.worldRate(level,tick.pos())-1)<1e-6))return new ScheduledTick<>(tick.type(),tick.pos(),time+1,tick.priority(),tick.subTickOrder());return tick;}
+    private static <T> boolean enabledQueue(Object scheduler,ServerLevel level,Long2ObjectMap<LevelChunkTicks<T>> containers){if(scheduler==level.getBlockTicks())return BubbleConfig.SCHEDULED_BLOCKS.get();if(scheduler==level.getFluidTicks())return BubbleConfig.SCHEDULED_FLUIDS.get();for(var c:containers.values()){var q=((BubbleChunkTicksAccess<T>)(Object)c).cosmerearcanists$queue();if(!q.isEmpty())return enabled(q.peek().type());}return false;}
     public static void scheduled(ScheduledTick<?> tick){var level=LEVEL.get();if(level==null||!enabled(tick.type())||BubbleService.worldRate(level,tick.pos())==1)return;long time=SCHEDULER_TIME.get()==null?level.getGameTime():SCHEDULER_TIME.get();BUDGETS.put(tick,new Budget(Math.max(0,tick.triggerTick()-time),time,PHASE.get()));}
-    public static <T> void scheduledFrame(Long2ObjectMap<LevelChunkTicks<T>> containers,Long2LongMap next,long time,int maximum,IntConsumer original){
-        var level=LEVEL.get();if(level==null||(!BubbleConfig.SCHEDULED_BLOCKS.get()&&!BubbleConfig.SCHEDULED_FLUIDS.get())||BubbleService.bubbles(level).isEmpty()){original.accept(maximum);return;}
+    public static <T> void scheduledFrame(Object scheduler,Long2ObjectMap<LevelChunkTicks<T>> containers,Long2LongMap next,long time,int maximum,IntConsumer original){
+        var level=LEVEL.get();if(level==null||!enabledQueue(scheduler,level,containers)||BubbleService.bubbles(level).isEmpty()){original.accept(maximum);return;}
         int steps=BubbleConfig.MAX_STEPS.get(),previous=PHASE.get();var previousTime=SCHEDULER_TIME.get();SCHEDULER_TIME.set(time);try{for(int phase=0;phase<steps;phase++){PHASE.set(phase);retime(level,containers,next,time,phase,steps);original.accept(Math.max(1,maximum/steps));}}finally{PHASE.set(previous);if(previousTime==null)SCHEDULER_TIME.remove();else SCHEDULER_TIME.set(previousTime);}
     }
     /** Public for deterministic engine tests: executes exactly the same path used by the server-level mixin. */
