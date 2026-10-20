@@ -67,6 +67,8 @@ public final class PowerClient {
     private static String preview() { return snapshot.powers().isEmpty() ? "" : snapshot.powers().get(Math.floorMod(previewIndex, snapshot.powers().size())).power(); }
     private static int state(String power) { return snapshot.powers().stream().filter(e -> e.power().equals(power)).mapToInt(PowerNetwork.Entry::state).findFirst().orElse(0); }
     private static void send(int action, String power, int value) { PacketDistributor.sendToServer(new PowerNetwork.Control(action, power, value)); }
+    private static int storeLevels(String power){return snapshot.powers().stream().filter(e->e.power().equals(power)).mapToInt(PowerNetwork.Entry::storeLevels).findFirst().orElse(snapshot.levels());}
+    private static int tapLevels(String power){return snapshot.powers().stream().filter(e->e.power().equals(power)).mapToInt(PowerNetwork.Entry::tapLevels).findFirst().orElse(snapshot.levels());}
     private static boolean playing() { var mc = Minecraft.getInstance(); return mc.player != null && mc.level != null && mc.screen == null && mc.isWindowActive(); }
     @SubscribeEvent public void tick(ClientTickEvent.Post event) {
         var mc = Minecraft.getInstance(); clock++;
@@ -148,7 +150,7 @@ public final class PowerClient {
             scrolledSelect = true; event.setCanceled(true);
         } else if (STATE.isDown()) {
             if (!choosingState) { choosingState = true; stateTicks = 0; previewState = state(selected()); }
-            previewState = PowerRules.clamp(selected(), previewState + direction, snapshot.levels());
+            previewState = PowerRules.clamp(selected(),previewState+direction,storeLevels(selected()),tapLevels(selected()));
             scrolledState = true; event.setCanceled(true);
         } else {
             String emotional=APPLY.isDown()&&Emotion.power(selected())?selected():SECONDARY.isDown()&&Emotion.power(snapshot.secondary())?snapshot.secondary():"";

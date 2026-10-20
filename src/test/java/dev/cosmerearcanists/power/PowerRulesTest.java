@@ -30,6 +30,9 @@ class PowerRulesTest {
         assertEquals("Tapping 3", PowerRules.label("f:iron", 3));
         assertEquals("Off", PowerRules.label("f:iron", 0));
     }
+    @Test void asymmetricFeruchemyLimitsClampAndCycleWithoutChangingAllomancy(){
+        assertEquals(15,PowerRules.clamp("f:iron",100,5,15));assertEquals(-5,PowerRules.clamp("f:iron",-100,5,15));assertEquals(-5,PowerRules.next("f:iron",15,5,15));assertEquals(0,PowerRules.next("f:iron",-1,5,15));assertEquals(0,PowerRules.next("a:steel",3,5,15));
+    }
     @Test void onlyWorkingPowersClaimImplementedEffects() {
         for(String metal:new String[]{"iron","steel","tin","pewter","electrum","atium","bronze","copper","zinc","brass","aluminum","duralumin","chromium","nicrosil","gold","bendalloy","cadmium"})assertTrue(PowerRules.implemented("a:"+metal));
         assertTrue(PowerRules.implemented("f:iron"));assertFalse(PowerRules.implemented("f:cadmium"));

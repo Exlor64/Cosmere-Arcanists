@@ -14,6 +14,8 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 public final class IronFeruchemy {
     private static final ResourceLocation MODIFIER=ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,"feruchemical_iron_mass");
     public static boolean configured(){return PowerConfig.ENABLED.get()&&FeruchemyConfig.ENABLED.get()&&FeruchemyConfig.IRON.get()&&ServerConfig.FERUCHEMY.enabled().get()&&ServerConfig.FERUCHEMY.metals().get(Metal.IRON).get();}
+    public static int storeLevels(ServerPlayer p){return FeruchemyLevels.storeLevels(PowerAttributes.strength(p,"f:iron"),FeruchemyConfig.STORE_STEP.get(),FeruchemyConfig.STORE_PER_ATTRIBUTE.get(),FeruchemyConfig.MAX_STORE.get());}
+    public static int tapLevels(ServerPlayer p){return FeruchemyLevels.tapLevels(PowerAttributes.strength(p,"f:iron"),FeruchemyConfig.TAP_LEVELS_PER_ATTRIBUTE.get());}
     public static double massMultiplier(Entity e){if(!(e instanceof Player p)||!p.isAlive()||p.isSpectator())return 1;var instance=p.getAttribute(PowerAttributes.MASS);return instance==null?1:instance.getValue();}
     public static double allomanticMass(ServerPlayer p){return PowerConfig.PLAYER_MASS.get()*(FeruchemyConfig.MASS.get()?massMultiplier(p):1);}
     public static void mass(ServerPlayer p,double factor){var a=p.getAttribute(PowerAttributes.MASS);if(a==null)return;var old=a.getModifier(MODIFIER);double value=factor-1;if(old!=null&&Math.abs(old.amount()-value)<1e-10)return;a.removeModifier(MODIFIER);if(Math.abs(value)>1e-10)a.addTransientModifier(new AttributeModifier(MODIFIER,value,AttributeModifier.Operation.ADD_VALUE));}
@@ -23,7 +25,7 @@ public final class IronFeruchemy {
         double factor=1;int state=PowerData.state(p,"f:iron");double strength=PowerAttributes.strength(p,"f:iron");
         if(configured()&&p.isAlive()&&!p.isSpectator()&&state!=0&&strength>0){
             boolean storing=state<0;
-            double magnitude=storing?Math.min(FeruchemyConfig.MAX_STORE.get(),-state*FeruchemyConfig.STORE_STEP.get()*strength):Math.min(FeruchemyConfig.MAX_MASS.get()-1,state*FeruchemyConfig.TAP_STEP.get()*strength);
+            double magnitude=storing?FeruchemyLevels.storedFraction(strength,-state,FeruchemyConfig.STORE_STEP.get(),FeruchemyConfig.STORE_PER_ATTRIBUTE.get(),FeruchemyConfig.MAX_STORE.get()):FeruchemyLevels.extraMass(state,FeruchemyConfig.TAP_STEP.get(),FeruchemyConfig.MAX_MASS.get());
             double cost=storing?magnitude/20:magnitude*Math.pow(Math.max(1,magnitude),FeruchemyConfig.TAP_LOSS.get())/20;
             double moved=Metalminds.transferAccessible(p,"iron",storing?cost:-cost);
             if(cost>0&&Math.abs(moved)>0)factor=storing?1-Math.abs(moved)*20:1+magnitude*Math.min(1,Math.abs(moved)/cost);

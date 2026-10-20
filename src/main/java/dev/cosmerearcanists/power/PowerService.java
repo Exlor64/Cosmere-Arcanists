@@ -95,7 +95,7 @@ public final class PowerService {
             case 0 -> PowerData.assignSlot(p,packet.power(),0);
             case 6 -> PowerData.assignSlot(p,packet.power(),PowerData.secondary(p).equals(packet.power())?0:1);
             case 1 -> PowerData.state(p, packet.power(), packet.value());
-            case 3 -> PowerData.state(p, packet.power(), PowerRules.next(packet.power(), PowerData.state(p, packet.power()), PowerConfig.FERUCHEMY_LEVELS.get()));
+            case 3 -> PowerData.state(p, packet.power(), PowerRules.next(packet.power(),PowerData.state(p,packet.power()),PowerData.storeLevels(p,packet.power()),PowerData.tapLevels(p,packet.power())));
             default -> { return; }
         }
         PowerNetwork.sync(p, s.targets);EmotionService.sync(p);

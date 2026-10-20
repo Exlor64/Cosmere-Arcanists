@@ -14,7 +14,7 @@ public final class PowerConfig {
         b.push("controls");
         ENABLED = b.define("enabled", true);
         SECONDARY_ENABLED=b.define("secondaryActivation",true);
-        FERUCHEMY_LEVELS = b.comment("Maximum storing/tapping selector levels. Iron Feruchemy is implemented; other metals remain pending.").defineInRange("feruchemyLevels", 5, 1, 20);
+        FERUCHEMY_LEVELS = b.comment("Fallback storing/tapping levels for pending Feruchemy metals. Iron uses its own attribute-scaled per-player limits.").defineInRange("feruchemyLevels", 5, 1, 20);
         b.pop(); b.push("ironSteel");
         IRON_STEEL = b.define("enabled", true);
         RESIST_WALKING = b.comment("Remove vanilla walking acceleration opposing an active Allomantic impulse; retain sideways input and existing inertia.").define("preventWalkingAgainstForce", true);

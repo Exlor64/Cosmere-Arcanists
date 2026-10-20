@@ -54,9 +54,9 @@ public final class FeruchemyGameTests {
     }
     @GameTest(template="empty") public static void ironStoresLostMassAndTapsOnlyPreviouslyStoredCharge(GameTestHelper h){
         var p=player(h);var item=new ItemStack(Items.IRON_NUGGET);p.setItemInHand(InteractionHand.OFF_HAND,item);PowerData.state(p,"f:iron",-5);
-        for(int i=0;i<20;i++)IronFeruchemy.tick(p);h.assertTrue(Math.abs(Metalminds.charge(item)-.5)<1e-7&&Math.abs(IronFeruchemy.massMultiplier(p)-.5)<1e-7,"One second at half normal mass stores half a weight-second");
+        for(int i=0;i<20;i++)IronFeruchemy.tick(p);h.assertTrue(Math.abs(Metalminds.charge(item)-.3)<1e-7&&Math.abs(IronFeruchemy.massMultiplier(p)-.7)<1e-7,"One second at70percent normal mass stores0.3weight-seconds");
         h.assertTrue(SeekingService.signalsFor(p).stream().anyMatch(s->s.art().equals(dev.cosmerearcanists.investiture.InvestitureSignals.FERUCHEMY)),"Active storing emits a real Feruchemy signal");
-        PowerData.state(p,"f:iron",1);IronFeruchemy.tick(p);h.assertTrue(Math.abs(IronFeruchemy.massMultiplier(p)-1.5)<1e-7,"Tapping level1 adds half normal mass");for(int i=0;i<20;i++)IronFeruchemy.tick(p);
+        PowerData.state(p,"f:iron",1);IronFeruchemy.tick(p);h.assertTrue(Math.abs(IronFeruchemy.massMultiplier(p)-1.15)<1e-7,"Tapping level1 adds15percent of normal mass");for(int i=0;i<40;i++)IronFeruchemy.tick(p);
         h.assertTrue(Metalminds.charge(item)<1e-7&&PowerData.state(p,"f:iron")==0&&IronFeruchemy.massMultiplier(p)==1,"Depleted charge stops tapping and restores mass");h.succeed();
     }
     @GameTest(template="empty") public static void capacityAndPartialTapsNeverCreateFreeWeight(GameTestHelper h){
@@ -76,14 +76,25 @@ public final class FeruchemyGameTests {
         try{FeruchemyConfig.ENABLED.set(false);IronFeruchemy.tick(p);h.assertTrue(IronFeruchemy.massMultiplier(p)==1&&Metalminds.charge(item)==saved&&PowerAttributes.strength(p,"f:iron")==1,"Disabling removes transient effects and preserves charge and power attributes");}finally{FeruchemyConfig.ENABLED.set(enabled);}
         p.setItemInHand(InteractionHand.OFF_HAND,ItemStack.EMPTY);IronFeruchemy.tick(p);h.assertTrue(PowerData.state(p,"f:iron")==0&&Metalminds.charge(item)==saved,"Losing contact stops the power without destroying the item-owned reserve");h.succeed();
     }
+    @GameTest(template="empty") public static void ironFractionalAttributesBoundStatesAndSyncAsymmetricSelectorLimits(GameTestHelper h){
+        var p=player(h);var item=new ItemStack(Items.IRON_INGOT);p.setItemInHand(InteractionHand.OFF_HAND,item);
+        PowerAttributes.set(p,"f:iron",1.5);h.assertTrue(PowerData.storeLevels(p,"f:iron")==5&&PowerData.tapLevels(p,"f:iron")==15,"Attribute1.5 grants five storing steps with partial45percent maximum and15tap levels");
+        PowerData.state(p,"f:iron",-100);IronFeruchemy.tick(p);h.assertTrue(PowerData.state(p,"f:iron")==-5&&Math.abs(IronFeruchemy.massMultiplier(p)-.55)<1e-7,"Server bounds storing to45percent at attribute1.5");
+        Metalminds.transfer(item,p.getUUID(),"iron",100);PowerData.state(p,"f:iron",100);IronFeruchemy.tick(p);h.assertTrue(PowerData.state(p,"f:iron")==15&&Math.abs(IronFeruchemy.massMultiplier(p)-3.25)<1e-7,"Tap15 is225percent additional mass, without double-multiplying strength");
+        PowerAttributes.set(p,"f:iron",1);h.assertTrue(PowerData.state(p,"f:iron")==10,"Reducing the attribute clamps an existing state immediately");PowerAttributes.set(p,"f:iron",1.5);h.assertTrue(PowerData.state(p,"f:iron")==10,"An out-of-range raw state does not silently reactivate when strength returns");
+        var entry=new PowerNetwork.Entry("f:iron",15,Metalminds.charge(item),PowerData.storeLevels(p,"f:iron"),PowerData.tapLevels(p,"f:iron"));var packet=new PowerNetwork.Snapshot(p.level().dimension().location().toString(),"f:iron","",5,List.of(entry),List.of());
+        var b=new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(),h.getLevel().registryAccess());try{PowerNetwork.Snapshot.CODEC.encode(b,packet);h.assertTrue(PowerNetwork.Snapshot.CODEC.decode(b).equals(packet),"Per-power asymmetric selector limits round-trip to the client");}finally{b.release();}
+        PowerAttributes.set(p,"f:iron",4);PowerData.state(p,"f:iron",-100);IronFeruchemy.tick(p);h.assertTrue(Math.abs(IronFeruchemy.massMultiplier(p)-.05)<1e-7&&PowerData.state(p,"f:iron")==-10,"High-strength final storage level remains capped at95percent");
+        PowerData.state(p,"f:iron",40);IronFeruchemy.tick(p);h.assertTrue(Math.abs(IronFeruchemy.massMultiplier(p)-7)<1e-7,"Attribute4 unlocks40tap levels at fixed15percent per level");IronFeruchemy.mass(p,1);h.succeed();
+    }
     @GameTest(template="empty") public static void inventoryStorageAndTappingAreOptInAndNeverDoubleCountHeldItems(GameTestHelper h){
         var p=player(h);var single=new ItemStack(Items.IRON_NUGGET);var stack=new ItemStack(Items.IRON_INGOT,2);p.getInventory().items.set(2,single);p.getInventory().items.set(3,stack);boolean previous=FeruchemyConfig.INVENTORY.get();
         try{
             FeruchemyConfig.INVENTORY.set(false);PowerData.state(p,"f:iron",-5);IronFeruchemy.tick(p);h.assertTrue(!Metalminds.bound(single)&&IronFeruchemy.massMultiplier(p)==1,"Inventory-only items do not store by default");
-            FeruchemyConfig.INVENTORY.set(true);PowerData.state(p,"f:iron",-5);IronFeruchemy.tick(p);h.assertTrue(Math.abs(Metalminds.charge(single)-.025)<1e-7&&stack.getCount()==2&&!Metalminds.bound(stack),"Enabled inventory storage finds singletons without charging or splitting stacked denominations");
-            p.getInventory().selected=2;h.assertTrue(Math.abs(Metalminds.accessibleCharge(p,"iron")-.025)<1e-7,"Selected hotbar item is counted only once in held plus inventory access");IronFeruchemy.tick(p);h.assertTrue(Math.abs(Metalminds.charge(single)-.05)<1e-7,"One transfer budget applies even when the same item is reachable through two paths");
-            p.getInventory().selected=0;PowerData.state(p,"f:iron",1);IronFeruchemy.tick(p);h.assertTrue(Math.abs(Metalminds.charge(single)-.025)<1e-7&&Math.abs(IronFeruchemy.massMultiplier(p)-1.5)<1e-7,"Enabled inventory access also taps without holding the piece");
-            FeruchemyConfig.INVENTORY.set(false);IronFeruchemy.tick(p);h.assertTrue(PowerData.state(p,"f:iron")==0&&Metalminds.charge(single)>.02499&&IronFeruchemy.massMultiplier(p)==1,"Turning inventory access off stops effects and preserves stored charge");
+            FeruchemyConfig.INVENTORY.set(true);PowerData.state(p,"f:iron",-5);IronFeruchemy.tick(p);h.assertTrue(Math.abs(Metalminds.charge(single)-.015)<1e-7&&stack.getCount()==2&&!Metalminds.bound(stack),"Enabled inventory storage finds singletons without charging or splitting stacked denominations");
+            p.getInventory().selected=2;h.assertTrue(Math.abs(Metalminds.accessibleCharge(p,"iron")-.015)<1e-7,"Selected hotbar item is counted only once in held plus inventory access");IronFeruchemy.tick(p);h.assertTrue(Math.abs(Metalminds.charge(single)-.03)<1e-7,"One transfer budget applies even when the same item is reachable through two paths");
+            p.getInventory().selected=0;PowerData.state(p,"f:iron",1);IronFeruchemy.tick(p);h.assertTrue(Math.abs(Metalminds.charge(single)-.0225)<1e-7&&Math.abs(IronFeruchemy.massMultiplier(p)-1.15)<1e-7,"Enabled inventory access also taps without holding the piece");
+            FeruchemyConfig.INVENTORY.set(false);IronFeruchemy.tick(p);h.assertTrue(PowerData.state(p,"f:iron")==0&&Metalminds.charge(single)>.02249&&IronFeruchemy.massMultiplier(p)==1,"Turning inventory access off stops effects and preserves stored charge");
         }finally{FeruchemyConfig.INVENTORY.set(previous);IronFeruchemy.mass(p,1);}h.succeed();
     }
     @GameTest(template="empty") public static void configurableCuriosCountsUpdateSlotsAndPreserveDisplacedCharge(GameTestHelper h){

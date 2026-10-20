@@ -2,11 +2,14 @@ package dev.cosmerearcanists.power;
 
 /** Shared control rules. Feruchemy: negative stores, positive taps, zero off. */
 public final class PowerRules {
-    public static int clamp(String power, int state, int levels) {
-        return power.startsWith("a:") ? Math.max(0, Math.min(3, state)) : Math.max(-levels, Math.min(levels, state));
+    public static int clamp(String power,int state,int levels){return clamp(power,state,levels,levels);}
+    public static int clamp(String power,int state,int storeLevels,int tapLevels){
+        return power.startsWith("a:")?Math.max(0,Math.min(3,state)):Math.max(-storeLevels,Math.min(tapLevels,state));
     }
-    public static int next(String power, int state, int levels) {
-        return power.startsWith("a:") ? (clamp(power, state, levels) + 1) % 4 : state >= levels ? -levels : state + 1;
+    public static int next(String power,int state,int levels){return next(power,state,levels,levels);}
+    public static int next(String power,int state,int storeLevels,int tapLevels){
+        int current=clamp(power,state,storeLevels,tapLevels);
+        return power.startsWith("a:")?(current+1)%4:current>=tapLevels?-storeLevels:current+1;
     }
     public static String label(String power, int state) {
         if (state == 0) return "Off";

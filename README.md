@@ -1223,14 +1223,23 @@ Existing nugget/ingot/block denominations use the same storage foundation.
 | Necklace | 1matching ingot+1string | 5,400 weight-seconds |
 | Storage-block item | Existing block item | 48,600 weight-seconds |
 
-At attribute1, Storing1 removes10% mass, through Storing5 removing50%. Tapping1
-adds50% mass; Tapping5 gives3.5times normal mass. Higher attributes increase the
-effect, capped at90% stored and20times tapped mass by default. One second spent
-storing half your mass gives0.5weight-seconds. Tapping faster than one extra
-normal mass incurs configurable compression loss. Partial charge gives only
-the effect actually paid for; missing contact, full storage or depletion stops
-the power. Power selection can change while the storing/tapping state remains
-active, as with Allomancy.
+At attribute1, Storing1 removes10% mass, through Storing3 removing30%.
+Maximum storage is30% per attribute point, capped at95% for every Feruchemical
+attribute. Fractional attributes count: attribute1.5 allows45% storage. The
+last10% selector step becomes partial when necessary (Storing5 at strength1.5
+stores45%, and Storing10 at strength4 stores95%).
+
+Each tap level adds15% of normal mass. Maximum tap level is
+`floor(10 * attribute)`: attribute1 permits Tapping10 (2.5times total mass),
+attribute1.5 permits Tapping15 (3.25times), and attribute2 permits Tapping20
+(4times). Attribute increases the level limit, without multiplying the15%
+per-level effect again. Higher levels still require sufficient stored charge.
+
+One second spent storing30% of your mass gives0.3weight-seconds. Tapping faster
+than one extra normal mass incurs configurable compression loss. Partial
+charge gives only the effect actually paid for; missing contact, full storage
+or depletion stops the power. Power selection can change while the
+storing/tapping state remains active, as with Allomancy.
 
 Mass affects iron/steel acceleration and recoil (including other players
 pushing/pulling you), metal-shot/ball recoil, and vanilla knockback. Lighter
@@ -1280,3 +1289,19 @@ other mods/datapacks can still provide additional slots. All functional
 matching slots can participate. Curios returns displaced functional items;
 this mod also preserves displaced cosmetics, giving them to the inventory or
 dropping them if there is no room. Charges and ownership remain intact.
+
+### Attribute-scaled Feruchemy levels (0.29.2)
+
+The Feruchemy server config exposes `ironStorageFractionPerAttribute` (0.30),
+`ironTapLevelsPerAttribute` (10), `ironTapWeightPerLevel` (0.15), and
+`maximumStoredAttributeFraction` (0.95, cannot exceed0.95). The existing
+`ironStoreFractionPerLevel` (0.10) controls storing increments.
+`ironTapMassCap` defaults to10,000times mass; it replaces the old20times cap so
+higher attributes can use their unlocked levels. New tap-step, storage-cap, and
+mass-cap keys supersede the0.29.0 defaults in existing configs. Saved charge
+and identity are unchanged.
+
+The selector receives separate storing/tapping limits for each power. Server
+validation enforces the same limits and clamps an active state when the
+attribute drops. Other Feruchemy powers remain pending. **Protocol19 requires
+matching0.29.2 client/server versions.**

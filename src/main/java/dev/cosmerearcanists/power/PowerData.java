@@ -70,10 +70,14 @@ public final class PowerData {
         }
         return true;
     }
-    public static int state(ServerPlayer p, String power) { return PowerRules.clamp(power, data(p).getCompound("states").getInt(power), PowerConfig.FERUCHEMY_LEVELS.get()); }
-    public static void state(ServerPlayer p, String power, int state) {
-        var d = data(p); var states = d.getCompound("states");
-        states.putInt(power, PowerRules.clamp(power, state, PowerConfig.FERUCHEMY_LEVELS.get())); d.put("states", states);
+    public static int storeLevels(ServerPlayer p,String power){return power.equals("f:iron")?dev.cosmerearcanists.feruchemy.IronFeruchemy.storeLevels(p):PowerConfig.FERUCHEMY_LEVELS.get();}
+    public static int tapLevels(ServerPlayer p,String power){return power.equals("f:iron")?dev.cosmerearcanists.feruchemy.IronFeruchemy.tapLevels(p):PowerConfig.FERUCHEMY_LEVELS.get();}
+    public static int state(ServerPlayer p,String power){
+        var d=data(p);var states=d.getCompound("states");int raw=states.getInt(power),value=PowerRules.clamp(power,raw,storeLevels(p,power),tapLevels(p,power));
+        if(value!=raw){states.putInt(power,value);d.put("states",states);}return value;
+    }
+    public static void state(ServerPlayer p,String power,int state){
+        var d=data(p);var states=d.getCompound("states");states.putInt(power,PowerRules.clamp(power,state,storeLevels(p,power),tapLevels(p,power)));d.put("states",states);
     }
     public static double reserve(ServerPlayer p, String metal) { return Math.max(0, Math.min(PowerConfig.RESERVE_CAP.get(), data(p).getCompound("reserves").getDouble(metal))); }
     public static void reserve(ServerPlayer p, String metal, double amount) {
