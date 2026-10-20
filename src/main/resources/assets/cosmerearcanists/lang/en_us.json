@@ -181,5 +181,6 @@
   "item.cosmerearcanists.bendalloy_metalmind_ring": "Bendalloy Metalmind Ring",
   "item.cosmerearcanists.bendalloy_metalmind_bracelet": "Bendalloy Metalmind Bracelet",
   "item.cosmerearcanists.bendalloy_metalmind_necklace": "Bendalloy Metalmind Necklace",
-  "attribute.cosmerearcanists.physical_mass_multiplier": "Physical Mass Multiplier"
+  "attribute.cosmerearcanists.physical_mass_multiplier": "Physical Mass Multiplier",
+  "attribute.cosmerearcanists.physical_strength_multiplier": "Physical strength multiplier"
 }

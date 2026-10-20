@@ -50,7 +50,7 @@ Ores require an iron-tier pickaxe, support Silk Touch/Fortune, and smelt/blast i
 The Cosmere Metals creative tab contains the new materials. Textures are initial distinct pixel palettes. `cosmerearcanists:metals` and `cosmerearcanists:aluminum_containing` item tags seed iron/steel detection. Duralumin is included in the aluminum exclusion tag.
 
 ## Iron/steel and power controls (0.3.0)
-All sixteen ordinary Allomantic metals and atium-electrum alloy are implemented. Feruchemical iron and steel support item-owned metalmind storage/tapping. Other assigned Feruchemy powers appear in the selector with **effects pending**.
+All sixteen ordinary Allomantic metals and atium-electrum alloy are implemented. Feruchemical iron, steel and pewter support item-owned metalmind storage/tapping. Other assigned Feruchemy powers appear in the selector with **effects pending**.
 
 Default keys (all rebindable):
 - Hold **R**, scroll to a power, then release R to select it. Tap R to cycle that power's state. Left-click while the menu is open also cycles the highlighted power's state.
@@ -1213,7 +1213,7 @@ identity and cannot be recycled by crafting, filing, smelting, or placement.
 Charge belongs to the item, survives saving, and is not an Allomantic reserve.
 
 All16ordinary metals have ring, bracelet and necklace items; their effects are
-implemented as each Feruchemical metal is added. **Iron and steel are active.**
+implemented as each Feruchemical metal is added. **Iron, steel and pewter are active.**
 Existing nugget/ingot/block denominations use the same storage foundation.
 
 | Metalmind form | Crafting material | Default capacity |
@@ -1349,3 +1349,28 @@ Settings in `cosmerearcanists-feruchemy-server.toml`: `steel`,
 `steelMaximumSpeedMultiplier` and `steelTapCompressionExponent`.
 Higher speed still carries normal collision/fall risks; jumping, bow charging,
 nonconsumable item-use duration and mob/world clocks are unchanged. Protocol19 is unchanged.
+
+### Feruchemical pewter (0.31.0)
+Pewterminds now store strength: storing weakens melee damage, tapping increases it.
+Defaults match iron/steel:30% storage per attribute point (95% ceiling),10tap
+levels per attribute point and15% extra strength per tap level. Strength-seconds
+are conserved; fast tapping uses configurable compression loss. Existing singleton
+pewter denominations and jewelry, ownership, Curios, optional inventory access and
+idle-storage protection apply. The HUD shows stored charge and strength percentage.
+Tapping broadens the player skin and outer clothing to suggest muscle growth;
+storing makes them thinner. This visual does not enlarge collision bounds or height.
+High bulk slows movement starting above3x strength (4% per excess multiplier,
+maximum50% penalty); these effects compose with Allomantic pewter and steel.
+While tapping, **hold the activation button assigned to Feruchemical pewter and jump**
+for enhanced jumps. Hold a movement direction as well to leap that way. Both scale
+with actually funded tapping, are capped, and require held primary or secondary
+activation. Holding alone does not launch the player or grant flight. Releasing
+activation restores ordinary jumping while retaining passive tapping strength.
+Normal collision and fall damage remain. Jump velocity defaults to sqrt(1+.8*extra
+strength), maximum2.5x; leap adds .3*sqrt(extra strength), capped1.2blocks/tick.
+Server config includes `pewter`, storage/tap rates/limits/compression,
+`pewterBulkSlowdown` and threshold/rate/cap, `pewterMuscleVisuals`,
+`pewterEnhancedJumps` and jump/leap rates/caps. Disable, death, dimension, logout,
+respawn or loss of contact clears transient effects without deleting stored charge.
+Protocol19 unchanged. Custom armor/player renderers may need visual compatibility
+work; only vanilla player skin/outer clothing muscle rendering is implemented.

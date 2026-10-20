@@ -20,6 +20,7 @@ public final class PowerAttributes {
     private static final DeferredRegister<Attribute> REGISTER = DeferredRegister.create(Registries.ATTRIBUTE, CosmereArcanists.MOD_ID);
     private static final Map<String, DeferredHolder<Attribute, Attribute>> POWERS = new LinkedHashMap<>();
     public static final DeferredHolder<Attribute,Attribute> MASS=REGISTER.register("physical_mass_multiplier",()->new RangedAttribute("attribute.cosmerearcanists.physical_mass_multiplier",1,.01,1000000).setSyncable(true));
+    public static final DeferredHolder<Attribute,Attribute> PHYSICAL_STRENGTH=REGISTER.register("physical_strength_multiplier",()->new RangedAttribute("attribute.cosmerearcanists.physical_strength_multiplier",1,.01,1000).setSyncable(true));
     private static final String MIGRATED = "attributes_migrated";
     static {
         for (String art : new String[]{"a", "f"}) for (Metal metal : Metal.values()) {
@@ -36,7 +37,7 @@ public final class PowerAttributes {
     }
     private static void addToPlayers(EntityAttributeModificationEvent event) {
         POWERS.values().forEach(attribute -> event.add(EntityType.PLAYER, attribute));
-        event.add(EntityType.PLAYER,MASS);
+        event.add(EntityType.PLAYER,MASS);event.add(EntityType.PLAYER,PHYSICAL_STRENGTH);
     }
     public static java.util.Set<String> keys() { return java.util.Collections.unmodifiableSet(POWERS.keySet()); }
     public static double strength(ServerPlayer player, String power) {
