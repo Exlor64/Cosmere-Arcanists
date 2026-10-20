@@ -18,7 +18,11 @@ public final class IronFeruchemy {
     public static int tapLevels(ServerPlayer p){return FeruchemyLevels.tapLevels(PowerAttributes.strength(p,"f:iron"),FeruchemyConfig.TAP_LEVELS_PER_ATTRIBUTE.get());}
     public static double massMultiplier(Entity e){if(!(e instanceof Player p)||!p.isAlive()||p.isSpectator())return 1;var instance=p.getAttribute(PowerAttributes.MASS);return instance==null?1:instance.getValue();}
     public static double allomanticMass(ServerPlayer p){return PowerConfig.PLAYER_MASS.get()*(FeruchemyConfig.MASS.get()?massMultiplier(p):1);}
-    public static void mass(ServerPlayer p,double factor){var a=p.getAttribute(PowerAttributes.MASS);if(a==null)return;var old=a.getModifier(MODIFIER);double value=factor-1;if(old!=null&&Math.abs(old.amount()-value)<1e-10)return;a.removeModifier(MODIFIER);if(Math.abs(value)>1e-10)a.addTransientModifier(new AttributeModifier(MODIFIER,value,AttributeModifier.Operation.ADD_VALUE));}
+    public static void mass(ServerPlayer p,double factor){
+        var gravity=p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.GRAVITY);
+        if(gravity!=null){double amount=FeruchemyConfig.IRON_GRAVITY.get()?factor-1:0;var old=gravity.getModifier(MODIFIER);if(old==null||Math.abs(old.amount()-amount)>1e-10){gravity.removeModifier(MODIFIER);if(Math.abs(amount)>1e-10)gravity.addTransientModifier(new AttributeModifier(MODIFIER,amount,AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));}}
+        var a=p.getAttribute(PowerAttributes.MASS);if(a==null)return;var old=a.getModifier(MODIFIER);double value=factor-1;if(old!=null&&Math.abs(old.amount()-value)<1e-10)return;a.removeModifier(MODIFIER);if(Math.abs(value)>1e-10)a.addTransientModifier(new AttributeModifier(MODIFIER,value,AttributeModifier.Operation.ADD_VALUE));
+    }
     public static double strength(ServerPlayer p){return configured()&&p.isAlive()&&!p.isSpectator()&&PowerData.state(p,"f:iron")!=0&&Math.abs(massMultiplier(p)-1)>1e-8?PowerAttributes.strength(p,"f:iron")*Math.abs(massMultiplier(p)-1):0;}
     /** Actual paid mass bounds the combat benefit, including partially funded final ticks. */
     public static double combatLevels(Entity entity){
@@ -47,7 +51,7 @@ public final class IronFeruchemy {
         }
         mass(p,factor);
     }
-    @SubscribeEvent public void fall(LivingFallEvent event){double mass=massMultiplier(event.getEntity());if(FeruchemyConfig.FALL.get()&&mass<1)event.setDamageMultiplier((float)(event.getDamageMultiplier()*mass));}
+    @SubscribeEvent public void fall(LivingFallEvent event){double mass=massMultiplier(event.getEntity());if(FeruchemyConfig.FALL.get()&&mass<1)event.setDamageMultiplier((float)(event.getDamageMultiplier()*(mass<=FeruchemyConfig.NO_FALL_MASS.get()+1e-9?0:Math.clamp((mass-FeruchemyConfig.NO_FALL_MASS.get())/(1-FeruchemyConfig.NO_FALL_MASS.get()),0,1))));}
     @SubscribeEvent public void death(LivingDeathEvent event){if(event.getEntity() instanceof ServerPlayer p)mass(p,1);}
     @SubscribeEvent public void logout(PlayerEvent.PlayerLoggedOutEvent event){if(event.getEntity() instanceof ServerPlayer p){mass(p,1);PowerData.state(p,"f:iron",0);}}
     @SubscribeEvent public void dimension(PlayerEvent.PlayerChangedDimensionEvent event){if(event.getEntity() instanceof ServerPlayer p){mass(p,1);PowerData.state(p,"f:iron",0);}}

@@ -192,9 +192,10 @@ the server has a fresh held-activation input. Burning alone, activating another
 power, a brief released tap, and expired hold inputs leave ordinary drops.
 Inventory drops also require that held activation; opening a GUI normally
 releases activation.
-With **Alt held before G**, Q instead drops metal straight down at your feet as
-an ordinary item, without projectile damage, launch recoil, or shot reserve
-cost. This uses the latched alternate mode; release G before switching modes.
+With **Alt held before G**, Q fires boxings and clips straight down at your feet,
+using normal shot fuel and recoil. Other metals drop as ordinary items without
+projectile damage, launch recoil, or shot reserve cost. This uses the latched
+alternate mode; release G before switching modes.
 Nonmetal and aluminum-containing drops remain ordinary items. Steel must be
 available/enabled, with enough reserves when consumption is enabled. The shot
 uses normal power attributes and Low burn/Burning/Flaring multipliers.
@@ -265,7 +266,7 @@ V continues to change the primary power's state; use menu left-click to cycle
 secondary's state. Assignments persist through respawn/save/reconnect.
 
 Steel throws use whichever key has steel assigned: normal held G or H + Q
-fires; Alt before that key + Q drops downward. The other key cannot authorize
+fires; Alt before that key + Q fires coins downward and drops other metal downward. The other key cannot authorize
 a steel shot. Separate hold heartbeats/release and lifecycle cleanup apply.
 Set `controls.secondaryActivation = false` to disable the secondary slot
 without deleting its saved assignment. Both sides must update: protocol 4.
@@ -1243,8 +1244,8 @@ storing/tapping state remains active, as with Allomancy.
 
 Mass affects iron/steel acceleration and recoil (including other players
 pushing/pulling you), metal-shot/ball recoil, and vanilla knockback. Lighter
-bodies have more air resistance and reduced fall impacts. Gravitational
-acceleration stays the same; extra mass grants a tapping bonus only to falling critical hits. Precise
+bodies have more air resistance and reduced fall impacts. Native
+gravity scales with funded mass as of0.37.2; extra mass also grants a tapping bonus to falling critical hits. Precise
 momentum changes and structural block crushing are future work.
 
 **Optional Curios compatibility:** install Curios API9.5.1+1.21.1 on client and
@@ -1461,10 +1462,13 @@ Storing reduces fire-tagged damage by20% per actual full storing level: level5
 gives complete fire immunity, including lava damage. Attribute1.5 can only store
 45% (4.5 effective levels), giving90% resistance even when selecting storing5.
 The reduction requires successful storage into a brassmind with room; merely
-having the attribute or selecting a level is insufficient. Storing also slows
-movement by30% of the stored fraction. After140 accumulated stored-fraction
-ticks of cold exposure, freezing deals2 times the stored fraction in health
-damage every two seconds. Stopping clears this power's cold penalties.
+having the attribute or selecting a level is insufficient. As of0.37.2, storing slowly raises vanilla's freezing meter instead of applying
+separate cold damage or an immediate movement penalty. The default rate is
+0.05frozen ticks per tick times the actual stored fraction:30% storage takes
+about7minutes47seconds to reach the normal140-tick freezing threshold. Native
+frost slowdown and damage then follow normal powder-snow rules, including leather
+freezing protection. Stopping storage allows normal thawing; tapping warmth clears
+the buildup immediately.
 
 Tapping any funded level of warmth passively clears freezing buildup and frost
 slowdown, prevents new freezing, and completely blocks freezing-tagged damage.
@@ -1635,3 +1639,51 @@ The warning is an actual scene-sampling blur and uses one reusable framebuffer,
 allocated only when needed and resized with the game window. Post-processing/shader
 pack compatibility requires in-game testing. **Network protocol22** requires matching
 client/server versions; existing power attributes and item charge need no migration.
+
+
+### Gentle brass freezing and iron gravity/fall safety (0.37.2)
+
+Brass storage now adds **slow native freezing buildup**, with no direct cold hits
+or independent instant slowdown. `brassFreezingTicksPerTickAtFullStorage` defaults
+to0.05 and scales by the actual funded stored fraction. Outside powder snow,
+ordinary thaw is paused only while actively storing warmth and able to freeze;
+turning off, losing contact/capacity, disabling cold penalties or wearing
+freeze-protective leather allows vanilla thawing. Vanilla freezing handles its
+own meter, visual overlay, movement penalty and eventual damage. The previous
+`brassMovementPenaltyPerStoredFraction` and `brassColdDamagePerStoredFraction`
+settings are removed; existing charge is preserved.
+
+Feruchemical iron now multiplies the native **gravity attribute** by its actual
+funded mass factor.70% mass gives70% normal gravity; tap10 gives2.5x gravity.
+The modifier composes with custom base gravity, time bubbles and independent mod
+modifiers, and clears on stopping/depletion/death/logout/dimension/clone/disable.
+`ironAffectsGravity` independently controls this behavior, defaulttrue. Native
+gravity attribute limits still apply; base values are never overwritten.
+
+Fall damage smoothly reaches **zero at30% mass**, and remains zero below that.
+Above30% and below100%, the multiplier is `(massFraction - 0.30) / 0.70`:
+50% mass takes about28.6% normal fall damage, while100% mass takes normal damage.
+The threshold is configurable with `ironNoFallDamageMassFraction` (default0.30);
+`reduceLightweightFallDamage` retains its existing independent toggle. Iron still
+requires sufficient power strength and a metalmind with capacity to actually
+reach the selected storage fraction. No packet change; protocol22 remains current.
+
+
+### Downward boxing and clip coinshots (0.37.3)
+
+While burning steel, hold **Alt before steel's assigned activation button**
+(primary G or secondary H by default), then press **Q** to drop a held boxing or
+clip. Both coins fire vertically downward from your feet, independent of your aim.
+They use the same strength, stack mass, damage, fuel cost and recoil rules as
+normal steel shots. Recoil pushes upward; impact embeds the coin as a steel anchor,
+with the existing arrow-style pickup and iron-pull recovery behavior. Exact dropped
+coin counts and item components are preserved. No currency is created.
+
+Other metals retain ordinary downward drops in alternate mode. Normal steel
+activation plus Q still shoots along your aim. Both
+`steelProjectiles.alternateDropDownwards` and the new default-on
+`steelProjectiles.alternateCoinProjectiles` must be enabled for downward coin fire.
+Without sufficient fuel, the coin remains an ordinary dropped item. Steel must be
+active, burning and assigned to the held activation slot; the existing heartbeat
+expiry, aluminum exclusion and server validation continue to apply.
+No packet change; protocol22 remains current.

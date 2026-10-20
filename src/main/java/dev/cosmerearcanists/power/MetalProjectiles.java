@@ -20,12 +20,14 @@ public final class MetalProjectiles {
         if(!PowerConfig.STEEL_PROJECTILES.get() || !PowerConfig.IRON_STEEL.get() || !player.isAlive() || player.isSpectator()
             || !PowerService.holdingAbility(player,"a:steel") || !PowerData.available(player).contains("a:steel") || PowerData.state(player,"a:steel")==0)return null;
         double units=MetalAmounts.units(player.server,dropped.getItem()); if(units<=0)return null;
-        if(PowerService.holdingAlternateAbility(player,"a:steel")) {
+        boolean alternate=PowerService.holdingAlternateAbility(player,"a:steel");
+        boolean downwardCoin=alternate&&PowerConfig.ALTERNATE_DROP_DOWN.get()&&PowerConfig.ALTERNATE_COIN_SHOTS.get()&&dev.cosmerearcanists.currency.Coins.coin(dropped.getItem());
+        if(alternate) {
             if(PowerConfig.ALTERNATE_DROP_DOWN.get()) {
                 dropped.setPos(player.getX(),player.getY()+.2,player.getZ());
                 dropped.setDeltaMovement(0,-.1,0);
             }
-            return null; // Keep the original stack, pickup delay and ownership; no shot fuel or recoil.
+            if(!downwardCoin)return null; // Other alternate drops retain their ordinary item behavior.
         }
         double cost=PowerConfig.reserveCost(PowerConfig.PROJECTILE_RESERVE_COST.get());
         if(PowerConfig.CONSUMPTION.get() && PowerData.reserve(player,"steel")<cost)return null;
@@ -34,8 +36,8 @@ public final class MetalProjectiles {
         double speed=MetalProjectilePhysics.speed(units,power,PowerConfig.NUGGET_SPEED.get(),PowerConfig.PROJECTILE_MAX_SPEED.get());
         if(speed<=0)return null;
         var projectile=new SteelProjectile(STEEL.get(),player.level());
-        projectile.setOwner(player); projectile.setPos(player.getX(),player.getEyeY()-.1,player.getZ());
-        projectile.cargo(dropped.getItem(),units); Vec3 direction=player.getLookAngle().normalize();
+        projectile.setOwner(player); projectile.setPos(player.getX(),downwardCoin?player.getY()+.2:player.getEyeY()-.1,player.getZ());
+        projectile.cargo(dropped.getItem(),units); Vec3 direction=downwardCoin?new Vec3(0,-1,0):player.getLookAngle().normalize();
         projectile.setDeltaMovement(direction.scale(speed));
         if(!player.serverLevel().addFreshEntity(projectile))return null;
         if(PowerConfig.CONSUMPTION.get())PowerData.reserve(player,"steel",PowerData.reserve(player,"steel")-cost);

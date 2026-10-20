@@ -22,7 +22,7 @@ public final class BrassFeruchemy {
     public static final ResourceKey<DamageType> OVERHEAT=ResourceKey.create(Registries.DAMAGE_TYPE,ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,"brass_overheat"));
     // Transient: saved/relogged players never inherit an unpaid effect or old damage clock.
     private static final Map<ServerPlayer,Status> ACTIVE=new WeakHashMap<>();
-    private record Status(double factor,double cold,int coldTicks,int hotTicks,double heatDamage){}
+    private record Status(double factor,double cold,int hotTicks,double heatDamage){}
     public static boolean configured(){return PowerConfig.ENABLED.get()&&FeruchemyConfig.ENABLED.get()&&FeruchemyConfig.BRASS.get()&&ServerConfig.FERUCHEMY.enabled().get()&&ServerConfig.FERUCHEMY.metals().get(Metal.BRASS).get();}
     public static int storeLevels(ServerPlayer p){return FeruchemyLevels.storeLevels(PowerAttributes.strength(p,"f:brass"),FeruchemyConfig.BRASS_STORE_STEP.get(),FeruchemyConfig.BRASS_STORE_PER_ATTRIBUTE.get(),FeruchemyConfig.MAX_STORE.get());}
     public static int tapLevels(ServerPlayer p){return FeruchemyLevels.tapLevels(PowerAttributes.strength(p,"f:brass"),FeruchemyConfig.BRASS_TAP_LEVELS.get());}
@@ -31,8 +31,10 @@ public final class BrassFeruchemy {
     public static double fireReduction(ServerPlayer p){return FeruchemyConfig.BRASS_FIRE.get()?Math.clamp(-levels(p)/FeruchemyConfig.BRASS_IMMUNE_LEVEL.get(),0,1):0;}
     public static boolean warm(ServerPlayer p){return FeruchemyConfig.BRASS_WARMTH.get()&&levels(p)>0;}
     public static double excessHeat(ServerPlayer p){return Math.max(0,levels(p)-FeruchemyConfig.BRASS_HOT_LEVEL.get()-1e-9);}
-    private static void slow(ServerPlayer p,double fraction){var a=p.getAttribute(Attributes.MOVEMENT_SPEED);if(a==null)return;double amount=-Math.min(.95,fraction*FeruchemyConfig.BRASS_SLOW.get());var old=a.getModifier(SLOW);if(old!=null&&Math.abs(old.amount()-amount)<1e-10)return;a.removeModifier(SLOW);if(amount<0)a.addTransientModifier(new AttributeModifier(SLOW,amount,AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));}
-    public static void clear(ServerPlayer p){ACTIVE.remove(p);BrassHands.clear(p);slow(p,0);}
+    /** Preserve native frost buildup against ordinary thaw only while actively storing funded warmth. */
+    public static boolean storingCold(ServerPlayer p){return FeruchemyConfig.BRASS_COLD.get()&&FeruchemyConfig.BRASS_FREEZE_RATE.get()>0&&levels(p)<0;}
+    private static void removeLegacySlow(ServerPlayer p){var a=p.getAttribute(Attributes.MOVEMENT_SPEED);if(a!=null)a.removeModifier(SLOW);}
+    public static void clear(ServerPlayer p){ACTIVE.remove(p);BrassHands.clear(p);removeLegacySlow(p);}
     public static void tick(ServerPlayer p){
         int state=PowerData.state(p,"f:brass");double attribute=PowerAttributes.strength(p,"f:brass");
         if(!configured()||!p.isAlive()||p.isSpectator()||state==0||attribute<=0){clear(p);return;}
@@ -42,15 +44,15 @@ public final class BrassFeruchemy {
         double moved=Metalminds.transferAccessible(p,"brass",storing?cost:-cost),paid=cost>0?Math.min(1,Math.abs(moved)/cost):0;
         if(paid<=0){PowerData.state(p,"f:brass",0);clear(p);return;}
         double actual=magnitude*paid,factor=storing?1-actual:1+actual;
-        var previous=ACTIVE.get(p);double cold=storing&&FeruchemyConfig.BRASS_COLD.get()?(previous==null?0:previous.cold())+actual:0;
-        int coldTicks=cold>=140?(previous==null?0:previous.coldTicks())+1:0;
+        var previous=ACTIVE.get(p);double cold=storing&&FeruchemyConfig.BRASS_COLD.get()&&p.canFreeze()?(previous==null?0:previous.cold())+actual*FeruchemyConfig.BRASS_FREEZE_RATE.get():0;
+        int frozenTicks=(int)Math.floor(cold+1e-9);
         double excess=storing?0:Math.max(0,actual/FeruchemyConfig.BRASS_TAP_STEP.get()-FeruchemyConfig.BRASS_HOT_LEVEL.get()-1e-9);
         boolean hot=excess>0&&FeruchemyConfig.BRASS_OVERHEAT.get();int hotTicks=hot?(previous==null?0:previous.hotTicks())+1:0;
         double damage=hot?(previous==null?0:previous.heatDamage())+excess*FeruchemyConfig.BRASS_SELF_DAMAGE.get()/20:0;
-        ACTIVE.put(p,new Status(factor,Math.min(140,cold),coldTicks%40,hotTicks%20,hotTicks>=20?0:damage));
-        slow(p,storing&&FeruchemyConfig.BRASS_COLD.get()?actual:0);
+        ACTIVE.put(p,new Status(factor,Math.max(0,cold-frozenTicks),hotTicks%20,hotTicks>=20?0:damage));
+        removeLegacySlow(p);
+        if(frozenTicks>0)p.setTicksFrozen(Math.min(p.getTicksRequiredToFreeze(),p.getTicksFrozen()+frozenTicks));
         if(!storing&&warm(p)){p.setTicksFrozen(0);var movement=p.getAttribute(Attributes.MOVEMENT_SPEED);if(movement!=null)movement.removeModifier(ResourceLocation.withDefaultNamespace("powder_snow"));}
-        if(coldTicks>=40)p.hurt(p.damageSources().freeze(),(float)(actual*FeruchemyConfig.BRASS_COLD_DAMAGE.get()));
         if(hotTicks>=20&&damage>0)p.hurt(new DamageSource(p.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(OVERHEAT)),(float)Math.min(1000,damage));
         if(paid<1-1e-9)PowerData.state(p,"f:brass",0);
         BrassHands.tick(p);

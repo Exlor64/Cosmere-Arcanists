@@ -7,6 +7,12 @@ import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(LivingEntity.class)
 public abstract class FeruchemyMotionMixin {
+    @com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation(method="aiStep",at=@At(value="INVOKE",target="Lnet/minecraft/world/entity/LivingEntity;setTicksFrozen(I)V"))
+    private void cosmerearcanists$storedWarmthStopsThaw(LivingEntity entity,int ticks,com.llamalad7.mixinextras.injector.wrapoperation.Operation<Void> original){
+        if(entity instanceof net.minecraft.server.level.ServerPlayer p&&ticks<p.getTicksFrozen()&&p.canFreeze()&&BrassFeruchemy.storingCold(p))return;
+        original.call(entity,ticks);
+    }
+
     @Inject(method="canFreeze",at=@At("HEAD"),cancellable=true)
     private void cosmerearcanists$warmthPreventsFreezing(org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Boolean> ci){if((Object)this instanceof net.minecraft.server.level.ServerPlayer p&&BrassFeruchemy.warm(p))ci.setReturnValue(false);}
 

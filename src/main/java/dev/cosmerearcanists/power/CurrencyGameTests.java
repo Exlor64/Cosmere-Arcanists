@@ -54,4 +54,28 @@ public final class CurrencyGameTests {
     @GameTest(template="empty") public static void currencyScopeConfigurationAndDisabledTradeDataArePreserved(GameTestHelper h){
         var v=villager(h);var offer=new MerchantOffer(new ItemCost(Items.EMERALD),new ItemStack(Items.BREAD),16,1,.05f);v.getOffers().add(offer);boolean all=CurrencyConfig.ALL_VILLAGERS.get(),trades=CurrencyConfig.TRADES.get();try{CurrencyConfig.TRADES.set(false);v.addTag(CurrencyTrades.SCADRIAN);h.assertTrue(v.getOffers().getFirst()==offer,"Disabled trade conversion leaves original saved offers intact");CurrencyConfig.TRADES.set(true);h.assertTrue(v.getOffers().getFirst().getBaseCostA().is(ModMetals.CLIP.get()),"Re-enabling converts marked villagers");CurrencyConfig.TRADES.set(false);h.assertTrue(v.getOffers().getFirst().getBaseCostA().is(ModMetals.CLIP.get()),"Disabling never deletes existing currency trades");CurrencyConfig.TRADES.set(true);CurrencyConfig.ALL_VILLAGERS.set(true);var world=villager(h);world.getOffers().add(new MerchantOffer(new ItemCost(Items.EMERALD),new ItemStack(Items.BREAD),16,1,.05f));h.assertTrue(world.getOffers().getFirst().getBaseCostA().is(ModMetals.CLIP.get()),"Configuration can opt ordinary dimensions into currency");}finally{CurrencyConfig.ALL_VILLAGERS.set(all);CurrencyConfig.TRADES.set(trades);}h.succeed();
     }
+
+    @GameTest(template="empty") public static void alternateSteelFiresBothCoinsDownwardWithRecoilAndRecoverableCargo(GameTestHelper h){
+        for(var coin:List.of(ModMetals.BOXING.get(),ModMetals.CLIP.get())){
+            var p=player(h);p.setYRot(37);p.setXRot(-60);p.setDeltaMovement(Vec3.ZERO);PowerAttributes.set(p,"a:steel",1);PowerData.state(p,"a:steel",2);PowerData.reserve(p,"steel",100);PowerData.assignSlot(p,"a:steel",0);PowerService.control(p,new PowerNetwork.Control(2,"",3));
+            var cargo=new ItemStack(coin,3);cargo.set(DataComponents.CUSTOM_NAME,Component.literal("Downward coin cargo"));var drop=new ItemEntity(h.getLevel(),p.getX(),p.getEyeY(),p.getZ(),cargo);var event=new net.neoforged.neoforge.event.entity.item.ItemTossEvent(drop,p);net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(event);
+            var shots=h.getLevel().getEntitiesOfClass(SteelProjectile.class,p.getBoundingBox().inflate(3),e->e.getOwner()==p);
+            h.assertTrue(event.isCanceled()&&shots.size()==1,"Actual toss replaces the coin drop with exactly one projectile");var shot=shots.getFirst();var velocity=shot.getDeltaMovement();
+            h.assertTrue(velocity.y<-.1&&Math.abs(velocity.x)<1e-9&&Math.abs(velocity.z)<1e-9&&Math.abs(shot.getY()-(p.getY()+.2))<1e-9,"Both coins fire vertically downward from feet independent of look direction");
+            h.assertTrue(p.getDeltaMovement().y>0&&Math.abs(PowerData.reserve(p,"steel")-(100-PowerConfig.reserveCost(PowerConfig.PROJECTILE_RESERVE_COST.get())))<1e-7,"A successful downward shot costs ordinary fuel and applies upward recoil");
+            var ground=p.blockPosition().below();h.getLevel().setBlockAndUpdate(ground,Blocks.STONE.defaultBlockState());for(int i=0;i<10&&!shot.embedded();i++)shot.tick();h.assertTrue(shot.embedded()&&shot.fixedMetalAnchor(),"Actual downward coin collision produces an embedded steel anchor");
+            var returned=shot.pullAsItem(p,14);h.assertTrue(returned!=null&&returned.getItem().getCount()==3&&returned.getItem().is(coin)&&returned.getItem().getHoverName().getString().equals("Downward coin cargo"),"Iron recovery preserves exact coin count and metadata after downward firing");returned.discard();PowerService.control(p,new PowerNetwork.Control(2,"",0));
+        }h.succeed();
+    }
+    @GameTest(template="empty") public static void alternateCoinShotsHonorFeatureFuelBurnAndAssignedActivationSlot(GameTestHelper h){
+        boolean enabled=PowerConfig.ALTERNATE_COIN_SHOTS.get();try{
+            for(var coin:List.of(ModMetals.BOXING.get(),ModMetals.CLIP.get())){
+                var p=player(h);PowerAttributes.set(p,"a:steel",1);PowerData.state(p,"a:steel",2);PowerData.reserve(p,"steel",100);PowerData.assignSlot(p,"a:steel",0);PowerService.control(p,new PowerNetwork.Control(2,"",3));
+                var drop=new ItemEntity(h.getLevel(),p.getX(),p.getEyeY(),p.getZ(),new ItemStack(coin));PowerConfig.ALTERNATE_COIN_SHOTS.set(false);h.assertTrue(MetalProjectiles.launch(p,drop)==null&&drop.getDeltaMovement().y==-.1&&PowerData.reserve(p,"steel")==100,"Disabling coin fire restores the ordinary downward item drop without fuel cost");
+                PowerConfig.ALTERNATE_COIN_SHOTS.set(true);PowerData.reserve(p,"steel",0);h.assertTrue(MetalProjectiles.launch(p,drop)==null&&!drop.isRemoved()&&drop.getItem().getCount()==1,"Insufficient fuel preserves the physical coin drop");
+                PowerData.reserve(p,"steel",100);PowerData.assignSlot(p,"a:steel",1);h.assertTrue(MetalProjectiles.launch(p,drop)==null,"Holding the wrong activation slot cannot fire coins");PowerService.control(p,new PowerNetwork.Control(7,"",3));h.assertTrue(MetalProjectiles.launch(p,drop)!=null,"Secondary assigned steel activation also fires downward");
+                h.getLevel().getEntitiesOfClass(SteelProjectile.class,p.getBoundingBox().inflate(3),e->e.getOwner()==p).forEach(SteelProjectile::discard);PowerData.state(p,"a:steel",0);h.assertTrue(MetalProjectiles.launch(p,drop)==null,"Steel off cannot fire coins");PowerService.control(p,new PowerNetwork.Control(2,"",0));PowerService.control(p,new PowerNetwork.Control(7,"",0));
+            }
+        }finally{PowerConfig.ALTERNATE_COIN_SHOTS.set(enabled);}h.succeed();
+    }
 }

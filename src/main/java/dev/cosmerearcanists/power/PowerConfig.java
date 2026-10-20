@@ -6,7 +6,7 @@ public final class PowerConfig {
     public static final ModConfigSpec SPEC;
     public static final java.util.Map<String,ModConfigSpec.DoubleValue> BURN_RATES=new java.util.LinkedHashMap<>();
     public static final ModConfigSpec.BooleanValue METAL_BURN_RATES;
-    public static final ModConfigSpec.BooleanValue ENABLED, IRON_STEEL, DETECTION_BLOCKS, DETECTION_ITEMS, DETECTION_GEAR, RECIPE_DETECTION, CONSUMPTION, FLARING, RECOIL, PLAYER_TARGETS, FALL_MITIGATION, BLOCK_RESISTANCE, STEEL_MOVEMENT, IRON_MOVEMENT, RESIST_WALKING, STEEL_PROJECTILES, ALTERNATE_DROP_DOWN, DETECTION_PROJECTILES, SECONDARY_ENABLED;
+    public static final ModConfigSpec.BooleanValue ENABLED, IRON_STEEL, DETECTION_BLOCKS, DETECTION_ITEMS, DETECTION_GEAR, RECIPE_DETECTION, CONSUMPTION, FLARING, RECOIL, PLAYER_TARGETS, FALL_MITIGATION, BLOCK_RESISTANCE, STEEL_MOVEMENT, IRON_MOVEMENT, RESIST_WALKING, STEEL_PROJECTILES, ALTERNATE_DROP_DOWN, ALTERNATE_COIN_SHOTS, DETECTION_PROJECTILES, SECONDARY_ENABLED;
     public static final ModConfigSpec.IntValue RANGE_CAP, RANGE, MAX_TARGETS, SCAN_BUDGET, SYNC_INTERVAL, FERUCHEMY_LEVELS, NEAR_SCAN_RADIUS, URGENT_SCAN_BUDGET, PROJECTILE_LIFETIME;
     public static final ModConfigSpec.DoubleValue PHYSICAL_BURN_RATE, LOW_RANGE, BURN_RANGE, FLARE_RANGE, RANGE_EXPONENT, FORCE, FLARE_STRENGTH, FLARE_DRAIN, BURN_DRAIN, LEGACY_RESERVE_CAP, RESERVE_CAP, MAX_SPEED, PLAYER_MASS, AIM_ANGLE, FALL_MITIGATION_STRENGTH, RESISTANCE_COST, RESISTANCE_HARDNESS_CAP, MOVEMENT_ANGLE, IRON_STRENGTH, STEEL_STRENGTH, LOW_STRENGTH, BURN_STRENGTH, LOW_DRAIN, NUGGET_SPEED, PROJECTILE_MAX_SPEED, NUGGET_DAMAGE, PROJECTILE_DAMAGE_CAP, NUGGET_MASS, UNKNOWN_METAL_UNITS, PROJECTILE_RESERVE_COST;
     static {
@@ -61,7 +61,8 @@ public final class PowerConfig {
         SYNC_INTERVAL = b.comment("Periodic state/reserve updates. Target-list changes are always sent immediately, regardless of this interval.").defineInRange("syncIntervalTicks", 1, 1, 40);
         b.pop(); b.push("steelProjectiles");
         STEEL_PROJECTILES=b.define("enabled",true);
-        ALTERNATE_DROP_DOWN=b.comment("Alt + held steel activation drops metal at the feet, moving straight down instead of firing. Disabling keeps an ordinary vanilla drop in alternate mode.").define("alternateDropDownwards",true);
+        ALTERNATE_DROP_DOWN=b.comment("Alt + held steel activation directs drops downward at the feet. Coins can fire downward when alternateCoinProjectiles is enabled. Disabling keeps ordinary vanilla drops in alternate mode.").define("alternateDropDownwards",true);
+        ALTERNATE_COIN_SHOTS=b.comment("With downward alternate drops enabled, boxings and clips fire straight down using ordinary steel shot cost, recoil and recoverable coin projectile behavior.").define("alternateCoinProjectiles",true);
         NUGGET_SPEED=b.comment("Blocks per tick for one nugget at reference push force 7, before the steel strength multiplier.").defineInRange("nuggetSpeed",3.5,.1,8.0);
         PROJECTILE_MAX_SPEED=b.defineInRange("maxSpeed",8.0,.1,16.0);
         NUGGET_DAMAGE=b.comment("Damage before armor at the reference nugget speed.").defineInRange("nuggetDamage",2.0,.01,99.0);
