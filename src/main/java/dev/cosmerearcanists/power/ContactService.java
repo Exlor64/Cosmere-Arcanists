@@ -96,7 +96,7 @@ public final class ContactService {
             }if(map.isEmpty())BURSTS.remove(p.getUUID());
         }
         for(String metal:List.of("chromium","nicrosil"))if(strength(p,metal)>0){
-            if(PowerConfig.CONSUMPTION.get())EnhancementService.consume(p,metal,ContactConfig.DRAIN.get()/20*PowerRules.levelMultiplier(state(p,metal),PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get()));
+            if(PowerConfig.CONSUMPTION.get())EnhancementService.burn(p,metal,ContactConfig.DRAIN.get()/20*PowerRules.levelMultiplier(state(p,metal),PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get()));
             if(PowerConfig.CONSUMPTION.get()&&PowerData.reserve(p,metal)<=0)PowerData.state(p,"a:"+metal,0);
         }
     }

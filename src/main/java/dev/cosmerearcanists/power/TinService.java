@@ -41,7 +41,7 @@ public final class TinService {
         double power=strength(p);
         if(power>0 && PowerConfig.CONSUMPTION.get()) {
             int state=PowerData.state(p,"a:tin");if(state==3&&!PowerConfig.FLARING.get()){state=2;PowerData.state(p,"a:tin",2);}
-            EnhancementService.consume(p,"tin",TinConfig.DRAIN.get()/20*PowerRules.levelMultiplier(state,PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get()));
+            EnhancementService.burn(p,"tin",TinConfig.DRAIN.get()/20*PowerRules.levelMultiplier(state,PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get()));
             power=strength(p);
         }
         if(PowerConfig.CONSUMPTION.get() && PowerData.state(p,"a:tin")>0 && PowerData.reserve(p,"tin")<=0)PowerData.state(p,"a:tin",0);

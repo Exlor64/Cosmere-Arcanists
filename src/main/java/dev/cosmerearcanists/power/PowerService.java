@@ -153,7 +153,7 @@ public final class PowerService {
             active = true;
             if (PowerConfig.CONSUMPTION.get()) {
                 double drain = PowerConfig.BURN_DRAIN.get() / 20.0 * PowerRules.levelMultiplier(state, PowerConfig.LOW_DRAIN.get(), 1, PowerConfig.FLARE_DRAIN.get());
-                EnhancementService.consume(p,metal,drain);
+                EnhancementService.burn(p,metal,drain);
             }
         }
         var previousTargets = s.targets;

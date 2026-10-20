@@ -18,6 +18,22 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @GameTestHolder(CosmereArcanists.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class PowerGameTests {
+    @GameTest(template="empty") public static void individualMetalBurnRatesRespectLoreOrderAndSeparateFlatCosts(GameTestHelper h){
+        var level=h.getLevel();var p=new ServerPlayer(level.getServer(),level,new GameProfile(UUID.randomUUID(),"MetalBurnRates"),ClientInformation.createDefault());
+        var bases=java.util.Map.ofEntries(java.util.Map.entry("copper",.25),java.util.Map.entry("tin",1.0),java.util.Map.entry("bronze",.5),java.util.Map.entry("brass",1.0),java.util.Map.entry("zinc",1.0),java.util.Map.entry("iron",1.0),java.util.Map.entry("steel",1.0),java.util.Map.entry("pewter",1.0),java.util.Map.entry("gold",1.0),java.util.Map.entry("electrum",1.0),java.util.Map.entry("atium",4.0),java.util.Map.entry("cadmium",2.0),java.util.Map.entry("bendalloy",2.0),java.util.Map.entry("chromium",1.0),java.util.Map.entry("nicrosil",1.0),java.util.Map.entry("duralumin",1.0));
+        var actual=new java.util.HashMap<String,Double>();
+        for(var e:bases.entrySet()){PowerData.reserve(p,e.getKey(),100);EnhancementService.burn(p,e.getKey(),e.getValue()/20);actual.put(e.getKey(),(100-PowerData.reserve(p,e.getKey()))*20);}
+        var order=java.util.List.of("copper","tin","bronze","iron","pewter","gold","atium");for(int i=1;i<order.size();i++)h.assertTrue(actual.get(order.get(i))>actual.get(order.get(i-1)),"Actual passive costs follow known metal ordering");
+        h.assertTrue(Math.abs(actual.get("iron")-actual.get("steel"))<1e-7&&actual.get("cadmium")<actual.get("bendalloy")&&Math.abs(actual.get("bendalloy")-2)<1e-7,"Paired physical rates match and temporal metals use distinct rates");
+        double before=PowerData.reserve(p,"gold");EnhancementService.consume(p,"gold",3);h.assertTrue(Math.abs(before-PowerData.reserve(p,"gold")-1)<1e-7,"Relative metal rates never multiply flat costs");
+        boolean enabled=PowerConfig.METAL_BURN_RATES.get();try{PowerConfig.METAL_BURN_RATES.set(false);before=PowerData.reserve(p,"gold");EnhancementService.burn(p,"gold",3);h.assertTrue(Math.abs(before-PowerData.reserve(p,"gold")-1)<1e-7,"Disabling the profile restores legacy relative rates");}finally{PowerConfig.METAL_BURN_RATES.set(enabled);}
+        h.succeed();
+    }
+    @GameTest(template="empty") public static void eightFilingsFillReserveAndRetainOverflow(GameTestHelper h){
+        var p=filingPlayer(h,"EightFilings");var vial=dev.cosmerearcanists.filing.Filings.vial(java.util.Map.of("iron",9));
+        var result=((MetalVialItem)vial.getItem()).finishUsingItem(vial,h.getLevel(),p);
+        h.assertTrue(PowerData.reserve(p,"iron")==100&&dev.cosmerearcanists.filing.Filings.contents(result).equals(java.util.Map.of("iron",1)),"Eight12.5-point filings fill an empty100-point reserve and retain the ninth");h.succeed();
+    }
     @GameTest(template="empty") public static void reserveUnitsMigrateOnceAndPreserveBurnDuration(GameTestHelper h){
         var level=h.getLevel();var p=new ServerPlayer(level.getServer(),level,new GameProfile(UUID.randomUUID(),"ReserveMigration"),ClientInformation.createDefault());
         var old=new net.minecraft.nbt.CompoundTag();var reserves=new net.minecraft.nbt.CompoundTag();reserves.putDouble("iron",150);reserves.putDouble("unimplemented_metal",300);old.put("reserves",reserves);p.getPersistentData().put(PowerData.KEY,old);
@@ -85,7 +101,7 @@ public final class PowerGameTests {
         }
         var mixture=dev.cosmerearcanists.filing.Filings.vial(java.util.Map.of("atium",2,"lerasium",3));
         var bottle=((MetalVialItem)mixture.getItem()).finishUsingItem(mixture,level,p);
-        helper.assertTrue(PowerData.reserve(p,"atium")==100 && PowerData.reserve(p,"lerasium")==100 && dev.cosmerearcanists.filing.Filings.contents(bottle).equals(java.util.Map.of("lerasium",1)),"Mixed god-metal filings must restore independent reserves at fifty per filing");
+        helper.assertTrue(PowerData.reserve(p,"atium")==25 && PowerData.reserve(p,"lerasium")==37.5 && bottle.is(Items.GLASS_BOTTLE),"Mixed god-metal filings must restore independent reserves at twelve and a half per filing");
         helper.assertTrue(!PowerData.available(p).contains("a:atium") && !PowerData.available(p).contains("a:lerasium"),"Material ingestion must not accidentally grant unfinished god-metal powers");
         helper.succeed();
     }
@@ -97,7 +113,7 @@ public final class PowerGameTests {
     @GameTest(template = "empty")
     public static void tinBurnFuelVisionAndHeldZoom(GameTestHelper helper) {
         var p=tinPlayer(helper,"TinBurn");TinService.tick(p);
-        helper.assertTrue(!p.hasEffect(net.minecraft.world.effect.MobEffects.NIGHT_VISION) && TinService.nightVision(p)>0 && Math.abs(PowerData.reserve(p,"tin")-(PowerConfig.RESERVE_CAP.get()-PowerConfig.reserveCost(.05)))<1e-6,"Passive tin provides variable vision without a potion and consumes normal burn fuel");
+        helper.assertTrue(!p.hasEffect(net.minecraft.world.effect.MobEffects.NIGHT_VISION) && TinService.nightVision(p)>0 && Math.abs(PowerData.reserve(p,"tin")-(PowerConfig.RESERVE_CAP.get()-PowerConfig.burnCost("tin",.05)))<1e-6,"Passive tin provides variable vision without a potion and consumes normal burn fuel");
         PowerData.state(p,"a:tin",0);TinService.tick(p);
         helper.assertTrue(!p.hasEffect(net.minecraft.world.effect.MobEffects.NIGHT_VISION),"Stopping leaves no tin potion effect");
         p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.NIGHT_VISION,1000));
@@ -280,7 +296,7 @@ public final class PowerGameTests {
         helper.assertTrue(PowerData.reserve(p,"iron")==0 && PowerData.reserve(p,"steel")==0 && item.getUseAnimation(vial)==net.minecraft.world.item.UseAnim.DRINK && item.getUseDuration(vial,p)==32,"Beginning potion-style use cannot grant reserve before completion");
         double cap=PowerConfig.RESERVE_CAP.get();
         try {PowerConfig.RESERVE_CAP.set(1000.0);var returned=item.finishUsingItem(vial,helper.getLevel(),p);
-            helper.assertTrue(PowerData.reserve(p,"iron")==150 && PowerData.reserve(p,"steel")==650 && returned.is(Items.GLASS_BOTTLE),"3 iron + 13 steel must restore 150/650 and return one empty bottle");
+            helper.assertTrue(PowerData.reserve(p,"iron")==37.5 && PowerData.reserve(p,"steel")==162.5 && returned.is(Items.GLASS_BOTTLE),"3 iron + 13 steel must restore 37.5/162.5 and return one empty bottle");
         }finally{PowerConfig.RESERVE_CAP.set(cap);}
         helper.succeed();
     }
@@ -288,9 +304,9 @@ public final class PowerGameTests {
     public static void vialOverflowLegacyAndAluminumArePreserved(GameTestHelper helper) {
         var p=filingPlayer(helper,"VialOverflow");var vial=dev.cosmerearcanists.filing.Filings.vial(java.util.Map.of("iron",3,"steel",13));
         var result=((MetalVialItem)vial.getItem()).finishUsingItem(vial,helper.getLevel(),p);
-        helper.assertTrue(PowerData.reserve(p,"iron")==100 && PowerData.reserve(p,"steel")==100 && dev.cosmerearcanists.filing.Filings.contents(result).equals(java.util.Map.of("iron",1,"steel",11)),"Overflow must retain one iron and eleven steel filings instead of silently wasting metal");
+        helper.assertTrue(PowerData.reserve(p,"iron")==37.5 && PowerData.reserve(p,"steel")==100 && dev.cosmerearcanists.filing.Filings.contents(result).equals(java.util.Map.of("steel",5)),"Overflow must retain five steel filings instead of silently wasting metal");
         MetalDetector.rebuild(helper.getLevel().getServer());
-        helper.assertTrue(MetalDetector.detects(p.server,result) && Math.abs(MetalAmounts.units(p.server,result)-3.0)<1e-9,"Vial detection and projectile mass must use actual contents");
+        helper.assertTrue(MetalDetector.detects(p.server,result) && Math.abs(MetalAmounts.units(p.server,result)-1.25)<1e-9,"Vial detection and projectile mass must use actual contents");
         var aluminum=dev.cosmerearcanists.filing.Filings.vial(java.util.Map.of("iron",15,"aluminum",1));
         helper.assertTrue(!MetalDetector.detects(p.server,aluminum) && !MetalDetector.detects(p.server,dev.cosmerearcanists.filing.Filings.filing("duralumin",1)),"Any aluminum-bearing filing must exclude the whole item");
         var legacy=new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,"iron_vial")));

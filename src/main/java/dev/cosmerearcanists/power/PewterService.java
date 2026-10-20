@@ -61,7 +61,7 @@ public final class PewterService {
         if(power>0 && PowerConfig.CONSUMPTION.get()) {
             int state=PowerData.state(p,"a:pewter"); if(state==3&&!PowerConfig.FLARING.get()){state=2;PowerData.state(p,"a:pewter",2);}
             double drain=PewterConfig.DRAIN.get()/20*PowerRules.levelMultiplier(state,PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get());
-            EnhancementService.consume(p,"pewter",drain);
+            EnhancementService.burn(p,"pewter",drain);
             if(PowerData.reserve(p,"pewter")<=0){PowerData.state(p,"a:pewter",0);power=0;}
         }
         modifier(p,Attributes.MOVEMENT_SPEED,SPEED,Math.min(PewterConfig.MAX_SPEED_BONUS.get(),power*PewterConfig.SPEED.get()),AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);

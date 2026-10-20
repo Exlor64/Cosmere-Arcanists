@@ -91,7 +91,7 @@ public final class SeekingService {
             if(strength(p,metal)>0 && PowerConfig.CONSUMPTION.get()) {
                 int state=PowerData.state(p,"a:"+metal);if(state==3&&!PowerConfig.FLARING.get()){state=2;PowerData.state(p,"a:"+metal,2);}
                 double rate=metal.equals("bronze")?SeekingConfig.BRONZE_DRAIN.get():SeekingConfig.COPPER_DRAIN.get();
-                EnhancementService.consume(p,metal,rate/20*PowerRules.levelMultiplier(state,PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get()));
+                EnhancementService.burn(p,metal,rate/20*PowerRules.levelMultiplier(state,PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get()));
             }
             if(PowerConfig.CONSUMPTION.get() && PowerData.reserve(p,metal)<=0 && PowerData.state(p,"a:"+metal)>0)PowerData.state(p,"a:"+metal,0);
         }

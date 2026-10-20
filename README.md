@@ -1157,3 +1157,37 @@ Filings still restore50 each; excess filings stay in the vial.
 In the powers-server config, `ironSteel.maxMetalReserve` controls the current
 cap. `reserveCapacity` is retained as the legacy conversion denominator for
 existing burn/cost settings; leave it unchanged after upgrading.
+
+### Filings and individual burn rates (0.28.5)
+
+Each filing now restores12.5 reserve: eight fill an empty100-point reserve.
+Use `reserveRestoredPerFiling` in the filings-server config for overrides; this
+replaces the old `reservePerFiling` key so existing worlds receive the new default.
+Vials still hold16 mixed filings and retain any filings that cannot fit.
+
+Normal burning at default settings, without enhancement or extra activation costs:
+
+| Metal | Reserve/second | Full100-point reserve |
+|---|---:|---:|
+| Copper | 0.04167 | 40 minutes |
+| Tin | 0.08333 | 20 minutes |
+| Bronze, brass, zinc | 0.16667 | 10 minutes |
+| Iron, steel | 0.33333 | 5 minutes |
+| Pewter | 0.66667 | 2 minutes30 seconds |
+| Gold | 1 | 1 minute40 seconds |
+| Electrum | 0.5 | 3 minutes20 seconds |
+| Atium-electrum alloy | 4 | 25 seconds |
+| Cadmium | 0.125 | 13 minutes20 seconds |
+| Bendalloy | 2 | 50 seconds |
+| Chromium, nicrosil, duralumin | 0.33333 | 5 minutes before special costs |
+
+Low burning halves consumption; flaring triples it. Aluminum retains its instant
+purge; duralumin/nicrosil captured bursts retain their existing fullness rules.
+
+The [Sanderson TWG post, July31,2006](https://wob.coppermind.net/adv_search/?query=copper&tags=allomancy)
+establishes the relative original-metal ordering, including gold and atium being
+faster than pewter. These exact times are gameplay tuning, not canonical
+measurements; underspecified Era2 rates are provisional. The powers-server
+`burnRates` section independently configures each metal or disables the profile.
+Its multipliers combine with existing per-power drains and reserve normalization;
+they affect passive burning, leaving flat shot/contact prices unchanged.

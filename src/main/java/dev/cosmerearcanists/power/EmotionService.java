@@ -53,7 +53,7 @@ public final class EmotionService {
     public static void tickFuel(ServerPlayer p){for(String power:List.of("a:zinc","a:brass")) {
         if(strength(p,power)>0 && PowerConfig.CONSUMPTION.get()) {
             int state=PowerData.state(p,power);if(state==3&&!PowerConfig.FLARING.get()){state=2;PowerData.state(p,power,2);}
-            EnhancementService.consume(p,power.substring(2),EmotionConfig.DRAIN.get()/20*PowerRules.levelMultiplier(state,PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get()));
+            EnhancementService.burn(p,power.substring(2),EmotionConfig.DRAIN.get()/20*PowerRules.levelMultiplier(state,PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get()));
         }
         if(PowerConfig.CONSUMPTION.get() && PowerData.reserve(p,power.substring(2))<=0 && PowerData.state(p,power)>0)PowerData.state(p,power,0);
     }}
