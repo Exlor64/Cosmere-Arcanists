@@ -46,6 +46,7 @@ public final class TemporalGameTests {
         cow.getNavigation().moveTo(path(h,new int[][]{{1,20,1},{4,20,1}}),1);var changed=TemporalService.predict(cow,8);
         h.assertTrue(first.getLast().position().z>cow.getZ()+.5 && changed.getLast().position().x>cow.getX()+.5,"Fresh path snapshot responds to rerouting without a cached old destination");
         boolean enabled=TemporalConfig.NAVIGATION.get();try{TemporalConfig.NAVIGATION.set(false);h.assertTrue(TemporalService.predict(cow,8).equals(TemporalService.trace(cow,Vec3.ZERO,8)),"Config restores motion-only forecasts");}finally{TemporalConfig.NAVIGATION.set(enabled);}
+        cow.hurtTime=8;cow.setDeltaMovement(.08,0,.08);h.assertTrue(TemporalService.predict(cow,8).equals(TemporalService.trace(cow,cow.getDeltaMovement(),8)),"Recent-hit impulses retain physical motion even when small");cow.hurtTime=0;
         cow.setDeltaMovement(.9,.1,0);h.assertTrue(TemporalService.predict(cow,8).equals(TemporalService.trace(cow,cow.getDeltaMovement(),8)),"Strong knockback retains physics instead of steering onto path");
         cow.setOnGround(false);cow.setDeltaMovement(.2,.4,0);h.assertTrue(TemporalService.predict(cow,8).equals(TemporalService.trace(cow,cow.getDeltaMovement(),8)),"Airborne jump motion remains ballistic");
         cow.setOnGround(true);cow.setDeltaMovement(Vec3.ZERO);cow.getNavigation().stop();h.assertTrue(TemporalService.predict(cow,8).equals(TemporalService.trace(cow,Vec3.ZERO,8)),"Missing navigation safely falls back");cow.discard();h.succeed();

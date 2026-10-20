@@ -119,7 +119,7 @@ public final class TemporalService {
     private record Route(List<Vec3> points,double speed,boolean complete) { }
     /** Snapshot only an existing route; never create, tick, advance or request a new path. */
     private static Route route(Mob mob,Vec3 motion){
-        if(!TemporalConfig.NAVIGATION.get() || mob.isNoAi() || !mob.onGround() || mob.isNoGravity() || mob.isPassenger() || mob.isInWaterOrBubble()
+        if(!TemporalConfig.NAVIGATION.get() || mob.isNoAi() || mob.hurtTime>0 || !mob.onGround() || mob.isNoGravity() || mob.isPassenger() || mob.isInWaterOrBubble()
             || !(mob.getNavigation() instanceof net.minecraft.world.entity.ai.navigation.GroundPathNavigation))return null;
         var navigation=mob.getNavigation();var path=navigation.getPath();if(path==null || path.isDone())return null;
         double modifier=((dev.cosmerearcanists.mixin.NavigationAccessor)navigation).cosmerearcanists$speedModifier();

@@ -938,7 +938,7 @@ Only a bounded, read-only snapshot of an existing ground-navigation route is
 used. Forecasting never runs AI, advances path nodes, computes a new path, or
 loads chunks. Collision, gravity and short upward-node jump approximations still
 apply. Players, projectiles, airborne/swimming/flying mobs, missing paths and
-strong/opposing knockback retain movement forecasts. Intent can change, so the
+recent hits and strong/opposing knockback retain movement forecasts. Intent can change, so the
 existing frequent updates remain important. No exact future input is known.
 
 Temporal server config: `mobNavigationPredictions` (defaulttrue) restores motion
