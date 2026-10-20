@@ -1083,8 +1083,8 @@ physics and mod-specific behavior can introduce approximation, particularly for
 custom accelerating projectiles and passenger physics. Steel-shot damage uses
 intrinsic velocity so a temporary movement subdivision does not change its
 metal/launch damage calculation. Ticking block entities such as furnaces also
-use local time. Global daylight, weather, chunk random ticks and scheduled
-block/fluid/redstone ticks retain normal world time.
+use local time. As of0.28.1, random block/fluid updates and scheduled block/fluid/redstone
+delays also follow local bubble time. Global daylight and weather remain shared.
 
 Other players keep normal network/input ticks; their movement, gravity, attack
 cooldown, mining, item use, base vital/effect timers and hunger timers are scaled
@@ -1100,3 +1100,33 @@ bubble entities are used; bubbles are transient and never survive a restart.
 entities/players/block entities/player vitals, PvP, strength/radius caps, fuel,
 transition/boundary blending, deflection, update frequency and work limits.
 Network protocol18 requires matching client/server versions.
+
+
+### Temporal bubbles affect world updates (0.28.1)
+
+Bubbles affect **mobs, animals, dropped items, projectiles, TNT, ticking machines,
+other players, random growth/decay/fire updates, scheduled fluids, and scheduled
+redstone/block updates**. The caster remains exempt from their own time effect.
+Existing hold/release, fixed position, exit collapse, shimmer and boundary
+trajectory deviation rules are unchanged.
+
+Scheduled updates use a local remaining-delay budget, including updates queued
+before a bubble appeared. Acceleration can advance short scheduled chains more
+than once per server frame. Tick type, position, priority, ordering and duplicate
+protection are preserved. On collapse, the remaining adjusted delay continues in
+the vanilla queue; pending updates are not discarded. Only already registered
+chunk queues are inspected. No chunks are loaded to accelerate distant systems.
+
+Random updates use the local rate to determine how many native random callbacks
+run, reading the current block/fluid state after each step. This covers growth,
+leaf decay and similar processes without ticking a stale state repeatedly.
+Growth remains random rather than guaranteed. Immediate neighbor notifications
+remain synchronous; timed redstone delays and ticking piston machines use local
+time. Global day/weather and independent timers outside the world's usual tick
+systems are not separate clocks for each region.
+
+New bubble-server switches: `affectRandomBlockTicks`, `affectRandomFluidTicks`,
+`affectScheduledBlockTicks`, `affectScheduledFluidTicks`. A configurable
+`maximumScheduledEntriesProcessedPerWorldTick` bounds extra work (default16384);
+entries beyond that per-frame processing limit retain ordinary scheduling.
+Protocol remains18; matching0.28.1 client/server installs are recommended.

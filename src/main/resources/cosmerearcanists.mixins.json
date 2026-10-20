@@ -21,7 +21,11 @@
     "BubbleProjectileAccess",
     "BubbleBlockEntityMixin",
     "BubblePlayerVitalsMixin",
-    "BubbleFoodMixin"
+    "BubbleFoodMixin",
+    "BubbleChunkTicksAccess",
+    "BubbleScheduledMixin",
+    "BubbleRandomBlockMixin",
+    "BubbleRandomFluidMixin"
   ],
   "injectors": {
     "defaultRequire": 1
