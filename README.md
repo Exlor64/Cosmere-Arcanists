@@ -1466,13 +1466,11 @@ movement by30% of the stored fraction. After140 accumulated stored-fraction
 ticks of cold exposure, freezing deals2 times the stored fraction in health
 damage every two seconds. Stopping clears this power's cold penalties.
 
-While tapping a funded level of warmth, hold the activation button assigned to
-Feruchemical brass (primary G or secondary H by default) to clear freezing buildup and frost
+Tapping any funded level of warmth passively clears freezing buildup and frost
 slowdown, prevents new freezing, and completely blocks freezing-tagged damage.
-It also clears brass storage cold penalties. Protection ends immediately on release, cessation or
+It also clears brass storage cold penalties. Protection ends on cessation or
 depletion. Unrelated potion debuffs are preserved. The independent
-`brassTappingClearsCold` setting enables/disables this protection;
-`brassColdProtectionRequiresActivation` defaults true (false restores passive protection).
+`brassTappingClearsCold` setting enables/disables this protection.
 **Strictly above tap10**, damaging melee hits add a separate fire damage hit:
 0.5 health points per actual level above10, capped at100 bonus damage. This
 works immediately through the original melee hit's cooldown and respects fire
@@ -1484,5 +1482,32 @@ use paid output, including partial charge and the maximum warmth multiplier.
 
 All major brass effects, rates, thresholds and limits are configurable in
 `cosmerearcanists-feruchemy-server.toml`. Existing power/state controls apply;
-cold protection requires held activation by default. Other brass effects remain
-passive according to the selected storing/tapping state. Network protocol remains20.
+cold protection and melee heat remain passive. Network protocol remains20.
+
+### Brass hand heat (0.35.0)
+
+Hold the activation button assigned to Feruchemical brass (primary G or secondary
+H by default) while tapping to use heat with your hands:
+
+- **Tap8+:** cook food held in either hand using its furnace cooking recipe.
+- **Tap12+:** hold activation and punch a block to place fire against the clicked
+  face, following normal fire placement rules and build/placement protection.
+- **Tap16+:** smelt held ores or raw minerals using their furnace recipes.
+
+The thresholds use actual paid tapping strength. Hand processing handles one
+item at a time, main hand first; a remaining raw stack stays held and the cooked
+result enters inventory (or drops if inventory is full). The last input is
+replaced in hand. Default processing times are40ticks per food item at tap8 and
+80ticks per ore at tap16, sped up proportionally by higher tapping (max8x).
+Releasing activation, losing charge/contact or changing input resets partial
+work. Items currently being eaten/drunk are not processed. Filed materials and
+charged metalminds cannot be processed. Food must cook into food; other
+non-ore furnace recipes are excluded. No furnace XP is awarded.
+
+Ignition respects cancelled interaction/placement events, loaded chunks, reach,
+world borders, build permissions and a10tick cooldown. It cannot replace occupied
+blocks. Independent feature toggles, thresholds, work times and cooldown are in
+`cosmerearcanists-feruchemy-server.toml`. Existing tapped warmth reserve cost
+and overheat risks still apply. Cold protection stays passive; the brief0.34.2
+activation requirement for cold protection was based on an incomplete message
+and is superseded by these hand abilities.
