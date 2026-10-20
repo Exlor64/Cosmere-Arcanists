@@ -185,5 +185,9 @@
   "attribute.cosmerearcanists.physical_strength_multiplier": "Physical strength multiplier",
   "attribute.cosmerearcanists.physical_sight_multiplier": "Physical sight multiplier",
   "attribute.cosmerearcanists.physical_hearing_multiplier": "Physical hearing multiplier",
-  "attribute.cosmerearcanists.physical_touch_multiplier": "Physical touch multiplier"
+  "attribute.cosmerearcanists.physical_touch_multiplier": "Physical touch multiplier",
+  "death.attack.cosmerearcanists.brass_fire_melee": "%1$s was seared by %2$s",
+  "death.attack.cosmerearcanists.brass_fire_melee.player": "%1$s was seared by %2$s",
+  "death.attack.cosmerearcanists.brass_overheat": "%1$s tapped too much warmth",
+  "death.attack.cosmerearcanists.brass_overheat.player": "%1$s overheated while fighting %2$s"
 }

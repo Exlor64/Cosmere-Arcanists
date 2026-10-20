@@ -1448,3 +1448,34 @@ captured capacity and non-stackable status. Empty denominations can be crafted,
 filed or placed again; charged pieces remain protected. Saved empty pieces from
 older versions are treated as unkeyed and cleaned when accessed. The physical
 metal still determines which Feruchemical power the piece can hold.
+
+### Feruchemical brass (0.34.0)
+
+Brass stores warmth in single brass denominations and existing brass jewelry, using
+the same ownership, Curios, optional inventory and anti-AFK rules. At attribute1,
+store up to30% warmth; tap up to level10. Fractional attributes scale the limits,
+and storage never exceeds95%. Each tap level adds15% warmth, with compression
+costs at high output. Empty brassminds unkey normally.
+
+Storing reduces fire-tagged damage by20% per actual full storing level: level5
+gives complete fire immunity, including lava damage. Attribute1.5 can only store
+45% (4.5 effective levels), giving90% resistance even when selecting storing5.
+The reduction requires successful storage into a brassmind with room; merely
+having the attribute or selecting a level is insufficient. Storing also slows
+movement by30% of the stored fraction. After140 accumulated stored-fraction
+ticks of cold exposure, freezing deals2 times the stored fraction in health
+damage every two seconds. Stopping clears this power's cold penalties.
+
+Tapping provides warmth, reduces freezing damage and thaws freezing buildup.
+**Strictly above tap10**, damaging melee hits add a separate fire damage hit:
+0.5 health points per actual level above10, capped at100 bonus damage. This
+works immediately through the original melee hit's cooldown and respects fire
+immunity/resistance, armor, PvP protection and damage hooks. It does not rely
+on setting targets on fire. Above10, the user also takes0.1 fire damage per
+second per excess level, accumulated and applied once per second. At tap20,
+this means +5 melee fire damage and2 self heat damage per second. Thresholds
+use paid output, including partial charge and the maximum warmth multiplier.
+
+All major brass effects, rates, thresholds and limits are configurable in
+`cosmerearcanists-feruchemy-server.toml`. Existing power/state controls apply;
+no activation hold is required. Network protocol remains20.
