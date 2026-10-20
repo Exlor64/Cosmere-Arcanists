@@ -102,6 +102,8 @@ public final class EmotionGameTests {
         var source=caster(h);var piglin=mob(h,EntityType.PIGLIN,source.position().add(1,0,0));var cow=mob(h,EntityType.COW,piglin.position().add(1,0,0));
         try{piglin.setItemSlot(EquipmentSlot.MAINHAND,new ItemStack(Items.CROSSBOW));EmotionService.apply(source,piglin,"a:zinc",Emotion.ANGER);EmotionService.behave(piglin);
             h.assertTrue(EmotionService.nativeAnger(piglin) && !EmotionService.forcesBehavior(piglin) && piglin.getTarget()==cow && piglin.getBrain().getMemory(net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET).orElse(null)==cow,"Brain attacker receives nearest target memory with its native combat behavior intact");
+            piglin.getBrain().eraseMemory(net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET);h.assertTrue(piglin.getBrain().getMemory(net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET).orElse(null)==cow,"Native brain invalid-target clearing cannot discard the forced anger target");
+            piglin.getBrain().setMemory(net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET,source);h.assertTrue(piglin.getBrain().getMemory(net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET).orElse(null)==cow,"Native brain target replacement remains bound to nearest mob");
             var goal=new AngerTargetGoal(piglin);goal.tick();EmotionService.clear(piglin);goal.stop();h.assertTrue(!piglin.getBrain().hasMemoryValue(net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET),"Ending anger removes its assigned brain target");
         }finally{EmotionService.clear(piglin);piglin.discard();cow.discard();}h.succeed();
     }

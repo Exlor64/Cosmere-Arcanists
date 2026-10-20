@@ -32,6 +32,7 @@ public final class EmotionService {
     private static final Map<UUID,State> STATES=new HashMap<>();
     private static final Set<Mob> GOALS=Collections.newSetFromMap(new WeakHashMap<>());
     private static final Map<Mob,LivingEntity> ANGER_TARGETS=new WeakHashMap<>();
+    private static final Map<net.minecraft.world.entity.ai.Brain<?>,java.lang.ref.WeakReference<Mob>> ANGER_BRAINS=new WeakHashMap<>();
     private static final Set<UUID> SENT=new HashSet<>();
     private record Key(UUID source,String power,Emotion emotion) { }
     private record Influence(ServerPlayer source,String power,Emotion emotion,double amount,double allomanticStrength,long expires) { }
@@ -125,16 +126,21 @@ public final class EmotionService {
         return mob.level().getEntitiesOfClass(Mob.class,mob.getBoundingBox().inflate(range),e->e!=mob && e.isAlive() && !e.isSpectator() && !e.isAlliedTo(mob) && mob.canAttack(e) && e.distanceToSqr(mob)<=range*range).stream()
             .min(Comparator.<Mob>comparingDouble(e->e.distanceToSqr(mob)).thenComparingInt(Mob::getId)).orElse(null);
     }
+    public record AngerBrainOverride(LivingEntity target) { }
+    public static AngerBrainOverride angerBrainTarget(net.minecraft.world.entity.ai.Brain<?> brain){
+        var ref=ANGER_BRAINS.get(brain);var mob=ref==null?null:ref.get();
+        if(mob==null || !nativeAnger(mob))return null;var target=nearestAngerTarget(mob);if(target!=null)ANGER_TARGETS.put(mob,target);return new AngerBrainOverride(target);
+    }
     public static LivingEntity redirectAnger(Mob mob){
         var target=nearestAngerTarget(mob);if(mob.getTarget()!=target)mob.setTarget(target);
-        var brain=mob.getBrain();if(brain.checkMemory(MemoryModuleType.ATTACK_TARGET,net.minecraft.world.entity.ai.memory.MemoryStatus.REGISTERED)){
+        var brain=mob.getBrain();if(nativeAnger(mob))ANGER_BRAINS.put(brain,new java.lang.ref.WeakReference<>(mob));if(brain.checkMemory(MemoryModuleType.ATTACK_TARGET,net.minecraft.world.entity.ai.memory.MemoryStatus.REGISTERED)){
             if(target==null)brain.eraseMemory(MemoryModuleType.ATTACK_TARGET);else brain.setMemory(MemoryModuleType.ATTACK_TARGET,target);
         }
         if(nativeAnger(mob)){if(target==null)ANGER_TARGETS.remove(mob);else ANGER_TARGETS.put(mob,target);}
         return target;
     }
     public static void releaseAngerTarget(Mob mob){
-        var old=ANGER_TARGETS.remove(mob);if(old==null)return;
+        ANGER_BRAINS.remove(mob.getBrain());var old=ANGER_TARGETS.remove(mob);if(old==null)return;
         if(mob.getTarget()==old)mob.setTarget(null);
         if(mob.getBrain().hasMemoryValue(MemoryModuleType.ATTACK_TARGET) && mob.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).orElse(null)==old)mob.getBrain().eraseMemory(MemoryModuleType.ATTACK_TARGET);
     }
@@ -232,5 +238,5 @@ public final class EmotionService {
     private static void removeSource(UUID source){for(var state:STATES.values())state.influences.entrySet().removeIf(e->e.getKey().source.equals(source));}
     @SubscribeEvent public void logout(PlayerEvent.PlayerLoggedOutEvent e){DominationService.remove(e.getEntity());clear(e.getEntity());removeSource(e.getEntity().getUUID());SENT.remove(e.getEntity().getUUID());}
     @SubscribeEvent public void dimension(PlayerEvent.PlayerChangedDimensionEvent e){DominationService.remove(e.getEntity());clear(e.getEntity());removeSource(e.getEntity().getUUID());SENT.remove(e.getEntity().getUUID());}
-    @SubscribeEvent public void stopped(ServerStoppedEvent e){DominationService.clear();for(var s:STATES.values())if(s.target instanceof ServerPlayer p)playerEffects(p,null);STATES.clear();SENT.clear();GOALS.clear();ANGER_TARGETS.clear();}
+    @SubscribeEvent public void stopped(ServerStoppedEvent e){DominationService.clear();for(var s:STATES.values())if(s.target instanceof ServerPlayer p)playerEffects(p,null);STATES.clear();SENT.clear();GOALS.clear();ANGER_TARGETS.clear();ANGER_BRAINS.clear();}
 }

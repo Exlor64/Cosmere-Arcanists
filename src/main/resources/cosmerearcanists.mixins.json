@@ -14,7 +14,8 @@
     "EmotionPanicGoalMixin",
     "EmotionVillagerMixin",
     "EmotionSwellGoalMixin",
-    "NavigationAccessor"
+    "NavigationAccessor",
+    "AngerBrainTargetMixin"
   ],
   "injectors": {
     "defaultRequire": 1

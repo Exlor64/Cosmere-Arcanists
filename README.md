@@ -952,7 +952,8 @@ Anger now switches combat-capable mobs' aggro to the **nearest valid mob** witho
 replacing their normal attacks. Skeletons retain bows, crossbow users retain
 crossbows, and melee/special combat uses native AI. A separate target-only anger
 goal leaves movement and aiming available to attack goals. Brain-based attackers
-also receive the selected attack-target memory. Friendly/allied, dead and
+also receive the selected attack-target memory; native memory resets cannot
+discard that selection while anger is controlling the target. Friendly/allied, dead and
 otherwise invalid targets are excluded; players are not selected by mob anger.
 
 Normally passive mobs retain the fallback chase/melee behavior. Fear, compliance
