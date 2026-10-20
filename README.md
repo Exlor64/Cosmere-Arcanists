@@ -1023,9 +1023,11 @@ alternate fights, and it does not load your former surroundings.
 Recording starts for all players, including those without gold, so later Augurs
 can see their earlier versions. Only post-install history exists. The initial
 state is saved, meaningful descriptive changes may save after a one-minute
-cooldown, and periodic records occur every five minutes of server game time.
-Checks run every40ticks. History retains the newest16 versions by default and
-survives logout, restart and respawn. Older entries expire at the configured cap.
+cooldown, and a five-minute periodic deadline can capture a pending change if a longer
+cooldown is configured. Identical periodic copies are disabled by default.
+Checks run every40ticks. History retains the first recorded self plus the newest15 later versions and
+survives logout, restart and respawn. Older later entries expire at the configured cap; the first self is retained
+by default. Both first-record retention and unchanged periodic copies are configurable.
 There are no position histories or saved inventories. The initial record can
 represent your current self until another version has been captured.
 
