@@ -5,8 +5,8 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 public final class PowerConfig {
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.BooleanValue ENABLED, IRON_STEEL, DETECTION_BLOCKS, DETECTION_ITEMS, DETECTION_GEAR, RECIPE_DETECTION, CONSUMPTION, FLARING, RECOIL, PLAYER_TARGETS, FALL_MITIGATION, BLOCK_RESISTANCE, STEEL_MOVEMENT, IRON_MOVEMENT, RESIST_WALKING, STEEL_PROJECTILES, ALTERNATE_DROP_DOWN, DETECTION_PROJECTILES, SECONDARY_ENABLED;
-    public static final ModConfigSpec.IntValue RANGE, MAX_TARGETS, SCAN_BUDGET, SYNC_INTERVAL, FERUCHEMY_LEVELS, NEAR_SCAN_RADIUS, URGENT_SCAN_BUDGET, PROJECTILE_LIFETIME;
-    public static final ModConfigSpec.DoubleValue FORCE, FLARE_STRENGTH, FLARE_DRAIN, BURN_DRAIN, RESERVE_CAP, MAX_SPEED, PLAYER_MASS, AIM_ANGLE, FALL_MITIGATION_STRENGTH, RESISTANCE_COST, RESISTANCE_HARDNESS_CAP, MOVEMENT_ANGLE, IRON_STRENGTH, STEEL_STRENGTH, LOW_STRENGTH, BURN_STRENGTH, LOW_DRAIN, NUGGET_SPEED, PROJECTILE_MAX_SPEED, NUGGET_DAMAGE, PROJECTILE_DAMAGE_CAP, NUGGET_MASS, UNKNOWN_METAL_UNITS, PROJECTILE_RESERVE_COST;
+    public static final ModConfigSpec.IntValue RANGE_CAP, RANGE, MAX_TARGETS, SCAN_BUDGET, SYNC_INTERVAL, FERUCHEMY_LEVELS, NEAR_SCAN_RADIUS, URGENT_SCAN_BUDGET, PROJECTILE_LIFETIME;
+    public static final ModConfigSpec.DoubleValue LOW_RANGE, BURN_RANGE, FLARE_RANGE, RANGE_EXPONENT, FORCE, FLARE_STRENGTH, FLARE_DRAIN, BURN_DRAIN, RESERVE_CAP, MAX_SPEED, PLAYER_MASS, AIM_ANGLE, FALL_MITIGATION_STRENGTH, RESISTANCE_COST, RESISTANCE_HARDNESS_CAP, MOVEMENT_ANGLE, IRON_STRENGTH, STEEL_STRENGTH, LOW_STRENGTH, BURN_STRENGTH, LOW_DRAIN, NUGGET_SPEED, PROJECTILE_MAX_SPEED, NUGGET_DAMAGE, PROJECTILE_DAMAGE_CAP, NUGGET_MASS, UNKNOWN_METAL_UNITS, PROJECTILE_RESERVE_COST;
     static {
         var b = new ModConfigSpec.Builder();
         b.push("controls");
@@ -22,6 +22,11 @@ public final class PowerConfig {
         STEEL_MOVEMENT = b.define("alternateMovement", true);
         MOVEMENT_ANGLE = b.comment("Anchors outside this angle from intended movement contribute no force; oblique anchors contribute less.").defineInRange("movementAnchorAngleDegrees", 60.0, 5.0, 80.0);
         RANGE = b.defineInRange("range", 16, 4, 32);
+        RANGE_CAP=b.comment("Maximum scaled detection radius; larger scans retain per-tick work budgets.").defineInRange("maxRange",32,4,64);
+        LOW_RANGE=b.defineInRange("lowBurnRangeMultiplier",.6,0.0,2.0);
+        BURN_RANGE=b.defineInRange("burningRangeMultiplier",.8,0.0,2.0);
+        FLARE_RANGE=b.defineInRange("flareRangeMultiplier",1.0,0.0,2.0);
+        RANGE_EXPONENT=b.comment("Attribute exponent: default gives 30 percent more range for each doubling. Zero disables attribute scaling.").defineInRange("rangeAttributeExponent",Math.log(1.3)/Math.log(2),0.0,2.0);
         FORCE = b.comment("Force per game tick, divided by target mass.").defineInRange("force", 7.0, 0.1, 100.0);
         PLAYER_MASS = b.defineInRange("playerMass", 80.0, 1.0, 1000.0);
         MAX_SPEED = b.defineInRange("maxSpeed", 2.0, 0.1, 10.0);

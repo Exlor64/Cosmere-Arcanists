@@ -4,6 +4,17 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class AllomanticPhysicsTest {
+    @Test void rangeScalesByBurnAndAttributeWithBoundedGrowth(){
+        double exponent=Math.log(1.3)/Math.log(2);
+        assertEquals(9.6,AllomanticPhysics.range(16,1,.6,exponent,32),1e-9);
+        assertEquals(12.8,AllomanticPhysics.range(16,1,.8,exponent,32),1e-9);
+        assertEquals(16,AllomanticPhysics.range(16,1,1,exponent,32),1e-9);
+        assertEquals(20.8,AllomanticPhysics.range(16,2,1,exponent,32),1e-9);
+        assertEquals(32,AllomanticPhysics.range(16,1024,1,exponent,32),1e-9);
+        assertEquals(0,AllomanticPhysics.range(16,0,1,exponent,32));
+        assertEquals(0,AllomanticPhysics.range(16,1,0,exponent,32));
+        assertEquals(16,AllomanticPhysics.range(16,2,1,0,32));
+    }
     @Test void equalOppositeForcesProduceDifferentAccelerationsAccordingToMass() {
         double player = AllomanticPhysics.acceleration(7, 4, 16, 80);
         double item = AllomanticPhysics.acceleration(7, 4, 16, 2);

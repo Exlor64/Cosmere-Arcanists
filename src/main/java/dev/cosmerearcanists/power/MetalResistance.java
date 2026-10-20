@@ -31,7 +31,7 @@ public final class MetalResistance {
             if(state.isAir() || state.getCollisionShape(player.level(),pos).isEmpty()) continue;
             float hardness=state.getDestroySpeed(player.level(),pos);
             total += (hardness<0 ? PowerConfig.RESISTANCE_HARDNESS_CAP.get() : Math.min(hardness,PowerConfig.RESISTANCE_HARDNESS_CAP.get())) * PowerConfig.RESISTANCE_COST.get();
-            if(total>PowerConfig.RANGE.get()) break;
+            if(total>PowerConfig.RANGE_CAP.get()) break;
         }
         return total;
     }

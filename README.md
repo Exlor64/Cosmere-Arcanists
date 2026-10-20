@@ -1136,3 +1136,13 @@ Protocol remains18; matching0.28.1 client/server installs are recommended.
 Dropped items now simulate bubble time on the client as well as the server,
 preventing normal-speed falling followed by repeated upward corrections. Both
 slowing and acceleration use the shared entity clock. Protocol remains18.
+
+### Iron and steel range scaling (0.28.3)
+
+At attribute1, low burning reaches9.6 blocks, burning12.8, and flaring16.
+Attribute2 multiplies these by1.3 (12.48/16.64/20.8 blocks). Intervening
+block resistance still reduces reach. Each metal has its own range; blue lines
+show the combined detectable targets, but pushing/pulling requires that power
+to reach the target. The default cap is32 blocks. The powers-server config's
+`ironSteel` section exposes `range`, `maxRange`, the three burn range
+multipliers, and `rangeAttributeExponent`. Force balance is unchanged.

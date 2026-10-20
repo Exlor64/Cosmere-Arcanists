@@ -176,8 +176,18 @@ public final class PowerService {
         } else if(!activated.isEmpty())ABILITIES.activate(p,activated,AbilityDispatcher.Phase.TICK,s.targets);
         a.pulse=false;
     }
+    public static double metalRange(ServerPlayer p,String power){
+        int state=PowerData.state(p,power);
+        if(state==3&&!PowerConfig.FLARING.get())state=2;
+        return AllomanticPhysics.range(PowerConfig.RANGE.get(),PowerAttributes.strength(p,power),PowerRules.levelMultiplier(state,PowerConfig.LOW_RANGE.get(),PowerConfig.BURN_RANGE.get(),PowerConfig.FLARE_RANGE.get()),PowerConfig.RANGE_EXPONENT.get(),PowerConfig.RANGE_CAP.get());
+    }
+    static double detectionRange(ServerPlayer p){return Math.max(metalRange(p,"a:iron"),metalRange(p,"a:steel"));}
+    static boolean withinRange(ServerPlayer p,MetalTarget target,double range){
+        var point=target.position(p.level(),1);var chest=chest(p);
+        return point!=null && point.distanceTo(chest)<=range && point.distanceTo(chest)+MetalResistance.cost(p,chest,point)<=range;
+    }
     static void scan(ServerPlayer p, Session s) {
-        int radius = PowerConfig.RANGE.get(); var center = p.blockPosition();
+        int radius = (int)Math.ceil(detectionRange(p)); var center = p.blockPosition();
         String dimension = p.level().dimension().location().toString();
         if (!dimension.equals(s.dimension)) { s.dimension = dimension; s.blocks.clear(); s.scanCenter = null; }
         if (!PowerConfig.DETECTION_BLOCKS.get()) { s.blocks.clear(); return; }
@@ -233,7 +243,7 @@ public final class PowerService {
     }
 
     static List<MetalTarget> targets(ServerPlayer p, Session s) {
-        int range = PowerConfig.RANGE.get(); double rangeSq = range * range; var chest = chest(p);
+        double range = detectionRange(p); double rangeSq = range * range; var chest = chest(p);
         var result = new ArrayList<MetalTarget>();
         // Gear/items are prioritized over dense collections of metal blocks.
         for (var e : p.level().getEntities(p, p.getBoundingBox().inflate(range))) {
@@ -257,9 +267,10 @@ public final class PowerService {
     public static Vec3 chest(Entity p) { return p.position().add(0, p.getBbHeight() * .65, 0); }
     private void apply(ServerPlayer p, String power, List<MetalTarget> targets) {
         MetalTarget best = null; double score = -1, threshold = Math.cos(Math.toRadians(PowerConfig.AIM_ANGLE.get()));
-        var hit = p.level().clip(new net.minecraft.world.level.ClipContext(p.getEyePosition(), p.getEyePosition().add(p.getLookAngle().scale(PowerConfig.RANGE.get())), net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, p));
+        var hit = p.level().clip(new net.minecraft.world.level.ClipContext(p.getEyePosition(), p.getEyePosition().add(p.getLookAngle().scale(metalRange(p,power))), net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, p));
         BlockPos aimedBlock = hit.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK ? hit.getBlockPos() : null;
         for (var target : targets) {
+            if(!withinRange(p,target,metalRange(p,power)))continue;
             Vec3 point = target.position(p.level(), 1); if (point == null) continue;
             Vec3 offset = point.subtract(p.getEyePosition()); double distance = offset.length(); if (distance < .1) continue;
             double dot = offset.normalize().dot(p.getLookAngle());
@@ -312,6 +323,7 @@ public final class PowerService {
         var anchors = new ArrayList<MetalTarget>(); var directions = new ArrayList<Vec3>(); var strengths = new ArrayList<Double>();
         var usedEntities = new HashSet<Integer>();
         for (var target : targets) {
+            if(!withinRange(p,target,metalRange(p,power)))continue;
             // Multiple pieces of equipment on one entity are one physical anchor.
             if (target.entityId() >= 0 && (!PowerConfig.RECOIL.get() || !usedEntities.add(target.entityId()))) continue;
             var point = target.position(p.level(), 1); if (point == null || point.distanceTo(chest(p)) < .3) continue;

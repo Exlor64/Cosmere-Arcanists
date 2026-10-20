@@ -18,6 +18,20 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @GameTestHolder(CosmereArcanists.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class PowerGameTests {
+    @GameTest(template="empty") public static void metalRangeUsesIndependentAttributesBurnLevelsAndResistance(GameTestHelper h){
+        var level=h.getLevel();MetalDetector.rebuild(level.getServer());
+        var p=new ServerPlayer(level.getServer(),level,new GameProfile(UUID.randomUUID(),"RangeScaling"),ClientInformation.createDefault());
+        p.setPos(net.minecraft.world.phys.Vec3.atCenterOf(h.absolutePos(new net.minecraft.core.BlockPos(1,20,1))));
+        PowerAttributes.set(p,"a:iron",1);PowerAttributes.set(p,"a:steel",2);
+        PowerData.state(p,"a:iron",1);PowerData.state(p,"a:steel",3);
+        h.assertTrue(Math.abs(PowerService.metalRange(p,"a:iron")-9.6)<1e-6&&Math.abs(PowerService.metalRange(p,"a:steel")-20.8)<1e-6,"Each power uses its own attribute and burn tier");
+        var block=net.minecraft.core.BlockPos.containing(PowerService.chest(p).add(18,0,0));var target=MetalTarget.block(block);
+        h.assertTrue(PowerService.withinRange(p,target,PowerService.metalRange(p,"a:steel"))&&!PowerService.withinRange(p,target,PowerService.metalRange(p,"a:iron")),"A shared visible anchor cannot extend the weaker power's activation range");
+        var wall=block.offset(-1,0,0);level.setBlockAndUpdate(wall,net.minecraft.world.level.block.Blocks.OBSIDIAN.defaultBlockState());
+        try{h.assertTrue(!PowerService.withinRange(p,target,PowerService.metalRange(p,"a:steel")),"Hardness still consumes scaled reach");}finally{level.setBlockAndUpdate(wall,net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());}
+        PowerData.state(p,"a:steel",0);h.assertTrue(Math.abs(PowerService.detectionRange(p)-9.6)<1e-6,"Stopping the stronger metal shrinks shared detection immediately");
+        h.succeed();
+    }
     @GameTest(template = "empty")
     public static void godMetalFormsConvertWithoutMaterialLoss(GameTestHelper helper) {
         var level=helper.getLevel();MetalDetector.rebuild(level.getServer());
@@ -754,6 +768,7 @@ public final class PowerGameTests {
         var player = new ServerPlayer(level.getServer(), level, new GameProfile(UUID.randomUUID(), "FallingScan"), ClientInformation.createDefault());
         var start = helper.absolutePos(new net.minecraft.core.BlockPos(1, 20, 1));
         player.setPos(start.getX()+.5,start.getY(),start.getZ()+.5);
+        PowerAttributes.set(player,"a:steel",1);PowerData.state(player,"a:steel",3);
         var session = new PowerService.Session();
         PowerService.scan(player,session);
         var lower = start.offset(0,-12,0);
@@ -807,6 +822,7 @@ public final class PowerGameTests {
         player.setPos(start.getX() + .5, start.getY(), start.getZ() + .5);
         var metal = start.offset(1, 0, 0);
         helper.getLevel().setBlock(metal, net.minecraft.world.level.block.Blocks.IRON_BLOCK.defaultBlockState(), 3);
+        PowerAttributes.set(player,"a:steel",1);PowerData.state(player,"a:steel",3);
         var session = new PowerService.Session();
         PowerService.scan(player, session);
         helper.assertTrue(session.blocks.contains(metal), "Nearby discoveries must publish before a pass finishes");
