@@ -1466,11 +1466,13 @@ movement by30% of the stored fraction. After140 accumulated stored-fraction
 ticks of cold exposure, freezing deals2 times the stored fraction in health
 damage every two seconds. Stopping clears this power's cold penalties.
 
-Tapping any funded level of warmth immediately clears freezing buildup and frost
+While tapping a funded level of warmth, hold the activation button assigned to
+Feruchemical brass (primary G or secondary H by default) to clear freezing buildup and frost
 slowdown, prevents new freezing, and completely blocks freezing-tagged damage.
-It also clears brass storage cold penalties. Protection ends on cessation or
+It also clears brass storage cold penalties. Protection ends immediately on release, cessation or
 depletion. Unrelated potion debuffs are preserved. The independent
-`brassTappingClearsCold` setting enables/disables this protection.
+`brassTappingClearsCold` setting enables/disables this protection;
+`brassColdProtectionRequiresActivation` defaults true (false restores passive protection).
 **Strictly above tap10**, damaging melee hits add a separate fire damage hit:
 0.5 health points per actual level above10, capped at100 bonus damage. This
 works immediately through the original melee hit's cooldown and respects fire
@@ -1482,4 +1484,5 @@ use paid output, including partial charge and the maximum warmth multiplier.
 
 All major brass effects, rates, thresholds and limits are configurable in
 `cosmerearcanists-feruchemy-server.toml`. Existing power/state controls apply;
-no activation hold is required. Network protocol remains20.
+cold protection requires held activation by default. Other brass effects remain
+passive according to the selected storing/tapping state. Network protocol remains20.

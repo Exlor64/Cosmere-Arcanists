@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-20 UTC**. Current mod version: **0.34.1-alpha**.
+Last updated: **2026-10-20 UTC**. Current mod version: **0.34.2-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -8,6 +8,8 @@ Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
 Read this and `AGENTS.md` when beginning a session. The user requires this file to be updated after every change or project chat. Keep it current rather than appending conflicting summaries.
 
 ## Latest session and next action
+
+- 0.34.2 user says this requires activation. Scoped to immediately preceding cold-clearing/protection request: warmth cold protection now requires holding the activation assigned to f:brass while actually tapping. Shared holdingAbility supports primary/secondary slots, release, input timeout and scout gating. Both frozen/frost cleanup and native freezing/damage immunity use same held gate; released input removes protection immediately, while paid tapping and other brass effects retain existing behavior. Config brassColdProtectionRequiresActivation=true allows optional passive behavior if false, separate from brassTappingClearsCold. Updated previous thaw/protection tests to hold primary; added required regression for no-hold, primary, release, wrong slot, secondary, config and stale input. Version0.34.2-alpha/protocol20 unchanged. Java21 CI pending; local Java17/Gradle bootstrap network limitation unchanged. No interactive playtest. Supersedes passive cold protection in0.34.1 below.
 
 - 0.34.1 user clarifies warmth tapping removes freezing/cold entirely. Any actual paid positive brass tapping now immediately clears ticksFrozen and vanilla powder_snow movement modifier, prevents native canFreeze via existing LivingEntity FeruchemyMotionMixin, cancels incoming freezing-tagged hits and zeros freezing Pre damage (also covers nested damage pipelines). Existing brass cold exposure/slowdown resets when tapping. Independent brassTappingClearsCold toggle, separate from storage cold-penalty toggle. Off/disabled/depleted/spectator/lost-attribute grants no protection. Unrelated potion slowness/debuffs preserved; foreign cold sources must use freezing damage tags/native freezing or integrate separately. Added one required engine regression for full thaw, native canFreeze prevention, frost modifier cleanup, unrelated potion preservation, actual freeze damage/incoming cancellation, off/depletion and independent gates. Version0.34.1-alpha/protocol20 unchanged. Java21 CI run39471789526 for gameplay commit70706362c582ce2b9dad4b8810d5f9e8b18edcd9 passed build/unit checks and all155required server GameTests in both standalone and Curios9.5.1+1.21.1 jobs. Standalone Xvfb/Mesa/OpenAL-null graphical startup passed (sound/resources started, no mixin injection errors), artifacts uploaded. Local Gradle bootstrap remains network blocked/Java17. No interactive playtest. Supersedes gradual thaw/partial cold damage reduction in0.34.0 below.
 
