@@ -50,7 +50,7 @@ Ores require an iron-tier pickaxe, support Silk Touch/Fortune, and smelt/blast i
 The Cosmere Metals creative tab contains the new materials. Textures are initial distinct pixel palettes. `cosmerearcanists:metals` and `cosmerearcanists:aluminum_containing` item tags seed iron/steel detection. Duralumin is included in the aluminum exclusion tag.
 
 ## Iron/steel and power controls (0.3.0)
-All sixteen ordinary Allomantic metals and atium-electrum alloy are implemented. Feruchemical iron, steel and pewter support item-owned metalmind storage/tapping. Other assigned Feruchemy powers appear in the selector with **effects pending**.
+All sixteen ordinary Allomantic metals and atium-electrum alloy are implemented. Feruchemical iron, steel, pewter and gold support item-owned metalmind storage/tapping. Other assigned Feruchemy powers appear in the selector with **effects pending**.
 
 Default keys (all rebindable):
 - Hold **R**, scroll to a power, then release R to select it. Tap R to cycle that power's state. Left-click while the menu is open also cycles the highlighted power's state.
@@ -1213,7 +1213,7 @@ identity and cannot be recycled by crafting, filing, smelting, or placement.
 Charge belongs to the item, survives saving, and is not an Allomantic reserve.
 
 All16ordinary metals have ring, bracelet and necklace items; their effects are
-implemented as each Feruchemical metal is added. **Iron, steel and pewter are active.**
+implemented as each Feruchemical metal is added. **Iron, steel, pewter and gold are active.**
 Existing nugget/ingot/block denominations use the same storage foundation.
 
 | Metalmind form | Crafting material | Default capacity |
@@ -1374,3 +1374,28 @@ Server config includes `pewter`, storage/tap rates/limits/compression,
 respawn or loss of contact clears transient effects without deleting stored charge.
 Protocol19 unchanged. Custom armor/player renderers may need visual compatibility
 work; only vanilla player skin/outer clothing muscle rendering is implemented.
+
+### Feruchemical gold (0.32.0)
+Gold stores health in singleton gold nuggets, ingots, blocks or gold jewelry.
+Storing reduces maximum health by the actual fraction stored and blocks healing
+(including food, potions and Allomantic pewter). At attribute1, storing30% lowers
+20maximum health to14 and fills0.3stored health points per second. Stronger
+attributes permit up to95% storage; the default minimum health ceiling is1point.
+Ending storage restores the maximum health ceiling without restoring missing hearts.
+Tapping heals passively: each tap level restores0.15health points/second by default,
+with compression cost max(1,healingRate/baseRate)^0.25. Tap10 heals1.5health/second.
+Full health spends nothing; cancelled/reduced healing refunds unused charge to
+the same pieces. Partial reserves heal only their affordable amount.
+**Above tap level10**, a lethal hit can be survived at1health if sufficient
+accessible gold charge can pay **5x the health needed to survive**. For5current
+health and8damage, cost=(8-5+1)*5=20stored health. Armor/resistance and absorption
+are accounted for before this calculation. Insufficient charge spends nothing;
+tap10 or below does not qualify. This grants no potion buffs or sustained immunity,
+and does not protect against damage that bypasses invulnerability, such as /kill.
+The normal healing compression cost is not added to this separate emergency cost.
+Fractional attribute limits, singleton ownership, Curios/inventory access, idle
+storage cutoff, charge HUD and bronze signals use the common Feruchemy foundation.
+Server config adds `gold`, storage/tap limits/rates, healing cap/compression,
+`goldMinimumMaximumHealth`, `goldPreventsLethalDamage`,
+`goldDeathPreventionThreshold` (strictly greater, default10), and
+`goldDeathPreventionCostMultiplier` (default5). Protocol19 unchanged.

@@ -120,7 +120,7 @@ public final class PowerService {
     }
     @SubscribeEvent public void clonePlayer(PlayerEvent.Clone event) {
         if (event.getOriginal() instanceof ServerPlayer old && event.getEntity() instanceof ServerPlayer p) {
-            dev.cosmerearcanists.feruchemy.PewterFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.PewterFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.SteelFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.SteelFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.IronFeruchemy.mass(old,1);dev.cosmerearcanists.feruchemy.IronFeruchemy.mass(p,1);
+            dev.cosmerearcanists.feruchemy.GoldFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.GoldFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.PewterFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.PewterFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.SteelFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.SteelFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.IronFeruchemy.mass(old,1);dev.cosmerearcanists.feruchemy.IronFeruchemy.mass(p,1);
             EnhancementService.clear(old); stopActivation(old); PowerData.clonePlayer(old, p); SESSIONS.remove(p.getUUID());
         }
     }
@@ -134,6 +134,7 @@ public final class PowerService {
         dev.cosmerearcanists.feruchemy.IronFeruchemy.tick(p);
         dev.cosmerearcanists.feruchemy.SteelFeruchemy.tick(p);
         dev.cosmerearcanists.feruchemy.PewterFeruchemy.tick(p);
+        dev.cosmerearcanists.feruchemy.GoldFeruchemy.tick(p);
         EnhancementService.begin(p);
         PewterService.tick(p);
         TinService.tick(p);
