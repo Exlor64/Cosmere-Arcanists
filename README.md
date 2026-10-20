@@ -1508,6 +1508,4 @@ Ignition respects cancelled interaction/placement events, loaded chunks, reach,
 world borders, build permissions and a10tick cooldown. It cannot replace occupied
 blocks. Independent feature toggles, thresholds, work times and cooldown are in
 `cosmerearcanists-feruchemy-server.toml`. Existing tapped warmth reserve cost
-and overheat risks still apply. Cold protection stays passive; the brief0.34.2
-activation requirement for cold protection was based on an incomplete message
-and is superseded by these hand abilities.
+and overheat risks still apply. Cold protection stays passive.
