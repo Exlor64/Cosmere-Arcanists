@@ -18,6 +18,11 @@ public final class PowerData {
             }
             tag.put("states", states); tag.putInt("burn_levels_schema", 1);
         }
+        if(tag.getInt("reserve_units_schema")<1){
+            var reserves=tag.getCompound("reserves");
+            for(String metal:reserves.getAllKeys())reserves.putDouble(metal,Math.max(0,Math.min(PowerConfig.RESERVE_CAP.get(),PowerConfig.reserveCost(reserves.getDouble(metal)))));
+            tag.put("reserves",reserves);tag.putInt("reserve_units_schema",1);
+        }
         return tag;
     }
     private static boolean enabled(String power) {

@@ -34,7 +34,7 @@ public final class ContactGameTests {
             double fuel=PowerData.reserve(source,"chromium");h.assertTrue(ContactService.target(source)==target,"Server ray resolves the touched body");h.assertTrue(touch(source,target,"a:chromium"),"Chromium contact succeeds");
             h.assertTrue(PowerData.reserve(target,"tin")==0 && PowerData.reserve(target,"lerasium")==0 && PowerData.state(target,"a:tin")==0,"All saved reserves are removed and burns stop");
             h.assertTrue(PowerAttributes.strength(target,"a:tin")==1 && PowerData.state(target,"f:iron")==2 && target.hasEffect(MobEffects.MOVEMENT_SPEED) && SpiritualIntegrity.get(target)==.4,"Powers, feruchemy, potion effects and spiritual integrity survive");
-            h.assertTrue(Math.abs(fuel-PowerData.reserve(source,"chromium")-ContactConfig.COST.get())<1e-7,"Successful touch pays contact cost");PowerData.reserve(target,"tin",100);h.assertTrue(!touch(source,target,"a:chromium") && PowerData.reserve(target,"tin")==100,"Cooldown prevents repeated free contacts");
+            h.assertTrue(Math.abs(fuel-PowerData.reserve(source,"chromium")-PowerConfig.reserveCost(ContactConfig.COST.get()))<1e-7,"Successful touch pays contact cost");PowerData.reserve(target,"tin",100);h.assertTrue(!touch(source,target,"a:chromium") && PowerData.reserve(target,"tin")==100,"Cooldown prevents repeated free contacts");
         }finally{remove(h,source,target);}h.succeed();
     }
     @GameTest(template="empty") public static void contactRequiresBurnFuelRangeSightAndPlayerPermission(GameTestHelper h){

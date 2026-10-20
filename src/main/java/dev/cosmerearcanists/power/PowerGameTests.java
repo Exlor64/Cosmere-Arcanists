@@ -18,6 +18,17 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @GameTestHolder(CosmereArcanists.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class PowerGameTests {
+    @GameTest(template="empty") public static void reserveUnitsMigrateOnceAndPreserveBurnDuration(GameTestHelper h){
+        var level=h.getLevel();var p=new ServerPlayer(level.getServer(),level,new GameProfile(UUID.randomUUID(),"ReserveMigration"),ClientInformation.createDefault());
+        var old=new net.minecraft.nbt.CompoundTag();var reserves=new net.minecraft.nbt.CompoundTag();reserves.putDouble("iron",150);reserves.putDouble("unimplemented_metal",300);old.put("reserves",reserves);p.getPersistentData().put(PowerData.KEY,old);
+        h.assertTrue(PowerData.reserve(p,"iron")==50&&PowerData.reserve(p,"unimplemented_metal")==100,"Existing reserves convert proportionally including disabled/unknown metals");
+        h.assertTrue(PowerData.reserve(p,"iron")==50,"Repeated access never converts twice");
+        PowerData.reserve(p,"iron",1000);h.assertTrue(PowerData.reserve(p,"iron")==100,"Refills clamp to the new cap");
+        EnhancementService.consume(p,"iron",1);h.assertTrue(Math.abs(PowerData.reserve(p,"iron")-(100-1.0/3))<1e-7,"A normal one-second burn consumes one third of a reserve unit");
+        h.assertTrue(Math.abs(100/PowerConfig.reserveCost(1)-300)<1e-7,"Full-reserve normal burn duration remains300 seconds");
+        var clone=new ServerPlayer(level.getServer(),level,new GameProfile(UUID.randomUUID(),"ReserveClone"),ClientInformation.createDefault());PowerData.clonePlayer(p,clone);h.assertTrue(PowerData.reserve(clone,"iron")==PowerData.reserve(p,"iron"),"Clone retains conversion marker and current reserves");
+        h.succeed();
+    }
     @GameTest(template="empty") public static void metalRangeUsesIndependentAttributesBurnLevelsAndResistance(GameTestHelper h){
         var level=h.getLevel();MetalDetector.rebuild(level.getServer());
         var p=new ServerPlayer(level.getServer(),level,new GameProfile(UUID.randomUUID(),"RangeScaling"),ClientInformation.createDefault());
@@ -74,7 +85,7 @@ public final class PowerGameTests {
         }
         var mixture=dev.cosmerearcanists.filing.Filings.vial(java.util.Map.of("atium",2,"lerasium",3));
         var bottle=((MetalVialItem)mixture.getItem()).finishUsingItem(mixture,level,p);
-        helper.assertTrue(PowerData.reserve(p,"atium")==100 && PowerData.reserve(p,"lerasium")==150 && bottle.is(Items.GLASS_BOTTLE),"Mixed god-metal filings must restore independent reserves at fifty per filing");
+        helper.assertTrue(PowerData.reserve(p,"atium")==100 && PowerData.reserve(p,"lerasium")==100 && dev.cosmerearcanists.filing.Filings.contents(bottle).equals(java.util.Map.of("lerasium",1)),"Mixed god-metal filings must restore independent reserves at fifty per filing");
         helper.assertTrue(!PowerData.available(p).contains("a:atium") && !PowerData.available(p).contains("a:lerasium"),"Material ingestion must not accidentally grant unfinished god-metal powers");
         helper.succeed();
     }
@@ -86,7 +97,7 @@ public final class PowerGameTests {
     @GameTest(template = "empty")
     public static void tinBurnFuelVisionAndHeldZoom(GameTestHelper helper) {
         var p=tinPlayer(helper,"TinBurn");TinService.tick(p);
-        helper.assertTrue(!p.hasEffect(net.minecraft.world.effect.MobEffects.NIGHT_VISION) && TinService.nightVision(p)>0 && Math.abs(PowerData.reserve(p,"tin")-299.95)<1e-6,"Passive tin provides variable vision without a potion and consumes normal burn fuel");
+        helper.assertTrue(!p.hasEffect(net.minecraft.world.effect.MobEffects.NIGHT_VISION) && TinService.nightVision(p)>0 && Math.abs(PowerData.reserve(p,"tin")-(PowerConfig.RESERVE_CAP.get()-PowerConfig.reserveCost(.05)))<1e-6,"Passive tin provides variable vision without a potion and consumes normal burn fuel");
         PowerData.state(p,"a:tin",0);TinService.tick(p);
         helper.assertTrue(!p.hasEffect(net.minecraft.world.effect.MobEffects.NIGHT_VISION),"Stopping leaves no tin potion effect");
         p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.NIGHT_VISION,1000));
@@ -277,9 +288,9 @@ public final class PowerGameTests {
     public static void vialOverflowLegacyAndAluminumArePreserved(GameTestHelper helper) {
         var p=filingPlayer(helper,"VialOverflow");var vial=dev.cosmerearcanists.filing.Filings.vial(java.util.Map.of("iron",3,"steel",13));
         var result=((MetalVialItem)vial.getItem()).finishUsingItem(vial,helper.getLevel(),p);
-        helper.assertTrue(PowerData.reserve(p,"iron")==150 && PowerData.reserve(p,"steel")==300 && dev.cosmerearcanists.filing.Filings.contents(result).equals(java.util.Map.of("steel",7)),"Overflow must retain seven steel filings instead of silently wasting metal");
+        helper.assertTrue(PowerData.reserve(p,"iron")==100 && PowerData.reserve(p,"steel")==100 && dev.cosmerearcanists.filing.Filings.contents(result).equals(java.util.Map.of("iron",1,"steel",11)),"Overflow must retain one iron and eleven steel filings instead of silently wasting metal");
         MetalDetector.rebuild(helper.getLevel().getServer());
-        helper.assertTrue(MetalDetector.detects(p.server,result) && Math.abs(MetalAmounts.units(p.server,result)-1.75)<1e-9,"Vial detection and projectile mass must use actual contents");
+        helper.assertTrue(MetalDetector.detects(p.server,result) && Math.abs(MetalAmounts.units(p.server,result)-3.0)<1e-9,"Vial detection and projectile mass must use actual contents");
         var aluminum=dev.cosmerearcanists.filing.Filings.vial(java.util.Map.of("iron",15,"aluminum",1));
         helper.assertTrue(!MetalDetector.detects(p.server,aluminum) && !MetalDetector.detects(p.server,dev.cosmerearcanists.filing.Filings.filing("duralumin",1)),"Any aluminum-bearing filing must exclude the whole item");
         var legacy=new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,"iron_vial")));
@@ -579,7 +590,7 @@ public final class PowerGameTests {
         PowerService.control(player,new PowerNetwork.Control(2,"",0));
         PowerService.control(player,new PowerNetwork.Control(2,"",1));
         var recoil=MetalProjectiles.launch(player,drop);
-        helper.assertTrue(recoil!=null && PowerData.reserve(player,"steel")==9,"Normal steel activation must still launch and spend shot fuel");
+        helper.assertTrue(recoil!=null && Math.abs(PowerData.reserve(player,"steel")-(10-PowerConfig.reserveCost(1)))<1e-7,"Normal steel activation must still launch and spend shot fuel");
         level.getEntitiesOfClass(SteelProjectile.class,player.getBoundingBox().inflate(3),e->e.getOwner()==player).forEach(net.minecraft.world.entity.Entity::discard);
         PowerService.control(player,new PowerNetwork.Control(2,"",0)); helper.succeed();
     }
@@ -616,14 +627,14 @@ public final class PowerGameTests {
         PowerData.data(player).putString("selected","a:steel");
         var light=MetalProjectiles.launch(player,nugget); var heavy=MetalProjectiles.launch(player,anvil);
         helper.assertTrue(light!=null && heavy!=null && heavy.length()>light.length()*50,"Anvil launch must apply much greater recoil than nugget launch");
-        helper.assertTrue(PowerData.reserve(player,"steel")==8,"Each successful launch must deduct its extra reserve cost");
+        helper.assertTrue(Math.abs(PowerData.reserve(player,"steel")-(10-PowerConfig.reserveCost(2)))<1e-7,"Each successful launch must deduct its extra reserve cost");
         var shots=level.getEntitiesOfClass(SteelProjectile.class,player.getBoundingBox().inflate(3),e->e.getOwner()==player);
         helper.assertTrue(shots.size()==2,"Each thrown stack must launch exactly one shot");
         var speeds=shots.stream().mapToDouble(e->e.getDeltaMovement().length()).sorted().toArray();
         helper.assertTrue(speeds[0]<speeds[1]*.3,"Anvil must fly much slower than nugget");
         PowerService.control(player,new PowerNetwork.Control(2,"",0));
         helper.assertTrue(MetalProjectiles.launch(player,nugget)==null,"Releasing G must immediately restore ordinary drops");
-        helper.assertTrue(PowerData.reserve(player,"steel")==8,"Rejected launches must not deduct fuel");
+        helper.assertTrue(Math.abs(PowerData.reserve(player,"steel")-(10-PowerConfig.reserveCost(2)))<1e-7,"Rejected launches must not deduct fuel");
         PowerService.control(player,new PowerNetwork.Control(2,"",1));
         PowerData.state(player,"a:steel",0);
         helper.assertTrue(MetalProjectiles.launch(player,nugget)==null,"Throwing without burning must remain an ordinary drop");

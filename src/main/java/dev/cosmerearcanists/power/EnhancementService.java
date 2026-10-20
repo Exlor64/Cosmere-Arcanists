@@ -28,7 +28,7 @@ public final class EnhancementService {
         var bursts=BURSTS.get(p.getUUID());if(bursts!=null && bursts.containsKey(metal))return;
         double multiplier=usable(p,"duralumin") && !metal.equals("duralumin")?switch(state(p,"duralumin")){case 1->EnhancementConfig.LOW_DRAIN.get();case 2->EnhancementConfig.BURN_DRAIN.get();default->1;}:1;
         if(multiplier>1)multiplier=Math.max(1,multiplier/efficiency(PowerAttributes.strength(p,"a:duralumin")));
-        PowerData.reserve(p,metal,PowerData.reserve(p,metal)-amount*multiplier);
+        PowerData.reserve(p,metal,PowerData.reserve(p,metal)-PowerConfig.reserveCost(amount)*multiplier);
     }
     public static double attributeCurve(double strength,double growth){return EnhancementMath.attributeCurve(strength,growth);}
     private static double efficiency(double strength){return attributeCurve(strength,EnhancementConfig.EFFICIENCY_GROWTH.get());}
@@ -72,7 +72,7 @@ public final class EnhancementService {
     public static void finish(ServerPlayer p){
         var bursts=BURSTS.get(p.getUUID());
         if(bursts!=null){long now=p.level().getGameTime();for(var it=bursts.entrySet().iterator();it.hasNext();){var entry=it.next();var b=entry.getValue();long elapsed=Math.max(0,now-b.start+1);double due=b.fuel*Math.min(1,elapsed/(double)b.ticks);if(PowerConfig.CONSUMPTION.get())PowerData.reserve(p,entry.getKey(),PowerData.reserve(p,entry.getKey())-Math.max(0,due-b.spent));b.spent=due;if(elapsed>=b.ticks){if(PowerConfig.CONSUMPTION.get())PowerData.reserve(p,entry.getKey(),PowerData.reserve(p,entry.getKey())<1e-8?0:PowerData.reserve(p,entry.getKey()));PowerData.state(p,"a:"+entry.getKey(),0);it.remove();}}if(bursts.isEmpty())BURSTS.remove(p.getUUID());}
-        else if(usable(p,"duralumin") && PowerConfig.CONSUMPTION.get()){int state=state(p,"duralumin");PowerData.reserve(p,"duralumin",PowerData.reserve(p,"duralumin")-EnhancementConfig.DRAIN.get()/20/efficiency(PowerAttributes.strength(p,"a:duralumin"))*PowerRules.levelMultiplier(state,PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get()));if(PowerData.reserve(p,"duralumin")<=0)PowerData.state(p,"a:duralumin",0);}
+        else if(usable(p,"duralumin") && PowerConfig.CONSUMPTION.get()){int state=state(p,"duralumin");PowerData.reserve(p,"duralumin",PowerData.reserve(p,"duralumin")-PowerConfig.reserveCost(EnhancementConfig.DRAIN.get())/20/efficiency(PowerAttributes.strength(p,"a:duralumin"))*PowerRules.levelMultiplier(state,PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get()));if(PowerData.reserve(p,"duralumin")<=0)PowerData.state(p,"a:duralumin",0);}
     }
     public static void clear(ServerPlayer p){BURSTS.remove(p.getUUID());}
     public static void clear(){BURSTS.clear();}

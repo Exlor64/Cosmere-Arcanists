@@ -1146,3 +1146,14 @@ show the combined detectable targets, but pushing/pulling requires that power
 to reach the target. The default cap is32 blocks. The powers-server config's
 `ironSteel` section exposes `range`, `maxRange`, the three burn range
 multipliers, and `rangeAttributeExponent`. Force balance is unchanged.
+
+### 100-point metal reserves (0.28.4)
+
+Metal reserves now default to100 maximum. All burn rates and flat shot/contact
+costs use one third of their previous reserve units, preserving full-reserve
+burn time. Existing saved reserves convert proportionally once (150/300 becomes
+50/100). Duralumin/nicrosil captured-pool durations still depend on fullness.
+Filings still restore50 each; excess filings stay in the vial.
+In the powers-server config, `ironSteel.maxMetalReserve` controls the current
+cap. `reserveCapacity` is retained as the legacy conversion denominator for
+existing burn/cost settings; leave it unchanged after upgrading.

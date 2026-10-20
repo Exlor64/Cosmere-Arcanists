@@ -75,7 +75,7 @@ public final class ContactService {
     public static boolean contact(ServerPlayer source,LivingEntity target,String power){
         if(!power.equals("a:chromium")&&!power.equals("a:nicrosil"))return false;String metal=power.substring(2);double strength=strength(source,metal);if(strength<=0||!allowed(source,target)||target(source)!=target)return false;
         long now=source.level().getGameTime();var key=new Use(source.getUUID(),power);var last=LAST.get(key);if(last!=null && now>=last && now-last<ContactConfig.COOLDOWN.get())return false;
-        double cost=ContactConfig.COST.get()/EnhancementMath.attributeCurve(strength,ContactConfig.EFFICIENCY_GROWTH.get());if(PowerConfig.CONSUMPTION.get()&&PowerData.reserve(source,metal)<cost)return false;
+        double cost=ContactConfig.COST.get()/EnhancementMath.attributeCurve(strength,ContactConfig.EFFICIENCY_GROWTH.get());if(PowerConfig.CONSUMPTION.get()&&PowerData.reserve(source,metal)<PowerConfig.reserveCost(cost))return false;
         var profile=metal.equals("nicrosil")?profile(source):new EnhancementService.Profile(1,1,0,false);
         var event=new InvestitureContactEvent(source,target,metal.equals("chromium")?InvestitureContactEvent.Kind.CHROMIUM:InvestitureContactEvent.Kind.NICROSIL,strength,profile);
         if(ContactConfig.FOREIGN.get())NeoForge.EVENT_BUS.post(event);if(event.isCanceled())return false;

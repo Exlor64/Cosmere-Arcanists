@@ -27,7 +27,7 @@ public final class MetalProjectiles {
             }
             return null; // Keep the original stack, pickup delay and ownership; no shot fuel or recoil.
         }
-        double cost=PowerConfig.PROJECTILE_RESERVE_COST.get();
+        double cost=PowerConfig.reserveCost(PowerConfig.PROJECTILE_RESERVE_COST.get());
         if(PowerConfig.CONSUMPTION.get() && PowerData.reserve(player,"steel")<cost)return null;
         if(!PowerConfig.FLARING.get() && PowerData.state(player,"a:steel")==3)PowerData.state(player,"a:steel",2);
         double power=PowerService.powerForce(player,"a:steel")/7.0;

@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-20 UTC**. Current mod version: **0.28.3-alpha**.
+Last updated: **2026-10-20 UTC**. Current mod version: **0.28.4-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -8,6 +8,8 @@ Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
 Read this and `AGENTS.md` when beginning a session. The user requires this file to be updated after every change or project chat. Keep it current rather than appending conflicting summaries.
 
 ## Latest session and next action
+
+- 0.28.4 user requests max reserves100 with proportional burn reductions. New ironSteel.maxMetalReserve defaults100; old reserveCapacity retained as legacy unit denominator(default300), so existing world configs upgrade without retaining a300 current cap. All passive burns through EnhancementService and flat shot/contact costs scale by currentCap/legacyCap (default1/3), preserving full-tank duration and affordability. Captured duralumin/nicrosil bursts already operate on actual fuel/fullness and are not scaled twice. One-time reserve_units_schema1 converts all saved reserve keys proportionally, including disabled/unknown metals; clone retains marker. Filing refill remains50 per prior explicit design, now two filings fill an empty tank; non-fitting filings retained. Current cap configurable; do not change legacy denominator after migration. Version0.28.4-alpha/protocol18 unchanged. Tests/verification pending; no client playtest.
 
 - 0.28.3 user requests iron/steel range scaling. Interpreted third/full burn tier as flaring (60% low,80% burning,100% flaring). Range=base16*burnMultiplier*attribute^log2(1.3), capped32 by default; attribute2 gives30% more. Raw power attribute, not force multiplier/enhancement. Independent iron/steel reach; shared blue lines/discovery use maximum burning reach while normal/alternate activation revalidates that particular power's range plus hardness resistance. Radius changes restart bounded loaded-only scans; fractional ranges round up only for scan coverage, final targets use exact distances. Configurable tier multipliers, exponent and cap(max64), existing base range retained. Force/falloff balance unchanged. Version0.28.3-alpha/protocol18 unchanged. Unit scaling regression, engine checks for independent reach/resistance/disabled metals and updated scan fixtures. Java21 CI run39366651262 for final gameplay commiteb7b60d9dbd984a67b611bd87aabdb4d8c9b202b passed build/JUnit (61 unit methods), all111required server GameTests, and artifact upload. Initial scaling commit also passed111 tests in run39366458237. No graphical-client/multiplayer playtest.
 
