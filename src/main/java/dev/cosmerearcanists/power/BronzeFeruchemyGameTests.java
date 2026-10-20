@@ -141,7 +141,7 @@ public final class BronzeFeruchemyGameTests {
         PowerAttributes.set(p, "f:bronze", 1); var item = mind(p); Metalminds.transfer(item, p.getUUID(), "bronze", 100);
         rest(p, 72020); PowerData.state(p, "f:bronze", 10);
         for (int i = 0; i < 60; i++) p.doTick();
-        h.assertTrue(rest(p) == 71990, "Actual server player ticks restore insomnia below the vanilla three-day phantom threshold");
+        h.assertTrue(rest(p) == 71990, "Actual server player ticks restore insomnia below the vanilla three-day phantom threshold; actualRest=" + rest(p) + ", charge=" + Metalminds.charge(item) + ", state=" + PowerData.state(p,"f:bronze") + ", tickCount=" + p.tickCount);
         close(h, Metalminds.charge(item), 100 - 3 * 1.5 * Math.pow(1.5, .25), "Native dispatch funds exactly one bronze update per tick");
         BronzeFeruchemy.clear(p); h.succeed();
     }
