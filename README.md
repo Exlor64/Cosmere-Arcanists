@@ -1473,7 +1473,7 @@ works immediately through the original melee hit's cooldown and respects fire
 immunity/resistance, armor, PvP protection and damage hooks. It does not rely
 on setting targets on fire. Above10, the user also takes0.1 fire damage per
 second per excess level, accumulated and applied once per second. At tap20,
-this means +5 melee fire damage and2 self heat damage per second. Thresholds
+this means +5 melee fire damage and1 self heat damage per second. Thresholds
 use paid output, including partial charge and the maximum warmth multiplier.
 
 All major brass effects, rates, thresholds and limits are configurable in
