@@ -31,6 +31,7 @@ public final class SeekingService {
     }
     public static double activeStrength(ServerPlayer p,String power) {
         return switch(power) {
+            case "f:steel" -> dev.cosmerearcanists.feruchemy.SteelFeruchemy.strength(p);
             case "f:iron" -> dev.cosmerearcanists.feruchemy.IronFeruchemy.strength(p);
             case "a:bendalloy","a:cadmium" -> BubbleService.strength(p,power.substring(2));
             case "a:gold" -> GoldService.strength(p);

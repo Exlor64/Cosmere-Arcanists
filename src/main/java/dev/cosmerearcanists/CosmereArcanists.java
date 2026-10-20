@@ -43,6 +43,7 @@ public final class CosmereArcanists {
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.power.BubbleService());
         container.registerConfig(ModConfig.Type.SERVER,dev.cosmerearcanists.feruchemy.FeruchemyConfig.SPEC,"cosmerearcanists-feruchemy-server.toml");
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.feruchemy.IronFeruchemy());
+        NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.feruchemy.SteelFeruchemy());
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.feruchemy.MetalmindEvents());
         bus.addListener((net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event)->{if(net.neoforged.fml.ModList.get().isLoaded("curios"))event.enqueueWork(dev.cosmerearcanists.feruchemy.CuriosMetalminds::register);});
         bus.addListener(dev.cosmerearcanists.power.PowerNetwork::register);

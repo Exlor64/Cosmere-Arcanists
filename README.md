@@ -1213,7 +1213,7 @@ identity and cannot be recycled by crafting, filing, smelting, or placement.
 Charge belongs to the item, survives saving, and is not an Allomantic reserve.
 
 All16ordinary metals have ring, bracelet and necklace items; their effects are
-implemented as each Feruchemical metal is added. **Only iron is active so far.**
+implemented as each Feruchemical metal is added. **Iron and steel are active.**
 Existing nugget/ingot/block denominations use the same storage foundation.
 
 | Metalmind form | Crafting material | Default capacity |
@@ -1323,3 +1323,29 @@ states does not. Select a storing level again after moving to resume. Time is
 measured in server ticks (five minutes at20TPS); offline time does not advance it.
 Disable `stopStoringWhenIdle` or adjust `idleStorageTimeoutSeconds` (default300)
 in `cosmerearcanists-feruchemy-server.toml`. Existing stored charge is preserved.
+
+### Feruchemical steel (0.30.0)
+Steel stores physical speed in a single steel nugget, ingot, block or dedicated
+steel jewelry metalmind. Use the existing Storing/Tapping state selector; no
+activation key is needed. Attribute1 permits30% storage and tap10; attribute1.5
+permits45% storage and tap15. Each tap level adds15% speed, up to8x total by default.
+Storing affects movement, attack cooldown recovery, eating, drinking and mining speed;
+tapping accelerates those actions. Eating/drinking use a fractional clock that follows
+current speed, including changes during consumption. Tapping adds a small step assist
+(up to0.4extra blocks by default, scaling with actual speed). These modifiers compose with independent power effects.
+Storage credits actual lost speed-seconds; tap compression uses the same default
+0.25 exponent as iron. Partial capacity/charge proportionally limits effects.
+The shared95% storage ceiling, ownership/singleton checks, Curios and inventory
+access configuration, and five-minute idle-storage cutoff apply. Existing
+steel jewelry automatically works; stacks never store or tap.
+The HUD shows stored charge and actual steel speed percentage; bronze detects
+active steel Feruchemy. Death, dimension change, logout, no contact and disabling
+remove transient speed effects. No movement teleportation or world-time changes.
+Settings in `cosmerearcanists-feruchemy-server.toml`: `steel`,
+`steelAffectsAttackSpeed`, `steelAffectsMiningSpeed`, `steelAffectsEatingAndDrinking`,
+`steelStepAssist`, `steelStepHeightPerExtraSpeed`, `steelMaximumExtraStepHeight`,
+`steelStorageFractionPerAttribute`,
+`steelTapLevelsPerAttribute`, `steelStoreFractionPerLevel`, `steelTapSpeedPerLevel`,
+`steelMaximumSpeedMultiplier` and `steelTapCompressionExponent`.
+Higher speed still carries normal collision/fall risks; jumping, bow charging,
+nonconsumable item-use duration and mob/world clocks are unchanged. Protocol19 is unchanged.

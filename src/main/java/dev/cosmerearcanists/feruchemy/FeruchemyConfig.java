@@ -2,10 +2,15 @@ package dev.cosmerearcanists.feruchemy;
 import net.neoforged.neoforge.common.ModConfigSpec;
 public final class FeruchemyConfig {
     public static final ModConfigSpec SPEC;
-    public static final ModConfigSpec.BooleanValue ENABLED,IRON,DENOMINATIONS,OWNERSHIP,CURIOS,INVENTORY,FALL,DRAG,KNOCKBACK,MASS,CRITICAL,IDLE_STORAGE;
+    public static final ModConfigSpec.BooleanValue ENABLED,IRON,DENOMINATIONS,OWNERSHIP,CURIOS,INVENTORY,FALL,DRAG,KNOCKBACK,MASS,CRITICAL,IDLE_STORAGE,STEEL,STEEL_ATTACK,STEEL_MINING,STEEL_CONSUMING,STEEL_STEP;
     public static final ModConfigSpec.IntValue RING_SLOTS,BRACELET_SLOTS,NECKLACE_SLOTS,IDLE_SECONDS;
-    public static final ModConfigSpec.DoubleValue CAPACITY,STORE_PER_ATTRIBUTE,TAP_LEVELS_PER_ATTRIBUTE,STORE_STEP,MAX_STORE,TAP_STEP,MAX_MASS,TAP_LOSS,TERMINAL,KNOCKBACK_STEP,KNOCKBACK_CAP,CRITICAL_STEP;
+    public static final ModConfigSpec.DoubleValue CAPACITY,STORE_PER_ATTRIBUTE,TAP_LEVELS_PER_ATTRIBUTE,STORE_STEP,MAX_STORE,TAP_STEP,MAX_MASS,TAP_LOSS,TERMINAL,KNOCKBACK_STEP,KNOCKBACK_CAP,CRITICAL_STEP,STEEL_STORE_PER_ATTRIBUTE,STEEL_TAP_LEVELS,STEEL_STORE_STEP,STEEL_TAP_STEP,STEEL_CAP,STEEL_LOSS,STEEL_STEP_RATE,STEEL_STEP_CAP;
     static{var b=new ModConfigSpec.Builder();ENABLED=b.define("enabled",true);IRON=b.define("iron",true);
+        STEEL_CONSUMING=b.define("steelAffectsEatingAndDrinking",true);STEEL_STEP=b.define("steelStepAssist",true);STEEL_STEP_RATE=b.defineInRange("steelStepHeightPerExtraSpeed",.3,0.0,2.0);STEEL_STEP_CAP=b.defineInRange("steelMaximumExtraStepHeight",.4,0.0,2.0);
+        STEEL=b.define("steel",true);STEEL_ATTACK=b.define("steelAffectsAttackSpeed",true);STEEL_MINING=b.define("steelAffectsMiningSpeed",true);
+        STEEL_STORE_PER_ATTRIBUTE=b.defineInRange("steelStorageFractionPerAttribute",.30,.001,1.0);STEEL_TAP_LEVELS=b.defineInRange("steelTapLevelsPerAttribute",10.0,.1,1000.0);
+        STEEL_STORE_STEP=b.defineInRange("steelStoreFractionPerLevel",.1,.001,.9);STEEL_TAP_STEP=b.defineInRange("steelTapSpeedPerLevel",.15,.001,10.0);
+        STEEL_CAP=b.comment("Maximum total physical speed multiplier, before other mods' independent modifiers.").defineInRange("steelMaximumSpeedMultiplier",8.0,1.0,100.0);STEEL_LOSS=b.defineInRange("steelTapCompressionExponent",.25,0.0,2.0);
         IDLE_STORAGE=b.comment("Stop Feruchemy storing after standing still for the configured duration. Moving resets the timer; tapping is unaffected.").define("stopStoringWhenIdle",true);
         IDLE_SECONDS=b.defineInRange("idleStorageTimeoutSeconds",300,1,86400);
         DENOMINATIONS=b.comment("Allow single nuggets, ingots and storage-block items as metalminds. Stacks of two or more are always rejected.").define("denominationMetalminds",true);
