@@ -31,6 +31,7 @@ public final class EmotionService {
     private static final TagKey<Item> SHIELD=TagKey.create(Registries.ITEM,id("emotion_shielding"));
     private static final Map<UUID,State> STATES=new HashMap<>();
     private static final Set<Mob> GOALS=Collections.newSetFromMap(new WeakHashMap<>());
+    private static final Map<Mob,LivingEntity> ANGER_TARGETS=new WeakHashMap<>();
     private static final Set<UUID> SENT=new HashSet<>();
     private record Key(UUID source,String power,Emotion emotion) { }
     private record Influence(ServerPlayer source,String power,Emotion emotion,double amount,double allomanticStrength,long expires) { }
@@ -110,7 +111,34 @@ public final class EmotionService {
     private static boolean angerSuppressed(State s){return s.dominant!=Emotion.ANGER && !s.influences.isEmpty() && s.levels[Emotion.ANGER.ordinal()]<s.baseline[Emotion.ANGER.ordinal()]-1e-6;}
     public static boolean pacified(LivingEntity target){var s=STATES.get(target.getUUID());if(s==null)return false;refresh(s);return angerSuppressed(s);}
     private static boolean inducedAggression(State s){return s.dominant==Emotion.ANGER && (s.intensity>1e-6 || s.baseline[Emotion.ANGER.ordinal()]<.6-1e-6);}
-    public static boolean forcesBehavior(Mob mob){if(DominationService.owner(mob)!=null)return true;var s=STATES.get(mob.getUUID());if(s==null)return false;refresh(s);return inducedAggression(s) || s.intensity>1e-6 && (s.dominant==Emotion.FEAR||s.dominant==Emotion.COMPLIANCE);}
+    public static boolean hasNativeCombat(Mob mob){
+        if(mob instanceof net.minecraft.world.entity.monster.Enemy || mob instanceof net.minecraft.world.entity.monster.RangedAttackMob || mob.getAttribute(Attributes.ATTACK_DAMAGE)!=null)return true;
+        if(mob.getBrain().checkMemory(MemoryModuleType.ATTACK_TARGET,net.minecraft.world.entity.ai.memory.MemoryStatus.REGISTERED))return true;
+        return ((dev.cosmerearcanists.mixin.MobGoalsAccessor)mob).cosmerearcanists$goals().getAvailableGoals().stream().anyMatch(g->g.getGoal() instanceof net.minecraft.world.entity.ai.goal.MeleeAttackGoal || g.getGoal() instanceof net.minecraft.world.entity.ai.goal.RangedAttackGoal);
+    }
+    public static boolean nativeAnger(Mob mob){
+        if(!EmotionConfig.NATIVE_ANGER.get() || mob.isNoAi() || DominationService.owner(mob)!=null || !hasNativeCombat(mob))return false;
+        var s=STATES.get(mob.getUUID());if(s==null)return false;refresh(s);return inducedAggression(s);
+    }
+    private static Mob nearestAngerTarget(Mob mob){
+        double range=EmotionConfig.ANGER_RANGE.get();
+        return mob.level().getEntitiesOfClass(Mob.class,mob.getBoundingBox().inflate(range),e->e!=mob && e.isAlive() && !e.isSpectator() && !e.isAlliedTo(mob) && mob.canAttack(e) && e.distanceToSqr(mob)<=range*range).stream()
+            .min(Comparator.<Mob>comparingDouble(e->e.distanceToSqr(mob)).thenComparingInt(Mob::getId)).orElse(null);
+    }
+    public static LivingEntity redirectAnger(Mob mob){
+        var target=nearestAngerTarget(mob);if(mob.getTarget()!=target)mob.setTarget(target);
+        var brain=mob.getBrain();if(brain.checkMemory(MemoryModuleType.ATTACK_TARGET,net.minecraft.world.entity.ai.memory.MemoryStatus.REGISTERED)){
+            if(target==null)brain.eraseMemory(MemoryModuleType.ATTACK_TARGET);else brain.setMemory(MemoryModuleType.ATTACK_TARGET,target);
+        }
+        if(nativeAnger(mob)){if(target==null)ANGER_TARGETS.remove(mob);else ANGER_TARGETS.put(mob,target);}
+        return target;
+    }
+    public static void releaseAngerTarget(Mob mob){
+        var old=ANGER_TARGETS.remove(mob);if(old==null)return;
+        if(mob.getTarget()==old)mob.setTarget(null);
+        if(mob.getBrain().hasMemoryValue(MemoryModuleType.ATTACK_TARGET) && mob.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).orElse(null)==old)mob.getBrain().eraseMemory(MemoryModuleType.ATTACK_TARGET);
+    }
+    public static boolean forcesBehavior(Mob mob){if(DominationService.owner(mob)!=null)return true;var s=STATES.get(mob.getUUID());if(s==null)return false;refresh(s);return inducedAggression(s) && !nativeAnger(mob) || s.intensity>1e-6 && (s.dominant==Emotion.FEAR||s.dominant==Emotion.COMPLIANCE);}
     private static void pacify(Mob mob){
         boolean attacking=mob.getTarget()!=null || mob.getBrain().hasMemoryValue(MemoryModuleType.ATTACK_TARGET);
         mob.setTarget(null);mob.getBrain().eraseMemory(MemoryModuleType.ATTACK_TARGET);
@@ -143,8 +171,9 @@ public final class EmotionService {
         if(angerSuppressed(state))pacify(mob);
         if(source==null||emotion==null)return;
         if(inducedAggression(state)) {
-            var candidates=mob.level().getEntitiesOfClass(Mob.class,mob.getBoundingBox().inflate(8),e->e!=mob && e.isAlive() && !e.isAlliedTo(mob));
-            candidates.sort(Comparator.comparingDouble(e->e.distanceToSqr(mob)));if(candidates.isEmpty())return;var target=candidates.getFirst();mob.setTarget(target);mob.getLookControl().setLookAt(target,30,30);
+            var target=redirectAnger(mob);if(target==null)return;
+            if(nativeAnger(mob))return; // Target only: leave movement, range, aiming and damage to native combat AI.
+            mob.getLookControl().setLookAt(target,30,30);
             if(mob.distanceToSqr(target)>4)navigate(mob,target.position(),1);else if(mob.tickCount%20==0){if(mob.getAttribute(Attributes.ATTACK_DAMAGE)!=null)mob.doHurtTarget(target);else target.hurt(mob.damageSources().mobAttack(mob),(float)(2*(mob instanceof Animal?EmotionConfig.ANIMAL_FACTOR.get():1)));}
         } else if(emotion==Emotion.FEAR) {
             mob.setTarget(null);var away=mob.position().subtract(source.position()).multiply(1,0,1).normalize();if(away.lengthSqr()<.01)away=new Vec3(1,0,0);navigate(mob,mob.position().add(away.scale(8)),1.25);
@@ -159,14 +188,16 @@ public final class EmotionService {
         }
     }
     public static void discount(Villager villager,Player customer){var s=STATES.get(villager.getUUID());if(!EmotionConfig.TRADES.get()||!trusts(villager,customer)||s==null)return;double fraction=EmotionMath.capped(Math.max(s.intensity,.1),EmotionConfig.DISCOUNT.get(),.5);for(var offer:villager.getOffers())offer.addToSpecialPriceDiff(-(int)Math.floor(offer.getBaseCostA().getCount()*fraction));}
-    @SubscribeEvent public void targeting(LivingChangeTargetEvent event){var owner=DominationService.owner(event.getEntity());if(owner!=null){if(!DominationService.permits(event.getEntity(),event.getNewAboutToBeSetTarget()))event.setNewAboutToBeSetTarget(null);return;}var s=STATES.get(event.getEntity().getUUID());if(s==null)return;refresh(s);if(angerSuppressed(s) || s.dominant==Emotion.FEAR||s.dominant==Emotion.COMPLIANCE || (s.dominant==Emotion.TRUST||s.dominant==Emotion.LOVE) && event.getNewAboutToBeSetTarget()==s.source)event.setNewAboutToBeSetTarget(null);}
+    @SubscribeEvent public void targeting(LivingChangeTargetEvent event){var owner=DominationService.owner(event.getEntity());if(owner!=null){if(!DominationService.permits(event.getEntity(),event.getNewAboutToBeSetTarget()))event.setNewAboutToBeSetTarget(null);return;}var s=STATES.get(event.getEntity().getUUID());if(s==null)return;refresh(s);if(event.getEntity() instanceof Mob mob && nativeAnger(mob)){event.setNewAboutToBeSetTarget(nearestAngerTarget(mob));return;}if(angerSuppressed(s) || s.dominant==Emotion.FEAR||s.dominant==Emotion.COMPLIANCE || (s.dominant==Emotion.TRUST||s.dominant==Emotion.LOVE) && event.getNewAboutToBeSetTarget()==s.source)event.setNewAboutToBeSetTarget(null);}
     @SubscribeEvent(priority=EventPriority.HIGH) public void loveDamage(LivingDamageEvent.Pre event){if(event.getSource().getEntity() instanceof LivingEntity attacker){var owner=DominationService.owner(attacker);if(owner!=null && (event.getEntity()==owner || DominationService.owner(event.getEntity())==owner)){event.setNewDamage(0);return;}}if(event.getSource().getEntity() instanceof ServerPlayer attacker)event.setNewDamage((float)(event.getNewDamage()*(1-loveReduction(attacker,event.getEntity()))));}
-    @SubscribeEvent public void join(EntityJoinLevelEvent event){if(!event.getLevel().isClientSide && event.getEntity() instanceof Mob mob && GOALS.add(mob))((dev.cosmerearcanists.mixin.MobGoalsAccessor)mob).cosmerearcanists$goals().addGoal(0,new EmotionalGoal(mob));}
+    @SubscribeEvent public void join(EntityJoinLevelEvent event){if(!event.getLevel().isClientSide && event.getEntity() instanceof Mob mob && GOALS.add(mob)){
+        var goals=(dev.cosmerearcanists.mixin.MobGoalsAccessor)mob;goals.cosmerearcanists$goals().addGoal(0,new EmotionalGoal(mob));goals.cosmerearcanists$targets().addGoal(0,new AngerTargetGoal(mob));
+    }}
     @SubscribeEvent public void tick(ServerTickEvent.Post event) {
         DominationService.tick();
         for(var it=STATES.values().iterator();it.hasNext();) {
             var s=it.next();refresh(s);
-            if(!s.target.isAlive()||s.target.isRemoved()||s.influences.isEmpty()){if(s.target instanceof ServerPlayer p)playerEffects(p,null);it.remove();continue;}
+            if(!s.target.isAlive()||s.target.isRemoved()||s.influences.isEmpty()){if(s.target instanceof ServerPlayer p)playerEffects(p,null);if(s.target instanceof Mob mob)releaseAngerTarget(mob);it.remove();continue;}
             if(s.target instanceof ServerPlayer p)playerEffects(p,s);else if(s.target instanceof Mob mob && mob.tickCount%4==0)behave(mob);
         }
         if(event.getServer().getTickCount()%4==0)for(var p:event.getServer().getPlayerList().getPlayers()) {
@@ -197,9 +228,9 @@ public final class EmotionService {
         return List.copyOf(result);
     }
     public static void sync(ServerPlayer p){var s=STATES.get(p.getUUID());if(s!=null)refresh(s);PacketDistributor.sendToPlayer(p,new EmotionPacket(p.level().dimension().location().toString(),mode(p,"a:zinc"),mode(p,"a:brass"),s==null||s.dominant==null?-1:s.dominant.ordinal(),(float)(s==null?0:s.intensity),inspect(p)));}
-    public static void clear(LivingEntity target){STATES.remove(target.getUUID());if(target instanceof ServerPlayer p)playerEffects(p,null);}
+    public static void clear(LivingEntity target){STATES.remove(target.getUUID());if(target instanceof Mob mob)releaseAngerTarget(mob);if(target instanceof ServerPlayer p)playerEffects(p,null);}
     private static void removeSource(UUID source){for(var state:STATES.values())state.influences.entrySet().removeIf(e->e.getKey().source.equals(source));}
     @SubscribeEvent public void logout(PlayerEvent.PlayerLoggedOutEvent e){DominationService.remove(e.getEntity());clear(e.getEntity());removeSource(e.getEntity().getUUID());SENT.remove(e.getEntity().getUUID());}
     @SubscribeEvent public void dimension(PlayerEvent.PlayerChangedDimensionEvent e){DominationService.remove(e.getEntity());clear(e.getEntity());removeSource(e.getEntity().getUUID());SENT.remove(e.getEntity().getUUID());}
-    @SubscribeEvent public void stopped(ServerStoppedEvent e){DominationService.clear();for(var s:STATES.values())if(s.target instanceof ServerPlayer p)playerEffects(p,null);STATES.clear();SENT.clear();GOALS.clear();}
+    @SubscribeEvent public void stopped(ServerStoppedEvent e){DominationService.clear();for(var s:STATES.values())if(s.target instanceof ServerPlayer p)playerEffects(p,null);STATES.clear();SENT.clear();GOALS.clear();ANGER_TARGETS.clear();}
 }

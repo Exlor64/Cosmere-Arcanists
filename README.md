@@ -945,3 +945,20 @@ Temporal server config: `mobNavigationPredictions` (defaulttrue) restores motion
 forecasts when disabled; `maxPredictionPathNodes` (default64) bounds copied
 waypoints. Existing target, time and loaded-geometry limits remain. No packet or
 save changes; protocol16.
+
+### Anger preserves native mob attacks (0.25.1)
+
+Anger now switches combat-capable mobs' aggro to the **nearest valid mob** without
+replacing their normal attacks. Skeletons retain bows, crossbow users retain
+crossbows, and melee/special combat uses native AI. A separate target-only anger
+goal leaves movement and aiming available to attack goals. Brain-based attackers
+also receive the selected attack-target memory. Friendly/allied, dead and
+otherwise invalid targets are excluded; players are not selected by mob anger.
+
+Normally passive mobs retain the fallback chase/melee behavior. Fear, compliance
+and domination behavior is unchanged. In the emotions server config,
+`effects.angerPreservesNativeAttacks` defaults true and
+`effects.angerTargetRange` defaults16 blocks (configurable1–64). Disabling native
+attack preservation restores the old forced combat behavior. Temporary anger
+targets clear when the target-only goal ends; normal targeting can resume.
+No save/network changes (protocol16).

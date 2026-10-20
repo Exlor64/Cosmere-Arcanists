@@ -4,8 +4,8 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class EmotionConfig {
     public static final ModConfigSpec SPEC;
-    public static final ModConfigSpec.BooleanValue ENABLED,ZINC,BRASS,PLAYERS,MOBS,ANIMALS,AREA,ANGER,FEAR,TRUST,LOVE,COMPLIANCE,BREEDING,TRADES,ALUMINUM,DOMINATION,INDICATOR;
-    public static final ModConfigSpec.DoubleValue DRAIN,RANGE,RANGE_CAP,ANIMAL_FACTOR,ANGER_DAMAGE,FEAR_DAMAGE,FEAR_ATTACK_SPEED,FEAR_SPEED,LOVE_REDUCTION,DISCOUNT,COMPLIANCE_FORCE,COMPLIANCE_CAP,DOMINATION_STRENGTH,MAX_INTEGRITY;
+    public static final ModConfigSpec.BooleanValue ENABLED,ZINC,BRASS,PLAYERS,MOBS,ANIMALS,AREA,ANGER,FEAR,TRUST,LOVE,COMPLIANCE,BREEDING,TRADES,ALUMINUM,DOMINATION,INDICATOR,NATIVE_ANGER;
+    public static final ModConfigSpec.DoubleValue DRAIN,RANGE,RANGE_CAP,ANIMAL_FACTOR,ANGER_DAMAGE,FEAR_DAMAGE,FEAR_ATTACK_SPEED,FEAR_SPEED,LOVE_REDUCTION,DISCOUNT,COMPLIANCE_FORCE,COMPLIANCE_CAP,DOMINATION_STRENGTH,MAX_INTEGRITY,ANGER_RANGE;
     public static final ModConfigSpec.IntValue DURATION,TARGETS,AFFECTED,FEAR_BURST,FEAR_COOLDOWN,MINION_TICKS,MINION_CAP;
     static {
         var b=new ModConfigSpec.Builder();ENABLED=b.define("enabled",true);ZINC=b.define("zincEnabled",true);BRASS=b.define("brassEnabled",true);
@@ -17,6 +17,8 @@ public final class EmotionConfig {
         DURATION=b.defineInRange("lingerTicks",80,5,600);TARGETS=b.defineInRange("maxTargetsPerUse",16,1,64);AFFECTED=b.defineInRange("maxAffectedEntities",256,16,2048);
         b.push("effects");ANGER=b.define("anger",true);FEAR=b.define("fear",true);TRUST=b.define("trust",true);LOVE=b.define("love",true);COMPLIANCE=b.define("compliance",true);
         BREEDING=b.define("loveBreeding",true);TRADES=b.define("trustTradeDiscounts",true);
+        NATIVE_ANGER=b.comment("Anger redirects combat-capable mobs to the nearest valid mob while retaining their normal attacks. Passive mobs retain fallback behavior.").define("angerPreservesNativeAttacks",true);
+        ANGER_RANGE=b.defineInRange("angerTargetRange",16.0,1.0,64.0);
         ANGER_DAMAGE=b.defineInRange("playerAngerDamagePerStrength",.25,0.0,1.0);FEAR_DAMAGE=b.defineInRange("playerFearDamageReductionPerStrength",.30,0.0,.9);
         FEAR_ATTACK_SPEED=b.defineInRange("playerFearAttackSpeedReductionPerStrength",.30,0.0,.9);FEAR_SPEED=b.defineInRange("playerFearSpeedBurstPerStrength",.40,0.0,2.0);
         FEAR_BURST=b.defineInRange("fearBurstTicks",40,1,200);FEAR_COOLDOWN=b.defineInRange("fearBurstCooldownTicks",100,20,600);

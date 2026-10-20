@@ -72,8 +72,38 @@ public final class EmotionGameTests {
         EmotionService.apply(source,creeper,"a:brass",Emotion.ANGER);var swelling=new net.minecraft.world.entity.ai.goal.SwellGoal(creeper);
         h.assertTrue(creeper.getTarget()==null && creeper.getSwellDir()== -1 && !swelling.canUse(),"Soothing anger stops an autonomous creeper attack and its swelling goal");
         PowerAttributes.set(rioter,"a:zinc",4);EmotionService.apply(rioter,creeper,"a:zinc",Emotion.ANGER);
-        h.assertTrue(!EmotionService.pacified(creeper),"A stronger Rioter can make anger dominant again");creeper.setTarget(victim);h.assertTrue(creeper.getTarget()==victim,"A winning anger signal permits aggression again");
+        h.assertTrue(!EmotionService.pacified(creeper),"A stronger Rioter can make anger dominant again");var nearest=mob(h,EntityType.COW,creeper.position().add(1,0,0));creeper.setTarget(victim);h.assertTrue(creeper.getTarget()==nearest,"A winning anger signal redirects native aggression to the nearest mob");nearest.discard();
         EmotionService.clear(creeper);EmotionService.apply(source,creeper,"a:brass",Emotion.ANGER);creeper.ignite();creeper.setSwellDir(1);h.assertTrue(swelling.canUse(),"Emotions do not reverse deliberate ignition");h.succeed();
+    }
+    @GameTest(template="empty") public static void angerOnlyRedirectsNativeCombatAndRetargetsNearest(GameTestHelper h){
+        var source=caster(h);var skeleton=mob(h,EntityType.SKELETON,source.position().add(1,0,0));skeleton.setItemSlot(EquipmentSlot.MAINHAND,new ItemStack(Items.BOW));
+        var near=mob(h,EntityType.COW,skeleton.position().add(1,0,0));var far=mob(h,EntityType.COW,skeleton.position().add(4,0,0));
+        try{
+            h.assertTrue(EmotionService.apply(source,skeleton,"a:zinc",Emotion.ANGER),"Anger applies to a native ranged attacker");skeleton.tickCount=20;float health=near.getHealth();EmotionService.behave(skeleton);
+            h.assertTrue(skeleton.getTarget()==near && near.getHealth()==health,"Anger switches target but never applies a forced melee hit");
+            var emotional=new EmotionalGoal(skeleton);var targetGoal=new AngerTargetGoal(skeleton);
+            h.assertTrue(!emotional.canUse() && targetGoal.canUse() && targetGoal.getFlags().equals(java.util.EnumSet.of(net.minecraft.world.entity.ai.goal.Goal.Flag.TARGET)),"Native anger takes only TARGET, leaving movement/look free for bow AI");
+            targetGoal.tick();skeleton.setTarget(source);h.assertTrue(skeleton.getTarget()==near,"Native target acquisition cannot replace emotional nearest-mob targeting with a player");
+            near.setPos(skeleton.position().add(10,0,0));targetGoal.tick();h.assertTrue(skeleton.getTarget()==far,"Changed distances select the new nearest mob");far.discard();targetGoal.tick();h.assertTrue(skeleton.getTarget()==near,"Dead or removed targets are replaced");
+            EmotionService.clear(skeleton);targetGoal.stop();h.assertTrue(skeleton.getTarget()==null,"Temporary anger target clears when goal ends");
+            var cow=mob(h,EntityType.COW,source.position().add(0,0,2));EmotionService.apply(source,cow,"a:zinc",Emotion.ANGER);h.assertTrue(!EmotionService.hasNativeCombat(cow) && EmotionService.forcesBehavior(cow),"A passive animal keeps fallback anger behavior");EmotionService.clear(cow);cow.discard();
+            EmotionService.apply(source,skeleton,"a:zinc",Emotion.ANGER);boolean preserve=EmotionConfig.NATIVE_ANGER.get();try{EmotionConfig.NATIVE_ANGER.set(false);h.assertTrue(!EmotionService.nativeAnger(skeleton) && EmotionService.forcesBehavior(skeleton),"Config can restore legacy forced combat");}finally{EmotionConfig.NATIVE_ANGER.set(preserve);}
+        }finally{EmotionService.clear(skeleton);skeleton.discard();near.discard();far.discard();}h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=100) public static void angeredSkeletonActuallyShootsAnotherSkeleton(GameTestHelper h){
+        var source=caster(h);var origin=Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(1,20,1)));source.setPos(origin);
+        for(int x=0;x<7;x++)for(int z=0;z<7;z++){h.setBlock(new BlockPos(x,19,z),net.minecraft.world.level.block.Blocks.STONE);for(int y=20;y<25;y++)h.setBlock(new BlockPos(x,y,z),net.minecraft.world.level.block.Blocks.AIR);}
+        var skeleton=mob(h,EntityType.SKELETON,origin.add(1,0,1));var victim=mob(h,EntityType.SKELETON,skeleton.position().add(1.5,0,0));victim.setNoAi(true);victim.setNoGravity(true);
+        skeleton.setItemSlot(EquipmentSlot.MAINHAND,new ItemStack(Items.BOW));skeleton.setItemSlot(EquipmentSlot.HEAD,new ItemStack(Items.IRON_HELMET));victim.setItemSlot(EquipmentSlot.HEAD,new ItemStack(Items.IRON_HELMET));skeleton.reassessWeaponGoal();
+        float health=victim.getHealth();EmotionService.apply(source,skeleton,"a:zinc",Emotion.ANGER);EmotionService.behave(skeleton);
+        h.runAfterDelay(55,()->{try{h.assertTrue(victim.getHealth()<health && victim.getLastDamageSource()!=null && victim.getLastDamageSource().is(net.minecraft.tags.DamageTypeTags.IS_PROJECTILE),"Native bow AI fires a real damaging arrow at the other skeleton");}finally{EmotionService.clear(skeleton);skeleton.discard();victim.discard();}h.succeed();});
+    }
+    @GameTest(template="empty") public static void brainAngerRedirectsAttackMemoryWithoutForcingMovement(GameTestHelper h){
+        var source=caster(h);var piglin=mob(h,EntityType.PIGLIN,source.position().add(1,0,0));var cow=mob(h,EntityType.COW,piglin.position().add(1,0,0));
+        try{piglin.setItemSlot(EquipmentSlot.MAINHAND,new ItemStack(Items.CROSSBOW));EmotionService.apply(source,piglin,"a:zinc",Emotion.ANGER);EmotionService.behave(piglin);
+            h.assertTrue(EmotionService.nativeAnger(piglin) && !EmotionService.forcesBehavior(piglin) && piglin.getTarget()==cow && piglin.getBrain().getMemory(net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET).orElse(null)==cow,"Brain attacker receives nearest target memory with its native combat behavior intact");
+            var goal=new AngerTargetGoal(piglin);goal.tick();EmotionService.clear(piglin);goal.stop();h.assertTrue(!piglin.getBrain().hasMemoryValue(net.minecraft.world.entity.ai.memory.MemoryModuleType.ATTACK_TARGET),"Ending anger removes its assigned brain target");
+        }finally{EmotionService.clear(piglin);piglin.discard();cow.discard();}h.succeed();
     }
     @GameTest(template="empty") public static void fiveEmotionsCompeteAnimalsAreWeakerAndBrassSuppresses(GameTestHelper h){
         var source=caster(h);var p=caster(h);p.setPos(source.position());var cow=mob(h,EntityType.COW,source.position());
