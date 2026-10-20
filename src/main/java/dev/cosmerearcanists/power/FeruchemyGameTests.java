@@ -115,5 +115,15 @@ public final class FeruchemyGameTests {
         double[] attributes={1,2,4};double[] expected={.30,.60,.95};
         for(int j=0;j<attributes.length;j++){var p=player(h);PowerAttributes.set(p,"f:iron",attributes[j]);var mind=new ItemStack(Items.IRON_INGOT);p.setItemInHand(InteractionHand.OFF_HAND,mind);PowerData.state(p,"f:iron",-100);for(int i=0;i<20;i++)IronFeruchemy.tick(p);h.assertTrue(Math.abs(Metalminds.charge(mind)-expected[j])<1e-7,"Maximum storing fills at the actual stored fraction per second, capped95percent");}h.succeed();
     }
+    @GameTest(template="empty") public static void idleStorageStopsAfterFiveMinutesButTappingAndConfigRemainUsable(GameTestHelper h){
+        var p=player(h);var mind=new ItemStack(Items.IRON_INGOT);p.setItemInHand(InteractionHand.OFF_HAND,mind);PowerData.state(p,"f:iron",-3);IronFeruchemy.tick(p);double before=Metalminds.charge(mind);long start=p.level().getGameTime();
+        for(int i=1;i<=6000;i++)StorageActivity.observe(p,start+i);
+        h.assertTrue(!StorageActivity.blocked(p),"Exactly five minutes is still allowed");StorageActivity.observe(p,start+6001);
+        h.assertTrue(StorageActivity.blocked(p)&&PowerData.state(p,"f:iron")==0,"More than five minutes standing still stops storing");
+        p.setYRot(p.getYRot()+90);PowerData.state(p,"f:iron",-3);IronFeruchemy.tick(p);h.assertTrue(Metalminds.charge(mind)==before&&IronFeruchemy.massMultiplier(p)==1,"Looking around or reselecting storing cannot bypass inactivity");
+        Metalminds.transfer(mind,p.getUUID(),"iron",10);PowerData.state(p,"f:iron",1);IronFeruchemy.tick(p);h.assertTrue(IronFeruchemy.massMultiplier(p)>1,"Idle players can still tap existing charge");
+        boolean enabled=FeruchemyConfig.IDLE_STORAGE.get();try{FeruchemyConfig.IDLE_STORAGE.set(false);PowerData.state(p,"f:iron",-3);IronFeruchemy.tick(p);h.assertTrue(IronFeruchemy.massMultiplier(p)<1,"Disabling the default-on gate permits stationary storage");}finally{FeruchemyConfig.IDLE_STORAGE.set(enabled);}
+        p.setPos(p.position().add(.1,0,0));IronFeruchemy.tick(p);h.assertTrue(!StorageActivity.blocked(p),"Moving resets inactivity");PowerData.state(p,"f:iron",-3);double moved=Metalminds.charge(mind);IronFeruchemy.tick(p);h.assertTrue(Metalminds.charge(mind)>moved,"Storing can be selected again after moving");h.succeed();
+    }
     private FeruchemyGameTests(){}
 }

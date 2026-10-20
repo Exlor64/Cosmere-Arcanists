@@ -1314,3 +1314,12 @@ Ordinary attacks and grounded criticals gain no bonus. Both effects are configur
 Lightweight storing retains increased knockback. Storing fills at the actual fraction
 stored per second: maximum30%/60%/95% stores0.30/0.60/0.95 weight-seconds each second.
 Higher maximum storage permits faster filling when that higher level is selected.
+
+### Idle storage protection (0.29.4)
+By default, standing in the same position for more than five minutes stops all
+Feruchemy storing and prevents further metalmind filling. Tapping is unaffected.
+Moving at least0.01 blocks resets the timer; looking around or changing power
+states does not. Select a storing level again after moving to resume. Time is
+measured in server ticks (five minutes at20TPS); offline time does not advance it.
+Disable `stopStoringWhenIdle` or adjust `idleStorageTimeoutSeconds` (default300)
+in `cosmerearcanists-feruchemy-server.toml`. Existing stored charge is preserved.

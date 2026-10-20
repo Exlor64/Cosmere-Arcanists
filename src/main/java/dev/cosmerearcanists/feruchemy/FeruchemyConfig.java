@@ -2,10 +2,12 @@ package dev.cosmerearcanists.feruchemy;
 import net.neoforged.neoforge.common.ModConfigSpec;
 public final class FeruchemyConfig {
     public static final ModConfigSpec SPEC;
-    public static final ModConfigSpec.BooleanValue ENABLED,IRON,DENOMINATIONS,OWNERSHIP,CURIOS,INVENTORY,FALL,DRAG,KNOCKBACK,MASS,CRITICAL;
-    public static final ModConfigSpec.IntValue RING_SLOTS,BRACELET_SLOTS,NECKLACE_SLOTS;
+    public static final ModConfigSpec.BooleanValue ENABLED,IRON,DENOMINATIONS,OWNERSHIP,CURIOS,INVENTORY,FALL,DRAG,KNOCKBACK,MASS,CRITICAL,IDLE_STORAGE;
+    public static final ModConfigSpec.IntValue RING_SLOTS,BRACELET_SLOTS,NECKLACE_SLOTS,IDLE_SECONDS;
     public static final ModConfigSpec.DoubleValue CAPACITY,STORE_PER_ATTRIBUTE,TAP_LEVELS_PER_ATTRIBUTE,STORE_STEP,MAX_STORE,TAP_STEP,MAX_MASS,TAP_LOSS,TERMINAL,KNOCKBACK_STEP,KNOCKBACK_CAP,CRITICAL_STEP;
     static{var b=new ModConfigSpec.Builder();ENABLED=b.define("enabled",true);IRON=b.define("iron",true);
+        IDLE_STORAGE=b.comment("Stop Feruchemy storing after standing still for the configured duration. Moving resets the timer; tapping is unaffected.").define("stopStoringWhenIdle",true);
+        IDLE_SECONDS=b.defineInRange("idleStorageTimeoutSeconds",300,1,86400);
         DENOMINATIONS=b.comment("Allow single nuggets, ingots and storage-block items as metalminds. Stacks of two or more are always rejected.").define("denominationMetalminds",true);
         INVENTORY=b.comment("Allow storing and tapping from single matching items in the36main inventory/hotbar slots. Does not permit stacked items or nested containers. Worn and held pieces are used first.").define("inventoryMetalminds",false);
         RING_SLOTS=b.comment("Default ring count from this mod. Other mods/datapacks may add their own slot bonuses. Updates existing players without deleting charge.").defineInRange("defaultRingSlots",2,0,64);

@@ -34,6 +34,7 @@ public final class IronFeruchemy {
         if(FeruchemyConfig.CRITICAL.get()&&event.isVanillaCritical()&&event.isCriticalHit())event.setDamageMultiplier((float)(event.getDamageMultiplier()*(1+combatLevels(event.getEntity())*FeruchemyConfig.CRITICAL_STEP.get())));
     }
     public static void tick(ServerPlayer p){
+        StorageActivity.tick(p);
         if(net.neoforged.fml.ModList.get().isLoaded("curios"))CuriosMetalminds.configureSlots(p);
         double factor=1;int state=PowerData.state(p,"f:iron");double strength=PowerAttributes.strength(p,"f:iron");
         if(configured()&&p.isAlive()&&!p.isSpectator()&&state!=0&&strength>0){

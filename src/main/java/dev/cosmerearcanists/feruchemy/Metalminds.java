@@ -42,6 +42,7 @@ public final class Metalminds {
         return result;
     }
     public static double transferAccessible(ServerPlayer p,String metal,double amount){
+        if(amount>0&&StorageActivity.blocked(p))return 0;
         double remaining=amount;
         var seen=java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<ItemStack,Boolean>());
         for(var access:touching(p)){

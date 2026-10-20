@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-20 UTC**. Current mod version: **0.29.3-alpha**.
+Last updated: **2026-10-20 UTC**. Current mod version: **0.29.4-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -8,6 +8,9 @@ Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
 Read this and `AGENTS.md` when beginning a session. The user requires this file to be updated after every change or project chat. Keep it current rather than appending conflicting summaries.
 
 ## Latest session and next action
+
+- 0.29.4 user requests default-on anti-AFK Feruchemy storage: more than5minutes standing still stops storing, configurable toggle. Added StorageActivity observing authoritative server position, cumulative0.01block displacement threshold, per-player persistent idle counter, duplicate server-time observations ignored. More than6000 observed stationary ticks stops all negative f: states; shared transferAccessible also refuses positive deposits while blocked, so future metals share gate. Timer runs even with powers off; looking/menu changes cannot reset. Movement resets, user reselects storing; tapping untouched. Config stopStoringWhenIdle=true and idleStorageTimeoutSeconds=300. Counter preserved in persistent data across logout, offline time not counted; dimension position changes reset. Existing charge preserved. New server regression checks exact boundary, forced reselect/head rotation, mass cleanup, tapping, disabling config and movement recovery. Version0.29.4-alpha/protocol19 unchanged. CI pending; no client playtest. Prior discussion suggested steel next then pewter/gold, but user has not yet selected next metal.
+
 
 - 0.29.3: user requests iron tapping small per-level incoming knockback reduction and5% extra damage per tap level only for falling criticals. Implemented2% knockback reduction/level capped80%, replacing heavy inverse-mass knockback; lightweight inverse-mass penalty retained. CriticalHitEvent only modifies vanilla criticals that remain critical; multiplier scales existing critical damage by1+.05*fundedLevels. No attack attribute changes. Actual applied mass and selected tapping state bound combat levels; no storing/off/missing-contact benefit. Partial final depletion switches state off conservatively, so final partial tick has no combat bonus. Config independent critical toggle/rate and knockback rate/cap, existing knockback toggle. User clarifies maximum storing influences fill speed: existing conserved mass-second transfer already scales with selected actual stored fraction; maximum attribute1/2/4 fills .30/.60/.95 persecond, hard95% cap. Added explicit fill-rate and combat regressions, adjusted knockback fixture. Protocol19 unchanged. Java21 CI run39442302185 for gameplay commit3cb1f7b3819c1c07a5615c75589cf8065cf28949 passed build/unit tests and all128required server GameTests in both standalone and Curios9.5.1+1.21.1 jobs; artifacts uploaded. No graphical-client or real multiplayer playtest.
 
