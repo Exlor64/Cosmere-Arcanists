@@ -7,6 +7,9 @@ import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(LivingEntity.class)
 public abstract class FeruchemyMotionMixin {
+    @Inject(method="canFreeze",at=@At("HEAD"),cancellable=true)
+    private void cosmerearcanists$warmthPreventsFreezing(org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Boolean> ci){if((Object)this instanceof net.minecraft.server.level.ServerPlayer p&&BrassFeruchemy.warm(p))ci.setReturnValue(false);}
+
     @ModifyVariable(method="knockback",at=@At("HEAD"),argsOnly=true,ordinal=0)
     private double cosmerearcanists$massKnockback(double force){return force*IronFeruchemy.knockbackMultiplier((LivingEntity)(Object)this);}
     @Inject(method="travel",at=@At("TAIL"))

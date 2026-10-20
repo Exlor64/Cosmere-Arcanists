@@ -1466,7 +1466,11 @@ movement by30% of the stored fraction. After140 accumulated stored-fraction
 ticks of cold exposure, freezing deals2 times the stored fraction in health
 damage every two seconds. Stopping clears this power's cold penalties.
 
-Tapping provides warmth, reduces freezing damage and thaws freezing buildup.
+Tapping any funded level of warmth immediately clears freezing buildup and frost
+slowdown, prevents new freezing, and completely blocks freezing-tagged damage.
+It also clears brass storage cold penalties. Protection ends on cessation or
+depletion. Unrelated potion debuffs are preserved. The independent
+`brassTappingClearsCold` setting enables/disables this protection.
 **Strictly above tap10**, damaging melee hits add a separate fire damage hit:
 0.5 health points per actual level above10, capped at100 bonus damage. This
 works immediately through the original melee hit's cooldown and respects fire
