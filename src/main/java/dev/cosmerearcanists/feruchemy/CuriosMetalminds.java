@@ -23,9 +23,21 @@ public final class CuriosMetalminds {
                 inventory.removeSlotModifier(slot,id);
                 if(delta!=0)inventory.addTransientSlotModifier(slot,id,delta,net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE);
                 holder.update();cosmetics=holder.getCosmeticStacks();
-                for(int i=0;i<saved.size();i++){var item=saved.get(i);if(i<cosmetics.getSlots())cosmetics.setStackInSlot(i,item);else if(!item.isEmpty())dev.cosmerearcanists.filing.Filings.give(p,item);}
+                // Cache clearing can defer the actual resize until the next player tick.
+                // Restore cosmetics only to slots that will also survive that pending resize.
+                int surviving=Math.min(cosmetics.getSlots(),projectedSlots(holder));
+                for(int i=0;i<saved.size();i++){var item=saved.get(i);if(i<surviving)cosmetics.setStackInSlot(i,item);else if(!item.isEmpty())dev.cosmerearcanists.filing.Filings.give(p,item);}
             });
         });
+    }
+    private static int projectedSlots(top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler holder){
+        // Curios9.5.1's public sync tag exposes the unmodified datapack base size.
+        double original=holder.getSyncTag().getInt("BaseSize"),base=original;
+        for(var modifier:holder.getModifiersByOperation(net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE))base+=modifier.amount();
+        double size=base;
+        for(var modifier:holder.getModifiersByOperation(net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_BASE))size+=original*modifier.amount();
+        for(var modifier:holder.getModifiersByOperation(net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL))size*=modifier.amount();
+        return (int)Math.max(0,size);
     }
     public static List<Metalminds.Access> touching(ServerPlayer p){
         var result=new ArrayList<Metalminds.Access>();CuriosApi.getCuriosInventory(p).ifPresent(inventory->{

@@ -32,8 +32,10 @@ public final class CuriosMetalmindTests {
             var piece=item("ring");ring.getStacks().setStackInSlot(2,piece);PowerData.state(p,"f:iron",-5);IronFeruchemy.tick(p);h.assertTrue(Math.abs(Metalminds.charge(piece)-.025)<1e-7,"Configured extra slots participate in storing beyond the old two-ring limit");
             var external=ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,"test_other_slot_provider");inventory.addTransientSlotModifier("ring",external,1,net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE);ring.update();CuriosMetalminds.configureSlots(p);h.assertTrue(ring.getSlots()==4,"Unrelated mod slot bonuses remain intact");inventory.removeSlotModifier("ring",external);ring.update();
             var cosmetic=item("ring");Metalminds.transfer(cosmetic,p.getUUID(),"iron",7);ring.getCosmeticStacks().setStackInSlot(2,cosmetic);
-            FeruchemyConfig.RING_SLOTS.set(0);FeruchemyConfig.BRACELET_SLOTS.set(0);FeruchemyConfig.NECKLACE_SLOTS.set(0);CuriosMetalminds.configureSlots(p);inventory.handleInvalidStacks();
+            ring.clearCachedModifiers(); // Forces Curios to defer this resize for the current tick.
+            FeruchemyConfig.RING_SLOTS.set(0);FeruchemyConfig.BRACELET_SLOTS.set(0);FeruchemyConfig.NECKLACE_SLOTS.set(0);CuriosMetalminds.configureSlots(p);p.tickCount++;
             h.assertTrue(ring.getSlots()==0&&inventory.getStacksHandler("bracelet").orElseThrow().getSlots()==0&&inventory.getStacksHandler("necklace").orElseThrow().getSlots()==0,"Zero removes this mod's default slots");
+            inventory.handleInvalidStacks();
             double recovered=p.getInventory().items.stream().filter(Metalminds::bound).mapToDouble(Metalminds::charge).sum();h.assertTrue(Math.abs(recovered-7.025)<1e-7,"Both functional and cosmetic jewelry displaced by shrinking keep their exact stored charge");
         }finally{FeruchemyConfig.RING_SLOTS.set(rings);FeruchemyConfig.BRACELET_SLOTS.set(bracelets);FeruchemyConfig.NECKLACE_SLOTS.set(necklaces);CuriosMetalminds.configureSlots(p);IronFeruchemy.mass(p,1);}
     }
