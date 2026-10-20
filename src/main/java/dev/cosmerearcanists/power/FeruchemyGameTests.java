@@ -269,7 +269,7 @@ public final class FeruchemyGameTests {
     }
     @GameTest(template="empty") public static void brassHeatDamageAndWarmthConsumePaidCharge(GameTestHelper h){
         var p=vulnerablePlayer(h);PowerAttributes.set(p,"f:brass",2);var mind=jewelry("brass","ring");Metalminds.transfer(mind,p.getUUID(),"brass",100);p.setItemInHand(InteractionHand.OFF_HAND,mind);PowerData.state(p,"f:brass",10);for(int i=0;i<20;i++)BrassFeruchemy.tick(p);h.assertTrue(p.getHealth()==20,"Tap10 has no self heat damage");
-        PowerData.state(p,"f:brass",20);double before=Metalminds.charge(mind);for(int i=0;i<20;i++)BrassFeruchemy.tick(p);h.assertTrue(Math.abs(p.getHealth()-18)<1e-4&&Math.abs(before-Metalminds.charge(mind)-3*Math.pow(3,.25))<1e-6,"Tap20 costs compressed warmth and deals2 fire heat damage per second");
+        PowerData.state(p,"f:brass",20);double before=Metalminds.charge(mind);for(int i=0;i<20;i++)BrassFeruchemy.tick(p);h.assertTrue(Math.abs(p.getHealth()-18)<1e-4&&Math.abs(before-Metalminds.charge(mind)-3*Math.pow(3,.25))<1e-6,"Tap20 costs compressed warmth and deals2 fire heat damage per second: health="+p.getHealth()+", spent="+(before-Metalminds.charge(mind))+", level="+BrassFeruchemy.levels(p));
         p.setTicksFrozen(100);BrassFeruchemy.tick(p);h.assertTrue(p.getTicksFrozen()<100,"Tapping warmth thaws natural freezing");PowerData.state(p,"f:brass",0);BrassFeruchemy.tick(p);h.assertTrue(BrassFeruchemy.strength(p)==0,"Off clears transient heat and bronze emission");h.succeed();
     }
     @GameTest(template="empty") public static void brassStorageColdBudgetAndCleanup(GameTestHelper h){

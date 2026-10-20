@@ -50,7 +50,7 @@ Ores require an iron-tier pickaxe, support Silk Touch/Fortune, and smelt/blast i
 The Cosmere Metals creative tab contains the new materials. Textures are initial distinct pixel palettes. `cosmerearcanists:metals` and `cosmerearcanists:aluminum_containing` item tags seed iron/steel detection. Duralumin is included in the aluminum exclusion tag.
 
 ## Iron/steel and power controls (0.3.0)
-All sixteen ordinary Allomantic metals and atium-electrum alloy are implemented. Feruchemical iron, steel, pewter, gold and tin support item-owned metalmind storage/tapping. Other assigned Feruchemy powers appear in the selector with **effects pending**.
+All sixteen ordinary Allomantic metals and atium-electrum alloy are implemented. Feruchemical iron, steel, pewter, gold, tin and brass support item-owned metalmind storage/tapping. Other assigned Feruchemy powers appear in the selector with **effects pending**.
 
 Default keys (all rebindable):
 - Hold **R**, scroll to a power, then release R to select it. Tap R to cycle that power's state. Left-click while the menu is open also cycles the highlighted power's state.
