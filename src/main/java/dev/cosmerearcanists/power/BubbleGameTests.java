@@ -62,7 +62,7 @@ public final class BubbleGameTests {
         var caster=caster(h,"cadmium");boolean pvp=BubbleConfig.PVP.get();BubbleConfig.PVP.set(false);
         try{
             for(String metal:List.of("iron","steel","pewter","gold","tin","brass","bronze")){
-                var p=player(h);PowerAttributes.set(p,"f:"+metal,1);PowerData.state(p,"f:"+metal,-1);
+                var p=player(h);PowerAttributes.set(p,"f:"+metal,1);PowerData.state(p,"f:"+metal,-3);
                 var item=net.minecraft.core.registries.BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,metal+"_metalmind_ring"));
                 var normal=new net.minecraft.world.item.ItemStack(item);p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,normal);feruchemyTick(p,metal);double base=dev.cosmerearcanists.feruchemy.Metalminds.charge(normal);
                 BubbleService.create(caster,"cadmium");var faster=new net.minecraft.world.item.ItemStack(item);p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,faster);feruchemyTick(p,metal);
@@ -79,7 +79,7 @@ public final class BubbleGameTests {
         var caster=caster(h,"cadmium");var p=player(h);boolean pvp=BubbleConfig.PVP.get(),enabled=BubbleConfig.FERUCHEMY_STORAGE.get(),players=BubbleConfig.PLAYERS.get();
         try{
             BubbleConfig.PVP.set(false);BubbleService.create(caster,"cadmium");
-            java.util.function.Function<ServerPlayer,net.minecraft.world.item.ItemStack> equip=user->{var stack=new net.minecraft.world.item.ItemStack(Items.IRON_INGOT);user.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,stack);PowerAttributes.set(user,"f:iron",1);PowerData.state(user,"f:iron",-1);return stack;};
+            java.util.function.Function<ServerPlayer,net.minecraft.world.item.ItemStack> equip=user->{var stack=new net.minecraft.world.item.ItemStack(Items.IRON_INGOT);user.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,stack);PowerAttributes.set(user,"f:iron",1);PowerData.state(user,"f:iron",-3);return stack;};
             var own=equip.apply(caster);feruchemyTick(caster,"iron");h.assertTrue(Math.abs(dev.cosmerearcanists.feruchemy.Metalminds.charge(own)-.015)<1e-8,"Caster cannot accelerate their own storage");
             var partial=equip.apply(p);dev.cosmerearcanists.feruchemy.Metalminds.transfer(partial,p.getUUID(),"iron",dev.cosmerearcanists.feruchemy.Metalminds.capacity(partial)-.015);feruchemyTick(p,"iron");
             h.assertTrue(Math.abs(dev.cosmerearcanists.feruchemy.Metalminds.charge(partial)-dev.cosmerearcanists.feruchemy.Metalminds.capacity(partial))<1e-8&&Math.abs(dev.cosmerearcanists.feruchemy.IronFeruchemy.massMultiplier(p)-.85)<1e-7&&PowerData.state(p,"f:iron")==0,"Partial capacity scales base penalty and stops storage without overflow");
