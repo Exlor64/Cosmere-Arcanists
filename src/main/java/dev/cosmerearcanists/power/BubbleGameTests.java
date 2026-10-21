@@ -46,5 +46,47 @@ public final class BubbleGameTests {
         }
         h.succeed();
     }
+    private static void feruchemyTick(ServerPlayer p,String metal){
+        switch(metal){
+            case "iron" -> dev.cosmerearcanists.feruchemy.IronFeruchemy.tick(p);
+            case "steel" -> dev.cosmerearcanists.feruchemy.SteelFeruchemy.tick(p);
+            case "pewter" -> dev.cosmerearcanists.feruchemy.PewterFeruchemy.tick(p);
+            case "gold" -> dev.cosmerearcanists.feruchemy.GoldFeruchemy.tick(p);
+            case "tin" -> dev.cosmerearcanists.feruchemy.TinFeruchemy.tick(p);
+            case "brass" -> dev.cosmerearcanists.feruchemy.BrassFeruchemy.tick(p);
+            case "bronze" -> dev.cosmerearcanists.feruchemy.BronzeFeruchemy.tick(p);
+            default -> throw new IllegalArgumentException(metal);
+        }
+    }
+    @GameTest(template="empty") public static void cadmiumAcceleratesEveryImplementedFeruchemyStorageButNotTapping(GameTestHelper h){
+        var caster=caster(h,"cadmium");boolean pvp=BubbleConfig.PVP.get();BubbleConfig.PVP.set(false);
+        try{
+            for(String metal:List.of("iron","steel","pewter","gold","tin","brass","bronze")){
+                var p=player(h);PowerAttributes.set(p,"f:"+metal,1);PowerData.state(p,"f:"+metal,-1);
+                var item=net.minecraft.core.registries.BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,metal+"_metalmind_ring"));
+                var normal=new net.minecraft.world.item.ItemStack(item);p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,normal);feruchemyTick(p,metal);double base=dev.cosmerearcanists.feruchemy.Metalminds.charge(normal);
+                BubbleService.create(caster,"cadmium");var faster=new net.minecraft.world.item.ItemStack(item);p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,faster);feruchemyTick(p,metal);
+                h.assertTrue(base>0&&Math.abs(dev.cosmerearcanists.feruchemy.Metalminds.charge(faster)-2*base)<1e-8,"Cadmium doubles actual stored charge for "+metal);
+                if(metal.equals("iron"))h.assertTrue(Math.abs(dev.cosmerearcanists.feruchemy.IronFeruchemy.massMultiplier(p)-.7)<1e-8,"Storage acceleration preserves selected mass penalty");
+                BubbleService.remove(caster,"cadmium");String channel=metal.equals("tin")?"tin:sight":metal;
+                var tap=new net.minecraft.world.item.ItemStack(item);dev.cosmerearcanists.feruchemy.Metalminds.transfer(tap,p.getUUID(),channel,10);p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,tap);PowerData.state(p,"f:"+metal,1);p.setHealth(1);feruchemyTick(p,metal);double spent=10-dev.cosmerearcanists.feruchemy.Metalminds.charge(tap);
+                var fastTap=new net.minecraft.world.item.ItemStack(item);dev.cosmerearcanists.feruchemy.Metalminds.transfer(fastTap,p.getUUID(),channel,10);p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,fastTap);BubbleService.create(caster,"cadmium");p.setHealth(1);feruchemyTick(p,metal);
+                h.assertTrue(spent>0&&Math.abs((10-dev.cosmerearcanists.feruchemy.Metalminds.charge(fastTap))-spent)<1e-7,"Cadmium does not change tapping payment for "+metal);BubbleService.remove(caster,"cadmium");BubbleService.clearPlayer(p);
+            }
+        }finally{BubbleConfig.PVP.set(pvp);BubbleService.clearPlayer(caster);}h.succeed();
+    }
+    @GameTest(template="empty") public static void cadmiumStorageRespectsCapacityExemptionFeatureAndExit(GameTestHelper h){
+        var caster=caster(h,"cadmium");var p=player(h);boolean pvp=BubbleConfig.PVP.get(),enabled=BubbleConfig.FERUCHEMY_STORAGE.get(),players=BubbleConfig.PLAYERS.get();
+        try{
+            BubbleConfig.PVP.set(false);BubbleService.create(caster,"cadmium");
+            java.util.function.Function<ServerPlayer,net.minecraft.world.item.ItemStack> equip=user->{var stack=new net.minecraft.world.item.ItemStack(Items.IRON_INGOT);user.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,stack);PowerAttributes.set(user,"f:iron",1);PowerData.state(user,"f:iron",-1);return stack;};
+            var own=equip.apply(caster);feruchemyTick(caster,"iron");h.assertTrue(Math.abs(dev.cosmerearcanists.feruchemy.Metalminds.charge(own)-.015)<1e-8,"Caster cannot accelerate their own storage");
+            var partial=equip.apply(p);dev.cosmerearcanists.feruchemy.Metalminds.transfer(partial,p.getUUID(),"iron",dev.cosmerearcanists.feruchemy.Metalminds.capacity(partial)-.015);feruchemyTick(p,"iron");
+            h.assertTrue(Math.abs(dev.cosmerearcanists.feruchemy.Metalminds.charge(partial)-dev.cosmerearcanists.feruchemy.Metalminds.capacity(partial))<1e-8&&Math.abs(dev.cosmerearcanists.feruchemy.IronFeruchemy.massMultiplier(p)-.85)<1e-7&&PowerData.state(p,"f:iron")==0,"Partial capacity scales base penalty and stops storage without overflow");
+            BubbleConfig.FERUCHEMY_STORAGE.set(false);var off=equip.apply(p);feruchemyTick(p,"iron");h.assertTrue(Math.abs(dev.cosmerearcanists.feruchemy.Metalminds.charge(off)-.015)<1e-8,"Independent storage gate restores base rate");
+            BubbleConfig.FERUCHEMY_STORAGE.set(true);BubbleConfig.PLAYERS.set(false);var immune=equip.apply(p);feruchemyTick(p,"iron");h.assertTrue(Math.abs(dev.cosmerearcanists.feruchemy.Metalminds.charge(immune)-.015)<1e-8,"Other-player feature gate is respected");
+            BubbleConfig.PLAYERS.set(true);p.setPos(p.position().add(20,0,0));var outside=equip.apply(p);feruchemyTick(p,"iron");h.assertTrue(Math.abs(dev.cosmerearcanists.feruchemy.Metalminds.charge(outside)-.015)<1e-8,"Leaving removes the bonus immediately without cached time credit");
+        }finally{BubbleConfig.PVP.set(pvp);BubbleConfig.FERUCHEMY_STORAGE.set(enabled);BubbleConfig.PLAYERS.set(players);BubbleService.clearPlayer(p);BubbleService.clearPlayer(caster);}h.succeed();
+    }
     private BubbleGameTests(){}
 }

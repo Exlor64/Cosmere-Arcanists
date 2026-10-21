@@ -45,7 +45,7 @@ public final class IronFeruchemy {
             boolean storing=state<0;
             double magnitude=storing?FeruchemyLevels.storedFraction(strength,-state,FeruchemyConfig.STORE_STEP.get(),FeruchemyConfig.STORE_PER_ATTRIBUTE.get(),FeruchemyConfig.MAX_STORE.get()):FeruchemyLevels.extraMass(state,FeruchemyConfig.TAP_STEP.get(),FeruchemyConfig.MAX_MASS.get());
             double cost=storing?magnitude/20:magnitude*Math.pow(Math.max(1,magnitude),FeruchemyConfig.TAP_LOSS.get())/20;
-            double moved=Metalminds.transferAccessible(p,"iron",storing?cost:-cost);
+            double moved=(storing?Metalminds.storePerTick(p,"iron",cost):Metalminds.transferAccessible(p,"iron",-cost));
             if(cost>0&&Math.abs(moved)>0)factor=storing?1-Math.abs(moved)*20:1+magnitude*Math.min(1,Math.abs(moved)/cost);
             if(cost<=0||Math.abs(moved)<cost-1e-9)PowerData.state(p,"f:iron",0);
         }

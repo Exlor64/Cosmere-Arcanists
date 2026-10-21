@@ -41,7 +41,7 @@ public final class BrassFeruchemy {
         boolean storing=state<0;
         double magnitude=storing?FeruchemyLevels.storedFraction(attribute,-state,FeruchemyConfig.BRASS_STORE_STEP.get(),FeruchemyConfig.BRASS_STORE_PER_ATTRIBUTE.get(),FeruchemyConfig.MAX_STORE.get()):FeruchemyLevels.extraMass(state,FeruchemyConfig.BRASS_TAP_STEP.get(),FeruchemyConfig.BRASS_CAP.get());
         double cost=magnitude*(storing?1:Math.pow(Math.max(1,magnitude),FeruchemyConfig.BRASS_LOSS.get()))/20;
-        double moved=Metalminds.transferAccessible(p,"brass",storing?cost:-cost),paid=cost>0?Math.min(1,Math.abs(moved)/cost):0;
+        double moved=(storing?Metalminds.storePerTick(p,"brass",cost):Metalminds.transferAccessible(p,"brass",-cost)),paid=cost>0?Math.min(1,Math.abs(moved)/cost):0;
         if(paid<=0){PowerData.state(p,"f:brass",0);clear(p);return;}
         double actual=magnitude*paid,factor=storing?1-actual:1+actual;
         var previous=ACTIVE.get(p);double cold=storing&&FeruchemyConfig.BRASS_COLD.get()&&p.canFreeze()?(previous==null?0:previous.cold())+actual*FeruchemyConfig.BRASS_FREEZE_RATE.get():0;

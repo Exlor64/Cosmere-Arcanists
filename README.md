@@ -1687,3 +1687,21 @@ Without sufficient fuel, the coin remains an ordinary dropped item. Steel must b
 active, burning and assigned to the held activation slot; the existing heartbeat
 expiry, aluminum exclusion and server validation continue to apply.
 No packet change; protocol22 remains current.
+
+
+### Cadmium and Feruchemy storage (0.37.4)
+
+Other players affected by accelerated bubble time now fill their metalminds at
+that effective time rate: a 2x cadmium bubble gives twice the charge per real
+second. This covers all implemented Feruchemy metals (iron, steel, pewter, gold,
+tin senses, brass and bronze). The selected storage penalty stays the same;
+tapping rates and costs stay unchanged. Partial remaining capacity reduces the
+final storage tick proportionally and cannot overflow the metalmind.
+
+Caster exemption and existing bubble rules for players, PvP, immunity, range,
+feature toggles and valid burning/fuel still apply. Overlapping bubbles use their
+existing combined, capped time rate; storage gets a bonus only above 1x, so
+bendalloy alone does not slow storage. Leaving the bubble immediately removes
+the bonus. AFK/contact/ownership/metal/channel restrictions remain in force.
+The default-on bubble setting `accelerateFeruchemyStorage` disables this bonus
+independently. No saved charge migration or packet change; protocol 22 remains.

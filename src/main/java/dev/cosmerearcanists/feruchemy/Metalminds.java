@@ -46,6 +46,12 @@ public final class Metalminds {
         for(var access:result)if(unkeyEmpty(access.stack()))access.changed().run();
         return result;
     }
+    /** Store local-time charge, returning the equivalent base-tick payment for effect/capacity accounting.
+     * Only periodic storage uses this: tapping, refunds and direct transfers retain their exact amounts. */
+    public static double storePerTick(ServerPlayer p,String metal,double amount){
+        double rate=dev.cosmerearcanists.power.BubbleConfig.FERUCHEMY_STORAGE.get()?Math.max(1,dev.cosmerearcanists.power.BubbleService.rate(p)):1;
+        return transferAccessible(p,metal,amount*rate)/rate;
+    }
     public static double transferAccessible(ServerPlayer p,String metal,double amount){
         if(amount>0&&StorageActivity.blocked(p))return 0;
         double remaining=amount;

@@ -77,7 +77,7 @@ public final class BronzeFeruchemy {
             ? FeruchemyLevels.storedFraction(attribute, -state, FeruchemyConfig.BRONZE_STORE_STEP.get(), FeruchemyConfig.BRONZE_STORE_PER_ATTRIBUTE.get(), FeruchemyConfig.MAX_STORE.get())
             : FeruchemyLevels.extraMass(state, FeruchemyConfig.BRONZE_TAP_STEP.get(), FeruchemyConfig.BRONZE_CAP.get());
         double cost = magnitude * (storing ? 1 : Math.pow(Math.max(1, magnitude), FeruchemyConfig.BRONZE_LOSS.get())) / 20;
-        double moved = Metalminds.transferAccessible(p, "bronze", storing ? cost : -cost);
+        double moved = (storing?Metalminds.storePerTick(p,"bronze",cost):Metalminds.transferAccessible(p,"bronze",-cost));
         double paid = cost > 0 ? Math.min(1, Math.abs(moved) / cost) : 0;
         if (paid <= 0) { PowerData.state(p, POWER, 0); clear(p); return; }
         double actual = magnitude * paid;

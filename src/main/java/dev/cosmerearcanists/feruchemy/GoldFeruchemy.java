@@ -31,7 +31,7 @@ public final class GoldFeruchemy {
             double fraction=FeruchemyLevels.storedFraction(attribute,-state,FeruchemyConfig.GOLD_STORE_STEP.get(),FeruchemyConfig.GOLD_STORE_PER_ATTRIBUTE.get(),FeruchemyConfig.MAX_STORE.get());
             var maximum=p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);var own=maximum.getModifier(CAP);double baseline=own==null?maximum.getValue():maximum.getValue()/(1+own.amount());fraction=Math.min(fraction,Math.max(0,1-FeruchemyConfig.GOLD_FLOOR.get()/baseline));
             double requested=fraction*FeruchemyConfig.GOLD_RATE.get()/20;
-            double stored=Metalminds.transferAccessible(p,"gold",requested);
+            double stored=Metalminds.storePerTick(p,"gold",requested);
             ceiling(p,requested>0?fraction*Math.min(1,stored/requested):0);
             if(stored>0)p.getPersistentData().putDouble(ACTIVE,stored);
             if(requested<=0||stored<requested-1e-9)PowerData.state(p,"f:gold",0);

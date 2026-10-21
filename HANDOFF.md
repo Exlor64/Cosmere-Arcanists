@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-10-20 UTC**. Current mod version: **0.37.3-alpha**.
+Last updated: **2026-10-20 UTC**. Current mod version: **0.37.4-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -8,6 +8,8 @@ Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
 Read this and `AGENTS.md` when beginning a session. The user requires this file to be updated after every change or project chat. Keep it current rather than appending conflicting summaries.
 
 ## Latest session and next action
+
+- **0.37.4 cadmium storage:** User requests cadmium bubbles accelerate other players' Feruchemy storage. Added default-on bubble accelerateFeruchemyStorage setting and Metalminds.storePerTick, used only by periodic storing for all seven implemented metals including separate tin channels. Transfers requested charge times max(1, live BubbleService.rate(player)), returns base-tick equivalent payment so selected penalties, partial-capacity effects and stop logic stay correct. Tapping/direct transfers/refunds unchanged. Existing caster/root-vehicle exemption, player/PvP/immunity, loaded dimension/range, validity/fuel/config and overlap/cap rules reused; no cached time credit or delayed exit bonus. Bendalloy alone leaves storage unchanged; overlap can counter cadmium before the >1 bonus. Existing ownership/contact/AFK limits retained. Two required engine regressions cover every implemented metal's actual charge and unchanged tapping, iron penalty, caster exemption, partial capacity, independent config/player gate and exit. Version0.37.4-alpha/protocol22. README updated; git diff --check passed; Java21 build/server/client checks pending CI. Local ./gradlew build --no-daemon attempt failed before compilation: Gradle9.2.1 download Network is unreachable; local Java17 also remains unsuitable. User explicitly authorized publication of0.37.4to Exlor64/Cosmere-Arcanists main and CI; the earlier approval block is resolved. Publication and Java21 CI pending. Next: publish, run CI, fix failures and record exact evidence before claiming runtime verification.
 
 - **0.37.3 published and verified (2026-10-20):** User explicitly authorized publishing the combined brass, iron and both-coin update to main and running CI. Gameplay commit `69b92a899f863504508110734a70b4f463529d1b` passed [Java 21 CI run 39516854485](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/39516854485): standalone and Curios 9.5.1+1.21.1 builds/unit checks, all **187 required server GameTests in each job**, standalone 180-second Xvfb/Mesa/OpenAL-null graphical client startup (sound/resources started; no mixin injection errors), and artifact uploads. Local `git diff --check` passed. Local Java 17/Gradle bootstrap limitations remain; Java verification came from CI. No interactive gameplay or multiplayer playtest. Version **0.37.3-alpha**, protocol **22** unchanged. README current. Next: user tests brass frost buildup, iron movement/falls and downward coinshot feel in-game.
 

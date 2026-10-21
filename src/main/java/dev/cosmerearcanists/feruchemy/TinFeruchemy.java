@@ -30,7 +30,7 @@ public final class TinFeruchemy {
         if(configured()&&p.isAlive()&&!p.isSpectator()&&attribute>0&&state!=0&&(sense(p)==0?FeruchemyConfig.TIN_SIGHT.get():sense(p)==1?FeruchemyConfig.TIN_HEARING.get():FeruchemyConfig.TIN_TOUCH.get())){
             boolean storing=state<0;double magnitude=storing?FeruchemyLevels.storedFraction(attribute,-state,FeruchemyConfig.TIN_STORE_STEP.get(),FeruchemyConfig.TIN_STORE_PER_ATTRIBUTE.get(),FeruchemyConfig.MAX_STORE.get()):FeruchemyLevels.extraMass(state,FeruchemyConfig.TIN_TAP_STEP.get(),FeruchemyConfig.TIN_CAP.get());
             double cost=storing?magnitude/20:magnitude*Math.pow(Math.max(1,magnitude),FeruchemyConfig.TIN_LOSS.get())/20;
-            double moved=Metalminds.transferAccessible(p,channel(p),storing?cost:-cost);
+            double moved=(storing?Metalminds.storePerTick(p,channel(p),cost):Metalminds.transferAccessible(p,channel(p),-cost));
             if(cost>0&&Math.abs(moved)>0)factor=storing?1-Math.abs(moved)*20:1+magnitude*Math.min(1,Math.abs(moved)/cost);
             if(cost<=0||Math.abs(moved)<cost-1e-9)PowerData.state(p,"f:tin",0);
         }apply(p,factor);
