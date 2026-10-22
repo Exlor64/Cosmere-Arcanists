@@ -9,7 +9,21 @@ public final class FeruchemyConfig {
     public static final ModConfigSpec.DoubleValue BRONZE_DEBUFF_RATE, BRONZE_DEBUFF_CAP, BRONZE_WARNING_LEVEL, BRONZE_WARNING_RANGE, BRONZE_WARNING_CAP;
     public static final ModConfigSpec.BooleanValue BRONZE, BRONZE_DROWSY, BRONZE_REST;
     public static final ModConfigSpec.DoubleValue BRONZE_STORE_PER_ATTRIBUTE, BRONZE_TAP_LEVELS, BRONZE_STORE_STEP, BRONZE_TAP_STEP, BRONZE_CAP, BRONZE_LOSS, BRONZE_SLOW, BRONZE_REST_RATE;
+    public static final ModConfigSpec.BooleanValue BENDALLOY;
+    public static final ModConfigSpec.DoubleValue BENDALLOY_STORE_PER_ATTRIBUTE,BENDALLOY_STORE_STEP,BENDALLOY_TAP_LEVELS,BENDALLOY_STORE_RATE,BENDALLOY_TAP_RATE,BENDALLOY_TAP_EXPONENT,BENDALLOY_CAP,BENDALLOY_LOSS;
+    public static final ModConfigSpec.IntValue BENDALLOY_FOOD_FLOOR;
     static{var b=new ModConfigSpec.Builder();
+        BENDALLOY=b.define("bendalloy",true);
+        BENDALLOY_STORE_PER_ATTRIBUTE=b.defineInRange("bendalloyStorageFractionPerAttribute",.30,.001,1.0);
+        BENDALLOY_STORE_STEP=b.defineInRange("bendalloyStoreFractionPerLevel",.1,.001,.9);
+        BENDALLOY_TAP_LEVELS=b.defineInRange("bendalloyTapLevelsPerAttribute",10.0,.1,1000.0);
+        BENDALLOY_STORE_RATE=b.comment("Nutrition points removed per second at full storage fraction; saturation first, then whole hunger points.").defineInRange("bendalloyNutritionPerSecondAtFullStorage",1.0,.001,20.0);
+        BENDALLOY_TAP_RATE=b.comment("Nutrition points per second at tap1. Default 0.025 gives one hunger point per40seconds; saturation restores gradually at the same rate.").defineInRange("bendalloyBaseTapNutritionPerSecond",.025,.0001,20.0);
+        BENDALLOY_TAP_EXPONENT=b.comment("Tap rate is base times level to this power, bounded by maximum rate.").defineInRange("bendalloyTapRateExponent",2.0,1.0,3.0);
+        BENDALLOY_CAP=b.defineInRange("bendalloyMaximumTapNutritionPerSecond",10.0,.001,100.0);
+        BENDALLOY_LOSS=b.defineInRange("bendalloyTapCompressionExponent",.25,0.0,2.0);
+        BENDALLOY_FOOD_FLOOR=b.comment("Storage stops consuming hunger at this food level (6 equals three shanks); saturation can still be stored.").defineInRange("bendalloyMinimumFoodWhileStoring",6,0,19);
+
         BRONZE_DEBUFFS=b.define("bronzeShortensFatigueAndNausea",true);
         BRONZE_WARNINGS=b.define("bronzeDangerWarnings",true);
         BRONZE_DEBUFF_RATE=b.comment("Extra duration ticks removed each tick per actual funded tap level. Default tap10 doubles the expiration speed of Mining Fatigue and Nausea.").defineInRange("bronzeExtraDebuffTicksPerTapLevel",.1,0.0,10.0);

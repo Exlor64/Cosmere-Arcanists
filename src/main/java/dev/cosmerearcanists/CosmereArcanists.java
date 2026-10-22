@@ -50,6 +50,7 @@ public final class CosmereArcanists {
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.feruchemy.GoldFeruchemy());
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.feruchemy.TinFeruchemy());
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.feruchemy.BronzeFeruchemy());
+        NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.feruchemy.BendalloyFeruchemy());
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.feruchemy.BrassFeruchemy());
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.feruchemy.BrassHands());
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.feruchemy.MetalmindEvents());

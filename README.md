@@ -1705,3 +1705,57 @@ bendalloy alone does not slow storage. Leaving the bubble immediately removes
 the bonus. AFK/contact/ownership/metal/channel restrictions remain in force.
 The default-on bubble setting `accelerateFeruchemyStorage` disables this bonus
 independently. No saved charge migration or packet change; protocol 22 remains.
+
+
+### Feruchemical bendalloy: nutrition (0.38.0)
+
+Bendalloy stores hunger and saturation in one shared nutrition reserve. One
+stored nutrition point restores one food point (half a hunger shank) or one
+saturation point before compression loss. Hold a single bendalloy item or use
+an enabled worn/inventory metalmind, select Feruchemical bendalloy and use the
+usual negative storing / positive tapping levels. No activation button is needed.
+Grant it with `/attribute @s cosmerearcanists:feruchemy_bendalloy base set 1`.
+
+Storing removes saturation first, then hunger. At power attribute1, each storing
+level adds10% up to30%; full-fraction storage is1 nutrition point/second, so
+storing3 banks0.3/second. Hunger changes in whole points only when a full point
+can be stored; the fractional scheduling clock itself contains no paid nutrition.
+The default safety floor stops hunger storage at6 food points (three shanks).
+Saturation is removed only for charge actually accepted. Cadmium accelerates
+charge gain with the existing storage bonus, preserving the selected penalty.
+
+Tapping fills hunger first, then saturation. Early levels are intentionally slow:
+
+| Tap level | Nutrition points/second | Time per food point (half shank) |
+| --- | ---: | ---: |
+| 1 | 0.025 | 40 seconds |
+| 2 | 0.100 | 10 seconds |
+| 3 | 0.225 | about4.4 seconds |
+| 5 | 0.625 | 1.6 seconds |
+| 10 | 2.500 | 0.4 seconds |
+
+Default rate is0.025 times tap level squared, capped at10 points/second. Rates
+above1 point/second cost extra charge using compression exponent0.25. Food
+points require full payment; a smaller reserve is preserved until enough charge
+is available. Saturation is restored fractionally and consumes only funded
+charge. Full hunger plus saturation pauses spending. Nutrition powers native
+food-based healing; bendalloy does not directly heal or add a regeneration effect.
+Eating, exhaustion, difficulty and the naturalRegeneration rule retain their
+normal behavior. The early tap levels cannot continuously refill saturation at
+high-healing rates.
+
+Scheduling credit clears on off/state changes, lost contact, disable, death,
+logout, clone and dimension change. It cannot be banked while full or used to
+obtain unpaid food. Ownership, singleton items, capacity and AFK limits apply.
+At attribute1: three storage levels and ten tap levels; stronger/fractional power
+uses the same attribute-based bounds as other Feruchemy. Creative/invulnerable
+and spectator players receive no nutrition transfer. Existing generic HUD shows
+stored nutrition and bronze can detect paid bendalloy transfers.
+
+Settings in `cosmerearcanists-feruchemy-server.toml`: `bendalloy`,
+`bendalloyStorageFractionPerAttribute`, `bendalloyStoreFractionPerLevel`,
+`bendalloyTapLevelsPerAttribute`, `bendalloyNutritionPerSecondAtFullStorage`,
+`bendalloyBaseTapNutritionPerSecond`, `bendalloyTapRateExponent`,
+`bendalloyMaximumTapNutritionPerSecond`, `bendalloyTapCompressionExponent`,
+`bendalloyMinimumFoodWhileStoring`. Existing charge is preserved; no packet
+format change, protocol22. Update client and server together for the new power.
