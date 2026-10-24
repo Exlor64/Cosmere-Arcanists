@@ -3,13 +3,15 @@ Minecraft **1.21.1**, NeoForge **21.1.256**, Java **21**. Author: **Ex**.
 
 For current project status, accepted design decisions, verification and continuation notes, read [HANDOFF.md](HANDOFF.md). Development and handoff-maintenance instructions are in [AGENTS.md](AGENTS.md).
 
+Current verification: all accumulated changes through **0.50.0-alpha** are published on `main`. [CI run 40049509203](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/40049509203) for `eb903d18d839e90190c2b12b554b8cc74d6c5b6e` passed Java 21 builds/JUnit and all **319 required server GameTests**, both with and without Curios, plus standalone graphical client startup. Older release-note statements about unpublished changes or pending engine verification describe their original release sessions and are superseded by this result. Manual GUI alignment, multiplayer behavior and regular-world Scadrial generation still need playtesting.
+
 ## Origins and assignment
 - Persistent planet/race and natural Allomantic/Feruchemical power identifiers.
 - Command-based Scadrial and separate Overworld origins; human race only so far.
 - RANDOM (default), CHOICE, and ANCESTRY assignment modes.
 - Per-art and per-metal switches, birth probabilities, Twinborn and reroll controls.
 - Data survives death and relogging. Config changes do not reroll saved origins.
-- Hemalurgy is acquired rather than a birth power. Melee extraction and the body implantation menu are implemented locally (0.50.0; Minecraft verification pending).
+- Hemalurgy is acquired rather than a birth power. Melee extraction and the body implantation menu are implemented and published (0.50.0).
 
 **Iron/steel/tin/pewter/electrum/atium/bronze/copper/zinc/brass/aluminum/duralumin/chromium/nicrosil/gold/bendalloy/cadmium Allomancy and the power selector are implemented. Scadrial is now a separate Overworld-style dimension with an independent seed. Other magic effects, planetary travel and the origin selection screen remain in development.** Scadrial will be Era 2 with an Overworld-like environment. The ancestry mode currently uses only a Scadrian-human probability multiplier; family inheritance and additional races are future work.
 
@@ -2828,7 +2830,7 @@ stabilization **and its stored power**, with normal integrity cost.
 The coordinate JSON now includes all38supported contents-to-region mappings;
 this remains a design specification pending runtime implantation.
 
-## Hemalurgy implantation and Scadrial (0.50.0, local; Minecraft verification pending)
+## Hemalurgy implantation and Scadrial (0.50.0)
 
 Press **K** (rebindable) to open Hemalurgy. It requires a recorded actual visit
 to `cosmerearcanists:scadrial` **or an active stolen Scadrial Connection**. Origin
@@ -2920,7 +2922,10 @@ Hemalurgy753,traits5216,Identity800,nicrosil543,compounding2073,Connection39 and
 aluminum9(stub-service timing) checks. Added13engine tests (319total annotations)
 for inventory conservation/access/Identity/powers/penalties/clone, dimension seed
 and currency, and kept legacy100clip fixtures explicitly configured. All resource
-JSON and24changed/new Java source syntax checks passed. **Both required Gradle
-commands failed downloading Gradle9.2.1 before compilation.** Java21 type checking,
-Mixin application, world generation, GUI/model alignment and multiplayer/death
-item ordering are not verified. Changes are local and unpublished.
+JSON and24changed/new Java source syntax checks passed. Subsequent publication CI
+40049509203 passed Java21 builds/JUnit and all319required server tests with and
+without Curios, plus standalone graphical client startup and Mixin application.
+The GameTest harness decodes the actual Scadrial dimension resource with live
+registry references; it does not instantiate that dimension. Regular-world
+Scadrial generation, GUI/model alignment and multiplayer/death item ordering
+still need manual verification. All accumulated changes are published on main.
