@@ -34,7 +34,8 @@
     "ScadrialCurrencyMixin",
     "BronzeEffectAccess",
     "EdibleNuggetMixin",
-    "ScadrialSeedMixin"
+    "ScadrialSeedMixin",
+    "CadmiumServerActivityMixin"
   ],
   "injectors": {
     "defaultRequire": 1

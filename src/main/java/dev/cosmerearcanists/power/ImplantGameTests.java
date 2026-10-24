@@ -16,7 +16,7 @@ import net.neoforged.neoforge.gametest.*;
 @GameTestHolder(CosmereArcanists.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class ImplantGameTests {
-    private static FakePlayer player(GameTestHelper h){var p=new FakePlayer(h.getLevel(),new GameProfile(UUID.randomUUID(),"ImplantTest"));p.setGameMode(GameType.SURVIVAL);PowerAttributes.migrate(p);return p;}
+    private static FakePlayer player(GameTestHelper h){var p=new DamageableTestPlayer(h.getLevel(),new GameProfile(UUID.randomUUID(),"ImplantTest"));p.setGameMode(GameType.SURVIVAL);PowerAttributes.migrate(p);return p;}
     private static void visited(FakePlayer p){var dimensions=HemalurgyConfig.SCADRIAL_DIMENSIONS.get();try{HemalurgyConfig.SCADRIAL_DIMENSIONS.set(List.of(p.level().dimension().location().toString()));ScadrialVisits.observe(p);}finally{HemalurgyConfig.SCADRIAL_DIMENSIONS.set(dimensions);}}
     private static HemalurgyMenu menu(FakePlayer p){var menu=new HemalurgyMenu(7,p.getInventory());p.containerMenu=menu;return menu;}
     private static ItemStack power(String metal,String key,UUID donor){var s=new ItemStack(EquipmentContent.SPIKES.get(metal).get());HemalurgicSpikes.store(s,new HemalurgicSpikes.Charge(UUID.randomUUID(),donor,metal,key,List.of(new IdentityMath.Portion(donor,.8))));return s;}

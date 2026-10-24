@@ -7,6 +7,6 @@ import org.spongepowered.asm.mixin.injection.At;
 /** Limit endurance to native locomotion call sites; healing, damage, mining and arbitrary exhaustion remain unchanged. */
 @Mixin(Player.class)
 public abstract class CadmiumActivityMixin {
-    @WrapOperation(method={"checkMovementStatistics","jumpFromGround"},at=@At(value="INVOKE",target="Lnet/minecraft/world/entity/player/Player;causeFoodExhaustion(F)V"))
+    @WrapOperation(method="jumpFromGround",at=@At(value="INVOKE",target="Lnet/minecraft/world/entity/player/Player;causeFoodExhaustion(F)V"))
     private void cosmerearcanists$oxygenEndurance(Player player,float amount,Operation<Void> original){original.call(player,CadmiumFeruchemy.activityExhaustion(player,amount));}
 }

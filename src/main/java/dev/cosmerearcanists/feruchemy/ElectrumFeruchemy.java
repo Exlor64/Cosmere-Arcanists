@@ -38,7 +38,7 @@ public final class ElectrumFeruchemy {
     private static void apply(ServerPlayer p,int state,double magnitude){
         double mining=1,attack=1;
         if(state<0&&FeruchemyConfig.ELECTRUM_STORE_MINING.get())mining=1-Math.min(.95,magnitude*FeruchemyConfig.ELECTRUM_MINING_PENALTY.get());
-        if(state>0&&FeruchemyConfig.ELECTRUM_SECOND_WIND.get()&&p.getMaxHealth()>0&&p.getHealth()/p.getMaxHealth()<=FeruchemyConfig.ELECTRUM_LOW_HEALTH.get()+1e-9&&magnitude/FeruchemyConfig.ELECTRUM_TAP_STEP.get()+1e-9>=FeruchemyConfig.ELECTRUM_WIND_LEVEL.get()){double bonus=Math.min(FeruchemicalEnhancement.cap(p,"electrum",FeruchemyConfig.ELECTRUM_WIND_CAP.get()),magnitude/FeruchemyConfig.ELECTRUM_TAP_STEP.get()*FeruchemyConfig.ELECTRUM_WIND_STEP.get());mining+=bonus;attack+=bonus;}
+        if(state>0&&FeruchemyConfig.ELECTRUM_SECOND_WIND.get()&&p.getMaxHealth()>0&&p.getHealth()/p.getMaxHealth()<=FeruchemyConfig.ELECTRUM_LOW_HEALTH.get()+1e-6&&magnitude/FeruchemyConfig.ELECTRUM_TAP_STEP.get()+1e-9>=FeruchemyConfig.ELECTRUM_WIND_LEVEL.get()){double bonus=Math.min(FeruchemicalEnhancement.cap(p,"electrum",FeruchemyConfig.ELECTRUM_WIND_CAP.get()),magnitude/FeruchemyConfig.ELECTRUM_TAP_STEP.get()*FeruchemyConfig.ELECTRUM_WIND_STEP.get());mining+=bonus;attack+=bonus;}
         modifier(p,Attributes.BLOCK_BREAK_SPEED,mining);modifier(p,Attributes.ATTACK_SPEED,attack);
     }
     private static void shortenSlowness(ServerPlayer p,double level){

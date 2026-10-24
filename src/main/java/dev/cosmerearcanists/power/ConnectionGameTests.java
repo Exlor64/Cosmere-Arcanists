@@ -24,7 +24,7 @@ import net.neoforged.neoforge.gametest.*;
 @GameTestHolder(CosmereArcanists.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class ConnectionGameTests {
-    private static FakePlayer player(GameTestHelper h){var p=new FakePlayer(h.getLevel(),new GameProfile(UUID.randomUUID(),"Connector")){@Override public boolean isInvulnerableTo(net.minecraft.world.damagesource.DamageSource source){return false;}};p.setGameMode(GameType.SURVIVAL);p.setPos(Vec3.atCenterOf(h.absolutePos(new BlockPos(1,20,1))));PowerAttributes.set(p,"f:duralumin",1);return p;}
+    private static FakePlayer player(GameTestHelper h){var p=new DamageableTestPlayer(h.getLevel(),new GameProfile(UUID.randomUUID(),"Connector")){@Override public boolean isInvulnerableTo(net.minecraft.world.damagesource.DamageSource source){return false;}};p.setGameMode(GameType.SURVIVAL);p.setPos(Vec3.atCenterOf(h.absolutePos(new BlockPos(1,20,1))));PowerAttributes.set(p,"f:duralumin",1);return p;}
     private static ItemStack mind(FakePlayer p,double charge){var item=new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,"duralumin_metalmind_ring")));p.setItemInHand(InteractionHand.OFF_HAND,item);if(charge>0)Metalminds.transfer(item,p.getUUID(),"duralumin",charge);return item;}
     private static void tap(FakePlayer p,int level){PowerData.state(p,"f:duralumin",level);DuraluminFeruchemy.tick(p);}
     private static void close(GameTestHelper h,double a,double b,String message){h.assertTrue(Math.abs(a-b)<1e-6,message+": "+a+" != "+b);}

@@ -18,7 +18,7 @@ import net.neoforged.neoforge.gametest.*;
 @GameTestHolder(CosmereArcanists.MOD_ID)
 @PrefixGameTestTemplate(false)
 public final class CompoundingGameTests {
-    private static FakePlayer player(GameTestHelper h,String metal){var p=new FakePlayer(h.getLevel(),new GameProfile(UUID.randomUUID(),"Compound"));p.setGameMode(GameType.SURVIVAL);p.setPos(net.minecraft.world.phys.Vec3.atCenterOf(h.absolutePos(new BlockPos(1,8,1))));PowerAttributes.set(p,"a:"+metal,1);PowerAttributes.set(p,"f:"+metal,1);PowerData.reserve(p,metal,20);return p;}
+    private static FakePlayer player(GameTestHelper h,String metal){var p=new DamageableTestPlayer(h.getLevel(),new GameProfile(UUID.randomUUID(),"Compound"));p.setGameMode(GameType.SURVIVAL);p.setPos(net.minecraft.world.phys.Vec3.atCenterOf(h.absolutePos(new BlockPos(1,8,1))));PowerAttributes.set(p,"a:"+metal,1);PowerAttributes.set(p,"f:"+metal,1);PowerData.reserve(p,metal,20);return p;}
     private static ItemStack ring(String metal){return new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,metal+"_metalmind_ring")));}
     private static ItemStack nugget(String metal){return new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,metal+"_nugget")));}
     private static void clean(FakePlayer p){TemporaryPowers.stop(p);CompoundingService.clear(p);NicrosilService.clear(p);SteelFeruchemy.clear(p);for(var stack:List.of(p.getMainHandItem(),p.getOffhandItem()))Metalminds.wipe(stack);}
