@@ -12,7 +12,8 @@ import net.minecraft.world.item.component.CustomData;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.*;
 import net.neoforged.neoforge.network.PacketDistributor;
-import org.joml.*;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
 /** Native container cursor/inventory, freehand body hit requests, front/back player model. */
 public final class HemalurgyScreen extends AbstractContainerScreen<HemalurgyMenu> {
