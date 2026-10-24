@@ -10,7 +10,9 @@ class PowerRulesTest {
         assertEquals(3, PowerRules.next("a:steel", 2, 5));
         assertEquals(0, PowerRules.next("a:steel", 3, 5));
         assertEquals(3, PowerRules.clamp("a:iron", Integer.MAX_VALUE, 5));
-        assertEquals(0, PowerRules.clamp("a:iron", Integer.MIN_VALUE, 5));
+        assertEquals(-3, PowerRules.clamp("a:iron", Integer.MIN_VALUE, 5));
+        assertEquals(0, PowerRules.clamp("a:iron", Integer.MIN_VALUE, 0, 5));
+        assertEquals("Compounding 2", PowerRules.label("a:iron", -2));
     }
     @Test void burnLevelsHaveDistinctStrengthConsumptionAndLabels() {
         assertEquals("Low burn", PowerRules.label("a:iron",1));
@@ -35,6 +37,6 @@ class PowerRulesTest {
     }
     @Test void onlyWorkingPowersClaimImplementedEffects() {
         for(String metal:new String[]{"iron","steel","tin","pewter","electrum","atium","bronze","copper","zinc","brass","aluminum","duralumin","chromium","nicrosil","gold","bendalloy","cadmium"})assertTrue(PowerRules.implemented("a:"+metal));
-        for(String metal:new String[]{"iron","steel","pewter","gold","tin","brass","bronze"})assertTrue(PowerRules.implemented("f:"+metal));assertFalse(PowerRules.implemented("f:cadmium"));
+        for(String metal:new String[]{"iron","steel","pewter","gold","tin","brass","bronze","bendalloy","cadmium","copper","aluminum","zinc","electrum","duralumin","chromium","nicrosil"})assertTrue(PowerRules.implemented("f:"+metal));
     }
 }

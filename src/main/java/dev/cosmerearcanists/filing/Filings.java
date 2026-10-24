@@ -20,7 +20,7 @@ public final class Filings {
     public record Source(String metal,int nuggetUnits) { }
     private static CompoundTag data(ItemStack stack){return stack.getOrDefault(DataComponents.CUSTOM_DATA,CustomData.EMPTY).copyTag();}
     public static boolean filed(ItemStack stack){return !stack.isEmpty() && data(stack).getCompound(FILED).getInt("used")>0;}
-    public static boolean protectedMaterial(ItemStack stack){return filed(stack)||dev.cosmerearcanists.feruchemy.Metalminds.bound(stack);}
+    public static boolean protectedMaterial(ItemStack stack){return filed(stack)||dev.cosmerearcanists.feruchemy.Metalminds.bound(stack)||dev.cosmerearcanists.hemalurgy.HemalurgicSpikes.marked(stack);}
     public static boolean hasFiled(RecipeInput input){for(int i=0;i<input.size();i++)if(protectedMaterial(input.getItem(i)))return true;return false;}
     public static int capacity(ItemStack stack){return Math.max(0,data(stack).getCompound(FILED).getInt("capacity"));}
     public static int remaining(ItemStack stack){var tag=data(stack).getCompound(FILED);return Math.max(0,tag.getInt("capacity")-tag.getInt("used"));}

@@ -13,7 +13,7 @@ public final class SpikeCrossbowItem extends CrossbowItem {
     @Override public net.minecraft.world.InteractionResultHolder<ItemStack> use(Level level,Player player,net.minecraft.world.InteractionHand hand){
         return EquipmentConfig.SPIKES.get()?super.use(level,player,hand):net.minecraft.world.InteractionResultHolder.fail(player.getItemInHand(hand));
     }
-    @Override public Predicate<ItemStack> getAllSupportedProjectiles(){return stack->EquipmentConfig.SPIKES.get() && stack.getItem() instanceof SpikeItem;}
+    @Override public Predicate<ItemStack> getAllSupportedProjectiles(){return stack->EquipmentConfig.SPIKES.get() && stack.getItem() instanceof SpikeItem && !dev.cosmerearcanists.hemalurgy.HemalurgicSpikes.marked(stack);}
     @Override public Predicate<ItemStack> getSupportedHeldProjectiles(){return getAllSupportedProjectiles();}
     @Override public ItemStack getDefaultCreativeAmmo(Player player,ItemStack weapon){return EquipmentContent.SPIKES.get("iron").get().getDefaultInstance();}
     @Override public Projectile createProjectile(Level level,LivingEntity shooter,ItemStack weapon,ItemStack ammo,boolean critical){

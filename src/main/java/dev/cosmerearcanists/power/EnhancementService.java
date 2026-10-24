@@ -22,6 +22,7 @@ public final class EnhancementService {
         if(!usable(p,"duralumin"))return 1;
         return switch(state(p,"duralumin")){case 1->boost(EnhancementConfig.LOW_POWER.get(),PowerAttributes.strength(p,"a:duralumin"));case 2->boost(EnhancementConfig.BURN_POWER.get(),PowerAttributes.strength(p,"a:duralumin"));default->1;};
     }
+    public static double capMultiplier(ServerPlayer p,String power){return !EnhancementConfig.OVERCAPS.get()?1:power.startsWith("f:")?dev.cosmerearcanists.feruchemy.FeruchemicalEnhancement.capMultiplier(p,power.substring(2)):selfMultiplier(p,power);}
     public static boolean committed(ServerPlayer p,String metal){var map=BURSTS.get(p.getUUID());return map!=null && map.containsKey(metal);}
     /** Passive consumption only: do not apply relative metal rates to flat ability costs. */
     public static void burn(ServerPlayer p,String metal,double amount){consume(p,metal,amount*PowerConfig.burnMultiplier(metal));}
@@ -64,19 +65,20 @@ public final class EnhancementService {
         if(!configured("duralumin") || PowerAttributes.strength(p,"a:duralumin")<=0){clear(p);return;}
         var existing=BURSTS.get(p.getUUID());if(existing!=null){var available=PowerData.available(p);existing.keySet().removeIf(m->!available.contains("a:"+m) || !featureEnabled(m));if(existing.isEmpty())BURSTS.remove(p.getUUID());}
         if(!BURSTS.containsKey(p.getUUID()) && usable(p,"duralumin") && state(p,"duralumin")==3){
-            var bursts=new HashMap<String,Burst>();int longest=0;long now=p.level().getGameTime();
+            var bursts=new HashMap<String,Burst>();int longest=dev.cosmerearcanists.feruchemy.FeruchemicalEnhancement.begin(p,profile(p));long now=p.level().getGameTime();
             for(String power:PowerData.available(p))if(power.startsWith("a:") && !power.equals("a:duralumin") && !power.equals("a:aluminum") && !ContactService.committed(p,power.substring(2)) && PowerRules.implemented(power) && SeekingService.activeStrength(p,power)>0){
                 String metal=power.substring(2);double fuel=PowerData.reserve(p,metal);int ticks=flareTicks(fuel,PowerConfig.RESERVE_CAP.get(),(int)Math.ceil(EnhancementConfig.FLARE_TICKS.get()*efficiency(PowerAttributes.strength(p,"a:duralumin"))));if(ticks>0){bursts.put(metal,new Burst(fuel,ticks,now));longest=Math.max(longest,ticks);}
             }
-            if(!bursts.isEmpty()){bursts.put("duralumin",new Burst(PowerData.reserve(p,"duralumin"),longest,now));BURSTS.put(p.getUUID(),bursts);}
+            if(!bursts.isEmpty()||longest>0){bursts.put("duralumin",new Burst(PowerData.reserve(p,"duralumin"),longest,now));BURSTS.put(p.getUUID(),bursts);}
         }
     }
     public static void finish(ServerPlayer p){
+        dev.cosmerearcanists.feruchemy.FeruchemicalEnhancement.finish(p);
         var bursts=BURSTS.get(p.getUUID());
         if(bursts!=null){long now=p.level().getGameTime();for(var it=bursts.entrySet().iterator();it.hasNext();){var entry=it.next();var b=entry.getValue();long elapsed=Math.max(0,now-b.start+1);double due=b.fuel*Math.min(1,elapsed/(double)b.ticks);if(PowerConfig.CONSUMPTION.get())PowerData.reserve(p,entry.getKey(),PowerData.reserve(p,entry.getKey())-Math.max(0,due-b.spent));b.spent=due;if(elapsed>=b.ticks){if(PowerConfig.CONSUMPTION.get())PowerData.reserve(p,entry.getKey(),PowerData.reserve(p,entry.getKey())<1e-8?0:PowerData.reserve(p,entry.getKey()));PowerData.state(p,"a:"+entry.getKey(),0);it.remove();}}if(bursts.isEmpty())BURSTS.remove(p.getUUID());}
         else if(usable(p,"duralumin") && PowerConfig.CONSUMPTION.get()){int state=state(p,"duralumin");PowerData.reserve(p,"duralumin",PowerData.reserve(p,"duralumin")-PowerConfig.burnCost("duralumin",EnhancementConfig.DRAIN.get())/20/efficiency(PowerAttributes.strength(p,"a:duralumin"))*PowerRules.levelMultiplier(state,PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get()));if(PowerData.reserve(p,"duralumin")<=0)PowerData.state(p,"a:duralumin",0);}
     }
-    public static void clear(ServerPlayer p){BURSTS.remove(p.getUUID());}
-    public static void clear(){BURSTS.clear();}
+    public static void clear(ServerPlayer p){BURSTS.remove(p.getUUID());dev.cosmerearcanists.feruchemy.FeruchemicalEnhancement.clear(p);}
+    public static void clear(){BURSTS.clear();dev.cosmerearcanists.feruchemy.FeruchemicalEnhancement.clear();}
     private EnhancementService() { }
 }

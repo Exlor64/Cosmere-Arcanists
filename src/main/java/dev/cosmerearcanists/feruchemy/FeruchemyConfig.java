@@ -12,7 +12,57 @@ public final class FeruchemyConfig {
     public static final ModConfigSpec.BooleanValue BENDALLOY;
     public static final ModConfigSpec.DoubleValue BENDALLOY_STORE_PER_ATTRIBUTE,BENDALLOY_STORE_STEP,BENDALLOY_TAP_LEVELS,BENDALLOY_STORE_RATE,BENDALLOY_TAP_RATE,BENDALLOY_TAP_EXPONENT,BENDALLOY_CAP,BENDALLOY_LOSS;
     public static final ModConfigSpec.IntValue BENDALLOY_FOOD_FLOOR;
+    public static final ModConfigSpec.BooleanValue CADMIUM,CADMIUM_ENDURANCE,CADMIUM_MINING,CADMIUM_SWIMMING,CADMIUM_MOVEMENT,CADMIUM_HEALING;
+    public static final ModConfigSpec.DoubleValue CADMIUM_STORE_PER_ATTRIBUTE,CADMIUM_STORE_STEP,CADMIUM_TAP_LEVELS,CADMIUM_AIR_PER_LEVEL,CADMIUM_AIR_CAP,CADMIUM_LOSS,CADMIUM_AIR_FLOOR,CADMIUM_ENDURANCE_STEP,CADMIUM_ENDURANCE_CAP,CADMIUM_MINING_STEP,CADMIUM_SWIM_STEP,CADMIUM_SWIM_CAP,CADMIUM_MOVEMENT_STEP,CADMIUM_MOVEMENT_CAP,CADMIUM_HEAL_STEP,CADMIUM_HEAL_CAP;
+    public static final ModConfigSpec.BooleanValue COPPER,COPPER_SCREENSHOTS;
+    public static final ModConfigSpec.IntValue COPPER_PAGES,COPPER_TEXT,COPPER_IMAGE_BYTES,COPPER_DISK_MB,COPPER_IMAGES,COPPER_BOOKS,COPPER_BYTES_PER_CHARGE;
+    public static final ModConfigSpec.BooleanValue ALUMINUM,ALUMINUM_EMOTIONS;
+    public static final ModConfigSpec.DoubleValue ALUMINUM_STORE_PER_ATTRIBUTE,ALUMINUM_STORE_STEP,ALUMINUM_TAP_LEVELS,ALUMINUM_TAP_STEP,ALUMINUM_CAP,ALUMINUM_LOSS,ALUMINUM_EMOTION_STEP,ALUMINUM_EMOTION_CAP;
+    public static final ModConfigSpec.BooleanValue ZINC,ZINC_ATTACK,ZINC_WEAPONS,ZINC_MOVEMENT,ZINC_REACTIONS,ZINC_PATHS;
+    public static final ModConfigSpec.DoubleValue ZINC_STORE_PER_ATTRIBUTE,ZINC_STORE_STEP,ZINC_TAP_LEVELS,ZINC_TAP_STEP,ZINC_CAP,ZINC_LOSS,ZINC_ACTION_STEP,ZINC_ACTION_CAP,ZINC_MOVEMENT_STEP,ZINC_MOVEMENT_CAP,ZINC_CUE_LEVEL,ZINC_PATH_LEVEL,ZINC_RANGE;
+    public static final ModConfigSpec.IntValue ZINC_HORIZON;
+    public static final ModConfigSpec.BooleanValue ELECTRUM,ELECTRUM_DAMAGE,ELECTRUM_KNOCKBACK,ELECTRUM_STORE_MINING,ELECTRUM_SLOW,ELECTRUM_SECOND_WIND;
+    public static final ModConfigSpec.DoubleValue ELECTRUM_STORE_PER_ATTRIBUTE,ELECTRUM_STORE_STEP,ELECTRUM_TAP_LEVELS,ELECTRUM_TAP_STEP,ELECTRUM_CAP,ELECTRUM_LOSS,ELECTRUM_DAMAGE_STEP,ELECTRUM_DAMAGE_CAP,ELECTRUM_STORE_KNOCKBACK,ELECTRUM_KNOCKBACK_STEP,ELECTRUM_KNOCKBACK_CAP,ELECTRUM_MINING_PENALTY,ELECTRUM_SLOW_STEP,ELECTRUM_SLOW_CAP,ELECTRUM_LOW_HEALTH,ELECTRUM_WIND_LEVEL,ELECTRUM_WIND_STEP,ELECTRUM_WIND_CAP;
     static{var b=new ModConfigSpec.Builder();
+        ELECTRUM=b.define("electrum",true);ELECTRUM_DAMAGE=b.define("electrumDamageReduction",true);ELECTRUM_KNOCKBACK=b.define("electrumKnockback",true);ELECTRUM_STORE_MINING=b.define("electrumStorageMiningPenalty",true);ELECTRUM_SLOW=b.define("electrumShorterSlowness",true);ELECTRUM_SECOND_WIND=b.define("electrumSecondWind",true);
+        ELECTRUM_STORE_PER_ATTRIBUTE=b.defineInRange("electrumStorageFractionPerAttribute",.3,.001,10.0);ELECTRUM_STORE_STEP=b.defineInRange("electrumStoreFractionPerLevel",.1,.001,1.0);ELECTRUM_TAP_LEVELS=b.defineInRange("electrumTapLevelsPerAttribute",10.0,.1,1000.0);ELECTRUM_TAP_STEP=b.defineInRange("electrumDeterminationPerTapLevel",.15,.001,10.0);ELECTRUM_CAP=b.defineInRange("electrumMaximumDeterminationMultiplier",20.0,1.0,100.0);ELECTRUM_LOSS=b.defineInRange("electrumTapCompressionExponent",.25,0.0,2.0);
+        ELECTRUM_DAMAGE_STEP=b.defineInRange("electrumDamageReductionPerTapLevel",.05,0.0,.5);ELECTRUM_DAMAGE_CAP=b.comment("Electrum's own contribution is hard-limited to50%; stacks multiplicatively with other damage reductions.").defineInRange("electrumMaximumDamageReduction",.5,0.0,.5);
+        ELECTRUM_STORE_KNOCKBACK=b.defineInRange("electrumExtraKnockbackAtFullStorage",.5,0.0,2.0);ELECTRUM_KNOCKBACK_STEP=b.defineInRange("electrumKnockbackReductionPerTapLevel",.025,0.0,.5);ELECTRUM_KNOCKBACK_CAP=b.defineInRange("electrumMaximumKnockbackReduction",.5,0.0,.95);ELECTRUM_MINING_PENALTY=b.defineInRange("electrumMiningPenaltyAtFullStorage",.5,0.0,1.0);
+        ELECTRUM_SLOW_STEP=b.defineInRange("electrumSlownessDurationReductionPerTapLevel",.05,0.0,.75);ELECTRUM_SLOW_CAP=b.defineInRange("electrumMaximumSlownessDurationReduction",.5,0.0,.75);ELECTRUM_LOW_HEALTH=b.defineInRange("electrumSecondWindHealthFraction",.3,.01,1.0);ELECTRUM_WIND_LEVEL=b.defineInRange("electrumFirstSecondWindTapLevel",10.0,.001,100000.0);ELECTRUM_WIND_STEP=b.defineInRange("electrumSecondWindBonusPerTapLevel",.02,0.0,.5);ELECTRUM_WIND_CAP=b.defineInRange("electrumMaximumSecondWindBonus",.3,0.0,1.0);
+
+        ZINC=b.define("zinc",true);ZINC_ATTACK=b.define("zincAttackRecovery",true);ZINC_WEAPONS=b.define("zincBowCrossbowPreparation",true);ZINC_MOVEMENT=b.define("zincSlightMovementBonus",true);ZINC_REACTIONS=b.define("zincReactionCues",true);ZINC_PATHS=b.define("zincProjectileEstimates",true);
+        ZINC_STORE_PER_ATTRIBUTE=b.defineInRange("zincStorageFractionPerAttribute",.3,.001,10.0);ZINC_STORE_STEP=b.defineInRange("zincStoreFractionPerLevel",.1,.001,1.0);ZINC_TAP_LEVELS=b.defineInRange("zincTapLevelsPerAttribute",10.0,.1,1000.0);ZINC_TAP_STEP=b.defineInRange("zincMentalSpeedPerTapLevel",.15,.001,10.0);ZINC_CAP=b.defineInRange("zincMaximumMentalSpeedMultiplier",20.0,1.0,100.0);ZINC_LOSS=b.defineInRange("zincTapCompressionExponent",.25,0.0,2.0);
+        ZINC_ACTION_STEP=b.defineInRange("zincActionBonusPerTapLevel",.05,0.0,1.0);ZINC_ACTION_CAP=b.defineInRange("zincMaximumActionBonus",1.0,0.0,4.0);ZINC_MOVEMENT_STEP=b.defineInRange("zincMovementBonusPerTapLevel",.002,0.0,.1);ZINC_MOVEMENT_CAP=b.defineInRange("zincMaximumMovementBonus",.05,0.0,.5);
+        ZINC_CUE_LEVEL=b.defineInRange("zincFirstReactionCueTapLevel",1.0,.001,100000.0);ZINC_PATH_LEVEL=b.defineInRange("zincFirstProjectileEstimateTapLevel",10.0,.001,100000.0);ZINC_RANGE=b.defineInRange("zincReactionRangeBlocks",16.0,1.0,32.0);ZINC_HORIZON=b.defineInRange("zincProjectileEstimateTicks",12,1,16);
+
+        ALUMINUM=b.define("aluminum",true);
+        ALUMINUM_EMOTIONS=b.define("aluminumEmotionalResistance",true);
+        ALUMINUM_EMOTION_STEP=b.comment("Reduction of both rioting and soothing per actually funded aluminum tap level.").defineInRange("aluminumEmotionalResistancePerTapLevel",.05,0.0,1.0);
+        ALUMINUM_EMOTION_CAP=b.defineInRange("aluminumMaximumEmotionalResistance",.75,0.0,1.0);
+        ALUMINUM_STORE_PER_ATTRIBUTE=b.comment("Identity alone may be stored fully to make unkeyed metalminds. Default attribute1 reaches100%; the ordinary95% cap still applies to all other attributes.").defineInRange("aluminumIdentityStorageFractionPerAttribute",1.0,.001,10.0);
+        ALUMINUM_STORE_STEP=b.defineInRange("aluminumIdentityStoreFractionPerLevel",.1,.001,1.0);ALUMINUM_TAP_LEVELS=b.defineInRange("aluminumIdentityTapLevelsPerAttribute",10.0,.1,1000.0);
+        ALUMINUM_TAP_STEP=b.defineInRange("aluminumIdentityPerTapLevel",.15,.001,10.0);ALUMINUM_CAP=b.defineInRange("aluminumMaximumIdentityMultiplier",20.0,1.0,100.0);ALUMINUM_LOSS=b.defineInRange("aluminumIdentityTapCompressionExponent",.25,0.0,2.0);
+
+        COPPER=b.define("copper",true);COPPER_SCREENSHOTS=b.define("copperServerScreenshots",true);
+        COPPER_BYTES_PER_CHARGE=b.comment("Logical notebook bytes supported per stored copper charge. Saving memories stores their required charge immediately; no idle charge generation.").defineInRange("copperBytesPerCharge",1024,1,1048576);
+        COPPER_PAGES=b.defineInRange("copperMaximumPagesPerMetalmind",32,1,64);COPPER_TEXT=b.defineInRange("copperMaximumTextCharactersPerMetalmind",16384,2048,65536);
+        COPPER_IMAGE_BYTES=b.comment("Maximum PNG bytes per screenshot; dimensions are independently bounded to512x288.").defineInRange("copperMaximumScreenshotBytes",786432,1024,786432);
+        COPPER_DISK_MB=b.defineInRange("copperMaximumScreenshotStorageMiB",256,1,4096);COPPER_IMAGES=b.defineInRange("copperMaximumServerScreenshots",2048,1,16384);COPPER_BOOKS=b.defineInRange("copperMaximumServerNotebooks",4096,1,65536);
+
+        CADMIUM=b.define("cadmium",true);
+        CADMIUM_MOVEMENT=b.define("cadmiumMovementSpeed",true);CADMIUM_HEALING=b.define("cadmiumNaturalFoodHealing",true);
+        CADMIUM_MOVEMENT_STEP=b.defineInRange("cadmiumMovementSpeedPerExcessTapLevel",.002,0.0,.1);CADMIUM_MOVEMENT_CAP=b.defineInRange("cadmiumMaximumMovementSpeedBonus",.05,0.0,.5);
+        CADMIUM_HEAL_STEP=b.defineInRange("cadmiumNaturalHealingPerExcessTapLevel",.005,0.0,.1);CADMIUM_HEAL_CAP=b.defineInRange("cadmiumMaximumNaturalHealingBonus",.1,0.0,1.0);
+
+        CADMIUM_ENDURANCE=b.define("cadmiumActivityEndurance",true);CADMIUM_MINING=b.define("cadmiumUnderwaterMining",true);CADMIUM_SWIMMING=b.define("cadmiumSwimmingSpeed",true);
+        CADMIUM_STORE_PER_ATTRIBUTE=b.defineInRange("cadmiumStorageFractionPerAttribute",.30,.001,1.0);CADMIUM_STORE_STEP=b.defineInRange("cadmiumStoreFractionPerLevel",.1,.001,.9);CADMIUM_TAP_LEVELS=b.defineInRange("cadmiumTapLevelsPerAttribute",10.0,.1,1000.0);
+        CADMIUM_AIR_PER_LEVEL=b.comment("Native air ticks restored per server tick per tap level. Default0.2 means tap5 offsets normal underwater air use of1tick/tick; extra bonuses scale above1/outputPerLevel.").defineInRange("cadmiumAirTicksPerTapLevel",.2,.001,10.0);
+        CADMIUM_AIR_CAP=b.defineInRange("cadmiumMaximumAirTicksPerTick",4.0,.01,100.0);CADMIUM_LOSS=b.defineInRange("cadmiumTapCompressionExponent",.25,0.0,2.0);
+        CADMIUM_AIR_FLOOR=b.comment("Fraction of native maximum air left by storage itself. Native drowning may still consume the remaining air.").defineInRange("cadmiumStorageMinimumAirFraction",.1,0.0,.9);
+        CADMIUM_ENDURANCE_STEP=b.defineInRange("cadmiumExhaustionReductionPerExcessTapLevel",.05,0.0,1.0);CADMIUM_ENDURANCE_CAP=b.defineInRange("cadmiumMaximumActivityExhaustionReduction",.75,0.0,.95);
+        CADMIUM_MINING_STEP=b.comment("Fraction of the submerged mining penalty removed per excess tap level;0.2 removes it at five excess levels. Does not increase an already unpenalized mining attribute.").defineInRange("cadmiumUnderwaterPenaltyRemovalPerExcessLevel",.2,0.0,1.0);
+        CADMIUM_SWIM_STEP=b.defineInRange("cadmiumSwimSpeedPerExcessTapLevel",.03,0.0,1.0);CADMIUM_SWIM_CAP=b.defineInRange("cadmiumMaximumSwimSpeedBonus",.5,0.0,2.0);
+
         BENDALLOY=b.define("bendalloy",true);
         BENDALLOY_STORE_PER_ATTRIBUTE=b.defineInRange("bendalloyStorageFractionPerAttribute",.30,.001,1.0);
         BENDALLOY_STORE_STEP=b.defineInRange("bendalloyStoreFractionPerLevel",.1,.001,.9);

@@ -11,7 +11,7 @@ public final class StorageActivity {
         if(moved){tag.putDouble("x",position.x);tag.putDouble("y",position.y);tag.putDouble("z",position.z);tag.putString("dimension",dimension);tag.putInt("idleTicks",0);}
         else if(!tag.contains("lastTick")||tick!=tag.getLong("lastTick"))tag.putInt("idleTicks",Math.min(2000000000,tag.getInt("idleTicks")+1));
         tag.putLong("lastTick",tick);root.put(KEY,tag);
-        if(blocked(player))for(String power:PowerAttributes.keys())if(power.startsWith("f:")&&PowerData.state(player,power)<0)PowerData.state(player,power,0);
+        if(blocked(player))for(String power:PowerAttributes.keys())if(power.startsWith("f:")&&!power.equals("f:copper")&&PowerData.state(player,power)<0)PowerData.state(player,power,0);
     }
     public static boolean blocked(ServerPlayer player){return FeruchemyConfig.IDLE_STORAGE.get()&&player.getPersistentData().getCompound(KEY).getInt("idleTicks")>FeruchemyConfig.IDLE_SECONDS.get()*20;}
     private StorageActivity(){}

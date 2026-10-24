@@ -1,0 +1,400 @@
+{
+  "schema": 1,
+  "status": "implemented_local_minecraft_unverified",
+  "maximum_implanted": 13,
+  "coordinate_space": "view-local silhouette, left-to-right u and head-to-feet v; receiver left is viewer right in front view",
+  "points": [
+    {
+      "id": "left_eye",
+      "view": "front",
+      "u": 0.6041666666666666,
+      "v": 0.10416666666666667
+    },
+    {
+      "id": "right_eye",
+      "view": "front",
+      "u": 0.3958333333333333,
+      "v": 0.10416666666666667
+    },
+    {
+      "id": "left_earlobe",
+      "view": "front",
+      "u": 0.75,
+      "v": 0.175
+    },
+    {
+      "id": "right_earlobe",
+      "view": "front",
+      "u": 0.25,
+      "v": 0.175
+    },
+    {
+      "id": "left_shoulder",
+      "view": "front",
+      "u": 0.8416666666666667,
+      "v": 0.2875
+    },
+    {
+      "id": "right_shoulder",
+      "view": "front",
+      "u": 0.15833333333333333,
+      "v": 0.2875
+    },
+    {
+      "id": "left_upper_arm",
+      "view": "front",
+      "u": 0.8833333333333333,
+      "v": 0.39791666666666664
+    },
+    {
+      "id": "right_upper_arm",
+      "view": "front",
+      "u": 0.11666666666666667,
+      "v": 0.39791666666666664
+    },
+    {
+      "id": "left_ribs",
+      "view": "front",
+      "u": 0.6583333333333333,
+      "v": 0.5
+    },
+    {
+      "id": "right_ribs",
+      "view": "front",
+      "u": 0.3416666666666667,
+      "v": 0.5
+    },
+    {
+      "id": "sternum",
+      "view": "front",
+      "u": 0.5,
+      "v": 0.35
+    },
+    {
+      "id": "heart",
+      "view": "front",
+      "u": 0.5916666666666667,
+      "v": 0.425
+    },
+    {
+      "id": "linchpin",
+      "view": "back",
+      "u": 0.5,
+      "v": 0.3375
+    }
+  ],
+  "bindings": [
+    {
+      "metal": "steel",
+      "power": "a:steel",
+      "points": [
+        "sternum",
+        "left_eye",
+        "right_eye"
+      ]
+    },
+    {
+      "metal": "steel",
+      "power": "a:iron",
+      "points": [
+        "left_eye",
+        "right_eye"
+      ]
+    },
+    {
+      "metal": "steel",
+      "power": "a:pewter",
+      "points": [
+        "left_shoulder",
+        "right_shoulder",
+        "left_ribs",
+        "right_ribs"
+      ]
+    },
+    {
+      "metal": "steel",
+      "power": "a:tin",
+      "points": [
+        "left_ribs",
+        "right_ribs"
+      ]
+    },
+    {
+      "metal": "pewter",
+      "power": "f:iron",
+      "points": [
+        "left_shoulder",
+        "right_shoulder"
+      ]
+    },
+    {
+      "metal": "pewter",
+      "power": "f:tin",
+      "points": [
+        "left_shoulder",
+        "right_shoulder"
+      ]
+    },
+    {
+      "metal": "pewter",
+      "power": "f:pewter",
+      "points": [
+        "left_shoulder",
+        "right_shoulder"
+      ]
+    },
+    {
+      "metal": "pewter",
+      "power": "f:steel",
+      "points": [
+        "heart"
+      ]
+    },
+    {
+      "metal": "bronze",
+      "power": "a:brass",
+      "points": [
+        "left_ribs",
+        "right_ribs"
+      ]
+    },
+    {
+      "metal": "bronze",
+      "power": "a:zinc",
+      "points": [
+        "left_ribs",
+        "right_ribs"
+      ]
+    },
+    {
+      "metal": "bronze",
+      "power": "a:copper",
+      "points": [
+        "left_ribs",
+        "right_ribs",
+        "heart"
+      ]
+    },
+    {
+      "metal": "bronze",
+      "power": "a:bronze",
+      "points": [
+        "left_ribs",
+        "right_ribs",
+        "left_earlobe",
+        "right_earlobe",
+        "left_upper_arm",
+        "right_upper_arm"
+      ]
+    },
+    {
+      "metal": "brass",
+      "power": "f:zinc",
+      "points": [
+        "left_upper_arm",
+        "right_upper_arm"
+      ]
+    },
+    {
+      "metal": "brass",
+      "power": "f:brass",
+      "points": [
+        "left_upper_arm",
+        "right_upper_arm"
+      ]
+    },
+    {
+      "metal": "brass",
+      "power": "f:copper",
+      "points": [
+        "left_upper_arm",
+        "right_upper_arm"
+      ]
+    },
+    {
+      "metal": "brass",
+      "power": "f:bronze",
+      "points": [
+        "left_upper_arm",
+        "right_upper_arm"
+      ]
+    },
+    {
+      "metal": "cadmium",
+      "power": "a:gold",
+      "points": [
+        "left_ribs",
+        "right_ribs"
+      ]
+    },
+    {
+      "metal": "cadmium",
+      "power": "a:electrum",
+      "points": [
+        "left_ribs",
+        "right_ribs"
+      ]
+    },
+    {
+      "metal": "cadmium",
+      "power": "a:cadmium",
+      "points": [
+        "left_ribs",
+        "right_ribs"
+      ]
+    },
+    {
+      "metal": "cadmium",
+      "power": "a:bendalloy",
+      "points": [
+        "left_ribs",
+        "right_ribs"
+      ]
+    },
+    {
+      "metal": "cadmium",
+      "power": "a:atium",
+      "points": [
+        "left_ribs",
+        "right_ribs"
+      ]
+    },
+    {
+      "metal": "gold",
+      "power": "f:gold",
+      "points": [
+        "left_ribs",
+        "right_ribs"
+      ]
+    },
+    {
+      "metal": "gold",
+      "power": "f:electrum",
+      "points": [
+        "left_ribs",
+        "right_ribs"
+      ]
+    },
+    {
+      "metal": "gold",
+      "power": "f:cadmium",
+      "points": [
+        "left_ribs",
+        "right_ribs"
+      ]
+    },
+    {
+      "metal": "gold",
+      "power": "f:bendalloy",
+      "points": [
+        "left_ribs",
+        "right_ribs"
+      ]
+    },
+    {
+      "metal": "electrum",
+      "power": "a:aluminum",
+      "points": [
+        "left_ribs",
+        "right_ribs"
+      ]
+    },
+    {
+      "metal": "bendalloy",
+      "power": "f:aluminum",
+      "points": [
+        "sternum"
+      ]
+    },
+    {
+      "metal": "electrum",
+      "power": "a:duralumin",
+      "points": [
+        "left_ribs",
+        "right_ribs"
+      ]
+    },
+    {
+      "metal": "bendalloy",
+      "power": "f:duralumin",
+      "points": [
+        "sternum"
+      ]
+    },
+    {
+      "metal": "electrum",
+      "power": "a:chromium",
+      "points": [
+        "left_ribs",
+        "right_ribs"
+      ]
+    },
+    {
+      "metal": "bendalloy",
+      "power": "f:chromium",
+      "points": [
+        "sternum"
+      ]
+    },
+    {
+      "metal": "electrum",
+      "power": "a:nicrosil",
+      "points": [
+        "left_ribs",
+        "right_ribs"
+      ]
+    },
+    {
+      "metal": "bendalloy",
+      "power": "f:nicrosil",
+      "points": [
+        "sternum"
+      ]
+    },
+    {
+      "metal": "iron",
+      "power": "trait:strength",
+      "points": [
+        "left_shoulder",
+        "right_shoulder"
+      ]
+    },
+    {
+      "metal": "tin",
+      "power": "trait:senses",
+      "points": [
+        "left_shoulder",
+        "right_shoulder"
+      ]
+    },
+    {
+      "metal": "copper",
+      "power": "trait:memory",
+      "points": [
+        "left_shoulder",
+        "right_shoulder"
+      ]
+    },
+    {
+      "metal": "zinc",
+      "power": "trait:fortitude",
+      "points": [
+        "left_shoulder",
+        "right_shoulder"
+      ]
+    },
+    {
+      "metal": "duralumin",
+      "power": "trait:connection",
+      "points": [
+        "heart"
+      ]
+    }
+  ],
+  "linchpin": {
+    "point": "linchpin",
+    "requires_supported_charge": true,
+    "grants_stored_effect": true,
+    "counts_toward_limit": true
+  }
+}

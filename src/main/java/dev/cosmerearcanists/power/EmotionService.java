@@ -64,7 +64,7 @@ public final class EmotionService {
     static boolean shielded(LivingEntity target){return EmotionConfig.ALUMINUM.get() && (target.getItemBySlot(EquipmentSlot.HEAD).is(SHIELD) || target.level() instanceof net.minecraft.server.level.ServerLevel level && MetalDetector.containsAluminum(level.getServer(),target.getItemBySlot(EquipmentSlot.HEAD)));}
     public static void activate(ServerPlayer p,String power,AbilityDispatcher.Phase phase) {
         if(phase==AbilityDispatcher.Phase.STOP || strength(p,power)<=0)return;
-        double range=Math.min(EmotionConfig.RANGE_CAP.get(),EmotionConfig.RANGE.get()*Math.sqrt(strength(p,power)));
+        double range=Math.min(Math.min(256,EnhancedCaps.scale(p,power,EmotionConfig.RANGE_CAP.get())),EmotionConfig.RANGE.get()*Math.sqrt(strength(p,power)));
         boolean area=EmotionConfig.AREA.get() && PowerService.holdingAlternateAbility(p,power);
         var targets=p.serverLevel().getEntitiesOfClass(LivingEntity.class,p.getBoundingBox().inflate(range),e->e!=p && eligible(e) && e.distanceToSqr(p)<=range*range);
         targets.sort(Comparator.comparingDouble(e->e.distanceToSqr(p)));
@@ -76,7 +76,7 @@ public final class EmotionService {
     }
     public static boolean apply(ServerPlayer source,LivingEntity target,String power,Emotion emotion) {
         double strength=strength(source,power);if(strength<=0 || !eligible(target)||source==target||source.level()!=target.level()||!EmotionConfig.effect(emotion)||shielded(target))return false;
-        double range=Math.min(EmotionConfig.RANGE_CAP.get(),EmotionConfig.RANGE.get()*Math.sqrt(strength));double distance=target.distanceTo(source);if(distance>range)return false;
+        double range=Math.min(Math.min(256,EnhancedCaps.scale(source,power,EmotionConfig.RANGE_CAP.get())),EmotionConfig.RANGE.get()*Math.sqrt(strength));double distance=target.distanceTo(source);if(distance>range)return false;
         double amount=strength*EmotionMath.falloff(distance,range)*(target instanceof Animal?EmotionConfig.ANIMAL_FACTOR.get():1);
         if(!EmotionalInfluenceEvent.allowed(target,strength))return false;
         var state=STATES.get(target.getUUID());if(state==null){if(STATES.size()>=EmotionConfig.AFFECTED.get())return false;state=new State(target);STATES.put(target.getUUID(),state);}
@@ -85,19 +85,21 @@ public final class EmotionService {
         if(emotion==Emotion.COMPLIANCE && state.dominant==Emotion.COMPLIANCE && state.source==source && amount>0 && power.equals("a:zinc"))DominationService.attempt(source,target,power,state.complianceStrength,strength);
         return true;
     }
+    public static double influenceMultiplier(LivingEntity target){return target instanceof ServerPlayer p?(1-dev.cosmerearcanists.feruchemy.AluminumFeruchemy.emotionalResistance(p))*(1-dev.cosmerearcanists.hemalurgy.ImplantService.resistance(p)):1;}
     private static void refresh(State state) {
         long now=state.target.level().getGameTime();
         if(!eligible(state.target))state.influences.clear();
         state.influences.values().removeIf(i->now>=i.expires || !i.source.isAlive() || i.source.isRemoved() || i.source.level()!=state.target.level() || !configured(i.power) || !EmotionConfig.effect(i.emotion) || shielded(state.target) || !EmotionalInfluenceEvent.allowed(state.target,i.allomanticStrength));
         System.arraycopy(state.baseline,0,state.levels,0,5);var leading=new double[5];var owners=new ServerPlayer[5];double strongest=0;ServerPlayer fallback=null;
+        double multiplier=influenceMultiplier(state.target);
         for(var influence:state.influences.values()) {
-            double value=influence.amount*Math.clamp((influence.expires-now)/(double)EmotionConfig.DURATION.get(),0,1);int n=influence.emotion.ordinal();state.levels[n]+=value;
+            double value=influence.amount*multiplier*Math.clamp((influence.expires-now)/(double)EmotionConfig.DURATION.get(),0,1);int n=influence.emotion.ordinal();state.levels[n]+=value;
             if(value>leading[n]){leading[n]=value;owners[n]=influence.source;}
             if(Math.abs(value)>strongest){strongest=Math.abs(value);fallback=influence.source;}
         }
         state.complianceStrength=Math.max(0,state.levels[Emotion.COMPLIANCE.ordinal()]-state.baseline[Emotion.COMPLIANCE.ordinal()]);
         for(int i=0;i<5;i++)state.levels[i]=Math.clamp(state.levels[i],0,16);
-        Emotion old=state.dominant;state.dominant=state.influences.isEmpty()?null:Emotion.values()[EmotionMath.dominant(state.levels)];
+        Emotion old=state.dominant;state.dominant=state.influences.isEmpty()||multiplier<=0?null:Emotion.values()[EmotionMath.dominant(state.levels)];
         if(state.dominant!=null && state.levels[state.dominant.ordinal()]<=.001)state.dominant=null;
         int n=state.dominant==null?0:state.dominant.ordinal();state.source=owners[n]==null?fallback:owners[n];state.intensity=state.dominant==null?0:Math.max(0,state.levels[n]-state.baseline[n]);
         if(state.dominant==Emotion.FEAR && old!=Emotion.FEAR && now>=state.burstCooldown){state.burstUntil=now+EmotionConfig.FEAR_BURST.get();state.burstCooldown=now+EmotionConfig.FEAR_COOLDOWN.get();}
@@ -156,17 +158,17 @@ public final class EmotionService {
     private static void modifier(ServerPlayer p,net.minecraft.core.Holder<Attribute> attribute,String name,double amount){var a=p.getAttribute(attribute);if(a==null)return;var key=id("emotion_"+name);var old=a.getModifier(key);if(old!=null && old.amount()==amount)return;a.removeModifier(key);if(amount!=0)a.addTransientModifier(new AttributeModifier(key,amount,AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));}
     private static void playerEffects(ServerPlayer p,State s) {
         Emotion e=s==null?null:s.dominant;double n=s==null?0:s.intensity;
-        modifier(p,Attributes.ATTACK_DAMAGE,"damage",e==Emotion.ANGER?EmotionMath.capped(n,EmotionConfig.ANGER_DAMAGE.get(),.75):e==Emotion.FEAR?-EmotionMath.capped(n,EmotionConfig.FEAR_DAMAGE.get(),.9):0);
-        modifier(p,Attributes.ATTACK_SPEED,"attack_speed",e==Emotion.FEAR?-EmotionMath.capped(n,EmotionConfig.FEAR_ATTACK_SPEED.get(),.9):0);
-        modifier(p,Attributes.MOVEMENT_SPEED,"speed",e==Emotion.FEAR && p.level().getGameTime()<s.burstUntil?EmotionMath.capped(n,EmotionConfig.FEAR_SPEED.get(),1):0);
+        modifier(p,Attributes.ATTACK_DAMAGE,"damage",e==Emotion.ANGER?EmotionMath.capped(n,EmotionConfig.ANGER_DAMAGE.get(),s.source==null?.75:EnhancedCaps.scale(s.source,"a:zinc",.75)):e==Emotion.FEAR?-EmotionMath.capped(n,EmotionConfig.FEAR_DAMAGE.get(),s.source==null?.9:EnhancedCaps.fraction(s.source,"a:zinc",.9)):0);
+        modifier(p,Attributes.ATTACK_SPEED,"attack_speed",e==Emotion.FEAR?-EmotionMath.capped(n,EmotionConfig.FEAR_ATTACK_SPEED.get(),s.source==null?.9:EnhancedCaps.fraction(s.source,"a:zinc",.9)):0);
+        modifier(p,Attributes.MOVEMENT_SPEED,"speed",e==Emotion.FEAR && p.level().getGameTime()<s.burstUntil?EmotionMath.capped(n,EmotionConfig.FEAR_SPEED.get(),s.source==null?1:EnhancedCaps.scale(s.source,"a:zinc",1)):0);
         if(DominationService.owner(p)==null && e==Emotion.COMPLIANCE && s.source!=null && p.level().getGameTime()%4==0 && p.distanceToSqr(s.source)>4) {
-            var direction=s.source.position().subtract(p.position()).multiply(1,0,1).normalize();var impulse=direction.scale(Math.min(EmotionConfig.COMPLIANCE_CAP.get(),EmotionConfig.COMPLIANCE_FORCE.get()*n));
+            var direction=s.source.position().subtract(p.position()).multiply(1,0,1).normalize();var impulse=direction.scale(Math.min(EnhancedCaps.scale(s.source,"a:zinc",EmotionConfig.COMPLIANCE_CAP.get()),EmotionConfig.COMPLIANCE_FORCE.get()*n));
             p.setDeltaMovement(p.getDeltaMovement().add(impulse));
             PacketDistributor.sendToPlayer(p,new PowerNetwork.Impulse(p.level().dimension().location().toString(),impulse.x,0,impulse.z,100,false));
         }
     }
     public static void updatePlayer(ServerPlayer p){var s=STATES.get(p.getUUID());if(s!=null)refresh(s);playerEffects(p,s);}
-    public static double loveReduction(ServerPlayer attacker,LivingEntity victim){var s=STATES.get(attacker.getUUID());return s!=null && dominant(attacker)==Emotion.LOVE && s.source==victim?EmotionMath.capped(s.intensity,EmotionConfig.LOVE_REDUCTION.get(),.75):0;}
+    public static double loveReduction(ServerPlayer attacker,LivingEntity victim){var s=STATES.get(attacker.getUUID());return s!=null && dominant(attacker)==Emotion.LOVE && s.source==victim?EmotionMath.capped(s.intensity,EmotionConfig.LOVE_REDUCTION.get(),EnhancedCaps.fraction(s.source,"a:zinc",.75)):0;}
     public static void navigate(Mob mob,Vec3 target,double speed) {
         int padding=(int)Math.clamp(mob.getAttributeValue(Attributes.FOLLOW_RANGE)+8,24,128);var pos=mob.blockPosition();
         if(mob.level().hasChunksAt(pos.offset(-padding,-8,-padding),pos.offset(padding,8,padding)) && mob.level().hasChunkAt(BlockPos.containing(target)))mob.getNavigation().moveTo(target.x,target.y,target.z,speed);
@@ -216,7 +218,7 @@ public final class EmotionService {
     public static List<Inspection> inspect(ServerPlayer p){
         double power=Math.max(strength(p,"a:zinc"),strength(p,"a:brass"));
         if(!EmotionConfig.INDICATOR.get() || power<=0 || !p.isAlive() || p.isSpectator())return List.of();
-        double range=Math.min(EmotionConfig.RANGE_CAP.get(),EmotionConfig.RANGE.get()*Math.sqrt(power));
+        double range=Math.min(Math.min(256,Math.max(EnhancedCaps.scale(p,"a:zinc",EmotionConfig.RANGE_CAP.get()),EnhancedCaps.scale(p,"a:brass",EmotionConfig.RANGE_CAP.get()))),EmotionConfig.RANGE.get()*Math.sqrt(power));
         var result=new java.util.ArrayList<Inspection>();var from=p.getEyePosition();
         var targets=p.serverLevel().getEntitiesOfClass(LivingEntity.class,p.getBoundingBox().inflate(range),e->e!=p && eligible(e) && e.distanceToSqr(p)<=range*range);
         targets.sort(java.util.Comparator.comparingDouble(e->e.distanceToSqr(p)));

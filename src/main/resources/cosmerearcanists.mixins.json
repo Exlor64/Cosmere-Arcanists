@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "PlayerExhaustionMixin",
+    "CadmiumActivityMixin",
     "FeruchemyMotionMixin",
     "FiledIngredientMixin",
     "FiledShapelessMixin",
@@ -14,6 +15,9 @@
     "EmotionAvoidGoalMixin",
     "EmotionPanicGoalMixin",
     "EmotionVillagerMixin",
+    "ConnectionItemMixin",
+    "FortuneFishingMixin",
+    "FortuneExplosionAccess",
     "EmotionSwellGoalMixin",
     "NavigationAccessor",
     "AngerBrainTargetMixin",
@@ -28,12 +32,15 @@
     "BubbleRandomBlockMixin",
     "BubbleRandomFluidMixin",
     "ScadrialCurrencyMixin",
-    "BronzeEffectAccess"
+    "BronzeEffectAccess",
+    "EdibleNuggetMixin",
+    "ScadrialSeedMixin"
   ],
   "injectors": {
     "defaultRequire": 1
   },
   "client": [
+    "AlternateDropMixin",
     "TinHurtCameraMixin",
     "TinSoundMixin",
     "TinInvisibleRendererMixin",

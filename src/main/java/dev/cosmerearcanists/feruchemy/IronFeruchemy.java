@@ -27,12 +27,12 @@ public final class IronFeruchemy {
     /** Actual paid mass bounds the combat benefit, including partially funded final ticks. */
     public static double combatLevels(Entity entity){
         if(!(entity instanceof ServerPlayer p)||!configured()||!p.isAlive()||p.isSpectator()||PowerData.state(p,"f:iron")<=0||PowerAttributes.strength(p,"f:iron")<=0)return 0;
-        return Math.max(0,Math.min(PowerData.state(p,"f:iron"),(massMultiplier(p)-1)/FeruchemyConfig.TAP_STEP.get()));
+        return Math.max(0,Math.min(PowerData.state(p,"f:iron")*FeruchemicalEnhancement.boost(p,"iron"),(massMultiplier(p)-1)/FeruchemyConfig.TAP_STEP.get()));
     }
     public static double knockbackMultiplier(Entity entity){
         if(!FeruchemyConfig.KNOCKBACK.get())return 1;
         double mass=massMultiplier(entity);
-        return mass<1?1/mass:1-Math.min(FeruchemyConfig.KNOCKBACK_CAP.get(),combatLevels(entity)*FeruchemyConfig.KNOCKBACK_STEP.get());
+        return mass<1?1/mass:1-Math.min(entity instanceof ServerPlayer p?FeruchemicalEnhancement.fractionCap(p,"iron",FeruchemyConfig.KNOCKBACK_CAP.get()):FeruchemyConfig.KNOCKBACK_CAP.get(),combatLevels(entity)*FeruchemyConfig.KNOCKBACK_STEP.get());
     }
     @SubscribeEvent public void critical(net.neoforged.neoforge.event.entity.player.CriticalHitEvent event){
         if(FeruchemyConfig.CRITICAL.get()&&event.isVanillaCritical()&&event.isCriticalHit())event.setDamageMultiplier((float)(event.getDamageMultiplier()*(1+combatLevels(event.getEntity())*FeruchemyConfig.CRITICAL_STEP.get())));
@@ -45,7 +45,8 @@ public final class IronFeruchemy {
             boolean storing=state<0;
             double magnitude=storing?FeruchemyLevels.storedFraction(strength,-state,FeruchemyConfig.STORE_STEP.get(),FeruchemyConfig.STORE_PER_ATTRIBUTE.get(),FeruchemyConfig.MAX_STORE.get()):FeruchemyLevels.extraMass(state,FeruchemyConfig.TAP_STEP.get(),FeruchemyConfig.MAX_MASS.get());
             double cost=storing?magnitude/20:magnitude*Math.pow(Math.max(1,magnitude),FeruchemyConfig.TAP_LOSS.get())/20;
-            double moved=(storing?Metalminds.storePerTick(p,"iron",cost):Metalminds.transferAccessible(p,"iron",-cost));
+        if(!storing)magnitude=FeruchemicalEnhancement.effect(p,"iron",magnitude);
+            double moved=(storing?Metalminds.storePerTick(p,"iron",cost):FeruchemicalEnhancement.tap(p,"iron",cost));
             if(cost>0&&Math.abs(moved)>0)factor=storing?1-Math.abs(moved)*20:1+magnitude*Math.min(1,Math.abs(moved)/cost);
             if(cost<=0||Math.abs(moved)<cost-1e-9)PowerData.state(p,"f:iron",0);
         }

@@ -39,7 +39,7 @@ public final class TemporalService {
         var direct=source.getDirectEntity();var attacker=source.getEntity();
         boolean physical=source.is(net.minecraft.tags.DamageTypeTags.IS_PROJECTILE) || direct instanceof LivingEntity && direct==attacker;
         if(!physical || attacker==p || interferes(attacker) || interferes(direct))return 0;
-        return TemporalMath.dodgeChance(power,PowerConfig.FLARE_STRENGTH.get(),TemporalConfig.DODGE_CHANCE.get(),TemporalConfig.DODGE_CAP.get());
+        return TemporalMath.dodgeChance(power,PowerConfig.FLARE_STRENGTH.get(),TemporalConfig.DODGE_CHANCE.get(),EnhancedCaps.fraction(p,"a:atium",TemporalConfig.DODGE_CAP.get()));
     }
     @SubscribeEvent(priority=net.neoforged.bus.api.EventPriority.HIGHEST)
     public void dodge(net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent event){

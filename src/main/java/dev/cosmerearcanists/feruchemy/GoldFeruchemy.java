@@ -18,10 +18,10 @@ public final class GoldFeruchemy {
     public static void clear(ServerPlayer p){p.getPersistentData().remove(ACTIVE);ceiling(p,0);}
     @SubscribeEvent(priority=net.neoforged.bus.api.EventPriority.LOWEST) public void blockHealing(net.neoforged.neoforge.event.entity.living.LivingHealEvent event){if(event.getEntity() instanceof ServerPlayer p&&configured()&&PowerData.state(p,"f:gold")<0&&PowerAttributes.strength(p,"f:gold")>0)event.setCanceled(true);}
     @SubscribeEvent(priority=net.neoforged.bus.api.EventPriority.LOWEST) public void rescue(net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Pre event){
-        if(!(event.getEntity() instanceof ServerPlayer p)||!configured()||!FeruchemyConfig.GOLD_RESCUE.get()||!p.isAlive()||p.isSpectator()||PowerAttributes.strength(p,"f:gold")<=0||PowerData.state(p,"f:gold")<=FeruchemyConfig.GOLD_RESCUE_LEVEL.get()||event.getSource().is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY))return;
+        if(!(event.getEntity() instanceof ServerPlayer p)||!configured()||!FeruchemyConfig.GOLD_RESCUE.get()||!p.isAlive()||p.isSpectator()||PowerAttributes.strength(p,"f:gold")<=0||PowerData.state(p,"f:gold")*FeruchemicalEnhancement.boost(p,"gold")<=FeruchemyConfig.GOLD_RESCUE_LEVEL.get()||event.getSource().is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY))return;
         double damage=event.getNewDamage(),absorbed=p.getAbsorptionAmount(),health=p.getHealth();if(!Double.isFinite(damage)||damage-absorbed<health)return;
-        double cost=(damage-absorbed-health+1)*FeruchemyConfig.GOLD_RESCUE_COST.get();if(Metalminds.accessibleCharge(p,"gold")+1e-9<cost)return;
-        double spent=-Metalminds.transferAccessible(p,"gold",-cost);if(spent<cost-1e-8){Metalminds.transferAccessible(p,"gold",spent);return;}
+        double cost=(damage-absorbed-health+1)*FeruchemyConfig.GOLD_RESCUE_COST.get()*FeruchemicalEnhancement.drain(p,"gold")/FeruchemicalEnhancement.boost(p,"gold");if(FeruchemicalEnhancement.emergencyAvailable(p,"gold")+1e-9<cost)return;
+        var paid=FeruchemicalEnhancement.flaring(p,"gold")?java.util.List.<Payment>of():withdraw(p,cost);double spent=paid.stream().mapToDouble(Payment::amount).sum();if(FeruchemicalEnhancement.flaring(p,"gold")){if(!FeruchemicalEnhancement.emergencySpend(p,"gold",cost))return;spent=cost;}if(spent<cost-1e-8){refund(paid,spent);return;}
         if(health<1)p.setHealth(1);event.setNewDamage((float)(absorbed+Math.max(0,health-1)));p.getPersistentData().putDouble(ACTIVE,-spent);
     }
     public static void tick(ServerPlayer p){
@@ -38,20 +38,26 @@ public final class GoldFeruchemy {
             return;
         }
         ceiling(p,0);
-        if(Metalminds.accessibleCharge(p,"gold")<=0){PowerData.state(p,"f:gold",0);return;}
+        if(FeruchemicalEnhancement.available(p,"gold")<=0){PowerData.state(p,"f:gold",0);return;}
         double missing=p.getMaxHealth()-p.getHealth();if(missing<=0)return;
         double rate=Math.min(FeruchemyConfig.GOLD_CAP.get(),state*FeruchemyConfig.GOLD_TAP_STEP.get()*FeruchemyConfig.GOLD_RATE.get());
-        double compression=Math.pow(Math.max(1,rate/FeruchemyConfig.GOLD_RATE.get()),FeruchemyConfig.GOLD_LOSS.get());double planned=Math.min(missing,rate/20),needed=planned*compression;
-        var seen=Collections.newSetFromMap(new IdentityHashMap<net.minecraft.world.item.ItemStack,Boolean>());var paid=new ArrayList<Payment>();double spent=0;
-        for(var access:Metalminds.touching(p)){if(!seen.add(access.stack()))continue;var previousOwner=Metalminds.owner(access.stack());double took=-Metalminds.transfer(access.stack(),p.getUUID(),"gold",-(needed-spent));if(took>0){paid.add(new Payment(access,took,previousOwner));access.changed().run();spent+=took;}if(spent>=needed-1e-10)break;}
+        double compression=Math.pow(Math.max(1,rate/FeruchemyConfig.GOLD_RATE.get()),FeruchemyConfig.GOLD_LOSS.get());double boosted=FeruchemicalEnhancement.effect(p,"gold",rate);double planned=Math.min(missing,boosted/20),needed=planned*compression*FeruchemicalEnhancement.drain(p,"gold")/(rate>0?boosted/rate:1);
+        if(FeruchemicalEnhancement.flaring(p,"gold")){float before=p.getHealth();p.heal((float)planned);if(p.getHealth()>before)p.getPersistentData().putDouble(ACTIVE,-(p.getHealth()-before));return;}
+        compression*=FeruchemicalEnhancement.drain(p,"gold")/(rate>0?boosted/rate:1);
+        var paid=withdraw(p,needed);double spent=paid.stream().mapToDouble(Payment::amount).sum();
         if(spent<=0){PowerData.state(p,"f:gold",0);return;}
         float before=p.getHealth();p.heal((float)(spent/compression));double healed=Math.max(0,p.getHealth()-before);double used=Math.min(spent,healed*compression),refund=spent-used;
         // Refund cancelled/reduced healing to the exact pieces charged, even if contact changed in a heal listener.
-        for(var payment:paid){double back=Math.min(refund,payment.amount());if(back>0){double returned=Metalminds.transfer(payment.access().stack(),payment.owner(),"gold",back);payment.access().changed().run();refund-=returned;}}
+        refund(paid,refund);
         if(used>0)p.getPersistentData().putDouble(ACTIVE,-used);
         if(spent<needed-1e-8)PowerData.state(p,"f:gold",0);
     }
-    private record Payment(Metalminds.Access access,double amount,UUID owner){}
+    private static java.util.List<Payment> withdraw(ServerPlayer p,double needed){
+        var seen=Collections.newSetFromMap(new IdentityHashMap<net.minecraft.world.item.ItemStack,Boolean>());var paid=new ArrayList<Payment>();double spent=0;
+        for(var access:Metalminds.touching(p)){if(!seen.add(access.stack()))continue;var previousOwner=Metalminds.owner(access.stack());boolean neutral=Metalminds.unkeyed(access.stack());double took=-Metalminds.transferFor(access.stack(),p,"gold",-(needed-spent));if(took>0){paid.add(new Payment(access,took,previousOwner,neutral));access.changed().run();spent+=took;}if(spent>=needed-1e-10)break;}return paid;
+    }
+    private static void refund(java.util.List<Payment> paid,double refund){for(var payment:paid){double back=Math.min(refund,payment.amount());if(back>0){double returned=Metalminds.transferWithBinding(payment.access().stack(),payment.owner(),"gold",back,payment.unkeyed());payment.access().changed().run();refund-=returned;}}}
+    private record Payment(Metalminds.Access access,double amount,UUID owner,boolean unkeyed){}
     @SubscribeEvent public void death(LivingDeathEvent event){if(event.getEntity() instanceof ServerPlayer p)clear(p);}
     @SubscribeEvent public void logout(PlayerEvent.PlayerLoggedOutEvent event){if(event.getEntity() instanceof ServerPlayer p){clear(p);PowerData.state(p,"f:gold",0);}}
     @SubscribeEvent public void dimension(PlayerEvent.PlayerChangedDimensionEvent event){if(event.getEntity() instanceof ServerPlayer p){clear(p);PowerData.state(p,"f:gold",0);}}

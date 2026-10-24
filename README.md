@@ -9,9 +9,9 @@ For current project status, accepted design decisions, verification and continua
 - RANDOM (default), CHOICE, and ANCESTRY assignment modes.
 - Per-art and per-metal switches, birth probabilities, Twinborn and reroll controls.
 - Data survives death and relogging. Config changes do not reroll saved origins.
-- Hemalurgy is acquired rather than a birth power; its switch reserves the future feature gate.
+- Hemalurgy is acquired rather than a birth power. Melee extraction and the body implantation menu are implemented locally (0.50.0; Minecraft verification pending).
 
-**Iron/steel/tin/pewter/electrum/atium/bronze/copper/zinc/brass/aluminum/duralumin/chromium/nicrosil/gold/bendalloy/cadmium Allomancy and the power selector are implemented. Other magic effects, custom dimensions, planetary travel, and the origin selection screen remain in development.** Scadrial will be Era 2 with an Overworld-like environment. The ancestry mode currently uses only a Scadrian-human probability multiplier; family inheritance and additional races are future work.
+**Iron/steel/tin/pewter/electrum/atium/bronze/copper/zinc/brass/aluminum/duralumin/chromium/nicrosil/gold/bendalloy/cadmium Allomancy and the power selector are implemented. Scadrial is now a separate Overworld-style dimension with an independent seed. Other magic effects, planetary travel and the origin selection screen remain in development.** Scadrial will be Era 2 with an Overworld-like environment. The ancestry mode currently uses only a Scadrian-human probability multiplier; family inheritance and additional races are future work.
 
 ## Build and run
 Install JDK 21 and import the root Gradle project into IntelliJ.
@@ -50,11 +50,12 @@ Ores require an iron-tier pickaxe, support Silk Touch/Fortune, and smelt/blast i
 The Cosmere Metals creative tab contains the new materials. Textures are initial distinct pixel palettes. `cosmerearcanists:metals` and `cosmerearcanists:aluminum_containing` item tags seed iron/steel detection. Duralumin is included in the aluminum exclusion tag.
 
 ## Iron/steel and power controls (0.3.0)
-All sixteen ordinary Allomantic metals and atium-electrum alloy are implemented. Feruchemical iron, steel, pewter, gold, tin, brass and bronze support item-owned metalmind storage/tapping. Other assigned Feruchemy powers appear in the selector with **effects pending**.
+All sixteen ordinary Allomantic metals and atium-electrum alloy are implemented. All sixteen ordinary Feruchemical metals support item-owned storage/tapping, including nicrosil's permanent power transfers. Recent implementations remain pending full Minecraft verification; see HANDOFF.md.
 
 Default keys (all rebindable):
 - Hold **R**, scroll to a power, then release R to select it. Tap R to cycle that power's state. Left-click while the menu is open also cycles the highlighted power's state.
-- Hold **V** and scroll to change state; release to apply. Tap V cycles state. Allomancy has Off/Low burn/Burning/Flaring. Feruchemy has Off, Storing 1–5, and Tapping 1–5.
+- Hold **V** and scroll to change state; release to apply. Tap V cycles state. Allomancy has Off/Low burn/Burning/Flaring; matching source-compatible Feruchemy unlocks backwards Compounding modes below Off (see 0.48.0). Feruchemy has Off and attribute-scaled storing/tapping levels (copper uses one level for each mode).
+- Hold **Alternate Function** (default Left Alt) while pressing the drop key (default Q) to throw a single item, even with Ctrl held for sprinting. Ordinary Ctrl+Q still drops a full stack. This also works with rebound Alternate Function/drop keys.
 - Hold **G** (Activate ability) to activate the currently selected implemented power. Iron/steel pull/push the metal source closest to your aim within the target cone while burning/flaring. Blue lines run from your chest to blocks, dropped items, and individual equipment sources. Lines are private to the Allomancer.
 
 File metal into loose filings, then load up to 16 into a dynamic metal vial. Hold right-click to drink it like a potion. Each consumed filing adds 50 reserve of its metal; filings that cannot fit under the reserve cap (default 300 per metal) remain in the vial. Empty vials return a glass bottle. Low burn applies half force at half consumption; Burning costs one unit/second at normal force; Flaring triples consumption and doubles force. Sensing consumes reserves too. States/reserves are separate per metal; switching selected power does not turn off other burning metals. Death retains powers/reserves/selection but turns active states off.
@@ -83,7 +84,7 @@ All 16 ordinary Allomantic and 16 Feruchemical powers have player attributes nam
 The atium–electrum alloy additionally has `cosmerearcanists:allomancy_atium`.
 Zero means no power; 1 is normal strength. Positive effective values grant access,
 and iron/steel force scales with the effective value (including attribute modifiers).
-All ordinary Allomantic metals plus atium-electrum alloy have effects. Feruchemy currently implements iron, steel, pewter, gold, tin, brass and bronze; other Feruchemical powers have selection/state support only. Config switches gate access.
+All ordinary Allomantic metals plus atium-electrum alloy have effects. Feruchemy currently implements iron, steel, pewter, gold, tin, brass, bronze, bendalloy, cadmium, copper, aluminum, zinc, electrum, duralumin and chromium; other Feruchemical powers have selection/state support only. Config switches gate access.
 
 Operator examples:
 ```mcfunction
@@ -1529,14 +1530,15 @@ The Scadrial dimension is still future work. For now, mark a test villager:
 Villagers in configured Scadrial dimensions also qualify; converted villagers
 keep the tag if moved. Ordinary Overworld villagers keep emeralds unless opted
 in. Configuration: `cosmerearcanists-currency-server.toml`. Defaults are
-100clips per boxing and a provisional gameplay rate of10clips per original
+10clips per boxing and a provisional gameplay rate of10clips per original
 emerald. Trades use clips, boxings, or both as space allows, retaining other
 inputs, output components, uses/limits, XP, demand and special-price state.
 Where vanilla's two input slots/single output cannot represent a price exactly,
 coin costs round up and payouts round down; extreme unrepresentable custom
 prices remain untouched. Config changes affect new emerald offers; existing
-coin trades and balances are preserved. Disabling conversion never deletes
-saved offers. A fixed, zero-XP clips-to-boxing trade accepts100clips as64+36
+ordinary coin trades and balances are preserved. Money-changing offers update
+to the configured exchange ratio. Disabling conversion never deletes
+saved offers. A fixed, zero-XP clips-to-boxing trade accepts10clips
 and returns one boxing; emotional/gossip discounts do not alter this rate.
 
 Drop coins while actively Steelpushing with the existing activation+Q controls
@@ -1759,3 +1761,1166 @@ Settings in `cosmerearcanists-feruchemy-server.toml`: `bendalloy`,
 `bendalloyMaximumTapNutritionPerSecond`, `bendalloyTapCompressionExponent`,
 `bendalloyMinimumFoodWhileStoring`. Existing charge is preserved; no packet
 format change, protocol22. Update client and server together for the new power.
+
+
+### Feruchemical cadmium: breath and excess oxygen (0.39.0)
+
+Cadmium stores breath in physical metalminds. One breath-second represents20
+native air ticks. Grant the power with
+`/attribute @s cosmerearcanists:feruchemy_cadmium base set 1`, select it and use
+normal negative storing / positive tapping levels; no activation is required.
+Default attribute1 supports30% storage (three10% levels) and ten tap levels.
+
+Storing removes native air, with fractional scheduling until a whole air tick
+can be transferred. Ambient refill is suppressed through NeoForge's breathing
+event while funded storage can accept air. Native underwater consumption,
+Respiration, Water Breathing and drowning rules remain. Storage itself stops at
+10% of maximum air (30 of the normal300 air ticks) and native ambient refill
+then resumes. A metalmind must have room for a whole native air tick; smaller
+remaining capacity is preserved. The shared cadmium-bubble storage bonus applies
+to other players, preserving their selected air penalty. Singleton/contact,
+ownership, capacity and AFK restrictions apply.
+
+Tapping restores0.2 native air ticks per level per server tick, capped at4.
+**Tap5 sustains normal underwater breathing**, lower levels extend a dive and
+higher levels refill air. At tap5, one stored breath-second is used per second.
+Above1 restored air tick/tick, compression cost scales as output^0.25. Existing
+accelerated bubble vitals can increase air demand; tapping is not accelerated.
+Water Breathing and Respiration retain their native benefits. Tapping does not
+protect from wall suffocation, lava, poison or arbitrary damage.
+
+Paid tapping above the normal breathing threshold adds these configurable bonuses:
+
+| Benefit | Per excess tap level | Maximum |
+| --- | ---: | ---: |
+| Sprinting/jumping/swimming exhaustion reduction | 5% | 75% |
+| Submerged mining penalty removed | 20% of original baseline penalty | 100% removed |
+| Swimming speed | +3% | +50% |
+| Movement speed | +0.2% | +5% |
+| Natural food healing amount | +0.5% | +10% |
+
+For example, tap10 provides five excess levels:25% less locomotion exhaustion,
+normal underwater mining speed,15% faster swimming,1% movement speed and2.5%
+stronger natural food healing. The air-output cap means default output stops
+scaling beyond tap20 (requiring power attribute2). The bonuses are fantasy
+mechanics inspired by oxygen, not a biological simulation.
+
+Mining removes only the submerged penalty, respecting Aqua Affinity and existing
+attribute modifiers without granting super mining; airborne/tool/Mining Fatigue
+penalties remain. Endurance changes only the native movement/jump exhaustion
+call sites, preserving healing, mining and arbitrary exhaustion. The slight
+healing bonus multiplies native food-regeneration heals only; it grants no
+passive heal, bypasses no healing hooks and does not amplify gold/potion heals.
+Normal hunger, naturalRegeneration and healing exhaustion still apply.
+
+Tapping pays continuously even with full lungs/on land so bonuses always require
+charge. Actual funded output bounds all benefits. Depletion, off, disabling,
+contact loss, death/logout/clone/dimension cleanup removes transient clocks and
+modifiers; foreign modifiers and saved breath remain. Full lungs cannot bank
+future air. Invulnerable/creative and spectator players cannot transfer breath.
+The generic HUD shows stored breath; tooltips label breath-seconds, and paid
+transfers emit bronze signals.
+
+Feruchemy server config: `cadmium`, `cadmiumActivityEndurance`,
+`cadmiumUnderwaterMining`, `cadmiumSwimmingSpeed`, `cadmiumMovementSpeed`,
+`cadmiumNaturalFoodHealing`; `cadmiumStorageFractionPerAttribute`,
+`cadmiumStoreFractionPerLevel`, `cadmiumTapLevelsPerAttribute`,
+`cadmiumAirTicksPerTapLevel`, `cadmiumMaximumAirTicksPerTick`,
+`cadmiumTapCompressionExponent`, `cadmiumStorageMinimumAirFraction`;
+`cadmiumExhaustionReductionPerExcessTapLevel`,
+`cadmiumMaximumActivityExhaustionReduction`,
+`cadmiumUnderwaterPenaltyRemovalPerExcessLevel`,
+`cadmiumSwimSpeedPerExcessTapLevel`, `cadmiumMaximumSwimSpeedBonus`,
+`cadmiumMovementSpeedPerExcessTapLevel`, `cadmiumMaximumMovementSpeedBonus`,
+`cadmiumNaturalHealingPerExcessTapLevel`, `cadmiumMaximumNaturalHealingBonus`.
+The bonus threshold follows1 / cadmiumAirTicksPerTapLevel. No packet format
+change, protocol22; update client and server together for the new power/mixins.
+
+
+### Feruchemical copper: coppermind notebooks (0.40.0)
+
+Copper is a waypoint, notebook and screenshot memory system. Hold a single copper
+item, or wear an enabled copper metalmind, then select **Feruchemical copper**.
+Set **Storing1** to create/open its notebook and write memories; set **Tapping1**
+to open the reading menu. G/H activation reopens the menu for the assigned copper
+power. **Next metalmind** switches among accessible pieces. Grant the power with
+`/attribute @s cosmerearcanists:feruchemy_copper base set 1`.
+
+The notebook menu supports:
+
+- **New note / Save:** a named page with up to2048 characters, including newlines.
+  Select an existing page while storing to edit its title and text.
+- **Here:** save your current server-recorded position and dimension, plus a name
+  and notes. It cannot discover unvisited places or accept forged coordinates.
+- **Capture:** hide the menu, capture the next rendered world frame, resize it to
+  fit512x288, and upload it as a screenshot page. It does not save a local F2 file.
+- **Screenshot pages:** select to download and view the image from the server.
+  Only the selected image is kept as a client texture; changing page releases it.
+- **Track:** while tapping, toggle the selected waypoint's HUD direction/distance.
+  A waypoint in another dimension displays its dimension. It never loads chunks
+  or teleports the player. One waypoint may be tracked at a time.
+- **Delete:** while storing, remove a page and its associated server screenshot.
+
+The menu remains live rather than pausing the world. Tapping is read only; edits,
+deletions, waypoint creation and screenshot uploads require storing. Closing the
+menu preserves its pages; switching off or losing access closes the session and
+clears tracking. Copper uses one write/read level. Reading does not consume charge.
+Saving a growing memory stores the charge needed to hold its total data, up to the
+physical metalmind's capacity; leaving the menu open generates no idle charge.
+Notebook work is exempt from the idle-resource-storage cutoff so a stationary
+player can write; other Feruchemy keeps its AFK limits.
+
+Each physical notebook has a server-created identity, bound using normal
+metalmind ownership rules and protected from stacking, crafting, filing and
+placement. Copies with the same identity reference the same notebook in that
+world. Default ownership restricts access to the owner; disabling the existing
+ownership restriction permits sharing the physical notebook. Contact, ownership,
+power, state and current session are checked for every operation and throughout
+image transfers. Disabling copper preserves existing pages and screenshot files.
+An initialized empty notebook remains a bound notebook after deleting its pages.
+
+Notes and waypoint/image references live in the world's
+`data/cosmere_copperminds.dat`. Screenshot PNGs live in
+`data/cosmerearcanists_copper_images/`, with server-generated UUID filenames.
+The item carries identity/ownership, not image bytes. Back up the world data and
+image folder together; importing only an item into another world does not import
+its memories. PNG uploads are validated, bounded before decoding, and re-encoded
+without metadata. No client path or filename is used for server filesystem access.
+
+Data capacity is proportional to charge: by default **1024 bytes per charge**.
+Titles, UTF-8 note text, dimension names, a64-byte allowance per page, and actual
+normalized screenshot PNG bytes all share that budget. A fully charged ring
+supports600KiB; a bracelet/necklace supports5400KiB at default metal capacities.
+The menu displays used bytes, current charged capacity, and physical maximum.
+Saving adds only missing charge; deleting memories frees space and keeps charge.
+A partial drain or lower capacity setting preserves existing memories, including
+reading and shrinking them; growth must fit the physical maximum and stores any
+required missing charge. Wiping or reaching zero still erases everything.
+
+Older notebooks retain their memories without receiving free migration charge.
+Their screenshot sizes are measured from existing server files on first opening;
+missing/unreadable files conservatively reserve768KiB each. This accounting is
+saved with each page. Existing ownership and unkeyed Identity rules still apply.
+
+Additional safety limits remain:32 pages/notebook,16384 text characters/notebook,768KiB per PNG,
+512x288 maximum resolution,256MiB total image storage,2048 screenshots and4096
+notebooks per server. Image transfers use16KiB chunks, one download chunk per
+player per tick, one upload/download per player, at most8 concurrent transfers
+of each kind, a10-second upload timeout and a5-second capture cooldown. Requests
+have bounded strings/arrays and session/rate validation. Existing memories are
+preserved when configurable limits are lowered; those limits restrict new writes.
+
+Feruchemy server settings: `copper`, `copperServerScreenshots`,
+`copperBytesPerCharge`, `copperMaximumPagesPerMetalmind`, `copperMaximumTextCharactersPerMetalmind`,
+`copperMaximumScreenshotBytes`, `copperMaximumScreenshotStorageMiB`,
+`copperMaximumServerScreenshots`, `copperMaximumServerNotebooks`.
+**Current protocol28 requires matching updated clients and server.** This version also
+includes the pending0.39.0 cadmium features described above.
+
+Validation helper: `python tools/validate_copper_images.py` exercises the actual
+PNG decoder and disk/quota logic using Java17+ with minimal Minecraft/config
+bindings. It does not replace the Java21 NeoForge build, GameTests or interactive
+screenshot/menu/multiplayer playtesting.
+
+
+### Empty and wiped copperminds (0.40.1)
+
+**A wiped or fully drained metalmind loses all of its memories.** Its notebook
+identity, note text, waypoint records and screenshot references are removed, and
+all associated server-side PNG files are deleted. Any open menus, uploads,
+downloads and tracked waypoints for that identity are revoked; the client clears
+its received image/texture data. The erased notebook is removed from world
+SavedData and cannot be reopened by a copied item carrying its old identity.
+Reusing the metalmind in storing mode creates a new, blank notebook.
+
+The final zero-charge transition in the common metalmind transfer code performs
+this cleanup automatically. Explicit wiping uses `Metalminds.wipe(ItemStack)`;
+external integrations should use this API on the server thread instead of deleting NBT
+without notifying the mod. Legacy zero-charge items are cleaned when their empty
+binding is processed. Wiping works even if Feruchemical copper is disabled.
+Physical capacity and unrelated item components remain intact.
+
+Erasure is saved before filesystem deletion. If a disk error prevents deleting a
+PNG immediately, its ID stays in a persistent cleanup queue; the server retries
+bounded batches every second and after restart, without restoring page access.
+Successful deletion clears that queue entry. This concerns the world's active
+mod data; external backups or files separately copied by a player are outside the
+metalmind system.
+
+A partial drain preserves memories until the item actually reaches zero. Ordinary
+notebook reading remains nonconsumptive, and deleting individual pages is distinct
+from wiping the entire metalmind. Protocol23 is unchanged; this update remains
+part of the pending combined cadmium/copper publication.
+
+### Aluminum: Identity and unkeyed metalminds (0.41.0, verification pending)
+
+Store Identity into an accessible aluminum metalmind while storing another
+attribute into a fresh, empty metalmind. At **100% paid Identity storage**, the
+other metalmind gains **unkeyed** charge: another player with the matching
+Feruchemical power can tap it. **Nicrosil is the exception: anyone can tap an
+unkeyed nicrosilmind**, without already possessing Feruchemical nicrosil. Ordinary unkeyed reserves include
+health, nutrition, breath, and copper notebooks with notes, waypoints and
+server-side screenshots. They do not grant powers; nicrosil can permanently
+grant the powers stored inside it. The tooltip identifies an unkeyed metalmind.
+
+Identity is the exception to the ordinary 95% storage ceiling. At the default
+aluminum power attribute of 1, Storing 10 reaches 100%; lower levels leave some
+Identity and create ordinary owned reserves. Suppression must be fully funded
+each tick, with continued contact with a keyed aluminum metalmind. Lost contact,
+full capacity, insufficient power, idle cutoff or disabled features stop sharing.
+Aluminum's own Identity reserve remains keyed. Its HUD shows current Identity.
+
+Existing owned reserves never become unkeyed. While fully suppressing Identity,
+storage skips owned metalminds; with normal Identity, it skips unkeyed metalminds.
+Use a fresh piece for a different binding. Fully draining or wiping a piece clears
+its binding so it can be reused. Gold refunds preserve the original binding.
+
+Create or edit a shared coppermind while fully storing Identity and storing
+copper. A Copper Ferring can read it while tapping copper without aluminum.
+Editing it again requires full Identity storage. Wiping or fully draining it
+still erases all notes, locations and associated server-side screenshots.
+
+Tapping aluminum consumes stored Identity and raises the synchronized Spiritual
+Identity Multiplier. As of 0.41.1, funded tapping also resists emotional Allomancy.
+Default tapping adds 15% Identity per level, with a 20x total cap and compression
+exponent 0.25. The aluminum toggle and storage/tapping scaling are configurable.
+Protocol **24** requires matching client/server builds. This update and the
+preceding cadmium/copper changes remain local, pending publication and full
+Java 21 Minecraft verification.
+
+### Aluminum emotional resistance (0.41.1, verification pending)
+
+Tapping aluminum weakens incoming **Rioting and Soothing by 5% per funded tap
+level**, capped at **75% resistance** by default. Tap 1 gives 5%, tap 5 gives 25%,
+and tap 10 gives 50%. Both new and lingering influences follow the current
+resistance, so changing tap level updates the effect without another cast.
+This also weakens beneficial emotional effects.
+
+Weaker compliance makes emotional domination harder to establish. Increasing
+Identity tapping can break an existing bond if its resisted strength falls below
+the domination threshold; sufficiently strong attackers can still overcome it.
+Copper retains its separate strength-based protection.
+
+Resistance requires paid tapping, the aluminum power, and continued contact with
+an eligible aluminum metalmind. Storing or simply selecting an unfunded tapping
+level grants none. Off, power/config loss and lifecycle cleanup remove it. No
+extra charge is charged beyond normal Identity tapping.
+
+Server settings: `aluminumEmotionalResistance` (true),
+`aluminumEmotionalResistancePerTapLevel` (0.05), and
+`aluminumMaximumEmotionalResistance` (0.75). Protocol24 is unchanged; update
+client/server together. Local implementation only; full Minecraft checks pending.
+
+### Feruchemical zinc: mental speed (0.42.0, verification pending)
+
+Zinc stores mental-speed seconds in physical zinc metalminds. Select Feruchemical
+zinc and use negative storing / positive tapping levels; no activation is needed.
+Grant with `/attribute @s cosmerearcanists:feruchemy_zinc base set 1`.
+Default attribute1 permits30% storage and10tap levels, with fractional strength
+scaling, the ordinary95% storage ceiling and existing ownership/contact/AFK rules.
+Aluminum Identity suppression can create unkeyed zinc reserves.
+
+Storing slows attack recovery and bow/crossbow preparation in proportion to the
+actually stored fraction. Storing3 gives70% action speed. Tapping improves those
+actions by5% per funded tap level, capped at+100% by default. Bow/crossbow
+preparation uses a fractional clock; food, shields and tridents are unchanged.
+Other modifiers, including physical steel speed, compose independently.
+
+Tapping gives a **slight movement bonus:0.2% per funded level, capped at5%**.
+Tap10 gives2%. Storing zinc does not slow movement. Zinc changes neither damage
+nor mining speed, world time, projectile velocity or other entities' speed.
+
+From funded tap1, clear gold directional ticks around the crosshair indicate
+visible approaching projectiles and nearby engaged attackers. From tap10, thin
+lines show short estimated paths for threatening incoming projectiles. These are
+current-motion estimates, including simple gravity/collisions; they can change
+with deflection, acceleration, water or another player's actions. The player
+still aims, blocks and dodges. There is no automatic dodge or damage immunity.
+
+Perception defaults to16blocks and12futureticks. Server scans at most64nearest
+candidates, sends at most8threats/17points each, and refreshes every4ticks with
+6tick expiry. Invisible, occluded, own/allied and receding projectiles do not
+reveal paths. Existing loaded-chunk collision prediction is reused without
+mutating entities or loading chunks. Reaction packets are private to the Ferring.
+Off, lost contact/fuel/config/power, death, logout, dimension change and clone
+cleanup remove effects and expire/clear the display. Partial fuel scales benefits.
+
+Mental tapping adds15% mental speed perlevel (20x total cap), spends extra
+mental-speed seconds with compression exponent0.25, and funds all bonuses from
+that same payment. Cadmium's common storage acceleration applies. The HUD shows
+stored charge and mental speed; bronze detects funded zinc use.
+
+Server settings expose `zinc` plus independent attack recovery, bow/crossbow,
+movement, reaction and projectile-estimate toggles; storage/tap scaling, mental
+cap/compression, action/movement rates/caps, cue/path thresholds, range and horizon.
+Client `feruchemicalZinc` settings independently hide cues/paths and set opacity.
+New synchronized mental-speed attribute and reaction payload require matching
+client/server **protocol25**. Full Minecraft build, GameTests and interactive
+multiplayer/client verification remain pending; changes are local and unpublished.
+
+### Feruchemical electrum: determination (0.43.0, verification pending)
+
+Electrum stores determination in physical metalminds with the standard ownership,
+contact, Curios/inventory, AFK and cadmium storage rules. Aluminum suppression can
+create unkeyed reserves. Grant with
+`/attribute @s cosmerearcanists:feruchemy_electrum base set 1` and select the normal
+storing/tapping states. Attribute1 supports30% storing and10tap levels; fractional
+attributes scale both bounds, with the ordinary95% storage ceiling.
+
+**Ordinary tapping reduces damage by5% per actually funded tap level, up to a50%
+maximum.** Tap1 gives5%, tap5 gives25%, tap10 gives50%; higher levels cannot exceed
+50% during ordinary tapping; Allomantic duralumin can exceed this ceiling (see0.44.0).
+Protection applies at any health level, scales down with partial fuel, and
+composes multiplicatively with armor, Resistance and other mitigation. Gold's
+lethal-hit rescue evaluates the reduced damage. Invulnerability-bypassing damage,
+including void and kill-style sources, retains its native behavior.
+
+Storing modestly reduces mining speed and increases knockback susceptibility.
+At storing3, default mining speed is85% and knockback force is115%. Tapping
+reduces knockback by2.5% per fundedlevel, capped at50%; tap10 reduces it25%.
+This composes with iron's mass-based knockback rules and native resistance.
+
+Tapping also makes finite Slowness wear off faster:5% shorter remaining duration
+per fundedlevel, capped at50% by default. Tap10 adds one extra aging tick per
+funded tick. Amplifiers and hidden weaker effects remain intact, infinite effects
+remain infinite, and vanilla expires the last tick. Other debuffs are unchanged.
+
+From tap10, a **second wind** at30% health or lower grants2% mining and attack
+recovery per fundedlevel, capped at30%. Thus tap10 grants20% while injured; full
+health gives no second-wind bonus. Independent transient modifiers compose with
+steel/zinc and are removed on cleanup.
+
+Determination tapping adds15% perlevel, capped at20x, and pays compression
+exponent0.25. One paid determination interval funds the active perks. Lost
+contact, turning off, power/config loss or an unfunded update removes protection;
+death/logout/dimension/clone cleanup removes transient effects. The generic
+reserve HUD shows stored determination and bronze detects funded electrum use.
+
+Server settings expose `electrum` and independent damage, knockback, storing
+mining penalty, shorter Slowness and second-wind toggles. Storage/tap scaling,
+compression, every rate/cap, low-health fraction and second-wind tap threshold
+are configurable. `electrumMaximumDamageReduction` can be lowered but is
+hard-limited to0.5; `electrumDamageReductionPerTapLevel` defaults0.05.
+Protocol25 and packet formats remain unchanged; update client/server together.
+Production damage-policy checks passed locally; full Java21 Minecraft build,
+GameTests and multiplayer/client checks remain pending. Changes are unpublished.
+
+### Allomantic duralumin: Feruchemy interaction and amplified caps (0.44.0, verification pending)
+
+Allomantic duralumin now amplifies **tapping** consumptive Feruchemical powers,
+using the existing Allomantic enhancement profile. Power attributes and selected
+tap levels stay persistent and unchanged. Storing keeps its original rates and
+limits. Copper notebooks retain their information binding and are excluded.
+
+| Duralumin state | Extra effect/output multiplier at attribute1 | Resource rule |
+| --- | ---: | --- |
+| Low burn | 1.75x | 5x ordinary selected-level metalmind cost |
+| Burning | 2.5x | 10x ordinary selected-level metalmind cost |
+| Flaring | 5x | Entire captured reserve committed to a burst |
+
+Higher duralumin attributes use the same efficiency and modest strength growth
+as Allomancy. Ordinary tap compression is calculated before the enhancement;
+partial fuel scales the actual effect. Gold and nutrition account for native
+target capacity and preserve exact refunds for cancelled ordinary healing.
+
+For Feruchemy flares, each active channel snapshots accessible charge and total
+accessible capacity. A full reserve lasts100ticks (5seconds) by default; a half
+reserve lasts50ticks, with a minimum1tick and existing efficiency scaling. The
+**captured charge is removed from the physical metalminds immediately** into a
+private server budget, then expires over that interval. Physical contact with a
+captured piece and the matching power remain required. New deposits are separate
+and cannot extend or retrigger the committed burst. Turning tapping off stops
+its effect but does not refund the commitment. Logout/restart, death or clearing
+the enhancement discards unused captured fuel; it is never restored to an item.
+The power HUD displays remaining burst fuel and time.
+
+This applies to iron, steel, pewter, gold, tin's selected sense, brass, bronze,
+bendalloy, cadmium, aluminum, zinc and electrum. Gold's emergency rescue can
+consume additional remaining burst fuel. Native health, hunger, saturation and
+air capacities still apply. Owned/unkeyed access rules and independent power
+feature gates remain enforced; losing contact cannot retain a free enhancement.
+
+Duralumin can now exceed ordinary effect ceilings. Feruchemy's core multipliers
+and secondary action, movement, jump, healing, endurance and mitigation ceilings
+can rise. Allomancy gains higher pewter strength/speed/mitigation ceilings,
+iron/steel range and velocity ceilings, enhanced launched-metal damage ceilings,
+emotional effect/range ceilings, tin hearing range/radius, bronze detection,
+copper cloud radius, electrum scouting range and atium dodge ceilings.
+
+Fractional reduction caps rise using diminishing returns, normally limited to95%
+for newly amplified mitigation rather than reaching negative damage. Ordinary
+electrum remains capped at50%; low-burn duralumin can raise its ceiling to about
+70.3%, normal burning to82.3%, and flaring to95%. Existing configured full
+immunities retain their ordinary behavior. Numeric effect caps scale with the
+validated amplification, while native attribute limits remain authoritative.
+
+Simulation/data limits stay bounded: storage fractions/physical capacities,
+notebook/image limits, target/packet counts, prediction budgets, visual saturation
+and time-bubble step limits remain unchanged. Time-bubble radius stays within
+the existing32block packet bound; enhanced impulse/launch speed has a64block/tick
+ceiling for new amplification (higher existing configured baselines remain valid),
+bronze danger perception128blocks and emotional targeting256blocks.
+Enhanced launched metal can exceed the ordinary100damage limit; its raised cap
+is captured at launch and survives entity saving, with a100000numeric ceiling.
+Currency exchange rules and ordinary trade price floors are unchanged.
+
+Settings in the enhancement config: `duraluminAmplifiesFeruchemicalTapping` and
+`duraluminExceedsOrdinaryEffectCaps`, both true by default. Existing duralumin
+strength/drain/flare duration/efficiency settings control both arts. Turning off
+the cap option restores ordinary ceilings while retaining amplification within
+them. Feruchemical duralumin/Connection was subsequently added in0.45.0 below.
+
+New weapon-preparation attribute sync and burst HUD fields require matching
+client/server protocol26 when introduced; the current build requires **protocol28**. Local source only: production cap/projectile math
+checks and syntax checks passed, but the Java21 Minecraft build, server GameTests
+and interactive client/multiplayer checks remain pending.
+
+### Copper charge-based data capacity (0.44.1, verification pending)
+
+Copper now stores data in proportion to the physical piece's charge, as described
+in the notebook section above. The byte allowance is configurable, server checked,
+and shared by notes, locations and screenshots. Copper remains outside duralumin's
+consumptive bursts; storage and data safety limits are unchanged by amplification.
+Protocol27 introduced capacity counters and persisted image sizes; current matching
+client/server builds use protocol28. `python tools/validate_copper_capacity.py` checks production byte
+accounting independently; three additional GameTests cover proportional deposits,
+rejected writes, partial drains/refilling, PNG accounting and SavedData persistence.
+The full Minecraft build and these GameTests remain pending because local Gradle
+bootstrap cannot download its distribution. This change is committed locally.
+
+### Feruchemical duralumin: Connection (0.45.0, verification pending)
+
+Feruchemical duralumin stores **Connection-seconds** in a held/worn duralumin
+metalmind (or a singleton denomination/inventory piece when enabled). Grant with
+`/attribute @s cosmerearcanists:feruchemy_duralumin base set 1`. Default attribute1
+allows Storing1–3 and Tapping1–10; fractional attributes scale both limits.
+Storing uses10% per level, limited to30% per attribute and the global95% ceiling.
+Tapping adds15% Connection per level, with20x ordinary maximum and normal.25
+compression loss. Ownership, unkeyed aluminum, Curios, AFK and cadmium storage-rate
+rules apply. Allomantic duralumin amplifies paid tapping and its resource cost,
+including bursts; ordinary social/range caps can be exceeded under that setting.
+
+While **storing**, your expressed Connection is reduced. Initial hostile detection
+range falls by80% of the stored fraction (Storing3:76% of normal detection range),
+with a2-block minimum. Existing targets, remembered brain attack targets and direct
+retaliation remain active. Villager prices rise by50% of the stored fraction
+(Storing3:+15%). Player Connections become harder to sense, and new relationship
+growth is reduced; existing relationship history is retained.
+
+While **tapping**, villager prices improve by2% per funded level, ordinarily capped
+at25% (Tapping10:20%). Adjustments affect only the current trade session, refresh
+when output changes, are removed before shutdown saving, compose with vanilla/emotional prices, and retain vanilla
+minimum costs. Currency exchanges receive neither discounts nor storage penalties.
+Skittish animals' avoidance radius shrinks by5% per level, ordinarily capped at75%
+(Tapping10:an8-block radius becomes4blocks). Getting too close still provokes
+avoidance; recent injury and panic are not suppressed. This does not tame animals
+or force breeding.
+
+**Player Connections form organically, without invitations or acceptance.** Both
+players can lack Feruchemy entirely. Time within16blocks builds1bond point per
+minute, provided at least one player has moved/interacted within5minutes. Direct
+player interaction, real item sharing, player-versus-player damage and helping
+against a mob targeting another player contribute up to2points per event, sharing
+a30-second per-pair cooldown. Interaction gains diminish with existing strength,
+down to25% of their initial amount near a full bond. Friendship is not required:
+recurring rivals can develop strong Connections too. Scores cap at100; they do not
+automatically decay. Storing suppresses expression rather than deleting history.
+
+Paid tapping shows a **Connections compass** with online connected players' names,
+directions and distances in the same dimension, including through walls. At
+Tapping1 a full100-point bond is required; at Tapping10 approximately30.8points
+are sufficient. Higher tapping detects weaker bonds and extends range:32+24blocks
+per funded tap level, ordinarily capped at512blocks. Target storage multiplies
+the bond's expressed strength by the target's remaining Connection. No target
+power is required. Offline/dead/spectator players are omitted. The system never
+teleports players or forces chunks to load.
+
+The server stores symmetric pair scores and cooldowns in
+`data/cosmere_connections.dat`; relationships survive death, relogging and travel.
+Default limits are64bonds/player and16384pairs/world; lowering these limits stops
+new bonds without deleting existing ones. Hard loading bounds are256bonds/player
+and262144pairs. Nearby sampling runs once per real server second with bounded
+candidate work; sensing refreshes every10ticks, sends at most8players privately,
+and expires client-side after15ticks without renewal. Dropped-item sharing
+attribution lasts5minutes for online players and is transient, bounded to4096
+tracked drops. Existing bonds remain saved while the feature is disabled.
+
+Server settings live in `cosmerearcanists-connection-server.toml`: independent
+storage/scaling, trade/detection/animal/bond/sensing switches, effect rates/caps,
+proximity/activity timing, interaction diminishing returns/cooldown, bond limits,
+sensing thresholds/range and display-count controls. Client settings under
+`feruchemicalConnection` hide, move or scale the compass. **Protocol28 requires
+matching builds.**
+
+**Accepted future design:** a world's natural citizens start with Connection to
+that world. Where acquiring a power requires that Connection, tapping Feruchemical
+duralumin may let a visitor meet the requirement. This includes **ChayShan on Sel**
+and **Surgebinding on Roshar** in this mod's planned progression. World Connection
+will be one acquisition requirement alongside that power's other conditions;
+tapping alone will not automatically grant powers. Native-world Connection data,
+planet/culture mappings, acquisition thresholds, and whether an acquired power
+later needs maintained Connection are future work. No Sel/Roshar powers are added
+by this update. `DuraluminFeruchemy.connectionMultiplier` exposes paid current
+output for future integration; persistent world Connection will be distinct from
+pairwise player relationships and spendable metalmind charge.
+
+Validation: `python tools/validate_connection.py` compiles production relationship
+and effect policies with Java17 and runs33checks, without Minecraft bindings.
+Seven new GameTests cover storage/payment/access, bond persistence/cooldowns,
+native rival/helping combat, sensing/suppression/range, native villager sessions,
+initial hostile detection/animal approach, amplification/config/packet bounds.
+Three JUnit tests cover relationship policies. These Minecraft/JUnit checks remain
+pending: local Gradle bootstrap fails downloading its distribution, before compile.
+
+### Feruchemical chromium: Fortune and misfortune (0.46.0, verification pending)
+
+Chromium stores **Fortune-seconds**. Tapping improves luck; storing worsens luck;
+**Off is neutral**. Grant with `/attribute @s cosmerearcanists:feruchemy_chromium base set 1`.
+The default attribute1 allows Storing1–3 and Tapping1–10:30%storage/attribute,
+10%store steps, global95%storage ceiling,15%Fortune per tap level,20xordinary
+maximum and.25compression loss. Physical contact, ownership, unkeyed aluminum,
+Curios, inventory settings, AFK cutoff and cadmium storage-rate rules apply.
+Allomantic duralumin amplifies tapping with its shared effect/resource/burst rules.
+
+**Fishing:** each funded tap level adds.5 native fishing Luck, ordinarily capped
+at+5 (Tap10). Storing subtracts10times the actual stored fraction (Storing3:-3).
+The adjustment is applied at the catch roll and composes with Luck of the Sea,
+Luck effects and native open-water/treasure requirements. It does not leave a
+global Luck attribute modifier. An eligible bad-luck mishap can also lose a catch.
+
+**Chest and mob loot:** each funded tap level adds.05bonus loot-table attempts
+(Tap10:50%chance of one attempt). Ordinary attempts cap at2; amplification may
+exceed that, with a hard4attempt work limit. Each attempt rolls the same original
+table under the same native conditions and contributes at most one eligible stack.
+Selection favors item rarity, enchantment and the `cosmerearcanists:fortune_valuable`
+item tag, then quantity. Existing tapping loot is retained; bonus stack counts are
+legal and components are copied. Empty candidate rolls add nothing. Mob Looting,
+player-kill conditions and table-specific rare-drop requirements remain native.
+
+While storing, each eligible loot generation has a75%times stored-fraction chance
+to lose one eligible valuable-first stack (Storing3:22.5%). The
+`cosmerearcanists:fortune_protected` item tag excludes items from both bonus
+selection and loss; defaults are nether stars and dragon eggs. Datapacks can
+extend either tag. Chest effects apply to the player generating previously
+unopened loot; already generated chests, manually placed contents and automation
+with no player remain unchanged. Reopening cannot reroll a chest. Mob effects use
+the credited player from loot parameters; nearby players' Fortune does not stack.
+Player inventory death drops, block drops and equipment drops outside mob loot
+tables are unchanged. All loot tables' own conditions still govern possible items.
+
+A registered NeoForge global loot modifier handles chest/entity tables, retaining
+the original loot and other modifiers' existing results when tapping. Bounded
+bonus samples use raw table generation with a recursion guard, so global modifiers
+are not recursively reapplied to bonus samples; normal downstream modifier order
+still applies. Each bonus sample considers at most256candidate stacks. Custom
+chest/entity tables using those native parameter-set types are supported. Tables
+using other types and unknown table IDs are skipped. See the primary
+[NeoForge1.21.1 loot modifier documentation](https://docs.neoforged.net/docs/1.21.1/resources/server/loottables/glm/).
+
+**18 contextual bad-luck mishaps** can occur only during actually funded storage:
+
+| Mishap | Context / consequence |
+| --- | --- |
+| Through-wall detection | A nearby loaded hostile notices you through cover. |
+| Storm lightning | Real lightning can strike during a thunderstorm while exposed to rain and sky. A roof protects you. |
+| Wayward dropped item | A dropped item veers45–120degrees; its cargo remains intact. |
+| Wayward projectile | A newly thrown or fired owned projectile veers; disk reloads do not reroll it. |
+| Lost catch | A generated fishing catch slips free. |
+| Chipped tool | A held damageable tool suffers a small amount of native durability damage. |
+| Armor wear | An equipped damageable armor piece suffers durability damage. |
+| Stumble | A moving grounded player receives a small sideways impulse. |
+| Leg cramp | Brief Slowness. |
+| Weak grip | Brief Weakness. |
+| Dizzy spell | Brief Nausea. |
+| Dust in eyes | Two seconds of Blindness. |
+| Heavy arms | Brief Mining Fatigue. |
+| Hunger pang | Extra exhaustion. |
+| Lost breath | Lose some remaining air while underwater. |
+| Fire flare-up | Existing fire burns longer; it cannot ignite an unlit player. |
+| Biting chill | Existing freezing worsens, respecting freezing immunity. |
+| Shield slip | An active block is interrupted with a short item cooldown. |
+
+Low storage allows minor events; stronger storage unlocks harsher events and raises
+probability. By default periodic events are checked once per real server second
+with probability.08times the actual stored fraction, and relevant actions check
+with probability.15times that fraction. All successes share a10second minimum
+interval, plus individual cooldowns of10seconds to5minutes. Lightning requires
+at least30%stored Fortune by default and has a5minute individual cooldown and
+low selection weight. Failed environmental checks cause no accident. No mobs are
+spawned and no chunks are forced to load. Fortune effects only initiate new
+mishaps while storing; existing consequences such as a debuff or fire expire by
+normal game rules after storage ends.
+
+Cooldowns survive mode switches, relogging and player cloning. Both global and
+per-effect gates validate the current power, feature, mode, paid output and
+metalmind contact. Equipment damage uses normal durability/Unbreaking rules.
+Existing retaliation/protection/mod hooks remain authoritative for hostile
+acquisition, and lightning follows native entity/fire/damage behavior. Action-bar
+messages identify mishaps without adding repeated chat messages.
+
+`cosmerearcanists-fortune-server.toml` independently controls the power, fishing,
+chests, mob loot, mishaps, messages, every storage/tap/luck/loot rate and cap,
+probabilities, global interval and detection range. Each of the18mishaps has its
+own enable switch, minimum stored fraction, cooldown and selection weight. No
+packet format changes; protocol28 remains unchanged. **At this release, nicrosil was the final pending standard Feruchemical metal;
+its local implementation follows in0.47.0 below.**
+
+Validation: `python tools/validate_fortune.py` compiles production FortuneMath and
+the Misfortune catalog with Java17 and passed75checks, including18distinct IDs,
+severity/cooldown bounds, probability, loot work limits, rarity scoring and vector
+rotation. Eight GameTests cover payment/ownership/fractional output/fishing luck,
+registered native chest and mob loot, chest reuse, mishap gates/cooldowns,
+equipment/environment/shield effects, walls/storm/roof conditions, toss/projectile
+misdirection and amplification/config behavior. Three JUnit policy tests were
+added. These Minecraft checks, actual fishing retrieval/mixin application and
+client/multiplayer testing remain pending: local Gradle bootstrap cannot download
+its distribution and fails before compilation.
+
+
+### Chromium near misses and TNT duds (0.46.2, verification pending)
+
+Paid Chromium tapping can turn an incoming projectile slightly so its predicted
+trajectory misses the player. The default chance is **2% per funded tap level**,
+with a normal50% cap: tap10 gives20%. Speed stays the same, the turn is at most
+12degrees, and only an imminent collision with a clear alternative trajectory is
+eligible. Protection considers up to6ticks of flight within8blocks; it does not
+guarantee a dodge. Own projectiles and fishing hooks are excluded. A projectile
+gets one roll per protected player, and can be successfully deflected only once.
+
+When primed TNT reaches the end of its normal fuse, an exposed tapping player
+inside its blast zone can cause it to fizzle and drop **one TNT item** instead of
+exploding. The default chance is **1% per funded tap level**, normally capped at
+40%: tap10 gives10%. Fully obstructed or out-of-range players do not trigger this.
+Multiple players use the strongest eligible chance for one shared roll. This
+applies to primed TNT, including chain reactions, rather than other explosion
+sources such as creepers or TNT minecarts.
+
+Both protections stop when tapping is off, unfunded, disabled or loses usable
+metalmind contact. Allomantic duralumin increases paid output and can raise the
+ordinary probability caps, with an absolute95% ceiling. Independent toggles,
+chance rates/caps, projectile range/angle/lookahead and maximum supported TNT
+blast radius are in `cosmerearcanists-fortune-server.toml`. Protocol28 is unchanged.
+
+`python tools/validate_fortune_protection.py` passed37 checks against production
+probability/rotation math. Six GameTests and two JUnit tests were added for native
+TNT detonation, no duplicate drops, exposure, paid output, amplification and
+projectile trajectory/one-roll behavior. Minecraft compilation, mixin application
+and these engine tests remain pending because the Gradle distribution download
+fails before compilation.
+
+
+### Feruchemical nicrosil: gradual power storage and splitting (0.47.1, verification pending)
+
+Nicrosil gradually transfers **personal power strength** into a metalmind.
+The donor becomes weaker as each fraction is stored. Stop partway to keep the
+remaining power: storing0.5from a strength1power leaves the donor at0.5and puts
+0.5in the metalmind. Someone tapping that portion permanently gains0.5strength.
+Tapping also adds to an existing personal power, allowing portions to recombine,
+provided the total does not exceed the1024attribute ceiling. No strength is
+created or rounded up to a full power.
+
+Hold a single nicrosil metalmind and **right-click in air** to open its menu.
+Nicrosil Ferrings can also select Storing1/Tapping1 or press Activate Ability
+(G/H for the assigned slot) while touching a suitable metalmind. Worn Curios
+pieces and optional inventory contact follow the existing settings. Opening a
+menu or selecting a mode never chooses or transfers a power automatically.
+
+- **Store:** Choose a current power from the menu. Enter the personal strength to
+  transfer, such as0.5, or leave the target blank for all currently held strength.
+  **Start storing** starts a gradual transfer; the button itself removes nothing.
+  The menu displays progress and the donor's remaining personal strength.
+- **Stop:** Use the **Stop** button, select Off/Tapping, or stop touching the piece.
+  Closing the menu lets your selected storage continue while Storing remains
+  active. It stops at the target, exhaustion, full capacity, invalid Identity,
+  AFK cutoff, feature disable, death, logout or dimension change. Reopen the menu
+  to select a new target; interrupted plans do not silently restart.
+- **Tap:** Choose a stored entry and press **Tap selected**. Its strength is added
+  permanently to the recipient and the entry is consumed. An overflowing transfer
+  is rejected intact, rather than clipping or destroying the stored portion.
+- **Investiture:** Registered currently held resources appear in this same menu.
+  Resource storage/retrieval currently uses bounded exact batches through provider
+  callbacks. Unknown or disabled resource types remain stored. Stormlight will
+  appear when its system and provider are added; no Stormlight exists yet.
+
+Default power storage rate is**0.01strength per second**: a whole strength1power
+takes100seconds and a0.5portion takes50seconds. Cadmium's existing local-time
+storage multiplier accelerates the process while conserving total strength.
+Successful ticks merge compatible fractions into one stable entry, rather than
+using an entry slot every tick. Rate and target limits are enforced on the server;
+repeated menu clicks or duplicate same-tick calls cannot accelerate storage.
+
+Keyed pieces retain their existing ownership restrictions and require Feruchemical
+nicrosil. Create unkeyed contents while fully and actually storing aluminum
+Identity. Existing keyed pieces cannot become unkeyed through additional storage.
+**Anyone can tap unkeyed nicrosil**, without any existing powers; storing still
+requires Feruchemical nicrosil. Its own power can be gradually stored only into
+an unkeyed destination, preserving a way to reclaim it after losing the power.
+All Identity and source-power requirements are checked throughout storage.
+
+Only personal base strength transfers. Equipment/external modifiers remain with
+their source. Future Hemalurgic spikes must provide separate modifiers, whose
+power contribution cannot be stored. A mixed personal/spike power transfers only
+its personal contribution. Future integrations can add source exclusions.
+Allomantic duralumin does not multiply permanent powers or resource quantities.
+Metal fuel, other metalmind contents, notebooks and personal history stay with
+their original owner.
+
+Default capacity cost is100units per strength point, with32entries per piece
+subject to physical capacity. Storage can fill the available space with a partial
+power. Each running plan captures its cost; previously stored entries keep their
+cost when configuration changes. Incompatible conversion costs use separate rows.
+
+Contents live in `data/cosmere_nicrosil.dat`; items reference that shared inventory.
+Copies share consumable entries, and stale emptied/wiped copies cannot restore
+claimed powers. Wiping a piece erases its shared contents and interrupts storage.
+Ordinary charge drains cannot consume permanent-power entries. Keep player, item
+and world data together in backups.
+
+`cosmerearcanists-nicrosil-server.toml` controls power/resource transfer gates,
+self-storage, power storage speed, capacity cost, entry/world limits, resource
+batch size and menu action interval. Disabled systems preserve existing contents.
+A successful storage tick or retrieval emits copper-maskable Feruchemical pulses
+for bronze detection; merely opening the menu does not.
+
+Protocol is now**30**, requiring matching client/server builds. Existing saved
+whole-power entries remain valid and can be combined with gradual transfers.
+No item or power registry IDs changed. `python tools/validate_nicrosil.py`
+passed543checks against actual production ledger/progress/policy code on Java17.
+Four JUnit methods and13server GameTests cover transfer and splitting behavior,
+including progress, explicit stopping, menu closure, same-tick deduplication,
+shared entry IDs and recombination. Minecraft compilation, these engine tests,
+GUI and multiplayer remain unverified because Gradle distribution downloads fail
+before compilation.
+
+
+### Compounding and edible nuggets (0.48.0, verification pending)
+
+**Allomancy into Feruchemy:** select the Allomantic power, hold V and scroll
+backwards below Off into Compounding 1–3. These low/normal/flare conversion rates
+fill a matching metalmind through the usual hands, equipped slots and optional
+inventory access. One empty metalmind is enough. Conversion directly spends
+Allomantic reserves, independently of the Feruchemical state: you can tap and
+compound the same metal simultaneously. Normal Allomantic effects are off during
+a compounding mode. Full or unavailable metalminds pause conversion without
+spending reserves.
+
+Default conversion is 10 charge per reserve point, at one reserve point/second
+before compatible Allomantic strength, metal-specific burn rates, mode and
+cadmium local-time storage speed. Duralumin accelerates paid conversion through
+its enhancement profile. Every generated charge still costs actual reserves,
+even if ordinary burn consumption is disabled. All rates and per-metal gates
+are configurable in `cosmerearcanists-compounding-server.toml`. Existing paid
+aluminum suppression creates unkeyed output through the normal storage rules.
+Tin uses the selected sense; copper increases notebook capacity without copying
+or inventing memories. Normal storage restrictions and AFK protection apply.
+
+**Feruchemy into Allomancy:** hold right-click to eat a charged nugget. It is
+consumed, fills matching Allomantic reserves to maximum, and grants this temporary
+boost based on its charge divided by its capacity:
+
+| Nugget fullness | Allomantic power bonus | Duration |
+|---|---:|---:|
+| Full | +50% | 10 seconds |
+| Half | +25% | 5 seconds |
+| Quarter | +12.5% | 2.5 seconds |
+
+Durations round up to the next game tick. Eating deals 2 nominal magic damage
+(one heart, subject to normal damage protection). Another nugget replaces the
+bonus and duration for that metal; bonuses do not stack. Buffs end on expiration,
+death, logout, dimension change or loss of eligible powers. Only nuggets can be
+eaten for this effect; rings, ingots and blocks cannot. Vanilla iron/gold and
+recognized mod nuggets use a 32-tick eating action. Uncharged nuggets supply the
+same reserve as their configured equivalent in filings (normally four filings),
+with the same damage cost and no compounding boost. Filed nuggets cannot be eaten.
+Damage, maximum bonus and duration are configurable. Eating a bound copper or
+nicrosil nugget also erases its shared notebook/images or nicrosil inventory;
+consuming the item cannot leave server contents available through stale copies.
+
+Both compounding directions require matching Allomantic and Feruchemical powers
+with compatible source Identities. Native sources match one another. Powers from
+unkeyed nicrosilminds remain neutral and can match native powers. Differently
+keyed portions cannot compound together; neutral portions do not combine
+conflicting keyed sources. Only compatible contributions fund conversion and
+receive the reverse bonus. Ordinary metalmind access rules also apply: foreign
+keyed charged nuggets are preserved when they cannot be used. Source metadata
+survives nicrosil transfer, splitting, recombination, player cloning and saving.
+Older personal attributes initialize as native; older keyed nicrosil entries use
+the recorded mind owner, since their earlier provenance cannot be reconstructed.
+Future external power providers must report their actual source contributions.
+
+For **nicrosil compounding**, select the encoded power in the existing nicrosil
+menu and press Start compounding. Allomantic reserves fill temporary-power charge;
+your personal power is retained. The optional amount selects encoded strength,
+limited to one source portion; closing the menu leaves conversion running, Stop
+ends the selection, and leaving the Allomantic compounding mode clears it. Tapping
+a temporary entry supplies a transient modifier while touching the nicrosilmind.
+Default cost is one charge per strength-second. More charge buys more lifetime;
+it cannot be tapped or stored as a permanent power grant. Unkeyed temporary
+entries are usable by anyone. The menu's Tap view can start temporary use during
+compounding without changing your Feruchemical mode. Registered future resource
+types can be selected instead; their configured conversion cost sets the quantity
+produced. Ordinary Feruchemical nicrosil storage still removes personal strength
+gradually and ordinary power entries still grant permanent strength when tapped.
+Nuggets are eaten with right-click; use the Feruchemical nicrosil activation or
+mode change to open their menu. Other nicrosilminds retain right-click opening.
+
+**Protocol 31 requires matching client/server builds.** Source metadata and the
+new temporary nicrosil entry kind persist in saved data; no item registry IDs
+changed. This replacement follows the clarified direct-conversion/nugget design.
+Standalone production checks passed: 2073 compounding, 543 nicrosil, 31 copper
+capacity and 13 enhanced-cap checks. Nine new server GameTests cover conversion,
+simultaneous tapping, pause conditions, nugget effects, Identity, nicrosil, tin
+and copper notebook deletion. Build and GameTest attempts failed downloading
+Gradle before compilation. Java 21 compilation, engine tests, client controls
+and multiplayer remain unverified. This update has not been published.
+
+
+### Metal item artwork (0.48.1, client verification pending)
+
+Spikes, metal shavings, ingots and vials now use the four supplied 16×16 textures.
+Original RGBA pixels are preserved unchanged in `textures/item/provided_*.png`.
+Minecraft item tinting applies one consistent palette across the 21 supported
+metals, retaining the established base-metal colors. Copper, bronze, brass and
+gold have distinct warm tones; silvery metals retain their existing cool, green
+or gray variations. Atium and lerasium use distinct pale presentation colors.
+
+Loose shavings follow their saved metal type. Vials blend the colors of their
+actual contents, weighted by filing count; empty vials use the untinted source.
+Only the 15 interior metal pixels are tinted, leaving the glass and stopper
+unchanged. Legacy iron/steel/pewter vials use the same artwork. All 19 existing
+spikes and 18 mod ingots are updated; vanilla iron/copper/gold ingot models also
+use the supplied ingot artwork. Items, recipes and server mechanics are unchanged.
+A higher-priority resource pack can replace these item models normally.
+
+`tools/generate_provided_item_models.py` reproduces the 46 model files from the
+original sprites; `--check` verifies them without writing. The vial uses explicit
+pixel geometry so tinting does not affect its glass or stopper. Colors live in
+`visual/MetalPalette.java`; registration is client-only. Protocol remains31.
+Asset checks passed for original PNG byte equality, model/texture references,
+64 vial pixels, 15 tinted contents pixels, and palette/mixed-vial calculations.
+Minecraft compilation and client appearance still require verification because
+Gradle distribution download is unavailable locally. This update is local only.
+
+Copper and gold examples of each supplied texture (enlarged texture previews):
+
+![Copper and gold spikes, shavings, ingots and vials](docs/metal-texture-examples.png)
+
+
+### Hemalurgic power theft and natural traits (0.49.1, Minecraft verification pending)
+
+Use an **uncharged spike in your main hand to deliver the killing melee hit**.
+If the victim actually possesses a compatible personal power, one spike becomes
+charged. Its glint and tooltip show the stolen power and retained strength.
+Holding a spike while killing with another weapon, an offhand spike, projectile
+kills do not produce a charge. Ordinary unpowered mobs can supply natural traits
+with iron, tin, zinc or copper as described below.
+
+The initial implementation supports these power-stealing metal categories:
+
+| Spike metal | Powers it can steal |
+|---|---|
+| Steel | Physical Allomancy: iron, steel, tin, pewter |
+| Pewter | Physical Feruchemy: iron, steel, tin, pewter |
+| Bronze | Mental Allomancy: zinc, brass, copper, bronze |
+| Brass | Cognitive Feruchemy: zinc, brass, copper, bronze |
+| Cadmium | Temporal Allomancy: gold, electrum, cadmium, bendalloy; the mod's atium alloy |
+| Gold | Hybrid Feruchemy: gold, electrum, cadmium, bendalloy |
+| Electrum | Enhancement Allomancy: aluminum, duralumin, chromium, nicrosil |
+| Bendalloy | Spiritual Feruchemy: aluminum, duralumin, chromium, nicrosil |
+
+Categories follow the [published Hemalurgic table](https://www.17thshard.com/news/brandon-news/hemalurgy-table/)
+and its [metal descriptions](https://coppermind.net/wiki/Hemalurgy/table).
+The mod's atium-alloy power is included in its temporal Allomancy group. Other
+existing spike metals without the categories below retain their weapon behavior;
+**The remaining spike metals—chromium, nicrosil, lead, silver and nickel—are
+intentionally outside the implemented Hemalurgy scope.** Their existing ordinary
+weapon/ammunition behavior remains. No additional spike types or Hemalurgic
+effects are planned without a new request. Allomantic and Feruchemical powers
+are unaffected. Duralumin Connection/Identity theft is described below.
+
+Natural traits use their own yields, without the ordinary 80% power-retention loss:
+
+| Spike | Stored effect for future implantation | Donor/yield |
+|---|---|---|
+| Iron | Extra attack damage | Any living victim: base attack ≤16 gives 50% +1; above16 gives 25% +5. Missing attack attribute counts as0. |
+| Tin | Sight, hearing and touch bonuses | Any mob; individually profiled senses, each below one Feruchemical tin tap level. Bats favor hearing; wardens hearing/touch with no sight. Monsters have stronger default senses than ordinary mobs. |
+| Zinc | Emotional Allomancy resistance, up to40% | Living humanoids; stronger natural health/attack gives more. Default formula: min(40%,5% +0.5% × base health +0.5% × base attack). |
+| Copper | Emotional resistance5–25%; Feruchemical copper capacity +15–75% | Intelligent living humanoids; individual random roll biased upward for smarter types. Capacity bonus is three times the resistance roll. |
+
+Zinc/copper default eligible types are players, villagers, wandering traders,
+witches, pillagers, vindicators, evokers, illusioners, piglins, piglin brutes and
+endermen. Undead and animals are excluded. Datapacks can extend the separate
+`hemalurgy_living_humanoids` and `hemalurgy_intelligent_humanoids` entity-type
+tags for modded humanoids. These eligibility lists and intelligence weights are
+gameplay judgments. Copper uses r=0.05+0.20×U^(2.5−2I), U uniform0–1;
+I=.95 for spellcasters, .75 for players/villagers/traders, .65 endermen,
+.60 pillagers/vindicators and .45 otherwise. Every group retains variation.
+The roll happens once during lethal capture and persists in the spike, never
+on tooltip reading or loading. Iron/zinc use base attributes, excluding gear
+and temporary buffs. Natural extraction adds no extra permanent respawn stat
+penalty beyond the lethal hit. Holding these spikes grants no effects yet.
+Copper stores a future capacity modifier; it does not copy the victim's notes,
+change current notebook limits, or bypass charge/wipe/Identity requirements.
+Tin profiles are configurable per entity ID (including modded IDs) in the
+`senses` section, with normal/monster fallbacks and last matching override.
+
+When several matching powers exist, the strongest personal base is selected;
+equal strengths use stable alphabetical power-key order. The victim permanently
+loses that selected power, including after respawn. Other powers and metal
+reserves remain. The spike retains **80% of the stolen strength by default**;
+this provisional gameplay loss is configurable. Temporary, equipment and
+spike-granted attribute modifiers are not converted into personal stolen powers.
+Mobs exposing the matching registered power attribute can provide their own
+personal base; standard mobs are not automatically assigned Metallic Arts.
+
+Charging a stack splits exactly one charged spike into the hand and returns the
+remaining uncharged spikes to inventory, dropping overflow normally. Charged
+spikes cannot stack, overwrite an existing charge, enter crafting/processing
+recipes covered by the protection hooks, or serve as crossbow ammunition. The
+crossbow restriction prevents multishot from copying stored power. Contents
+preserve the original power-source Identity portions, including neutral sources;
+this does not rekey the power to the killer. UUID, donor, metal, power and source
+strengths survive normal item serialization. Malformed or unknown marked
+contents are preserved rather than overwritten.
+
+Canceled deaths do not steal powers. The server captures the lethal event and
+settles after cancellation handlers finish, normally at the end of the tick.
+Player clone/logout hooks settle pending theft before normal power data copying
+or saving. Loss of the original held weapon, changed donor powers or disabled
+features before settlement aborts without removing the power. A brief
+copper-maskable Hemalurgic Investiture pulse supports bronze detection. Merely
+carrying the charged spike grants nothing.
+
+**This is extraction only.** Insertion, player-body placement, accuracy effects,
+misplacement penalties, spike decay and access to stored powers await the chart.
+Future insertion must use the saved source portions as external modifiers and
+keep them excluded from nicrosil personal-power storage. Shared cross-file
+crash-atomic transactions are not provided.
+
+`cosmerearcanists-hemalurgy-server.toml` controls theft, player/mob sources,
+retained strength and each of the fourteen implemented metals. The existing main server
+`hemalurgy.enabled` gate and global power switch also apply. Disabling preserves
+existing charged items. Version0.49.3-alpha retains protocol31 and all existing
+item IDs; matching client/server versions are recommended for the new tooltip,
+glint and charge protection behavior.
+
+Verification: 5216 standalone natural-trait and 753 power theft-policy checks
+passed, alongside543 nicrosil and2073 compounding checks. Fifteen Hemalurgy
+GameTests (299 total project annotations) cover melee extraction, persistence,
+cancellation, stacks, respawn, trait yields, eligibility and stable copper rolls.
+These engine tests are unrun. Source syntax parsing and diff checks passed. Both
+Gradle build and GameTest commands failed downloading Gradle before compilation;
+Java21 compilation, engine tests, graphical and multiplayer behavior remain
+unverified. Changes are local and have not been published.
+
+### Aluminum spikes (0.49.2, Minecraft verification pending)
+
+A direct killing melee hit with a mainhand aluminum spike suppresses the victim's
+power access for **five minutes** if the victim is a player. It has no extra effect
+on mobs. It does not steal powers, charge or consume the spike, or erase learned
+powers, reserves or metalmind charge. Allomancy/Feruchemy activation, compounding
+and unkeyed nicrosilmind tapping are blocked during the lock. After expiry,
+reactivate powers deliberately.
+
+The deadline survives respawn, reconnect and saves. It counts6000server game ticks:
+offline time counts while the server runs; shutdown pauses it. Another qualifying
+kill refreshes the duration. Canceled deaths and losing the held weapon before
+settlement do not apply suppression. Config: `aluminumSuppressionSeconds` (default300)
+and `metals.aluminum`, alongside existing Hemalurgy/player/global gates. Nine
+production timing checks with stub services passed; three new engine tests are
+unrun because the Gradle distribution download remains blocked.
+
+### Duralumin spikes (0.49.3, Minecraft verification pending)
+
+A direct lethal mainhand duralumin spike hit steals a **player's Identity and
+Connections**. The charged spike stores their spiritual Identity, home-world
+Connection and current player Connection list with its bond strengths. Mobs
+supply none. Final cancellation and weapon/config checks still apply. The lethal
+hit's own new Connection is included at settlement. The natural Identity payload
+has no80% power-retention loss and does not take personal powers themselves.
+
+The donor loses that Connection list and home-world Connection. Their origin
+record stays intact, but its world no longer supplies citizenship Connection.
+They receive a fresh spiritual Identity for future keyed stores; the old Identity
+no longer unlocks their old metalminds. Account UUID, existing powers, reserves,
+notebooks and power-source provenance remain intact. New organic player bonds
+can form normally. These changes survive respawn/save/reconnect.
+
+**Extraction is available; implantation still awaits the placement chart.**
+Holding, carrying or wearing a charged spike does not activate it. The server
+`IdentityAccess.registerImplanted` provider boundary is ready for actual installed
+spikes. While such a provider grants the donor's Identity, the recipient keeps
+their own Identity and can access the donor's keyed metalminds (including copper
+notebooks and keyed nicrosilminds), still requiring the relevant Feruchemy.
+Ownership/charge/empty/wipe rules remain; nothing is automatically unkeyed.
+Removing the grant immediately revokes borrowed access. Aluminum suppression
+also blocks it. No production implantation provider is registered yet.
+
+Compounding treats only actively possessed Identities as compatible together,
+so a donor-sourced Hemalurgic power can compound with the recipient's other
+required power while the donor's Identity is active. Original source labels
+are preserved; unrelated Identities stay incompatible, and spikes' powers
+remain excluded from personal nicrosil storage. Stolen player bonds join the
+recipient's effective Connection list without adding duplicate strength; existing
+Feruchemical sensing still requires funded tapping and obeys range/target limits.
+`IdentityAccess.worlds` exposes native plus borrowed world Connections for future
+world-power requirements; this does not implement ChayShan or Surgebinding.
+
+Payload schema3 reads prior schema1/2 spikes. Only the donor's native Identity,
+native world and organic bonds are extracted; borrowed spike contents are not
+recursively copied. The bounded payload supports256player bonds and64active
+Identity grants. Config adds `metals.duralumin`; protocol31 unchanged. Checks:
+800production multi-Identity math and39Connection ledger checks passed, plus
+existing regression checks. Four new engine tests (306project annotations) are
+unrun; Gradle build/GameTest downloads still fail before compilation.
+
+### Placement reference and proposed position count
+
+The [compiled bind-point chart](docs/hemalurgy-bind-points.md) preserves the
+supplied locations, examples and uncertainties. Its [front/back diagram](docs/hemalurgy-bind-points.png)
+shows the agreed13positions, including the back position. The accepted limit is
+**13 implanted spikes per player**. The linchpin prevents the additional
+instability penalty for having more than four spikes; its material remains
+undecided.
+Missing bind points and uncertain/kandra-derived mappings are listed explicitly.
+This reference does not add implantation gameplay or enforce the cap yet.
+
+The accepted spiritual-integrity design is an additive **−25percentage points
+per implanted spike**, including the linchpin. From100%, four spikes give0%,
+five give−25%, and thirteen give−225%. Integrity can go negative, making emotional
+Allomancer or future Shard takeover much easier. More than four spikes without
+a linchpin makes integrity penalties **50% worse** (interpreted as37.5points
+per implanted spike rather than25). A linchpin prevents that extra penalty
+but does not remove normal spike costs. A removed spike's negative effects
+linger for **seven Minecraft days**:168,000game ticks, about2hours20minutes at
+normal tick speed. Its granted benefits end on removal and the lingering
+penalty occupies no implant slot. Lingering penalties are tracked **per bind
+point**, with at most one active-or-lingering contribution per point. Removing
+and reinserting spikes at the same point never stacks extra penalties; separate
+points remain independent. These are design rules awaiting implantation integration: current
+integrity code still clamps at zero, and Shard takeover is not implemented.
+
+An incompatible placement (such as a physical spike in a temporal point) also
+causes **−25%maximum health, −25%attack damage, −25%movement speed and −15%vision**
+for **one Minecraft day** (24,000game ticks, about20minutes at20TPS), alongside
+the usual spiritual-integrity penalties. Repeated attempts at the same bind
+point must not stack duplicate penalties. These placement debuffs remain design
+rules awaiting gameplay implementation.
+
+The diagram's13marker centers are the accepted **ideal bind points**, with
+[normalized coordinates](docs/hemalurgy-bind-points.json) saved for future
+implementation. The planned menu shows the player's own body from the front,
+with a button below to view the back. Pick a spike up from inventory onto the
+normal inventory cursor and click the body to implant it; click an installed
+spike to pick it back up. Placement stays freehand for accuracy scoring.
+
+Removing an ordinary spike deals **1heart**; removing a linchpin deals **2hearts**,
+or **5hearts if more than four spikes were implanted before removal**, including
+the linchpin. The5-heart amount replaces the2-heart cost. Existing lingering
+penalties still apply per bind point. The interface and removal damage are
+accepted design, awaiting implementation.
+
+The compatibility chart and additional mappings are now accepted game rules.
+**Both eye sockets accept Allomantic steel and iron**; steel also retains its
+sternum placement. Remaining group placements follow the chart's accepted table.
+Any supported charged spike can serve as the back linchpin, supplying
+stabilization **and its stored power**, with normal integrity cost.
+The coordinate JSON now includes all38supported contents-to-region mappings;
+this remains a design specification pending runtime implantation.
+
+## Hemalurgy implantation and Scadrial (0.50.0, local; Minecraft verification pending)
+
+Press **K** (rebindable) to open Hemalurgy. It requires a recorded actual visit
+to `cosmerearcanists:scadrial` **or an active stolen Scadrial Connection**. Origin
+selection alone is not an actual visit. Visits persist through death/reconnect.
+A valid charged duralumin spike carrying Scadrial Connection can open a limited
+bootstrap/repair view: implant/reposition that Connection first; other implants
+require actual visit history or an active Connection. Holding it does not grant
+its Identity, powers, or a permanent visit flag. All checks run on the server.
+
+The native inventory menu shows your own character, front by default, with a
+**Front / Back** button below. Pick up a charged spike from the inventory onto
+the normal cursor and click the body. Click an installed spike with an empty
+cursor to remove it. One item per anatomical point,13total; no occupied-point
+swap. The server owns the actual item and rejects stale revisions, duplicate
+charge IDs, unsupported charges and invalid coordinates. Changing views moves
+nothing. Closing uses normal cursor return/drop behavior. Body display slots
+cannot be looted, shift-clicked or creative-cloned through normal menu packets.
+Installed charges, positions, visit history and wound records save inside
+persistent player power data and remain through respawn; implants are not
+normal inventory death drops. Malformed saved implant data is preserved and
+blocked from mutation rather than silently overwritten.
+
+The [accepted chart](docs/hemalurgy-bind-points.md) and its JSON are implemented
+by `ImplantRules`:13ideal points and38material/contents mappings. Placement stays
+freehand; the nearest point on the chosen side owns the slot. Accuracy scales
+linearly from100%at the center to0at the configured radius (default0.16 of body
+height, correcting for its width). Off-body clicks are rejected. Incompatible
+points grant no power and apply the agreed one-day penalties. Empty ideal
+points are not drawn as guides. Hover installed spikes for effectiveness and
+see removal heart cost beside the body.
+
+Stolen magic uses transient external attribute modifiers with original source
+Identity; never personal bases. It therefore supports ordinary power activation
+and source-compatible compounding while remaining excluded from personal
+nicrosil storage. Linchpins grant **both stored power and stabilization**.
+Iron adds attack damage; tin uses the existing sight/hearing/touch effects.
+Zinc resistance caps40%, copper25%; the categories multiply their remaining
+susceptibility (both capped together give55%resistance), and existing aluminum
+resistance remains independent. Copper memory bonus caps75%and scales the
+server's charge-backed byte limits/payment calculations; losing the bonus does
+not erase existing notes. Installed duralumin exposes the donor Identity,
+world and player Connections through the existing access APIs. Player bond
+strength scales with placement accuracy; Identity/world access is present when
+an installed compatible spike has positive effectiveness. Aluminum suppression
+suspends installed grants/borrowed Identity without deleting physical implants.
+
+Integrity is now allowed below zero and subtracts25percentage points per
+implanted point. More than4without an effective linchpin multiplies active
+costs by1.5. A removed point keeps its removal-time cost for168,000server game
+ticks; the last removal refreshes that point's timer. Occupied points replace
+their own wound contribution instead of adding to it; different points remain
+independent. Wounds never count toward the implanted threshold or13cap. Their
+cost is frozen until expiry even if linchpin status later changes. Ordinary
+spiritual damage is tracked separately and never double-subtracted. Negative
+integrity multiplies emotional takeover susceptibility by `1 + abs(integrity)`;
+nonnegative takeover thresholds/durations retain their existing behavior. Copper
+shielding, aluminum and emotional influence gates still apply. Future Shards can
+use the same susceptibility API; no Shard system is added here.
+
+Wrong-point debuffs reduce max health/attack damage/movement speed25%and vision
+15%for24,000server game ticks. Per-point mistakes refresh their own timer; the
+physical stat reduction applies once while any such timer is active, rather
+than compounding multiple25%reductions. Vision reduces sight and narrows the
+configured camera FOV by15%. Incompatible placement itself adds no extra direct
+hit. Removal deals2nominalHP,4for a linchpin, or10for a linchpin when pre-removal
+count>4; normal damage protections apply, but repeated removals cannot evade
+pain using vanilla hit cooldown. Timers advance while the server runs, including
+player offline; shutdown pauses them and sleeping does not shorten them.
+
+`cosmerearcanists-hemalurgy-server.toml` adds implantation.enabled,
+accuracyRadius,integrityCostPerPoint,missingLinchpinExtraPenalty and
+scadrialDimensions. Existing global/per-metal switches remain. Disabling
+preserves items/wounds. Protocol**32** requires matching client/server builds.
+
+**Scadrial dimension:** `cosmerearcanists:scadrial` uses vanilla Overworld noise
+settings, biome preset and dimension type, including normal village generation.
+Its stable seed is the save seed XOR `0x534341445249414C`; a dimension-specific
+ServerLevel seed hook feeds vanilla generation instead of an ignored JSON seed
+field. Overworld generation is unchanged. This adds no travel portal or origin
+teleport; administrators can use native `/execute in cosmerearcanists:scadrial`
+commands. Existing world-specific configs may retain the old100clip value:
+set `clipsPerBoxing=10` for the requested ratio. New configs default to10, and
+recognized saved money-changing offers are repriced without duplication when
+the configured ratio changes. Scadrial villagers use the existing currency
+conversion hooks automatically; ordinary Overworld villagers retain emeralds.
+
+Validation:7965standalone production placement/seed checks passed, plus existing
+Hemalurgy753,traits5216,Identity800,nicrosil543,compounding2073,Connection39 and
+aluminum9(stub-service timing) checks. Added13engine tests (319total annotations)
+for inventory conservation/access/Identity/powers/penalties/clone, dimension seed
+and currency, and kept legacy100clip fixtures explicitly configured. All resource
+JSON and24changed/new Java source syntax checks passed. **Both required Gradle
+commands failed downloading Gradle9.2.1 before compilation.** Java21 type checking,
+Mixin application, world generation, GUI/model alignment and multiplayer/death
+item ordering are not verified. Changes are local and unpublished.

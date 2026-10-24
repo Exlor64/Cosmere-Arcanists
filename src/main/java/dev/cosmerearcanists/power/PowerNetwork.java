@@ -16,9 +16,10 @@ public final class PowerNetwork {
     /** Assigned by physical-client initialization; no common class references a client class. */
     public static Consumer<Snapshot> clientReceiver = packet -> { };
     public static Consumer<Impulse> impulseReceiver = packet -> { };
-    public record Entry(String power,int state,double reserve,int storeLevels,int tapLevels){
+    public record Entry(String power,int state,double reserve,int storeLevels,int tapLevels,double committedReserve,int burstTicks){
+        public Entry(String power,int state,double reserve,int storeLevels,int tapLevels){this(power,state,reserve,storeLevels,tapLevels,0,0);}
         public Entry(String power,int state,double reserve){this(power,state,reserve,5,5);}
-        public Entry{if(storeLevels<0||tapLevels<0||storeLevels>100000||tapLevels>100000)throw new IllegalArgumentException("Invalid power level limits");}
+        public Entry{if(!Double.isFinite(committedReserve)||committedReserve<0||burstTicks<0||storeLevels<0||tapLevels<0||storeLevels>100000||tapLevels>100000)throw new IllegalArgumentException("Invalid power level limits");}
     }
     public record Snapshot(String dimension, String selected, String secondary, int levels, List<Entry> powers, List<MetalTarget> targets) implements CustomPacketPayload {
         public static final Type<Snapshot> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID, "power_snapshot"));
@@ -26,14 +27,14 @@ public final class PowerNetwork {
             public Snapshot decode(RegistryFriendlyByteBuf b) {
                 String dimension = b.readUtf(128), selected = b.readUtf(32), secondary=b.readUtf(32); int levels = b.readVarInt();
                 int n = b.readVarInt(); if (n < 0 || n > 64) throw new IllegalArgumentException("Invalid powers");
-                var powers = new ArrayList<Entry>(); for (int i = 0; i < n; i++) powers.add(new Entry(b.readUtf(32),b.readInt(),b.readDouble(),b.readVarInt(),b.readVarInt()));
+                var powers = new ArrayList<Entry>(); for (int i = 0; i < n; i++) powers.add(new Entry(b.readUtf(32),b.readInt(),b.readDouble(),b.readVarInt(),b.readVarInt(),b.readDouble(),b.readVarInt()));
                 n = b.readVarInt(); if (n < 0 || n > 256) throw new IllegalArgumentException("Invalid targets");
                 var targets = new ArrayList<MetalTarget>(); for (int i = 0; i < n; i++) targets.add(new MetalTarget(b.readInt(), b.readInt(), b.readBlockPos()));
                 return new Snapshot(dimension, selected, secondary, levels, List.copyOf(powers), List.copyOf(targets));
             }
             public void encode(RegistryFriendlyByteBuf b, Snapshot p) {
                 b.writeUtf(p.dimension, 128); b.writeUtf(p.selected, 32); b.writeUtf(p.secondary,32); b.writeVarInt(p.levels); b.writeVarInt(p.powers.size());
-                for (var e : p.powers) { b.writeUtf(e.power, 32); b.writeInt(e.state); b.writeDouble(e.reserve);b.writeVarInt(e.storeLevels);b.writeVarInt(e.tapLevels); }
+                for (var e : p.powers) { b.writeUtf(e.power, 32); b.writeInt(e.state); b.writeDouble(e.reserve);b.writeVarInt(e.storeLevels);b.writeVarInt(e.tapLevels);b.writeDouble(e.committedReserve);b.writeVarInt(e.burstTicks); }
                 b.writeVarInt(p.targets.size()); for (var t : p.targets) { b.writeInt(t.entityId()); b.writeInt(t.slot()); b.writeBlockPos(t.block()); }
             }
         };
@@ -95,7 +96,12 @@ public final class PowerNetwork {
         @Override public Type<Impulse> type() { return TYPE; }
     }
     public static void register(RegisterPayloadHandlersEvent event) {
-        var r = event.registrar("22");
+        var r = event.registrar("32");
+        dev.cosmerearcanists.hemalurgy.HemalurgyNetwork.register(r);
+        dev.cosmerearcanists.copper.CopperNetwork.register(r);
+        dev.cosmerearcanists.nicrosil.NicrosilNetwork.register(r);
+        r.playToClient(dev.cosmerearcanists.connection.ConnectionPacket.TYPE,dev.cosmerearcanists.connection.ConnectionPacket.CODEC,(packet,context)->context.enqueueWork(()->dev.cosmerearcanists.connection.ConnectionPacket.receiver.accept(packet)));
+        r.playToClient(ZincReactionPacket.TYPE,ZincReactionPacket.CODEC,(packet,context)->context.enqueueWork(()->ZincReactionPacket.receiver.accept(packet)));
         r.playToClient(BronzeWarningPacket.TYPE,BronzeWarningPacket.CODEC,(packet,context)->context.enqueueWork(()->BronzeWarningPacket.receiver.accept(packet)));
         r.playToClient(BubblePacket.TYPE,BubblePacket.CODEC,(packet,context)->context.enqueueWork(()->BubblePacket.receiver.accept(packet)));
         r.playToClient(GoldPacket.TYPE,GoldPacket.CODEC,(packet,context)->context.enqueueWork(()->GoldPacket.receiver.accept(packet)));
@@ -118,7 +124,7 @@ public final class PowerNetwork {
         PacketDistributor.sendToPlayer(p,new TinStatus(p.level().dimension().location().toString(),tin,sight>0 && TinConfig.ZOOM.get() && (PowerService.holdingAbility(p,"a:tin")||dev.cosmerearcanists.feruchemy.TinFeruchemy.sense(p)==0&&PowerService.holdingAbility(p,"f:tin"))?TinMath.zoom(sight,TinConfig.ZOOM_STRENGTH.get(),TinConfig.MAX_ZOOM.get()):1,TinService.revealStrength(p)>0,(float)TinService.nightVision(p),dev.cosmerearcanists.feruchemy.TinFeruchemy.sense(p)));
         double pewter=PewterService.strength(p);
         PacketDistributor.sendToPlayer(p,new PewterStatus(p.level().dimension().location().toString(),PewterService.debt(p),pewter>0,pewter));
-        var list = PowerData.available(p).stream().map(power -> new Entry(power, PowerData.state(p, power), power.startsWith("a:") ? PowerData.reserve(p, power.substring(2)) : dev.cosmerearcanists.feruchemy.Metalminds.accessibleCharge(p,power.equals("f:tin")?dev.cosmerearcanists.feruchemy.TinFeruchemy.channel(p):power.substring(2)),PowerData.storeLevels(p,power),PowerData.tapLevels(p,power))).toList();
+        var list = PowerData.available(p).stream().map(power -> new Entry(power, PowerData.controlState(p, power), power.startsWith("a:") ? PowerData.reserve(p, power.substring(2)) : dev.cosmerearcanists.feruchemy.Metalminds.accessibleCharge(p,power.equals("f:tin")?dev.cosmerearcanists.feruchemy.TinFeruchemy.channel(p):power.substring(2)),PowerData.storeLevels(p,power),PowerData.tapLevels(p,power),power.startsWith("f:")?dev.cosmerearcanists.feruchemy.FeruchemicalEnhancement.committedFuel(p,power.equals("f:tin")?dev.cosmerearcanists.feruchemy.TinFeruchemy.channel(p):power.substring(2)):0,power.startsWith("f:")?dev.cosmerearcanists.feruchemy.FeruchemicalEnhancement.committedTicks(p,power.equals("f:tin")?dev.cosmerearcanists.feruchemy.TinFeruchemy.channel(p):power.substring(2)):0)).toList();
         PacketDistributor.sendToPlayer(p, new Snapshot(p.level().dimension().location().toString(), PowerData.selected(p), PowerData.secondary(p), PowerConfig.FERUCHEMY_LEVELS.get(), list, targets));
     }
     private PowerNetwork() { }

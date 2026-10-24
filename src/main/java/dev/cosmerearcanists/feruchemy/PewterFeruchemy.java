@@ -22,21 +22,22 @@ public final class PewterFeruchemy {
         modifier(p,Attributes.ATTACK_DAMAGE,factor);
         double bulk=FeruchemyConfig.PEWTER_BULK.get()?Math.min(FeruchemyConfig.PEWTER_BULK_CAP.get(),Math.max(0,factor-FeruchemyConfig.PEWTER_BULK_THRESHOLD.get())*FeruchemyConfig.PEWTER_BULK_RATE.get()):0;
         modifier(p,Attributes.MOVEMENT_SPEED,1-bulk);
-        double jump=FeruchemyConfig.PEWTER_JUMPS.get()&&factor>1&&PowerData.state(p,"f:pewter")>0&&PowerService.holdingAbility(p,"f:pewter")?Math.min(FeruchemyConfig.PEWTER_JUMP_CAP.get(),Math.sqrt(1+(factor-1)*FeruchemyConfig.PEWTER_JUMP_RATE.get())):1;
+        double jump=FeruchemyConfig.PEWTER_JUMPS.get()&&factor>1&&PowerData.state(p,"f:pewter")>0&&PowerService.holdingAbility(p,"f:pewter")?Math.min(FeruchemicalEnhancement.cap(p,"pewter",FeruchemyConfig.PEWTER_JUMP_CAP.get()),Math.sqrt(1+(factor-1)*FeruchemyConfig.PEWTER_JUMP_RATE.get())):1;
         modifier(p,Attributes.JUMP_STRENGTH,jump);
     }
     public static void clear(ServerPlayer p){apply(p,1);}
     @SubscribeEvent public void jump(net.neoforged.neoforge.event.entity.living.LivingEvent.LivingJumpEvent event){
         if(!(event.getEntity() instanceof ServerPlayer p)||!configured()||!FeruchemyConfig.PEWTER_JUMPS.get()||PowerData.state(p,"f:pewter")<=0||!PowerService.holdingAbility(p,"f:pewter"))return;
         double extra=Math.max(0,factor(p)-1);int input=PowerService.movementInputs(p,"f:pewter");double forward=((input&4)!=0?1:0)-((input&8)!=0?1:0),left=((input&16)!=0?1:0)-((input&32)!=0?1:0);double yaw=Math.toRadians(p.getYRot());var direction=new net.minecraft.world.phys.Vec3(-Math.sin(yaw)*forward+Math.cos(yaw)*left,0,Math.cos(yaw)*forward+Math.sin(yaw)*left);
-        if(direction.lengthSqr()<1e-8||extra<=0)return;double boost=Math.min(FeruchemyConfig.PEWTER_LEAP_CAP.get(),Math.sqrt(extra)*FeruchemyConfig.PEWTER_LEAP_RATE.get());p.setDeltaMovement(p.getDeltaMovement().add(direction.normalize().scale(boost)));p.hurtMarked=true;
+        if(direction.lengthSqr()<1e-8||extra<=0)return;double boost=Math.min(FeruchemicalEnhancement.cap(p,"pewter",FeruchemyConfig.PEWTER_LEAP_CAP.get()),Math.sqrt(extra)*FeruchemyConfig.PEWTER_LEAP_RATE.get());p.setDeltaMovement(p.getDeltaMovement().add(direction.normalize().scale(boost)));p.hurtMarked=true;
     }
     public static void tick(ServerPlayer p){
         double factor=1;int state=PowerData.state(p,"f:pewter");double attribute=PowerAttributes.strength(p,"f:pewter");
         if(configured()&&p.isAlive()&&!p.isSpectator()&&attribute>0&&state!=0){
             boolean storing=state<0;double magnitude=storing?FeruchemyLevels.storedFraction(attribute,-state,FeruchemyConfig.PEWTER_STORE_STEP.get(),FeruchemyConfig.PEWTER_STORE_PER_ATTRIBUTE.get(),FeruchemyConfig.MAX_STORE.get()):FeruchemyLevels.extraMass(state,FeruchemyConfig.PEWTER_TAP_STEP.get(),FeruchemyConfig.PEWTER_CAP.get());
             double cost=storing?magnitude/20:magnitude*Math.pow(Math.max(1,magnitude),FeruchemyConfig.PEWTER_LOSS.get())/20;
-            double moved=(storing?Metalminds.storePerTick(p,"pewter",cost):Metalminds.transferAccessible(p,"pewter",-cost));
+        if(!storing)magnitude=FeruchemicalEnhancement.effect(p,"pewter",magnitude);
+            double moved=(storing?Metalminds.storePerTick(p,"pewter",cost):FeruchemicalEnhancement.tap(p,"pewter",cost));
             if(cost>0&&Math.abs(moved)>0)factor=storing?1-Math.abs(moved)*20:1+magnitude*Math.min(1,Math.abs(moved)/cost);
             if(cost<=0||Math.abs(moved)<cost-1e-9)PowerData.state(p,"f:pewter",0);
         }apply(p,factor);

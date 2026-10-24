@@ -25,7 +25,7 @@ public final class PowerData {
         }
         return tag;
     }
-    private static boolean enabled(String power) {
+    public static boolean powerEnabled(String power) {
         if((power.equals("a:bendalloy")||power.equals("a:cadmium"))&&!BubbleService.configured(power.substring(2)))return false;
         if(power.equals("a:gold")&&!GoldService.configured())return false;
         if ((power.equals("a:chromium") || power.equals("a:nicrosil")) && !ContactService.configured(power.substring(2)))return false;
@@ -44,7 +44,7 @@ public final class PowerData {
         PowerAttributes.migrate(p);
         if (!PowerConfig.ENABLED.get()) return List.of();
         return PowerAttributes.keys().stream().filter(key -> PowerAttributes.strength(p, key) > 0)
-            .filter(PowerData::enabled).sorted().toList();
+            .filter(PowerData::powerEnabled).sorted().toList();
     }
 
     public static String secondary(ServerPlayer p) {
@@ -70,13 +70,16 @@ public final class PowerData {
         }
         return true;
     }
-    public static int storeLevels(ServerPlayer p,String power){return power.equals("f:bendalloy")?dev.cosmerearcanists.feruchemy.BendalloyFeruchemy.storeLevels(p):power.equals("f:bronze")?dev.cosmerearcanists.feruchemy.BronzeFeruchemy.storeLevels(p):power.equals("f:brass")?dev.cosmerearcanists.feruchemy.BrassFeruchemy.storeLevels(p):power.equals("f:tin")?dev.cosmerearcanists.feruchemy.TinFeruchemy.storeLevels(p):power.equals("f:gold")?dev.cosmerearcanists.feruchemy.GoldFeruchemy.storeLevels(p):power.equals("f:pewter")?dev.cosmerearcanists.feruchemy.PewterFeruchemy.storeLevels(p):power.equals("f:steel")?dev.cosmerearcanists.feruchemy.SteelFeruchemy.storeLevels(p):power.equals("f:iron")?dev.cosmerearcanists.feruchemy.IronFeruchemy.storeLevels(p):PowerConfig.FERUCHEMY_LEVELS.get();}
-    public static int tapLevels(ServerPlayer p,String power){return power.equals("f:bendalloy")?dev.cosmerearcanists.feruchemy.BendalloyFeruchemy.tapLevels(p):power.equals("f:bronze")?dev.cosmerearcanists.feruchemy.BronzeFeruchemy.tapLevels(p):power.equals("f:brass")?dev.cosmerearcanists.feruchemy.BrassFeruchemy.tapLevels(p):power.equals("f:tin")?dev.cosmerearcanists.feruchemy.TinFeruchemy.tapLevels(p):power.equals("f:gold")?dev.cosmerearcanists.feruchemy.GoldFeruchemy.tapLevels(p):power.equals("f:pewter")?dev.cosmerearcanists.feruchemy.PewterFeruchemy.tapLevels(p):power.equals("f:steel")?dev.cosmerearcanists.feruchemy.SteelFeruchemy.tapLevels(p):power.equals("f:iron")?dev.cosmerearcanists.feruchemy.IronFeruchemy.tapLevels(p):PowerConfig.FERUCHEMY_LEVELS.get();}
-    public static int state(ServerPlayer p,String power){
+    public static int storeLevels(ServerPlayer p,String power){return power.startsWith("a:")?dev.cosmerearcanists.compounding.CompoundingService.storeLevels(p,power):power.equals("f:nicrosil")?1:power.equals("f:chromium")?dev.cosmerearcanists.feruchemy.ChromiumFeruchemy.storeLevels(p):power.equals("f:duralumin")?dev.cosmerearcanists.feruchemy.DuraluminFeruchemy.storeLevels(p):power.equals("f:electrum")?dev.cosmerearcanists.feruchemy.ElectrumFeruchemy.storeLevels(p):power.equals("f:zinc")?dev.cosmerearcanists.feruchemy.ZincFeruchemy.storeLevels(p):power.equals("f:aluminum")?dev.cosmerearcanists.feruchemy.AluminumFeruchemy.storeLevels(p):power.equals("f:copper")?1:power.equals("f:cadmium")?dev.cosmerearcanists.feruchemy.CadmiumFeruchemy.storeLevels(p):power.equals("f:bendalloy")?dev.cosmerearcanists.feruchemy.BendalloyFeruchemy.storeLevels(p):power.equals("f:bronze")?dev.cosmerearcanists.feruchemy.BronzeFeruchemy.storeLevels(p):power.equals("f:brass")?dev.cosmerearcanists.feruchemy.BrassFeruchemy.storeLevels(p):power.equals("f:tin")?dev.cosmerearcanists.feruchemy.TinFeruchemy.storeLevels(p):power.equals("f:gold")?dev.cosmerearcanists.feruchemy.GoldFeruchemy.storeLevels(p):power.equals("f:pewter")?dev.cosmerearcanists.feruchemy.PewterFeruchemy.storeLevels(p):power.equals("f:steel")?dev.cosmerearcanists.feruchemy.SteelFeruchemy.storeLevels(p):power.equals("f:iron")?dev.cosmerearcanists.feruchemy.IronFeruchemy.storeLevels(p):PowerConfig.FERUCHEMY_LEVELS.get();}
+    public static int tapLevels(ServerPlayer p,String power){return power.equals("f:nicrosil")?1:power.equals("f:chromium")?dev.cosmerearcanists.feruchemy.ChromiumFeruchemy.tapLevels(p):power.equals("f:duralumin")?dev.cosmerearcanists.feruchemy.DuraluminFeruchemy.tapLevels(p):power.equals("f:electrum")?dev.cosmerearcanists.feruchemy.ElectrumFeruchemy.tapLevels(p):power.equals("f:zinc")?dev.cosmerearcanists.feruchemy.ZincFeruchemy.tapLevels(p):power.equals("f:aluminum")?dev.cosmerearcanists.feruchemy.AluminumFeruchemy.tapLevels(p):power.equals("f:copper")?1:power.equals("f:cadmium")?dev.cosmerearcanists.feruchemy.CadmiumFeruchemy.tapLevels(p):power.equals("f:bendalloy")?dev.cosmerearcanists.feruchemy.BendalloyFeruchemy.tapLevels(p):power.equals("f:bronze")?dev.cosmerearcanists.feruchemy.BronzeFeruchemy.tapLevels(p):power.equals("f:brass")?dev.cosmerearcanists.feruchemy.BrassFeruchemy.tapLevels(p):power.equals("f:tin")?dev.cosmerearcanists.feruchemy.TinFeruchemy.tapLevels(p):power.equals("f:gold")?dev.cosmerearcanists.feruchemy.GoldFeruchemy.tapLevels(p):power.equals("f:pewter")?dev.cosmerearcanists.feruchemy.PewterFeruchemy.tapLevels(p):power.equals("f:steel")?dev.cosmerearcanists.feruchemy.SteelFeruchemy.tapLevels(p):power.equals("f:iron")?dev.cosmerearcanists.feruchemy.IronFeruchemy.tapLevels(p):PowerConfig.FERUCHEMY_LEVELS.get();}
+    public static int state(ServerPlayer p,String power){int state=controlState(p,power);return power.startsWith("a:")&&state<0?0:state;}
+    public static int controlState(ServerPlayer p,String power){
+        if(dev.cosmerearcanists.hemalurgy.AluminumSuppression.active(p))return 0;
         var d=data(p);var states=d.getCompound("states");int raw=states.getInt(power),value=PowerRules.clamp(power,raw,storeLevels(p,power),tapLevels(p,power));
         if(value!=raw){states.putInt(power,value);d.put("states",states);}return value;
     }
     public static void state(ServerPlayer p,String power,int state){
+        if(state!=0&&dev.cosmerearcanists.hemalurgy.AluminumSuppression.active(p))return;
         var d=data(p);var states=d.getCompound("states");states.putInt(power,PowerRules.clamp(power,state,storeLevels(p,power),tapLevels(p,power)));d.put("states",states);
     }
     public static double reserve(ServerPlayer p, String metal) { return Math.max(0, Math.min(PowerConfig.RESERVE_CAP.get(), data(p).getCompound("reserves").getDouble(metal))); }

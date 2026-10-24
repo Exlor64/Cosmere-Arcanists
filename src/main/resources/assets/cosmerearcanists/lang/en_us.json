@@ -87,6 +87,9 @@
   "attribute.cosmerearcanists.feruchemy_brass": "Brass Feruchemy",
   "attribute.cosmerearcanists.feruchemy_copper": "Copper Feruchemy",
   "attribute.cosmerearcanists.feruchemy_bronze": "Bronze Feruchemy",
+  "attribute.cosmerearcanists.weapon_preparation_multiplier": "Weapon Preparation Multiplier",
+  "attribute.cosmerearcanists.mental_speed_multiplier": "Mental Speed Multiplier",
+  "attribute.cosmerearcanists.spiritual_identity_multiplier": "Spiritual Identity Multiplier",
   "attribute.cosmerearcanists.feruchemy_aluminum": "Aluminum Feruchemy",
   "attribute.cosmerearcanists.feruchemy_duralumin": "Duralumin Feruchemy",
   "attribute.cosmerearcanists.feruchemy_chromium": "Chromium Feruchemy",
@@ -191,5 +194,7 @@
   "death.attack.cosmerearcanists.brass_overheat": "%1$s tapped too much warmth",
   "death.attack.cosmerearcanists.brass_overheat.player": "%1$s overheated while fighting %2$s",
   "item.cosmerearcanists.boxing": "Boxing",
-  "item.cosmerearcanists.clip": "Clip"
+  "item.cosmerearcanists.clip": "Clip",
+  "key.cosmerearcanists.hemalurgy": "Hemalurgy",
+  "attribute.cosmerearcanists.hemalurgic_vision": "Vision"
 }

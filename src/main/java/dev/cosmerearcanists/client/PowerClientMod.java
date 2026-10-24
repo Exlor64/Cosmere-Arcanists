@@ -15,6 +15,18 @@ public final class PowerClientMod {
     public PowerClientMod(IEventBus bus, ModContainer container) {
         container.registerConfig(ModConfig.Type.CLIENT, PowerClientConfig.SPEC);
         bus.addListener(this::keys);
+        bus.addListener((net.neoforged.neoforge.client.event.RegisterMenuScreensEvent e)->e.register(dev.cosmerearcanists.hemalurgy.HemalurgyMenu.TYPE.get(),HemalurgyScreen::new));
+        NeoForge.EVENT_BUS.register(new HemalurgyScreen.Events());
+        bus.addListener(MetalItemColors::register);
+        dev.cosmerearcanists.connection.ConnectionPacket.receiver=ConnectionClient::receive;
+        NeoForge.EVENT_BUS.register(new ConnectionClient());
+        dev.cosmerearcanists.nicrosil.NicrosilNetwork.receiver=NicrosilScreen::receive;
+        dev.cosmerearcanists.copper.CopperNetwork.snapshotReceiver=CopperClient::snapshot;
+        dev.cosmerearcanists.copper.CopperNetwork.imageReceiver=CopperClient::image;
+        dev.cosmerearcanists.copper.CopperNetwork.waypointReceiver=CopperClient::waypoint;
+        NeoForge.EVENT_BUS.register(new CopperClient());
+        dev.cosmerearcanists.power.ZincReactionPacket.receiver=ZincReactionClient::receive;
+        NeoForge.EVENT_BUS.register(new ZincReactionClient());
         bus.addListener(TinRenderTypes::registerShaders);
         bus.addListener(BronzeDangerClient::registerShaders);
         dev.cosmerearcanists.power.BronzeWarningPacket.receiver=BronzeDangerClient::receive;
@@ -57,6 +69,7 @@ public final class PowerClientMod {
         net.minecraft.client.renderer.item.ItemProperties.register(item,net.minecraft.resources.ResourceLocation.withDefaultNamespace("pull"),(stack,level,entity,seed)->entity!=null && entity.getUseItem()==stack?(float)(stack.getUseDuration(entity)-entity.getUseItemRemainingTicks())/net.minecraft.world.item.CrossbowItem.getChargeDuration(stack,entity):0);
     });}
     private void keys(RegisterKeyMappingsEvent event) {
+        event.register(HemalurgyScreen.KEY);
         event.register(PowerClient.SELECT); event.register(PowerClient.STATE); event.register(PowerClient.APPLY); event.register(PowerClient.SECONDARY); event.register(PowerClient.ALTERNATE);
     }
 }

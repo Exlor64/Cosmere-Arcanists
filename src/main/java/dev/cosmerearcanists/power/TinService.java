@@ -84,11 +84,11 @@ public final class TinService {
     public static PowerNetwork.TinEcho echo(ServerPlayer listener,Vec3 position,Entity source,float volume) {
         double power=hearingStrength(listener);if(power<=0 || !TinConfig.HEARING.get() || !Float.isFinite(volume) || volume<=0)return null;
         double potential=revealStrength(listener);if(potential<=0)return null;
-        double range=TinMath.range(power,volume,TinConfig.RANGE.get()*TinConfig.ECHO_RANGE.get(),TinConfig.MAX_RANGE.get()*TinConfig.ECHO_RANGE.get())*(.5+.5*potential);double distance=listener.getEyePosition().distanceTo(position);
+        double range=TinMath.range(power,volume,TinConfig.RANGE.get()*TinConfig.ECHO_RANGE.get(),EnhancedCaps.scale(listener,"a:tin",TinConfig.MAX_RANGE.get())*TinConfig.ECHO_RANGE.get())*(.5+.5*potential);double distance=listener.getEyePosition().distanceTo(position);
         if(distance>=range)return null;
         double audible=TinMath.audibility(distance,obstruction(listener.serverLevel(),listener.getEyePosition(),position),range);
         if(audible<TinConfig.MIN_AUDIBILITY.get())return null;
-        double radius=Math.min(TinConfig.MAX_RADIUS.get(),TinConfig.RADIUS.get()*Math.sqrt(power)*Math.sqrt(Math.min(4,volume)))*TinConfig.ECHO_RANGE.get()*Math.sqrt(audible*potential);
+        double radius=Math.min(EnhancedCaps.scale(listener,"a:tin",TinConfig.MAX_RADIUS.get()),TinConfig.RADIUS.get()*Math.sqrt(power)*Math.sqrt(Math.min(4,volume)))*TinConfig.ECHO_RANGE.get()*Math.sqrt(audible*potential);
         int ticks=(int)Math.clamp(TinConfig.FADE.get()*(.75+.25*Math.sqrt(power))*Math.sqrt(audible)*(.35+.65*potential)*TinConfig.PERSISTENCE.get(),4,Math.max(4,Math.min(200,TinConfig.MAX_FADE.get()*TinConfig.PERSISTENCE.get())));
         int detail=Math.max(4,(int)(TinConfig.SHAPES.get()*potential*Math.sqrt(audible)));
         boolean identified=source!=null && source.level()==listener.level() && !source.isSilent() && source.position().distanceToSqr(position)<9;

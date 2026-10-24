@@ -26,6 +26,8 @@ public final class SteelProjectile extends ThrowableItemProjectile implements Al
     private ItemStack cargo=ItemStack.EMPTY;
     private double metalUnits=1, referenceSpeed=3.5, nuggetDamage=2, damageCap=100;
     private int flightAge;
+    private boolean enhancedDamage;
+    public void enhanceDamage(double multiplier){if(multiplier>1){enhancedDamage=true;damageCap=Math.min(100000,damageCap*multiplier);}}
     public SteelProjectile(EntityType<? extends SteelProjectile> type,Level level){super(type,level);}
     @Override protected void defineSynchedData(SynchedEntityData.Builder builder){super.defineSynchedData(builder);builder.define(EMBEDDED,false);}
     public boolean embedded(){return entityData.get(EMBEDDED);}
@@ -69,7 +71,7 @@ public final class SteelProjectile extends ThrowableItemProjectile implements Al
         var target=hit.getEntity();
         if(target instanceof Player victim && (!PowerConfig.PLAYER_TARGETS.get() || getOwner() instanceof Player owner && !owner.canHarmPlayer(victim)))return;
         double speed=BubbleService.intrinsicVelocity(this).length();
-        float damage=(float)MetalProjectilePhysics.damage(metalUnits,speed,referenceSpeed,nuggetDamage,damageCap);
+        float damage=(float)(enhancedDamage?MetalProjectilePhysics.enhancedDamage(metalUnits,speed,referenceSpeed,nuggetDamage,damageCap):MetalProjectilePhysics.damage(metalUnits,speed,referenceSpeed,nuggetDamage,damageCap));
         boolean accepted=target.hurt(damageSources().thrown(this,getOwner()),damage);
         if(accepted && target instanceof LivingEntity living) {
             double knockback=Math.min(2,Math.sqrt(metalUnits)*speed*.05);
@@ -100,12 +102,12 @@ public final class SteelProjectile extends ThrowableItemProjectile implements Al
         if(!cargo.isEmpty())tag.put("Cargo",cargo.save(registryAccess()));
         tag.putBoolean("CoinEmbedded",embedded());tag.putLong("CoinAnchor",anchor.asLong());
         tag.putDouble("MetalUnits",metalUnits); tag.putDouble("ReferenceSpeed",referenceSpeed);
-        tag.putDouble("NuggetDamage",nuggetDamage); tag.putDouble("DamageCap",damageCap); tag.putInt("FlightAge",flightAge);
+        tag.putBoolean("DuraluminEnhancedDamage",enhancedDamage);tag.putDouble("NuggetDamage",nuggetDamage); tag.putDouble("DamageCap",damageCap); tag.putInt("FlightAge",flightAge);
     }
     @Override public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag); cargo=ItemStack.parseOptional(registryAccess(),tag.getCompound("Cargo"));
         metalUnits=Math.clamp(tag.getDouble("MetalUnits"),.001,1e12); referenceSpeed=Math.max(.001,tag.getDouble("ReferenceSpeed"));
-        nuggetDamage=Math.max(0,tag.getDouble("NuggetDamage")); damageCap=Math.clamp(tag.getDouble("DamageCap"),.001,100);
+        nuggetDamage=Math.max(0,tag.getDouble("NuggetDamage")); enhancedDamage=tag.getBoolean("DuraluminEnhancedDamage");damageCap=Math.clamp(tag.getDouble("DamageCap"),.001,enhancedDamage?100000:100);
         flightAge=Math.max(0,tag.getInt("FlightAge"));entityData.set(EMBEDDED,coin()&&tag.getBoolean("CoinEmbedded"));anchor=BlockPos.of(tag.getLong("CoinAnchor"));setNoGravity(embedded());
     }
 }

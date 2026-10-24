@@ -7,14 +7,21 @@ public final class PowerClientConfig {
     public static final ModConfigSpec.EnumValue<TinEchoStyle> TIN_ECHO_STYLE;
     public enum PulseInstrument { BASS_DRUM, BASS, HARP, SNARE, HAT, BELL, CHIME, FLUTE }
     public static final ModConfigSpec.EnumValue<PulseInstrument> SEEKING_INSTRUMENT;
+    public static final ModConfigSpec.BooleanValue ZINC_CUES,ZINC_PATHS;
+    public static final ModConfigSpec.DoubleValue ZINC_OPACITY;
     public static final ModConfigSpec.BooleanValue BRONZE_BLUR;
     public static final ModConfigSpec.DoubleValue BRONZE_BLUR_RADIUS, BRONZE_EDGE_WIDTH, BRONZE_BLUR_STRENGTH;
+    public static final ModConfigSpec.BooleanValue CONNECTION_HUD;
+    public static final ModConfigSpec.IntValue CONNECTION_X,CONNECTION_Y;
+    public static final ModConfigSpec.DoubleValue CONNECTION_SCALE;
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.BooleanValue BUBBLES,GOLD_SHADOW,GOLD_DETAILS,HUD, HIDE_HUD, LINES, THROUGH_WALLS, PEWTER_HEARTS, TIN_ECHOES, TIN_MODELS, TIN_ZOOM, FUTURES, FUTURE_MODELS, FUTURE_WARNINGS, SEEKING_HUD, SEEKING_SOUNDS, EMOTION_HUD, EMOTION_TARGET, TIN_LIGHTMAP;
     public static final ModConfigSpec.IntValue BUBBLE_SEGMENTS,BUBBLE_LIMIT,HUD_X, HUD_Y, HOLD_TICKS, TIN_ECHO_LIMIT, SEEKING_LIMIT, TIN_BLUR_LIMIT, TIN_SOFT_SURFACES;
     public static final ModConfigSpec.DoubleValue BUBBLE_OPACITY,BUBBLE_RIPPLE,GOLD_OPACITY,LINE_WIDTH, TIN_WIDTH, TIN_OPACITY, FUTURE_OPACITY, SEEKING_VOLUME, TIN_BRIGHTNESS, TIN_WIDTH_SCALE, TIN_HOLD, TIN_PULSE_STRENGTH, TIN_WAVE_SPEED, FUTURE_PROMINENCE, HUD_SCALE, TIN_VISION_SCALE, TIN_VISION_FADE, TIN_BLUR_OPACITY, TIN_BLUR_SIZE, TIN_SOFT_MOB, TIN_SOFT_TERRAIN, TIN_SOFT_FILL;
     static {
         var b = new ModConfigSpec.Builder();
+        b.push("feruchemicalConnection");CONNECTION_HUD=b.define("connectedPlayerCompass",true);CONNECTION_X=b.defineInRange("compassX",12,0,8192);CONNECTION_Y=b.defineInRange("compassY",60,0,8192);CONNECTION_SCALE=b.defineInRange("compassScale",1.0,.25,3.0);b.pop();
+        b.push("feruchemicalZinc");ZINC_CUES=b.define("directionalReactionCues",true);ZINC_PATHS=b.define("estimatedProjectilePaths",true);ZINC_OPACITY=b.defineInRange("reactionOpacity",.65,.05,1.0);b.pop();
         b.push("feruchemicalBronze");
         BRONZE_BLUR=b.define("dangerEdgeBlur",true);
         BRONZE_BLUR_RADIUS=b.defineInRange("maximumBlurRadiusPixels",14.0,1.0,32.0);

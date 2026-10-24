@@ -31,6 +31,13 @@ public final class SeekingService {
     }
     public static double activeStrength(ServerPlayer p,String power) {
         return switch(power) {
+            case "f:chromium" -> dev.cosmerearcanists.feruchemy.ChromiumFeruchemy.strength(p);
+            case "f:duralumin" -> dev.cosmerearcanists.feruchemy.DuraluminFeruchemy.strength(p);
+            case "f:electrum" -> dev.cosmerearcanists.feruchemy.ElectrumFeruchemy.strength(p);
+            case "f:zinc" -> dev.cosmerearcanists.feruchemy.ZincFeruchemy.strength(p);
+            case "f:aluminum" -> dev.cosmerearcanists.feruchemy.AluminumFeruchemy.strength(p);
+            case "f:copper" -> dev.cosmerearcanists.copper.CopperService.strength(p);
+            case "f:cadmium" -> dev.cosmerearcanists.feruchemy.CadmiumFeruchemy.strength(p);
             case "f:bendalloy" -> dev.cosmerearcanists.feruchemy.BendalloyFeruchemy.strength(p);
             case "f:bronze" -> dev.cosmerearcanists.feruchemy.BronzeFeruchemy.strength(p);
             case "f:brass" -> dev.cosmerearcanists.feruchemy.BrassFeruchemy.strength(p);
@@ -64,7 +71,7 @@ public final class SeekingService {
     }
     private static void allomancy(ServerLevel level,Consumer<InvestitureSignals.Signal> sink){for(var player:level.players())signalsFor(player).forEach(sink);}
     public static double cloudRadius(double strength){return strength<=0?0:Math.min(SeekingConfig.CLOUD_CAP.get(),SeekingConfig.CLOUD_RADIUS.get()*Math.sqrt(strength));}
-    public static Cloud cloud(ServerPlayer p){double power=strength(p,"copper");return power>0 && SeekingConfig.MASKING.get()?new Cloud(p.getUUID(),p.position(),cloudRadius(power),power):null;}
+    public static Cloud cloud(ServerPlayer p){double power=strength(p,"copper");return power>0 && SeekingConfig.MASKING.get()?new Cloud(p.getUUID(),p.position(),Math.min(EnhancedCaps.scale(p,"a:copper",SeekingConfig.CLOUD_CAP.get()),SeekingConfig.CLOUD_RADIUS.get()*Math.sqrt(power)),power):null;}
     public static List<Cloud> clouds(ServerLevel level){return level.players().stream().map(SeekingService::cloud).filter(Objects::nonNull).toList();}
     /** Endpoint fields: each cloud counts once even when it contains both the Seeker and the emission. */
     public static double shielding(Vec3 listener,Vec3 source,List<Cloud> clouds) {
@@ -79,7 +86,7 @@ public final class SeekingService {
             for(var signal:ordered) {
                 if(signal.source().equals(listener.getUUID()) || !SeekingConfig.OTHER_ARTS.get() && !signal.art().equals(InvestitureSignals.ALLOMANCY))continue;
                 if(!listener.serverLevel().hasChunkAt(net.minecraft.core.BlockPos.containing(signal.position())))continue;
-                double range=SeekingMath.range(bronze,signal.intensity(),SeekingConfig.RANGE.get(),SeekingConfig.RANGE_CAP.get());double distance=listener.position().distanceTo(signal.position());if(distance>=range)continue;
+                double range=SeekingMath.range(bronze,signal.intensity(),SeekingConfig.RANGE.get(),EnhancedCaps.scale(listener,"a:bronze",SeekingConfig.RANGE_CAP.get()));double distance=listener.position().distanceTo(signal.position());if(distance>=range)continue;
                 double shield=SeekingConfig.MASKING.get() && signal.copperMaskable()?shielding(listener.position(),signal.position(),clouds):0;
                 double clarity=SeekingMath.clarity(distance,range,bronze,signal.difficulty(),SeekingMath.transmission(bronze,shield,SeekingConfig.PIERCING.get(),SeekingConfig.PIERCE_RATIO.get()));
                 if(clarity<SeekingConfig.MIN_SIGNAL.get())continue;

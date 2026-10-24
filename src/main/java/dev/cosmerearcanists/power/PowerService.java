@@ -49,6 +49,8 @@ public final class PowerService {
         ABILITIES.register("a:steel", ironSteel);
         ABILITIES.register("a:bendalloy",(p,key,phase,targets)->BubbleService.activate(p,key,phase));
         ABILITIES.register("a:cadmium",(p,key,phase,targets)->BubbleService.activate(p,key,phase));
+        ABILITIES.register("f:nicrosil",(p,key,phase,targets)->{if(phase==AbilityDispatcher.Phase.START)dev.cosmerearcanists.nicrosil.NicrosilService.open(p,null);});
+        ABILITIES.register("f:copper",(p,key,phase,targets)->{if(phase==AbilityDispatcher.Phase.START)dev.cosmerearcanists.copper.CopperService.open(p,false);});
         ABILITIES.register("a:gold",(p,key,phase,targets)->GoldService.activate(p,key,phase));
         ABILITIES.register("a:chromium",(p,key,phase,targets)->ContactService.activate(p,key,phase));
         ABILITIES.register("a:nicrosil",(p,key,phase,targets)->ContactService.activate(p,key,phase));
@@ -96,7 +98,7 @@ public final class PowerService {
             case 0 -> PowerData.assignSlot(p,packet.power(),0);
             case 6 -> PowerData.assignSlot(p,packet.power(),PowerData.secondary(p).equals(packet.power())?0:1);
             case 1 -> PowerData.state(p, packet.power(), packet.value());
-            case 3 -> PowerData.state(p, packet.power(), PowerRules.next(packet.power(),PowerData.state(p,packet.power()),PowerData.storeLevels(p,packet.power()),PowerData.tapLevels(p,packet.power())));
+            case 3 -> PowerData.state(p, packet.power(), PowerRules.next(packet.power(),PowerData.controlState(p,packet.power()),PowerData.storeLevels(p,packet.power()),PowerData.tapLevels(p,packet.power())));
             default -> { return; }
         }
         PowerNetwork.sync(p, s.targets);EmotionService.sync(p);
@@ -108,6 +110,28 @@ public final class PowerService {
     @SubscribeEvent public void login(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer p) { EnhancementService.clear(p);stopActivation(p); SESSIONS.remove(p.getUUID()); PowerNetwork.sync(p, List.of()); }
     }
+    /** End activation and transient Feruchemical output when its personal power is placed in nicrosil. */
+    public static void powerTransferred(ServerPlayer p,String power){
+        PowerData.state(p,power,0);var session=SESSIONS.get(p.getUUID());if(session!=null)for(var a:List.of(session,session.secondary))if(a.activePower.equals(power)){ABILITIES.activate(p,power,AbilityDispatcher.Phase.STOP,session.targets);a.activePower="";a.applying=a.pulse=false;}
+        switch(power){
+            case "f:iron"->dev.cosmerearcanists.feruchemy.IronFeruchemy.mass(p,1);
+            case "f:steel"->dev.cosmerearcanists.feruchemy.SteelFeruchemy.clear(p);
+            case "f:pewter"->dev.cosmerearcanists.feruchemy.PewterFeruchemy.clear(p);
+            case "f:gold"->dev.cosmerearcanists.feruchemy.GoldFeruchemy.clear(p);
+            case "f:tin"->dev.cosmerearcanists.feruchemy.TinFeruchemy.clear(p);
+            case "f:brass"->dev.cosmerearcanists.feruchemy.BrassFeruchemy.clear(p);
+            case "f:bronze"->dev.cosmerearcanists.feruchemy.BronzeFeruchemy.clear(p);
+            case "f:bendalloy"->dev.cosmerearcanists.feruchemy.BendalloyFeruchemy.clear(p);
+            case "f:cadmium"->dev.cosmerearcanists.feruchemy.CadmiumFeruchemy.clear(p);
+            case "f:copper"->dev.cosmerearcanists.copper.CopperService.clear(p);
+            case "f:aluminum"->dev.cosmerearcanists.feruchemy.AluminumFeruchemy.clear(p);
+            case "f:zinc"->dev.cosmerearcanists.feruchemy.ZincFeruchemy.clear(p);
+            case "f:electrum"->dev.cosmerearcanists.feruchemy.ElectrumFeruchemy.clear(p);
+            case "f:duralumin"->dev.cosmerearcanists.feruchemy.DuraluminFeruchemy.clear(p);
+            case "f:chromium"->dev.cosmerearcanists.feruchemy.ChromiumFeruchemy.clear(p);
+            default->{}
+        }
+    }
     private static void stopActivation(ServerPlayer p) {
         var s = SESSIONS.get(p.getUUID());
         if(s!=null)for(var a:List.of(s,s.secondary)) {
@@ -115,13 +139,16 @@ public final class PowerService {
             a.activePower=""; a.applying=a.pulse=false;
         }
     }
+    @SubscribeEvent public void death(net.neoforged.neoforge.event.entity.living.LivingDeathEvent event){if(event.getEntity() instanceof ServerPlayer p){EnhancementService.clear(p);stopActivation(p);}}
     @SubscribeEvent public void logout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer p) {stopActivation(p);EnhancementService.clear(p);}
         SESSIONS.remove(event.getEntity().getUUID());
     }
     @SubscribeEvent public void clonePlayer(PlayerEvent.Clone event) {
         if (event.getOriginal() instanceof ServerPlayer old && event.getEntity() instanceof ServerPlayer p) {
-            dev.cosmerearcanists.feruchemy.BendalloyFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.BendalloyFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.BronzeFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.BronzeFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.BrassFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.BrassFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.TinFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.TinFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.GoldFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.GoldFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.PewterFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.PewterFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.SteelFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.SteelFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.IronFeruchemy.mass(old,1);dev.cosmerearcanists.feruchemy.IronFeruchemy.mass(p,1);
+            dev.cosmerearcanists.feruchemy.ChromiumFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.ChromiumFeruchemy.clear(p);
+            dev.cosmerearcanists.feruchemy.DuraluminFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.DuraluminFeruchemy.clear(p);
+            dev.cosmerearcanists.feruchemy.ElectrumFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.ElectrumFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.ZincFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.ZincFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.AluminumFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.AluminumFeruchemy.clear(p);dev.cosmerearcanists.copper.CopperService.clear(old);dev.cosmerearcanists.copper.CopperService.clear(p);dev.cosmerearcanists.feruchemy.CadmiumFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.CadmiumFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.BendalloyFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.BendalloyFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.BronzeFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.BronzeFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.BrassFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.BrassFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.TinFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.TinFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.GoldFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.GoldFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.PewterFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.PewterFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.SteelFeruchemy.clear(old);dev.cosmerearcanists.feruchemy.SteelFeruchemy.clear(p);dev.cosmerearcanists.feruchemy.IronFeruchemy.mass(old,1);dev.cosmerearcanists.feruchemy.IronFeruchemy.mass(p,1);
             EnhancementService.clear(old); stopActivation(old); PowerData.clonePlayer(old, p); SESSIONS.remove(p.getUUID());
         }
     }
@@ -132,15 +159,26 @@ public final class PowerService {
     @SubscribeEvent public void stopped(ServerStoppedEvent event) { event.getServer().getPlayerList().getPlayers().forEach(PowerService::stopActivation); SESSIONS.clear(); EnhancementService.clear();MetalDetector.clear(); }
     @SubscribeEvent public void tick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer p)) return;
+        dev.cosmerearcanists.nicrosil.TemporaryPowers.tick(p);
+        dev.cosmerearcanists.compounding.CompoundingService.updateBoosts(p);
+        EnhancementService.begin(p);
+        dev.cosmerearcanists.feruchemy.AluminumFeruchemy.tick(p);
+        dev.cosmerearcanists.compounding.CompoundingService.tick(p);
         dev.cosmerearcanists.feruchemy.IronFeruchemy.tick(p);
         dev.cosmerearcanists.feruchemy.SteelFeruchemy.tick(p);
+        dev.cosmerearcanists.feruchemy.ZincFeruchemy.tick(p);
+        dev.cosmerearcanists.feruchemy.ChromiumFeruchemy.tick(p);
+        dev.cosmerearcanists.feruchemy.DuraluminFeruchemy.tick(p);
+        dev.cosmerearcanists.feruchemy.ElectrumFeruchemy.tick(p);
         dev.cosmerearcanists.feruchemy.PewterFeruchemy.tick(p);
         dev.cosmerearcanists.feruchemy.GoldFeruchemy.tick(p);
         dev.cosmerearcanists.feruchemy.TinFeruchemy.tick(p);
         dev.cosmerearcanists.feruchemy.BrassFeruchemy.tick(p);
         dev.cosmerearcanists.feruchemy.BronzeFeruchemy.tick(p);
         dev.cosmerearcanists.feruchemy.BendalloyFeruchemy.tick(p);
-        EnhancementService.begin(p);
+        dev.cosmerearcanists.feruchemy.CadmiumFeruchemy.tick(p);
+        dev.cosmerearcanists.copper.CopperService.tick(p);
+        dev.cosmerearcanists.nicrosil.NicrosilService.tick(p);
         PewterService.tick(p);
         TinService.tick(p);
         GoldService.tick(p);
@@ -192,7 +230,7 @@ public final class PowerService {
         if(metal==null||!dev.cosmerearcanists.ServerConfig.ALLOMANCY.metals().get(metal).get())return 0;
         int state=PowerData.state(p,power);
         if(state==3&&!PowerConfig.FLARING.get())state=2;
-        return AllomanticPhysics.range(PowerConfig.RANGE.get(),PowerAttributes.strength(p,power),PowerRules.levelMultiplier(state,PowerConfig.LOW_RANGE.get(),PowerConfig.BURN_RANGE.get(),PowerConfig.FLARE_RANGE.get()),PowerConfig.RANGE_EXPONENT.get(),PowerConfig.RANGE_CAP.get());
+        return AllomanticPhysics.range(PowerConfig.RANGE.get(),PowerAttributes.effectiveStrength(p,power),PowerRules.levelMultiplier(state,PowerConfig.LOW_RANGE.get(),PowerConfig.BURN_RANGE.get(),PowerConfig.FLARE_RANGE.get()),PowerConfig.RANGE_EXPONENT.get(),EnhancedCaps.scale(p,power,PowerConfig.RANGE_CAP.get()));
     }
     static double detectionRange(ServerPlayer p){return Math.max(metalRange(p,"a:iron"),metalRange(p,"a:steel"));}
     static boolean withinRange(ServerPlayer p,MetalTarget target,double range){
@@ -298,7 +336,7 @@ public final class PowerService {
         var point = best.position(p.level(), 1); var offset = point.subtract(chest(p)); double distance = offset.length();
         if (distance < .3) return;
         Vec3 direction = anchorDirection(chest(p), point, power);
-        accelerate(p, targetImpulse(p, best, direction, powerForce(p, power),power));
+        accelerate(p, targetImpulse(p, best, direction, powerForce(p, power),power),EnhancementService.capMultiplier(p,power));
     }
     public static double powerForce(ServerPlayer p, String power) {
         return PowerConfig.FORCE.get() * (power.equals("a:iron") ? PowerConfig.IRON_STRENGTH.get() : power.equals("a:steel") ? PowerConfig.STEEL_STRENGTH.get() : 1) * PowerAttributes.effectiveStrength(p, power) * PowerRules.levelMultiplier(PowerData.state(p, power), PowerConfig.LOW_STRENGTH.get(), PowerConfig.BURN_STRENGTH.get(), PowerConfig.FLARE_STRENGTH.get());
@@ -328,7 +366,7 @@ public final class PowerService {
         if(entity instanceof ItemEntity item)dev.cosmerearcanists.currency.CoinRecall.interrupt(item);
         double mass = entity instanceof AllomanticProjectile projectile ? projectile.allomanticMass() : entity instanceof ItemEntity item ? Math.max(.2, item.getItem().getCount() * .2)
             : entity instanceof ServerPlayer targetPlayer ? dev.cosmerearcanists.feruchemy.IronFeruchemy.allomanticMass(targetPlayer) : Math.max(10, entity.getBbWidth() * entity.getBbWidth() * entity.getBbHeight() * 100);
-        accelerate(entity, direction.scale(-AllomanticPhysics.acceleration(force, distance, PowerConfig.RANGE.get(), mass)));
+        accelerate(entity, direction.scale(-AllomanticPhysics.acceleration(force, distance, PowerConfig.RANGE.get(), mass)),EnhancementService.capMultiplier(p,power));
         return PowerConfig.RECOIL.get() ? direction.scale(accel) : Vec3.ZERO;
     }
     static Vec3 anchorDirection(Vec3 chest, Vec3 anchor, String power) {
@@ -360,7 +398,7 @@ public final class PowerService {
         Vec3 impulse = Vec3.ZERO;
         for (int i=0;i<weights.length;i++) if (weights[i]>1e-6)
             impulse = impulse.add(targetImpulse(p, anchors.get(i), directions.get(i), powerForce(p,power)*weights[i],power));
-        if (impulse.lengthSqr()>1e-12) accelerate(p,impulse);
+        if (impulse.lengthSqr()>1e-12) accelerate(p,impulse,EnhancementService.capMultiplier(p,power));
     }
     public static void externalImpulse(ServerPlayer player,Vec3 impulse){accelerate(player,impulse);}
     public static Vec3 movementEstimate(ServerPlayer player){
@@ -372,7 +410,8 @@ public final class PowerService {
     private static boolean usableMovement(Vec3 movement) {
         return movement != null && movement.lengthSqr() > 1e-8 && movement.lengthSqr() < 64;
     }
-    private static void accelerate(Entity e, Vec3 impulse) {
+    private static void accelerate(Entity e,Vec3 impulse){accelerate(e,impulse,1);}
+    private static void accelerate(Entity e, Vec3 impulse,double capMultiplier) {
         if (impulse.lengthSqr() < 1e-12) return;
         Vec3 previous = e.getDeltaMovement();
         if (e instanceof ServerPlayer player) {
@@ -389,7 +428,7 @@ public final class PowerService {
         }
         Vec3 velocity = previous.add(impulse);
         // Existing fast falls are not instantly slowed to the ability's speed cap.
-        double speed = velocity.length(), cap = Math.max(e instanceof AllomanticProjectile ? PowerConfig.PROJECTILE_MAX_SPEED.get() : PowerConfig.MAX_SPEED.get(), previous.length());
+        double speed = velocity.length(), cap = Math.max(EnhancedCaps.velocity(e instanceof AllomanticProjectile ? PowerConfig.PROJECTILE_MAX_SPEED.get() : PowerConfig.MAX_SPEED.get(),capMultiplier), previous.length());
         if (speed > cap) velocity = velocity.scale(cap / speed);
         if (PowerConfig.FALL_MITIGATION.get()) e.fallDistance = AllomanticPhysics.brakedFallDistance(
                 e.fallDistance, previous.y, velocity.y, impulse.y, PowerConfig.FALL_MITIGATION_STRENGTH.get());
@@ -400,7 +439,7 @@ public final class PowerService {
             // Send only the new force; the client retains its real horizontal and vertical momentum.
             net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, new PowerNetwork.Impulse(
                 player.level().dimension().location().toString(), impulse.x, impulse.y, impulse.z,
-                PowerConfig.MAX_SPEED.get(), PowerConfig.RESIST_WALKING.get()));
+                EnhancedCaps.velocity(PowerConfig.MAX_SPEED.get(),capMultiplier), PowerConfig.RESIST_WALKING.get()));
         } else e.hurtMarked = true;
     }
     @SubscribeEvent public void toss(net.neoforged.neoforge.event.entity.item.ItemTossEvent event) {
@@ -412,7 +451,7 @@ public final class PowerService {
     }
     @SubscribeEvent public void commands(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("cosmere").then(Commands.literal("integrity").requires(s->s.hasPermission(2))
-            .then(Commands.argument("targets",EntityArgument.entities()).then(Commands.argument("value",com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg(0,1)).executes(ctx->{int count=0;for(var target:EntityArgument.getEntities(ctx,"targets"))if(target instanceof LivingEntity living){SpiritualIntegrity.set(living,com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(ctx,"value"));count++;}final int changed=count;ctx.getSource().sendSuccess(()->Component.literal("Set spiritual integrity for "+changed+" living targets."),true);return count;})))));
+            .then(Commands.argument("targets",EntityArgument.entities()).then(Commands.argument("value",com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg(-1000,1)).executes(ctx->{int count=0;for(var target:EntityArgument.getEntities(ctx,"targets"))if(target instanceof LivingEntity living){SpiritualIntegrity.set(living,com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(ctx,"value"));count++;}final int changed=count;ctx.getSource().sendSuccess(()->Component.literal("Set spiritual integrity for "+changed+" living targets."),true);return count;})))));
 
         event.getDispatcher().register(Commands.literal("cosmere").then(Commands.literal("power").requires(s -> s.hasPermission(2))
             .then(Commands.literal("grant").then(Commands.argument("player", EntityArgument.player()).then(Commands.argument("power", ResourceLocationArgument.id())

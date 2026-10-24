@@ -29,18 +29,18 @@ public final class MetalProjectiles {
             }
             if(!downwardCoin)return null; // Other alternate drops retain their ordinary item behavior.
         }
-        double cost=PowerConfig.reserveCost(PowerConfig.PROJECTILE_RESERVE_COST.get());
+        double cost=(EnhancementService.committed(player,"steel")||ContactService.committed(player,"steel"))?0:PowerConfig.reserveCost(PowerConfig.PROJECTILE_RESERVE_COST.get())*(EnhancementService.profile(player).burst()?1:EnhancementService.profile(player).consumptionMultiplier());
         if(PowerConfig.CONSUMPTION.get() && PowerData.reserve(player,"steel")<cost)return null;
         if(!PowerConfig.FLARING.get() && PowerData.state(player,"a:steel")==3)PowerData.state(player,"a:steel",2);
         double power=PowerService.powerForce(player,"a:steel")/7.0;
-        double speed=MetalProjectilePhysics.speed(units,power,PowerConfig.NUGGET_SPEED.get(),PowerConfig.PROJECTILE_MAX_SPEED.get());
+        double speed=MetalProjectilePhysics.speed(units,power,PowerConfig.NUGGET_SPEED.get(),EnhancedCaps.velocity(PowerConfig.PROJECTILE_MAX_SPEED.get(),EnhancementService.capMultiplier(player,"a:steel")));
         if(speed<=0)return null;
         var projectile=new SteelProjectile(STEEL.get(),player.level());
         projectile.setOwner(player); projectile.setPos(player.getX(),downwardCoin?player.getY()+.2:player.getEyeY()-.1,player.getZ());
-        projectile.cargo(dropped.getItem(),units); Vec3 direction=downwardCoin?new Vec3(0,-1,0):player.getLookAngle().normalize();
+        projectile.cargo(dropped.getItem(),units);projectile.enhanceDamage(EnhancementService.capMultiplier(player,"a:steel")); Vec3 direction=downwardCoin?new Vec3(0,-1,0):player.getLookAngle().normalize();
         projectile.setDeltaMovement(direction.scale(speed));
         if(!player.serverLevel().addFreshEntity(projectile))return null;
-        if(PowerConfig.CONSUMPTION.get())PowerData.reserve(player,"steel",PowerData.reserve(player,"steel")-cost);
+        if(PowerConfig.CONSUMPTION.get())EnhancementService.consume(player,"steel",PowerConfig.PROJECTILE_RESERVE_COST.get());
         return PowerConfig.RECOIL.get() ? direction.scale(-MetalProjectilePhysics.recoil(units,speed,PowerConfig.NUGGET_MASS.get(),dev.cosmerearcanists.feruchemy.IronFeruchemy.allomanticMass(player))) : Vec3.ZERO;
     }
     private MetalProjectiles() { }

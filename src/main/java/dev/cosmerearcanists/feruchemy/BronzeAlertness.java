@@ -52,7 +52,7 @@ public final class BronzeAlertness {
         if (!p.level().hasChunksAt(BlockPos.containing(from), BlockPos.containing(to))) return false;
         return p.level().clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p)).getType() == HitResult.Type.MISS;
     }
-    private static boolean attack(ServerPlayer p, Entity entity) {
+    public static boolean attack(ServerPlayer p, Entity entity) {
         if (!(entity instanceof LivingEntity living) || living.isAlliedTo(p)) return false;
         double distance = living.distanceToSqr(p);
         if (living instanceof Mob mob) {
@@ -67,7 +67,7 @@ public final class BronzeAlertness {
         double threshold = FeruchemyConfig.BRONZE_WARNING_LEVEL.get();
         if (!FeruchemyConfig.BRONZE_WARNINGS.get() || level + 1e-9 < threshold) return List.of();
         double ratio = Math.max(1, level / threshold);
-        double range = Math.min(FeruchemyConfig.BRONZE_WARNING_CAP.get(), FeruchemyConfig.BRONZE_WARNING_RANGE.get() * Math.sqrt(ratio));
+        double range = Math.min(Math.min(128,FeruchemicalEnhancement.cap(p,"bronze",FeruchemyConfig.BRONZE_WARNING_CAP.get())), FeruchemyConfig.BRONZE_WARNING_RANGE.get() * Math.sqrt(ratio));
         double horizon = Math.min(12, 6 * Math.sqrt(ratio));
         var warnings = new ArrayList<BronzeWarningPacket.Warning>();
         var entities = p.serverLevel().getEntities(p, p.getBoundingBox().inflate(range), e -> e instanceof Projectile || e instanceof LivingEntity);
@@ -95,7 +95,7 @@ public final class BronzeAlertness {
     public static void tick(ServerPlayer p, double fundedLevel) {
         if (fundedLevel <= 0) { clear(p); return; }
         if (FeruchemyConfig.BRONZE_DEBUFFS.get()) {
-            double extra = Math.min(FeruchemyConfig.BRONZE_DEBUFF_CAP.get(), fundedLevel * FeruchemyConfig.BRONZE_DEBUFF_RATE.get());
+            double extra = Math.min(FeruchemicalEnhancement.cap(p,"bronze",FeruchemyConfig.BRONZE_DEBUFF_CAP.get()), fundedLevel * FeruchemyConfig.BRONZE_DEBUFF_RATE.get());
             shorten(p, "fatigue", p.getEffect(MobEffects.DIG_SLOWDOWN), extra);
             shorten(p, "nausea", p.getEffect(MobEffects.CONFUSION), extra);
         } else CLOCKS.remove(p);

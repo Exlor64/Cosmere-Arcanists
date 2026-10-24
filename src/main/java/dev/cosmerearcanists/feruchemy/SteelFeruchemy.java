@@ -17,7 +17,7 @@ public final class SteelFeruchemy {
     public static double factor(Player p){var a=p.getAttribute(Attributes.MOVEMENT_SPEED);var m=a==null?null:a.getModifier(MODIFIER);return m==null?1:1+m.amount();}
     public static double strength(ServerPlayer p){return configured()&&p.isAlive()&&!p.isSpectator()&&PowerData.state(p,"f:steel")!=0?PowerAttributes.strength(p,"f:steel")*Math.abs(factor(p)-1):0;}
     private static void modifier(ServerPlayer p,net.minecraft.core.Holder<Attribute> attribute,double factor){var a=p.getAttribute(attribute);if(a==null)return;double value=factor-1;var old=a.getModifier(MODIFIER);if(old!=null&&Math.abs(old.amount()-value)<1e-10)return;a.removeModifier(MODIFIER);if(Math.abs(value)>1e-10)a.addTransientModifier(new AttributeModifier(MODIFIER,value,AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));}
-    private static void apply(ServerPlayer p,double factor){step(p,FeruchemyConfig.STEEL_STEP.get()?Math.min(FeruchemyConfig.STEEL_STEP_CAP.get(),Math.max(0,factor-1)*FeruchemyConfig.STEEL_STEP_RATE.get()):0);modifier(p,Attributes.MOVEMENT_SPEED,factor);modifier(p,Attributes.ATTACK_SPEED,FeruchemyConfig.STEEL_ATTACK.get()?factor:1);modifier(p,Attributes.BLOCK_BREAK_SPEED,FeruchemyConfig.STEEL_MINING.get()?factor:1);}
+    private static void apply(ServerPlayer p,double factor){step(p,FeruchemyConfig.STEEL_STEP.get()?Math.min(FeruchemicalEnhancement.cap(p,"steel",FeruchemyConfig.STEEL_STEP_CAP.get()),Math.max(0,factor-1)*FeruchemyConfig.STEEL_STEP_RATE.get()):0);modifier(p,Attributes.MOVEMENT_SPEED,factor);modifier(p,Attributes.ATTACK_SPEED,FeruchemyConfig.STEEL_ATTACK.get()?factor:1);modifier(p,Attributes.BLOCK_BREAK_SPEED,FeruchemyConfig.STEEL_MINING.get()?factor:1);}
     private static void step(ServerPlayer p,double extra){var a=p.getAttribute(Attributes.STEP_HEIGHT);if(a==null)return;var old=a.getModifier(MODIFIER);if(old!=null&&Math.abs(old.amount()-extra)<1e-10)return;a.removeModifier(MODIFIER);if(extra>0)a.addTransientModifier(new AttributeModifier(MODIFIER,extra,AttributeModifier.Operation.ADD_VALUE));}
     private static boolean consumable(net.minecraft.world.item.ItemStack item){var animation=item.getUseAnimation();return animation==net.minecraft.world.item.UseAnim.EAT||animation==net.minecraft.world.item.UseAnim.DRINK;}
     @SubscribeEvent public void startUse(net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent.Start event){if(event.getEntity() instanceof Player p)p.getPersistentData().remove("steel_consuming_remainder");}
@@ -33,7 +33,8 @@ public final class SteelFeruchemy {
         if(configured()&&p.isAlive()&&!p.isSpectator()&&attribute>0&&state!=0){
             boolean storing=state<0;double magnitude=storing?FeruchemyLevels.storedFraction(attribute,-state,FeruchemyConfig.STEEL_STORE_STEP.get(),FeruchemyConfig.STEEL_STORE_PER_ATTRIBUTE.get(),FeruchemyConfig.MAX_STORE.get()):FeruchemyLevels.extraMass(state,FeruchemyConfig.STEEL_TAP_STEP.get(),FeruchemyConfig.STEEL_CAP.get());
             double cost=storing?magnitude/20:magnitude*Math.pow(Math.max(1,magnitude),FeruchemyConfig.STEEL_LOSS.get())/20;
-            double moved=(storing?Metalminds.storePerTick(p,"steel",cost):Metalminds.transferAccessible(p,"steel",-cost));
+        if(!storing)magnitude=FeruchemicalEnhancement.effect(p,"steel",magnitude);
+            double moved=(storing?Metalminds.storePerTick(p,"steel",cost):FeruchemicalEnhancement.tap(p,"steel",cost));
             if(cost>0&&Math.abs(moved)>0)factor=storing?1-Math.abs(moved)*20:1+magnitude*Math.min(1,Math.abs(moved)/cost);
             if(cost<=0||Math.abs(moved)<cost-1e-9)PowerData.state(p,"f:steel",0);
         }apply(p,factor);

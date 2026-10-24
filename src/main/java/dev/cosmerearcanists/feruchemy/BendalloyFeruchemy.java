@@ -48,11 +48,12 @@ public final class BendalloyFeruchemy {
             CLOCKS.put(p,new Clock(state,Math.min(1,Math.max(0,pending-paid)),paid*20));return;
         }
         double rate=tapRate(state),compression=Math.pow(Math.max(1,rate/FeruchemyConfig.BENDALLOY_STORE_RATE.get()),FeruchemyConfig.BENDALLOY_LOSS.get());
-        double charge=Metalminds.accessibleCharge(p,"bendalloy");if(charge<=1e-9){stop(p);return;}
+        double boosted=FeruchemicalEnhancement.effect(p,"bendalloy",rate);compression*=FeruchemicalEnhancement.drain(p,"bendalloy")/(rate>0?boosted/rate:1);rate=boosted;
+        double charge=FeruchemicalEnhancement.available(p,"bendalloy");if(charge<=1e-9){stop(p);return;}
         if(food.getFoodLevel()<20){
             if(charge+1e-9<compression){stop(p);return;}
             pending+=rate/20;int points=(int)Math.min(Math.floor(pending+1e-9),Math.min(20-food.getFoodLevel(),Math.floor(charge/compression+1e-9)));
-            double spent=points>0?-Metalminds.transferAccessible(p,"bendalloy",-points*compression):0;
+            double spent=points>0?FeruchemicalEnhancement.physicalSpend(p,"bendalloy",points*compression):0;
             int paid=(int)Math.floor(spent/compression+1e-9);if(paid>0)food.setFoodLevel(food.getFoodLevel()+paid);
             CLOCKS.put(p,new Clock(state,Math.min(1,Math.max(0,pending-paid)),paid*20));return;
         }
@@ -63,7 +64,7 @@ public final class BendalloyFeruchemy {
         if(after-food.getSaturationLevel()>request)after=Math.nextDown(after);
         double gain=Math.max(0,after-food.getSaturationLevel()),cost=gain*compression;
         if(gain>0&&charge-cost<1e-9)cost=charge; // Consume rounding dust on an otherwise funded final saturation transfer.
-        double spent=gain>0?-Metalminds.transferAccessible(p,"bendalloy",-cost):0;
+        double spent=gain>0?FeruchemicalEnhancement.physicalSpend(p,"bendalloy",cost):0;
         food.setSaturation((float)Math.min(food.getFoodLevel(),food.getSaturationLevel()+spent/compression));CLOCKS.put(p,new Clock(state,Math.max(0,budget-spent/compression),spent/compression*20));
         if(charge/compression<budget-1e-7||spent<gain*compression-1e-9)stop(p);
     }

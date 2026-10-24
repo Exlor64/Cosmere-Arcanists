@@ -30,7 +30,7 @@ public final class ServerConfig {
         ALLOMANCY = art(b, "allomancy", 0.25);
         FERUCHEMY = art(b, "feruchemy", 0.25);
         b.push("hemalurgy");
-        HEMALURGY_ENABLED = b.comment("Feature gate for future spike mechanics. Hemalurgy is acquired, never rolled as a birth power.").define("enabled", true);
+        HEMALURGY_ENABLED = b.comment("Master feature gate for Hemalurgic spike mechanics. Hemalurgy is acquired, never rolled as a birth power.").define("enabled", true);
         b.pop();
         SPEC = b.build();
     }

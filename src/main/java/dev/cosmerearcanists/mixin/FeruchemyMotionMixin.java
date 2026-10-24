@@ -17,7 +17,7 @@ public abstract class FeruchemyMotionMixin {
     private void cosmerearcanists$warmthPreventsFreezing(org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Boolean> ci){if((Object)this instanceof net.minecraft.server.level.ServerPlayer p&&BrassFeruchemy.warm(p))ci.setReturnValue(false);}
 
     @ModifyVariable(method="knockback",at=@At("HEAD"),argsOnly=true,ordinal=0)
-    private double cosmerearcanists$massKnockback(double force){return force*IronFeruchemy.knockbackMultiplier((LivingEntity)(Object)this);}
+    private double cosmerearcanists$massKnockback(double force){return force*IronFeruchemy.knockbackMultiplier((LivingEntity)(Object)this)*ElectrumFeruchemy.knockbackMultiplier((LivingEntity)(Object)this);}
     @Inject(method="travel",at=@At("TAIL"))
     private void cosmerearcanists$lightweightDrag(Vec3 input,CallbackInfo ci){var e=(LivingEntity)(Object)this;double mass=IronFeruchemy.massMultiplier(e);
         if(!FeruchemyConfig.DRAG.get()||mass>=1||e.isNoGravity()||e.isFallFlying()||e.isInWater()||e.isInLava())return;

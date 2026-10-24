@@ -20,7 +20,7 @@ public final class ScoutService {
     public static void look(ServerPlayer p,ScoutLook look){var s=SCOUTS.get(p.getUUID());if(s==null || s.lastLook==p.level().getGameTime() || !Float.isFinite(look.yaw()) || !Float.isFinite(look.pitch()))return;s.lastLook=p.level().getGameTime();p.setYRot(net.minecraft.util.Mth.wrapDegrees(look.yaw()));p.setXRot(Math.clamp(look.pitch(),-90,90));}
     public static boolean active(ServerPlayer p){return SCOUTS.containsKey(p.getUUID());}
     public static Vec3 position(ServerPlayer p){var s=SCOUTS.get(p.getUUID());return s==null?p.position():s.position;}
-    public static double radius(ServerPlayer p){return Math.min(TemporalConfig.SCOUT_CAP.get(),TemporalConfig.SCOUT_RANGE.get()*Math.sqrt(TemporalService.sightStrength(p,"electrum")/Math.max(.0001,PowerConfig.FLARE_STRENGTH.get())));}
+    public static double radius(ServerPlayer p){return Math.min(EnhancedCaps.scale(p,"a:electrum",TemporalConfig.SCOUT_CAP.get()),TemporalConfig.SCOUT_RANGE.get()*Math.sqrt(TemporalService.sightStrength(p,"electrum")/Math.max(.0001,PowerConfig.FLARE_STRENGTH.get())));}
     public static void stop(ServerPlayer p){if(SCOUTS.remove(p.getUUID())!=null)PacketDistributor.sendToPlayer(p,new ScoutPacket(p.level().dimension().location().toString(),false,p.position(),0));}
     public static Vec3 move(ServerPlayer p,Vec3 position,Vec3 motion){
         var box=p.getBoundingBox().move(position.subtract(p.position()));var obstacles=TemporalService.collisions(p.serverLevel(),box.expandTowards(motion),p);if(obstacles==null)return Vec3.ZERO;

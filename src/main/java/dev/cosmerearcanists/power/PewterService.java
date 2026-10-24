@@ -64,8 +64,8 @@ public final class PewterService {
             EnhancementService.burn(p,"pewter",drain);
             if(PowerData.reserve(p,"pewter")<=0){PowerData.state(p,"a:pewter",0);power=0;}
         }
-        modifier(p,Attributes.MOVEMENT_SPEED,SPEED,Math.min(PewterConfig.MAX_SPEED_BONUS.get(),power*PewterConfig.SPEED.get()),AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
-        modifier(p,Attributes.ATTACK_DAMAGE,ATTACK,Math.min(PewterConfig.MAX_ATTACK_BONUS.get(),power*PewterConfig.ATTACK.get()),AttributeModifier.Operation.ADD_VALUE);
+        modifier(p,Attributes.MOVEMENT_SPEED,SPEED,Math.min(EnhancedCaps.scale(p,"a:pewter",PewterConfig.MAX_SPEED_BONUS.get()),power*PewterConfig.SPEED.get()),AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+        modifier(p,Attributes.ATTACK_DAMAGE,ATTACK,Math.min(EnhancedCaps.scale(p,"a:pewter",PewterConfig.MAX_ATTACK_BONUS.get()),power*PewterConfig.ATTACK.get()),AttributeModifier.Operation.ADD_VALUE);
         if(power<=0) {
             recovery.rest=recovery.heal=recovery.food=0;recovery.position=p.position();
             // Configuration disables freeze debt; genuine cessation or lost power settles it.
@@ -105,6 +105,7 @@ public final class PewterService {
         if(!(event.getEntity() instanceof ServerPlayer p))return;
         double power=strength(p); if(power<=0)return;
         double mitigation=PewterMath.mitigation(PowerAttributes.strength(p,"a:pewter"),power,PewterConfig.MITIGATION.get(),PewterConfig.BASE_CAP.get(),PewterConfig.STRONG_CAP.get());
+        if(EnhancementService.capMultiplier(p,"a:pewter")>1)mitigation=Math.min(power*PewterConfig.MITIGATION.get(),EnhancedCaps.fraction(p,"a:pewter",PowerAttributes.strength(p,"a:pewter")>1?Math.min(.7,PewterConfig.STRONG_CAP.get()):Math.min(.5,PewterConfig.BASE_CAP.get())));
         double damage=Math.max(0,event.getNewDamage()*(1-mitigation));
         double deferred=PewterConfig.DRAG.get()?PewterMath.deferred(damage,p.getAbsorptionAmount(),PewterConfig.DRAG_FRACTION.get()):0;
         event.setNewDamage((float)(damage-deferred));

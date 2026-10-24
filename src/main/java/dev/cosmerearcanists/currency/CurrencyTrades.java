@@ -32,11 +32,12 @@ public final class CurrencyTrades {
         }
         return MerchantOffer.CODEC.parse(ops,tag).getOrThrow();
     }
+    private static MerchantOffer repriceExchange(Villager v,MerchantOffer offer){int ratio=CurrencyConfig.CLIPS_PER_BOXING.get();if(!exchange(offer)||offer.getBaseCostA().getCount()+offer.getCostB().getCount()==ratio)return offer;var ops=v.registryAccess().createSerializationContext(NbtOps.INSTANCE);var tag=((CompoundTag)MerchantOffer.CODEC.encodeStart(ops,offer).getOrThrow()).copy();tag.put("buy",cost(ModMetals.CLIP.get(),Math.min(64,ratio)));if(ratio>64)tag.put("buyB",cost(ModMetals.CLIP.get(),ratio-64));else tag.remove("buyB");return MerchantOffer.CODEC.parse(ops,tag).getOrThrow();}
     public static boolean exchange(MerchantOffer offer){return offer.getBaseCostA().is(ModMetals.CLIP.get())&&(offer.getCostB().isEmpty()||offer.getCostB().is(ModMetals.CLIP.get()))&&offer.getResult().is(ModMetals.BOXING.get());}
     public static void resetExchangePrices(MerchantOffers offers){for(var offer:offers)if(exchange(offer))offer.resetSpecialPriceDiff();}
     public static void prepare(Villager v,MerchantOffers offers){
         if(v.level().isClientSide||!CurrencyConfig.TRADES.get()||!scadrian(v))return;
-        v.addTag(SCADRIAN);for(int i=0;i<offers.size();i++)offers.set(i,convert(v,offers.get(i)));
+        v.addTag(SCADRIAN);for(int i=0;i<offers.size();i++)offers.set(i,CurrencyConfig.EXCHANGE.get()?repriceExchange(v,convert(v,offers.get(i))):convert(v,offers.get(i)));
         if(CurrencyConfig.EXCHANGE.get()&&offers.stream().noneMatch(CurrencyTrades::exchange)){
             int clips=CurrencyConfig.CLIPS_PER_BOXING.get();var offer=new MerchantOffer(new ItemCost(ModMetals.CLIP.get(),Math.min(64,clips)),new ItemStack(ModMetals.BOXING.get()),1000000,0,0f);
             var ops=v.registryAccess().createSerializationContext(NbtOps.INSTANCE);var tag=((CompoundTag)MerchantOffer.CODEC.encodeStart(ops,offer).getOrThrow()).copy();if(clips>64)tag.put("buyB",cost(ModMetals.CLIP.get(),clips-64));tag.putBoolean("rewardExp",false);offers.add(MerchantOffer.CODEC.parse(ops,tag).getOrThrow());

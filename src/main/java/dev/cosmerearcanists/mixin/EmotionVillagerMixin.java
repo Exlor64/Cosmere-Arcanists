@@ -11,6 +11,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /** Session-only special prices are reset by vanilla when trading ends, without changing gossip or base costs. */
 @Mixin(Villager.class)
 public abstract class EmotionVillagerMixin {
+    @Inject(method="updateSpecialPrices",at=@At("HEAD"))
+    private void cosmerearcanists$restoreConnectionDelta(Player player,CallbackInfo ci){dev.cosmerearcanists.connection.ConnectionTrades.beforePricing((Villager)(Object)this);}
+    @Inject(method="resetSpecialPrices",at=@At("HEAD"))
+    private void cosmerearcanists$endConnectionPrices(CallbackInfo ci){dev.cosmerearcanists.connection.ConnectionTrades.end((Villager)(Object)this);}
     @Inject(method="updateSpecialPrices",at=@At("TAIL"))
-    private void cosmerearcanists$trustPrices(Player player,CallbackInfo ci){EmotionService.discount((Villager)(Object)this,player);dev.cosmerearcanists.currency.CurrencyTrades.resetExchangePrices(((Villager)(Object)this).getOffers());}
+    private void cosmerearcanists$trustPrices(Player player,CallbackInfo ci){EmotionService.discount((Villager)(Object)this,player);dev.cosmerearcanists.connection.ConnectionTrades.begin((Villager)(Object)this,player);dev.cosmerearcanists.currency.CurrencyTrades.resetExchangePrices(((Villager)(Object)this).getOffers());}
 }
