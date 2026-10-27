@@ -3,7 +3,7 @@ Minecraft **1.21.1**, NeoForge **21.1.256**, Java **21**. Author: **Ex**.
 
 For current project status, accepted design decisions, verification and continuation notes, read [HANDOFF.md](HANDOFF.md). Development and handoff-maintenance instructions are in [AGENTS.md](AGENTS.md).
 
-Current verification: all accumulated changes through **0.50.0-alpha** are published on `main`. [CI run 40049509203](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/40049509203) for `eb903d18d839e90190c2b12b554b8cc74d6c5b6e` passed Java 21 builds/JUnit and all **319 required server GameTests**, both with and without Curios, plus standalone graphical client startup. Older release-note statements about unpublished changes or pending engine verification describe their original release sessions and are superseded by this result. Manual GUI alignment, multiplayer behavior and regular-world Scadrial generation still need playtesting.
+Current verification: changes through **0.51.0-alpha** are published on `main`. [CI run 40512130461](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/40512130461) for `a4cbde386ea9900d01482b21fef6287fb5db4acb` passed Java 21 builds/JUnit and all **323 required server GameTests**, both with and without Curios, plus standalone graphical client startup. Older release-note statements about unpublished changes or pending engine verification describe their original release sessions and are superseded by this result. Manual koloss model/weapon alignment, pack navigation and combat balance, Hemalurgy GUI/multiplayer behavior and regular-world Scadrial generation still need playtesting.
 
 ## Origins and assignment
 - Persistent planet/race and natural Allomantic/Feruchemical power identifiers.
@@ -2959,8 +2959,11 @@ Egg/spawner initialization outside Scadrial is rejected; explicit raw-NBT admin
 summons can bypass normal initialization. Creative tab includes the sword and egg.
 Pack identity, equipment, size, attributes and current health persist on save/load.
 
-**Protocol33** requires matching client/server builds. Local Gradle build remains
-blocked at downloading the wrapper distribution; new Java21 build,4koloss engine
-tests and client/model startup verification are pending CI. Earlier319-test green
-result applies to0.50.0, not this new implementation. Actual spawning frequency,
-model/weapon alignment and combat balance still require manual playtesting.
+**Protocol33** requires matching client/server builds. CI40512130461 passed Java21
+builds/JUnit and all323required server tests with/without Curios, including4koloss
+tests for pack composition/stats, save/load, actual death drops and Overworld
+spawn/egg exclusion. Standalone graphical client startup passed. All resource JSON,
+exact supplied texture pixels/sword geometry and Java item model bounds/rotation
+checks passed locally. Actual spawning frequency, model/weapon alignment and combat
+balance still require manual playtesting; startup success does not verify their
+appearance or actual regular-world pack spawning.
