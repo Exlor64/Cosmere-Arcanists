@@ -32,6 +32,7 @@ public final class PowerClientMod {
         dev.cosmerearcanists.power.BronzeWarningPacket.receiver=BronzeDangerClient::receive;
         NeoForge.EVENT_BUS.register(new BronzeDangerClient());
         bus.addListener(this::renderers);
+        bus.addListener((net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterLayerDefinitions e)->e.registerLayerDefinition(KolossModel.LAYER_LOCATION,KolossModel::createBodyLayer));
         bus.addListener(this::setup);
         dev.cosmerearcanists.power.EmotionPacket.receiver=EmotionClient::receive;
         NeoForge.EVENT_BUS.register(new EmotionClient());
@@ -59,6 +60,7 @@ public final class PowerClientMod {
         NeoForge.EVENT_BUS.register(new EquipmentClient());
     }
     private void renderers(net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(dev.cosmerearcanists.koloss.KolossContent.KOLOSS.get(),KolossRenderer::new);
         event.registerEntityRenderer(dev.cosmerearcanists.equipment.EquipmentContent.PROJECTILE.get(),net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
         event.registerEntityRenderer(dev.cosmerearcanists.power.MetalProjectiles.STEEL.get(), net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
     }

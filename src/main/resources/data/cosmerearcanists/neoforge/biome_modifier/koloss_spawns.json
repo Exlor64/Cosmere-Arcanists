@@ -1,0 +1,12 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": "#cosmerearcanists:koloss_spawning",
+  "spawners": [
+    {
+      "type": "cosmerearcanists:koloss",
+      "weight": 12,
+      "minCount": 4,
+      "maxCount": 7
+    }
+  ]
+}

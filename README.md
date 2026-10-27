@@ -2929,3 +2929,38 @@ The GameTest harness decodes the actual Scadrial dimension resource with live
 registry references; it does not instantiate that dimension. Regular-world
 Scadrial generation, GUI/model alignment and multiplayer/death item ordering
 still need manual verification. All accumulated changes are published on main.
+
+
+## Koloss packs (0.51.0)
+
+Koloss spawn only on **Scadrial**, on the surface in plains, savanna and badlands
+biomes under normal hostile-mob darkness, difficulty, collision and population
+rules. A native spawn group requests4–7members; terrain and mob caps can yield a
+smaller group. Each group has one largest leader carrying a **Koloss Sword**;
+followers vary in size and are unarmed. Followers regroup around their loaded
+leader while idle, attack players/villagers and retaliate when hurt. A dead leader
+is not replaced with a newly generated sword.
+
+The supplied Blockbench model and textures are used, with walking/look/attack
+animation and a sword bone visible only while actually holding the sword.
+Size affects rendering, collision, health, attack and knockback resistance.
+Followers are roughly2.2–3.9blocks tall; leaders4.3–4.8blocks. Default unarmed
+attack is8times scale, health50times scale squared, armor4, and knockback
+resistance40%times scale. Leaders have128–162health before any outside modifiers
+and their sword adds weapon damage. They do not burn in sunlight.
+
+The leader's actual sword drops once on death by default, respecting doMobLoot
+and normal loot events; followers have no sword to drop. It is a slow iron-tier
+weapon with11player attack damage,0.8attack speed and750durability, no crafting
+recipe, and is detectable by iron/steel. Balance/drop chance/spawning are in
+`cosmerearcanists-koloss-server.toml`; biome tag, spawn weight and requested group
+size are datapack configurable. Disabling spawning preserves existing mobs.
+Egg/spawner initialization outside Scadrial is rejected; explicit raw-NBT admin
+summons can bypass normal initialization. Creative tab includes the sword and egg.
+Pack identity, equipment, size, attributes and current health persist on save/load.
+
+**Protocol33** requires matching client/server builds. Local Gradle build remains
+blocked at downloading the wrapper distribution; new Java21 build,4koloss engine
+tests and client/model startup verification are pending CI. Earlier319-test green
+result applies to0.50.0, not this new implementation. Actual spawning frequency,
+model/weapon alignment and combat balance still require manual playtesting.

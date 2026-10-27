@@ -129,13 +129,13 @@
   "item.cosmerearcanists.metal_file": "Metal File",
   "item.cosmerearcanists.metal_filing": "Metal Filing",
   "item.cosmerearcanists.metal_vial": "Metal Vial",
-  "item.cosmerearcanists.atium_nugget": "Atium Nugget (Atium–Electrum Alloy)",
-  "item.cosmerearcanists.atium_ingot": "Atium Ingot (Atium–Electrum Alloy)",
-  "block.cosmerearcanists.atium_block": "Block of Atium (Atium–Electrum Alloy)",
+  "item.cosmerearcanists.atium_nugget": "Atium Nugget (Atium\u2013Electrum Alloy)",
+  "item.cosmerearcanists.atium_ingot": "Atium Ingot (Atium\u2013Electrum Alloy)",
+  "block.cosmerearcanists.atium_block": "Block of Atium (Atium\u2013Electrum Alloy)",
   "item.cosmerearcanists.lerasium_nugget": "Lerasium Nugget",
   "item.cosmerearcanists.lerasium_ingot": "Lerasium Ingot",
   "block.cosmerearcanists.lerasium_block": "Block of Lerasium",
-  "attribute.cosmerearcanists.allomancy_atium": "Atium Allomancy (Atium–Electrum Alloy)",
+  "attribute.cosmerearcanists.allomancy_atium": "Atium Allomancy (Atium\u2013Electrum Alloy)",
   "item.cosmerearcanists.iron_metalmind_ring": "Iron Metalmind Ring",
   "item.cosmerearcanists.iron_metalmind_bracelet": "Iron Metalmind Bracelet",
   "item.cosmerearcanists.iron_metalmind_necklace": "Iron Metalmind Necklace",
@@ -196,5 +196,8 @@
   "item.cosmerearcanists.boxing": "Boxing",
   "item.cosmerearcanists.clip": "Clip",
   "key.cosmerearcanists.hemalurgy": "Hemalurgy",
-  "attribute.cosmerearcanists.hemalurgic_vision": "Vision"
+  "attribute.cosmerearcanists.hemalurgic_vision": "Vision",
+  "entity.cosmerearcanists.koloss": "Koloss",
+  "item.cosmerearcanists.koloss_sword": "Koloss Sword",
+  "item.cosmerearcanists.koloss_spawn_egg": "Koloss Spawn Egg"
 }

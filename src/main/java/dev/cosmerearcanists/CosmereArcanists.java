@@ -12,6 +12,9 @@ public final class CosmereArcanists {
     public CosmereArcanists(IEventBus bus, ModContainer container) {
         container.registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC);
         dev.cosmerearcanists.equipment.EquipmentContent.register(bus);
+        dev.cosmerearcanists.koloss.KolossContent.register(bus);
+        container.registerConfig(ModConfig.Type.SERVER,dev.cosmerearcanists.koloss.KolossConfig.SPEC,"cosmerearcanists-koloss-server.toml");
+        NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.koloss.KolossSpawning());
         ModMetals.register(bus);
         dev.cosmerearcanists.hemalurgy.HemalurgyMenu.REGISTER.register(bus);
         dev.cosmerearcanists.hemalurgy.ImplantService.registerProviders();
