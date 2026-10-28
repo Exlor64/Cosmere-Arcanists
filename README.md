@@ -3028,3 +3028,49 @@ Local Gradle build remains blocked downloading its distribution. CI40609682144
 passed Java21 builds/JUnit and all330required server tests with/without Curios,
 plus standalone graphical client startup. Manual multiplayer leap feel remains
 to be playtested.
+
+
+## Koloss emotional control and naturally invested humanoids (0.52.0)
+
+Koloss can be seized using sufficiently strong **zinc or brass in compliance
+mode**, without first damaging their spiritual integrity. Both the global
+emotional-domination threshold and the koloss-specific minimum apply (default4
+effective strength). Burn level, power attributes, enhancements and distance
+still matter. Ordinary strength is insufficient. Existing aluminum shielding,
+feature gates, bounded control duration, stronger-controller competition,
+follow/assist behavior and protection of the controller remain. This controls
+targeted koloss individually; existing alternate area targeting can affect several.
+`strongEmotionalControl` and `minimumEmotionalControlStrength` are in the koloss
+server config. Ordinary intact mobs retain their previous domination requirements.
+
+Each newly initialized eligible **living, non-undead humanoid mob** now has a
+**1/160** chance to possess natural Metallic Arts. The default eligible tag includes
+villagers/traders, witches/illagers, piglins/brutes, endermen and koloss; animals,
+undead and players are excluded. Datapacks can edit
+`cosmerearcanists:natural_power_humanoids`. This defaults to all dimensions;
+`dimensions` in `cosmerearcanists-natural-mob-powers-server.toml` can restrict it
+to Scadrial. Player origins and their existing chances are unchanged.
+
+On success, Allomancy, Feruchemy or both are equally likely when both arts are
+available. Each selected art normally grants one random enabled standard metal;
+it independently has a1/16chance of granting its complete enabled set. This allows
+Mistings, Ferrings, Twinborn, Mistborn, full Feruchemists and combinations of full
+and single sets, including rare full sets in both arts. God-metal powers are not
+included. Chance, full-set rarity, both-art/full-set switches and strength are
+configurable. Disabled powers are excluded; existing/admin powers are preserved.
+
+These are **real personal power attributes**, saved with the mob and stealable
+with the appropriate Hemalurgic spike. One roll is recorded even on failure;
+loading does not roll again. Conversions preserve actual power bases and original
+source Identity, including zero bases after theft, so cure/conversion loops cannot
+restore stolen powers. Existing mobs are not retroactively rolled. Natural/egg/
+spawner initialization uses the same rule. This update adds power ownership and
+Hemalurgic sources; autonomous NPC use of the full Metallic Arts list, fuel,
+metalminds, menus and combat ability AI remain future work.
+
+Version0.52.0-alpha/**protocol35**: matching builds required for the newly supported
+mob attributes.16004pure production roll-policy checks and Java syntax checks
+passed. Seven new engine tests cover both-metal control/strength/shielding/config,
+birth persistence, full sets/exclusions, conversions, real theft and native spawn
+initialization. Local Gradle build is blocked downloading its distribution;
+Java21 engine/client CI checks pending. No new client/gameplay success claimed yet.

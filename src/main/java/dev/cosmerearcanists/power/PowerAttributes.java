@@ -43,7 +43,9 @@ public final class PowerAttributes {
         bus.addListener(PowerAttributes::addToPlayers);
     }
     private static void addToPlayers(EntityAttributeModificationEvent event) {
-        POWERS.values().forEach(attribute -> event.add(EntityType.PLAYER, attribute));
+        // Tags are datapack-loaded later, so suppliers support powers on all living types.
+        // Zero defaults grant nothing; the humanoid spawn policy alone chooses recipients.
+        for(var type:event.getTypes())for(var attribute:POWERS.values())if(!event.has(type,attribute))event.add(type,attribute);
         event.add(EntityType.PLAYER,IMPLANT_VISION);event.add(EntityType.PLAYER,WEAPON_PREPARATION);event.add(EntityType.PLAYER,MENTAL_SPEED);event.add(EntityType.PLAYER,IDENTITY);event.add(EntityType.PLAYER,MASS);event.add(EntityType.PLAYER,PHYSICAL_STRENGTH);event.add(EntityType.PLAYER,SIGHT);event.add(EntityType.PLAYER,HEARING);event.add(EntityType.PLAYER,TOUCH);
     }
     public static net.minecraft.core.Holder<Attribute> holder(String key){return POWERS.get(key);}

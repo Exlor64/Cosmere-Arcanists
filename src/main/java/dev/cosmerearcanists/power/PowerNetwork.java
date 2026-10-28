@@ -96,7 +96,7 @@ public final class PowerNetwork {
         @Override public Type<Impulse> type() { return TYPE; }
     }
     public static void register(RegisterPayloadHandlersEvent event) {
-        var r = event.registrar("34");
+        var r = event.registrar("35");
         dev.cosmerearcanists.hemalurgy.HemalurgyNetwork.register(r);
         dev.cosmerearcanists.copper.CopperNetwork.register(r);
         dev.cosmerearcanists.nicrosil.NicrosilNetwork.register(r);

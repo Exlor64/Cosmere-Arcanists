@@ -32,6 +32,8 @@ public final class CosmereArcanists {
         AlloyEnabledCondition.register(bus);
         container.registerConfig(ModConfig.Type.COMMON, MetallurgyConfig.SPEC);
         NeoForge.EVENT_BUS.register(new OriginEvents());
+        container.registerConfig(ModConfig.Type.SERVER,dev.cosmerearcanists.mobs.NaturalMobConfig.SPEC,"cosmerearcanists-natural-mob-powers-server.toml");
+        NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.mobs.NaturalMobPowers());
         container.registerConfig(ModConfig.Type.SERVER, dev.cosmerearcanists.power.PowerConfig.SPEC, "cosmerearcanists-powers-server.toml");
         container.registerConfig(ModConfig.Type.SERVER, dev.cosmerearcanists.power.PewterConfig.SPEC, "cosmerearcanists-pewter-server.toml");
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.power.PewterService());
