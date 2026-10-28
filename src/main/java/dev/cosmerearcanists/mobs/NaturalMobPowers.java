@@ -23,12 +23,23 @@ public final class NaturalMobPowers {
         var dimensions=NaturalMobConfig.DIMENSIONS.get();if(!dimensions.isEmpty()&&!dimensions.contains(mob.level().dimension().location().toString()))return;
         // Respect pre-existing/admin-provided powers. Never overwrite or add another birth roll to them.
         for(String key:PowerAttributes.keys()){var attr=mob.getAttribute(PowerAttributes.holder(key));if(attr!=null&&attr.getBaseValue()>0)return;}
+        long ticks=NaturalMobConfig.CHUNK_COOLDOWN_SECONDS.get()*20L;
+        var server=mob.getServer();if(server==null)return;
+        long now=server.overworld().getGameTime();
+        var chunk=new ChunkPowerLedger.Key(mob.level().dimension().location().toString(),mob.chunkPosition().toLong());
+        var cooldown=ticks>0?NaturalPowerChunks.get(server):null;
+        if(cooldown!=null&&!cooldown.available(chunk,now))return;
         var a=new ArrayList<String>();var f=new ArrayList<String>();
         for(var metal:Metal.values())for(String art:List.of("a:","f:")){
             String key=art+metal.id();if(mob.getAttribute(PowerAttributes.holder(key))!=null&&dev.cosmerearcanists.hemalurgy.HemalurgySources.enabled(key))(art.equals("a:")?a:f).add(key);
         }
         var powers=NaturalPowerRoll.roll(NaturalMobConfig.ONE_IN.get(),NaturalMobConfig.BOTH.get(),NaturalMobConfig.SETS.get(),NaturalMobConfig.SET_ONE_IN.get(),a,f,mob.getRandom()::nextInt);
+        // Claim only a successful grant, atomically rechecking the chunk for concurrent spawn attempts.
+        if(powers.isEmpty()||cooldown!=null&&!cooldown.claim(chunk,now,ticks))return;
         for(String key:powers)mob.getAttribute(PowerAttributes.holder(key)).setBaseValue(NaturalMobConfig.STRENGTH.get());
+    }
+    @SubscribeEvent public void worldLoaded(net.neoforged.neoforge.event.level.LevelEvent.Load event){
+        if(event.getLevel() instanceof net.minecraft.server.level.ServerLevel level&&level.dimension().equals(net.minecraft.world.level.Level.OVERWORLD))NaturalPowerChunks.install(level);
     }
     @SubscribeEvent(priority=EventPriority.LOWEST) public void spawn(FinalizeSpawnEvent event){
         if(!event.isSpawnCancelled()&&event.getSpawnType()!=MobSpawnType.CONVERSION)initialize(event.getEntity());

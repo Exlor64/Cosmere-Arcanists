@@ -3077,3 +3077,33 @@ tests with and without Curios, plus standalone graphical client startup. Local
 Gradle build remains blocked downloading its distribution. Manual koloss
 follow/assist feel and compatibility with modded humanoid conversions remain to
 be playtested; full NPC ability AI remains separate future work.
+
+
+## One-hour powered-mob chunk limit (0.52.1)
+
+A successful random natural-power assignment now starts a **one-hour cooldown
+for that16×16chunk**, across all heights and shared by all players. Another mob
+born there during the cooldown remains unpowered. Unlocked chunks retain the
+existing1/160chance; failed rolls do not consume their allowance. A full power
+set still counts as one powered mob. Other chunks and dimensions have independent
+cooldowns.
+
+The birth chunk stays locked if its powered mob dies, despawns, is converted or
+moves away. A blocked mob's ordinary birth result is final, so moving it elsewhere
+cannot reroll it. Existing powered mobs keep their powers, and ordinary reloads
+are not new births. Cooldowns persist in `data/cosmere_natural_power_chunks.dat`.
+They use72,000server ticks (one hour at20TPS); sleeping cannot skip them and
+shutdown pauses the remaining time. The bookkeeping never loads chunks.
+
+Configure `chunkPowerCooldownSeconds` in
+`cosmerearcanists-natural-mob-powers-server.toml` (default3600;0disables).
+Hemalurgic theft, donor eligibility and player cooldown rules are unchanged.
+The earlier proposed donor-origin restrictions and theft cooldown were not added.
+
+Version0.52.1-alpha, protocol35 unchanged. Three engine tests cover saved cooldown
+expiry, chunk/dimension independence, donor death/movement, blocked rerolls and
+failed-roll allowance. Existing assignment tests explicitly disable the cooldown
+while testing their independent contracts. Pure production checks passed exact
+hour boundaries, restore,32concurrent claimers (one success), and10000expiry/prune
+cycles; Java syntax/diff checks passed. Local Gradle build remains blocked at
+distribution download; Java21 engine/client CI verification pending.
