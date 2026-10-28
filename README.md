@@ -3,7 +3,7 @@ Minecraft **1.21.1**, NeoForge **21.1.256**, Java **21**. Author: **Ex**.
 
 For current project status, accepted design decisions, verification and continuation notes, read [HANDOFF.md](HANDOFF.md). Development and handoff-maintenance instructions are in [AGENTS.md](AGENTS.md).
 
-Current verification: changes through **0.51.0-alpha** are published on `main`. [CI run 40512130461](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/40512130461) for `a4cbde386ea9900d01482b21fef6287fb5db4acb` passed Java 21 builds/JUnit and all **323 required server GameTests**, both with and without Curios, plus standalone graphical client startup. Older release-note statements about unpublished changes or pending engine verification describe their original release sessions and are superseded by this result. Manual koloss model/weapon alignment, pack navigation and combat balance, Hemalurgy GUI/multiplayer behavior and regular-world Scadrial generation still need playtesting.
+Current verification: changes through **0.51.1-alpha** are published on `main`. [CI run 40608491913](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/40608491913) for `22bee1b6bb63b30bbec6e0f5a515bac7fe9634ac` passed Java 21 builds/JUnit and all **327 required server GameTests**, both with and without Curios, plus standalone graphical client startup. Older release-note statements about unpublished changes or pending engine verification describe their original release sessions and are superseded by this result. Fluid-edge movement/latency, koloss model/weapon alignment and combat balance, Hemalurgy GUI/multiplayer behavior and regular-world Scadrial generation still need manual playtesting.
 
 ## Origins and assignment
 - Persistent planet/race and natural Allomantic/Feruchemical power identifiers.
@@ -2999,6 +2999,8 @@ nugget boosts are unchanged.
 Version0.51.1-alpha/**protocol34** requires matching clients and servers for fluid
 collision prediction. Three new steel engine tests and a cross-metal compounding
 yield/fuel test added; local2073compounding policy checks and Java syntax checks
-passed. Local Gradle build/GameTest attempts remain blocked downloading Gradle;
-new engine/client CI verification is pending. Manual running across fluid edges,
-network latency and interaction with other movement mods remain to be playtested.
+passed. CI40608491913 passed Java21 builds/JUnit and all327required server tests
+with and without Curios, plus standalone graphical client startup. Native movement
+with zero stored horizontal velocity exercised the actual movement-scope hook.
+Manual running across fluid edges, network latency and interaction with other
+movement mods remain to be playtested.
