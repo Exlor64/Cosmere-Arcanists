@@ -1370,7 +1370,7 @@ for enhanced jumps. Hold a movement direction as well to leap that way. Both sca
 with actually funded tapping, are capped, and require held primary or secondary
 activation. Holding alone does not launch the player or grant flight. Releasing
 activation restores ordinary jumping while retaining passive tapping strength.
-Normal collision and fall damage remain. Jump velocity defaults to sqrt(1+.8*extra
+Normal collision remains; activated enhanced jumps/leaps now prevent fall damage on their next landing (see0.51.2). Jump velocity defaults to sqrt(1+.8*extra
 strength), maximum2.5x; leap adds .3*sqrt(extra strength), capped1.2blocks/tick.
 Server config includes `pewter`, storage/tap rates/limits/compression,
 `pewterBulkSlowdown` and threshold/rate/cap, `pewterMuscleVisuals`,
@@ -3004,3 +3004,24 @@ with and without Curios, plus standalone graphical client startup. Native moveme
 with zero stored horizontal velocity exercised the actual movement-scope hook.
 Manual running across fluid edges, network latency and interaction with other
 movement mods remain to be playtested.
+
+
+## Safe Feruchemical pewter landings (0.51.2)
+
+An actually launched, funded, activated Feruchemical pewter jump or directional
+leap now prevents fall damage on its **next landing**. Releasing activation,
+stopping tapping or running out of charge midair does not remove protection for
+the leap already performed. Passive tapping and holding activation without
+jumping grant no fall immunity. Other damage is unchanged.
+
+Protection is consumed on the first fall event and cleared on an ordinary safe
+landing, entering water/lava, climbing, mounting or switching to flight. Death,
+logout and dimension changes clear it; it is never saved or copied on respawn.
+The Feruchemy server setting `pewterLeapPreventsFallDamage` defaults true. Existing
+jump gates and funded strength still determine whether a launch qualifies.
+Version0.51.2-alpha; protocol34 unchanged (server-side landing rules only).
+
+Three new GameTests exercise actual native jump/fall events, one-landing scope,
+release/contact loss, vertical jumps, passive/held exclusions, safe landing,
+dimension cleanup and the config toggle. Local Java syntax and diff checks passed;
+Gradle build remains blocked downloading its distribution. CI verification pending.

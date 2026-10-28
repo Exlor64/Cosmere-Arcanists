@@ -11,6 +11,11 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 /** Physical strength-seconds live in pewterminds; temporal clocks are not changed. */
 public final class PewterFeruchemy {
     private static final ResourceLocation MODIFIER=ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,"feruchemical_pewter_speed");
+    private static final class LeapFlight {
+        final long launched;boolean airborne;
+        LeapFlight(long launched){this.launched=launched;}
+    }
+    private static final java.util.Map<ServerPlayer,LeapFlight> LEAPS=new java.util.WeakHashMap<>();
     public static boolean configured(){return PowerConfig.ENABLED.get()&&FeruchemyConfig.ENABLED.get()&&FeruchemyConfig.PEWTER.get()&&ServerConfig.FERUCHEMY.enabled().get()&&ServerConfig.FERUCHEMY.metals().get(Metal.PEWTER).get();}
     public static int storeLevels(ServerPlayer p){return FeruchemyLevels.storeLevels(PowerAttributes.strength(p,"f:pewter"),FeruchemyConfig.PEWTER_STORE_STEP.get(),FeruchemyConfig.PEWTER_STORE_PER_ATTRIBUTE.get(),FeruchemyConfig.MAX_STORE.get());}
     public static int tapLevels(ServerPlayer p){return FeruchemyLevels.tapLevels(PowerAttributes.strength(p,"f:pewter"),FeruchemyConfig.PEWTER_TAP_LEVELS.get());}
@@ -28,10 +33,27 @@ public final class PewterFeruchemy {
     public static void clear(ServerPlayer p){apply(p,1);}
     @SubscribeEvent public void jump(net.neoforged.neoforge.event.entity.living.LivingEvent.LivingJumpEvent event){
         if(!(event.getEntity() instanceof ServerPlayer p)||!configured()||!FeruchemyConfig.PEWTER_JUMPS.get()||PowerData.state(p,"f:pewter")<=0||!PowerService.holdingAbility(p,"f:pewter"))return;
-        double extra=Math.max(0,factor(p)-1);int input=PowerService.movementInputs(p,"f:pewter");double forward=((input&4)!=0?1:0)-((input&8)!=0?1:0),left=((input&16)!=0?1:0)-((input&32)!=0?1:0);double yaw=Math.toRadians(p.getYRot());var direction=new net.minecraft.world.phys.Vec3(-Math.sin(yaw)*forward+Math.cos(yaw)*left,0,Math.cos(yaw)*forward+Math.sin(yaw)*left);
-        if(direction.lengthSqr()<1e-8||extra<=0)return;double boost=Math.min(FeruchemicalEnhancement.cap(p,"pewter",FeruchemyConfig.PEWTER_LEAP_CAP.get()),Math.sqrt(extra)*FeruchemyConfig.PEWTER_LEAP_RATE.get());p.setDeltaMovement(p.getDeltaMovement().add(direction.normalize().scale(boost)));p.hurtMarked=true;
+        double extra=Math.max(0,factor(p)-1);if(extra<=0||p.getDeltaMovement().y<=0)return;
+        var jumpModifier=p.getAttribute(Attributes.JUMP_STRENGTH).getModifier(MODIFIER);
+        boolean enhanced=jumpModifier!=null&&jumpModifier.amount()>0;
+        int input=PowerService.movementInputs(p,"f:pewter");double forward=((input&4)!=0?1:0)-((input&8)!=0?1:0),left=((input&16)!=0?1:0)-((input&32)!=0?1:0);double yaw=Math.toRadians(p.getYRot());var direction=new net.minecraft.world.phys.Vec3(-Math.sin(yaw)*forward+Math.cos(yaw)*left,0,Math.cos(yaw)*forward+Math.sin(yaw)*left);
+        if(direction.lengthSqr()>=1e-8){double boost=Math.min(FeruchemicalEnhancement.cap(p,"pewter",FeruchemyConfig.PEWTER_LEAP_CAP.get()),Math.sqrt(extra)*FeruchemyConfig.PEWTER_LEAP_RATE.get());if(boost>0){p.setDeltaMovement(p.getDeltaMovement().add(direction.normalize().scale(boost)));p.hurtMarked=true;enhanced=true;}}
+        if(enhanced&&FeruchemyConfig.PEWTER_SAFE_LANDING.get())LEAPS.put(p,new LeapFlight(p.level().getGameTime()));
     }
+    private static void updateLeap(ServerPlayer p){
+        var flight=LEAPS.get(p);if(flight==null)return;
+        if(!p.isAlive()||p.isSpectator()||!configured()||!FeruchemyConfig.PEWTER_SAFE_LANDING.get()||p.isInWater()||p.isInLava()||p.onClimbable()||p.isPassenger()||p.isFallFlying()||p.getAbilities().flying){LEAPS.remove(p);return;}
+        if(!p.onGround())flight.airborne=true;
+        else if(flight.airborne||p.level().getGameTime()>flight.launched+1)LEAPS.remove(p);
+    }
+    @SubscribeEvent(priority=net.neoforged.bus.api.EventPriority.LOWEST)
+    public void land(net.neoforged.neoforge.event.entity.living.LivingFallEvent event){
+        if(!(event.getEntity() instanceof ServerPlayer p)||LEAPS.remove(p)==null)return;
+        if(configured()&&FeruchemyConfig.PEWTER_SAFE_LANDING.get())event.setDamageMultiplier(0);
+    }
+
     public static void tick(ServerPlayer p){
+        updateLeap(p);
         double factor=1;int state=PowerData.state(p,"f:pewter");double attribute=PowerAttributes.strength(p,"f:pewter");
         if(configured()&&p.isAlive()&&!p.isSpectator()&&attribute>0&&state!=0){
             boolean storing=state<0;double magnitude=storing?FeruchemyLevels.storedFraction(attribute,-state,FeruchemyConfig.PEWTER_STORE_STEP.get(),FeruchemyConfig.PEWTER_STORE_PER_ATTRIBUTE.get(),FeruchemyConfig.MAX_STORE.get()):FeruchemyLevels.extraMass(state,FeruchemyConfig.PEWTER_TAP_STEP.get(),FeruchemyConfig.PEWTER_CAP.get());
@@ -42,7 +64,7 @@ public final class PewterFeruchemy {
             if(cost<=0||Math.abs(moved)<cost-1e-9)PowerData.state(p,"f:pewter",0);
         }apply(p,factor);
     }
-    @SubscribeEvent public void death(LivingDeathEvent event){if(event.getEntity() instanceof ServerPlayer p)clear(p);}
-    @SubscribeEvent public void logout(PlayerEvent.PlayerLoggedOutEvent event){if(event.getEntity() instanceof ServerPlayer p){clear(p);PowerData.state(p,"f:pewter",0);}}
-    @SubscribeEvent public void dimension(PlayerEvent.PlayerChangedDimensionEvent event){if(event.getEntity() instanceof ServerPlayer p){clear(p);PowerData.state(p,"f:pewter",0);}}
+    @SubscribeEvent public void death(LivingDeathEvent event){if(event.getEntity() instanceof ServerPlayer p){LEAPS.remove(p);clear(p);}}
+    @SubscribeEvent public void logout(PlayerEvent.PlayerLoggedOutEvent event){if(event.getEntity() instanceof ServerPlayer p){LEAPS.remove(p);clear(p);PowerData.state(p,"f:pewter",0);}}
+    @SubscribeEvent public void dimension(PlayerEvent.PlayerChangedDimensionEvent event){if(event.getEntity() instanceof ServerPlayer p){LEAPS.remove(p);clear(p);PowerData.state(p,"f:pewter",0);}}
 }
