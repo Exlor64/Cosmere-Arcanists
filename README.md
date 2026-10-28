@@ -3,7 +3,7 @@ Minecraft **1.21.1**, NeoForge **21.1.256**, Java **21**. Author: **Ex**.
 
 For current project status, accepted design decisions, verification and continuation notes, read [HANDOFF.md](HANDOFF.md). Development and handoff-maintenance instructions are in [AGENTS.md](AGENTS.md).
 
-Current verification: changes through **0.51.1-alpha** are published on `main`. [CI run 40608491913](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/40608491913) for `22bee1b6bb63b30bbec6e0f5a515bac7fe9634ac` passed Java 21 builds/JUnit and all **327 required server GameTests**, both with and without Curios, plus standalone graphical client startup. Older release-note statements about unpublished changes or pending engine verification describe their original release sessions and are superseded by this result. Fluid-edge movement/latency, koloss model/weapon alignment and combat balance, Hemalurgy GUI/multiplayer behavior and regular-world Scadrial generation still need manual playtesting.
+Current verification: changes through **0.51.2-alpha** are published on `main`. [CI run 40609682144](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/40609682144) for `7395c9cd560f972e92944e540d832dc844a82c90` passed Java 21 builds/JUnit and all **330 required server GameTests**, both with and without Curios, plus standalone graphical client startup. Older release-note statements about unpublished changes or pending engine verification describe their original release sessions and are superseded by this result. Fluid-edge movement/latency, koloss model/weapon alignment and combat balance, Hemalurgy GUI/multiplayer behavior and regular-world Scadrial generation still need manual playtesting.
 
 ## Origins and assignment
 - Persistent planet/race and natural Allomantic/Feruchemical power identifiers.
@@ -3024,4 +3024,7 @@ Version0.51.2-alpha; protocol34 unchanged (server-side landing rules only).
 Three new GameTests exercise actual native jump/fall events, one-landing scope,
 release/contact loss, vertical jumps, passive/held exclusions, safe landing,
 dimension cleanup and the config toggle. Local Java syntax and diff checks passed;
-Gradle build remains blocked downloading its distribution. CI verification pending.
+Local Gradle build remains blocked downloading its distribution. CI40609682144
+passed Java21 builds/JUnit and all330required server tests with/without Curios,
+plus standalone graphical client startup. Manual multiplayer leap feel remains
+to be playtested.
