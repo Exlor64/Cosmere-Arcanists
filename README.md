@@ -3,7 +3,7 @@ Minecraft **1.21.1**, NeoForge **21.1.256**, Java **21**. Author: **Ex**.
 
 For current project status, accepted design decisions, verification and continuation notes, read [HANDOFF.md](HANDOFF.md). Development and handoff-maintenance instructions are in [AGENTS.md](AGENTS.md).
 
-Current verification: changes through **0.52.0-alpha** are published on `main`. [CI run 40748064241](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/40748064241) for `aabdcc7311ab94ccbe9dec38d6dee0dd6df2eaa0` passed Java 21 builds/JUnit and all **337 required server GameTests**, both with and without Curios, plus standalone graphical client startup. Older release-note statements about unpublished changes or pending engine verification describe their original release sessions and are superseded by this result. Fluid-edge movement/latency, koloss visuals/navigation/combat balance, Hemalurgy GUI/multiplayer behavior and regular-world Scadrial generation still need manual playtesting. Natural humanoid powers currently provide ownership and Hemalurgic sources; autonomous NPC use of the full power list remains future work.
+Current verification: changes through **0.52.1-alpha** are published on `main`. [CI run 40752914452](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/40752914452) for `ffd387209fd6c52d25f49e12217efcacf7398c88` passed Java 21 builds/JUnit and all **340 required server GameTests**, both with and without Curios, plus standalone graphical client startup. Older release-note statements about unpublished changes or pending engine verification describe their original release sessions and are superseded by this result. Fluid-edge movement/latency, koloss visuals/navigation/combat balance, Hemalurgy GUI/multiplayer behavior and regular-world Scadrial generation still need manual playtesting. Natural humanoid powers currently provide ownership and Hemalurgic sources; autonomous NPC use of the full power list remains future work.
 
 ## Origins and assignment
 - Persistent planet/race and natural Allomantic/Feruchemical power identifiers.
@@ -3106,4 +3106,7 @@ failed-roll allowance. Existing assignment tests explicitly disable the cooldown
 while testing their independent contracts. Pure production checks passed exact
 hour boundaries, restore,32concurrent claimers (one success), and10000expiry/prune
 cycles; Java syntax/diff checks passed. Local Gradle build remains blocked at
-distribution download; Java21 engine/client CI verification pending.
+distribution download. CI40752914452 passed Java21 builds/JUnit and all340required
+server tests with and without Curios, plus standalone graphical client startup.
+The hour boundary is verified with a controlled clock and SavedData roundtrip;
+a real one-hour live-server soak test has not been performed.
