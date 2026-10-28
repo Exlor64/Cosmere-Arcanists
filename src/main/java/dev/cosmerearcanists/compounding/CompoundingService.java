@@ -28,7 +28,7 @@ public final class CompoundingService {
     public static void tick(ServerPlayer p){tickAt(p,p.level().getGameTime());}
     public static void tickAt(ServerPlayer p,long tick){if(tick<=TICKS.getOrDefault(p.getUUID(),Long.MIN_VALUE))return;TICKS.put(p.getUUID(),tick);StorageActivity.tick(p);for(var m:Metal.values()){
         String metal=m.id();if(!active(p,metal)||StorageActivity.blocked(p))continue;
-        int mode=-PowerData.controlState(p,"a:"+metal);double gain=CompoundingConfig.GAIN.get();double rate=CompoundingConfig.FUEL.get()*PowerConfig.burnMultiplier(metal)*PowerRules.levelMultiplier(mode,PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get())*PowerSources.pair(p,metal).allomancy()*nuggetMultiplier(p,metal)*Metalminds.storageRate(p)/20;
+        int mode=-PowerData.controlState(p,"a:"+metal);double gain=CompoundingConfig.gain();double rate=CompoundingConfig.FUEL.get()*PowerConfig.burnMultiplier(metal)*PowerRules.levelMultiplier(mode,PowerConfig.LOW_DRAIN.get(),1,PowerConfig.FLARE_DRAIN.get())*PowerSources.pair(p,metal).allomancy()*nuggetMultiplier(p,metal)*Metalminds.storageRate(p)/20;
         var profile=EnhancementService.profile(p);rate*=profile.burst()?Math.max(1,profile.strengthMultiplier()):profile.consumptionMultiplier();
         double reserve=PowerData.reserve(p,metal),moved;
         if(metal.equals("nicrosil"))moved=NicrosilService.compound(p,Math.min(reserve,rate)*gain);

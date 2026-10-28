@@ -2967,3 +2967,38 @@ exact supplied texture pixels/sword geometry and Java item model bounds/rotation
 checks passed locally. Actual spawning frequency, model/weapon alignment and combat
 balance still require manual playtesting; startup success does not verify their
 appearance or actual regular-world pack spawning.
+
+
+## Steel fluid running and compounding balance (0.51.1)
+
+Funded **Feruchemical steel above tap10** lets a moving player run across exposed
+water and lava surfaces. Exactly tap10 does not qualify. Effective output after
+partial payment and Allomantic enhancement determines the threshold. Keep moving
+(default minimum0.05blocks/tick); stopping or crouching removes support. It does
+not lift submerged players, support passengers/flying players, or create blocks.
+Other entities keep their normal collisions. Lava running keeps feet just above
+the fluid surface; it grants no general fire immunity or protection after falling
+in. Existing fire and ordinary fall damage remain. Native client/server collision
+uses the actual movement vector, preserving horizontal momentum and other powers.
+
+In the Feruchemy server config: `steelRunsOnWater`, `steelRunsOnLava`,
+`steelFluidRunningThreshold` (strictly above10 by default) and
+`steelFluidRunningMinimumSpeed` (.05). Contact/power/config loss, stopping tapping
+or insufficient paid output remove the effect. No additional charge beyond
+ordinary steel tapping is required.
+
+Allomancy-to-Feruchemy compounding now yields **90%less charge**, with unchanged
+reserve consumption when space is available. The new `chargeYieldMultiplier=0.1`
+in `cosmerearcanists-compounding-server.toml` multiplies existing
+`chargePerReserve` settings, so existing worlds also receive the reduction.
+Default effective conversion is now **1charge per reserve point**, previously10.
+This includes tin senses, copper capacity and nicrosil temporary-power/resource
+charge. Existing stored charge, ordinary storing/tapping and reverse-compounded
+nugget boosts are unchanged.
+
+Version0.51.1-alpha/**protocol34** requires matching clients and servers for fluid
+collision prediction. Three new steel engine tests and a cross-metal compounding
+yield/fuel test added; local2073compounding policy checks and Java syntax checks
+passed. Local Gradle build/GameTest attempts remain blocked downloading Gradle;
+new engine/client CI verification is pending. Manual running across fluid edges,
+network latency and interaction with other movement mods remain to be playtested.

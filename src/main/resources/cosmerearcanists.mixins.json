@@ -35,7 +35,9 @@
     "BronzeEffectAccess",
     "EdibleNuggetMixin",
     "ScadrialSeedMixin",
-    "CadmiumServerActivityMixin"
+    "CadmiumServerActivityMixin",
+    "SteelFluidCollisionMixin",
+    "SteelFluidMovementMixin"
   ],
   "injectors": {
     "defaultRequire": 1
