@@ -20,6 +20,25 @@ public final class OriginTravelGameTests {
     }
 
     @GameTest(template = "empty")
+    public static void arrivalSafetyRejectsFluidsHazardsAndObstructions(GameTestHelper h) {
+        var pos = h.absolutePos(new BlockPos(2, 3, 2));
+        var level = h.getLevel();
+        level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
+        level.setBlockAndUpdate(pos.above(), Blocks.AIR.defaultBlockState());
+        level.setBlockAndUpdate(pos.below(), Blocks.STONE.defaultBlockState());
+        h.assertTrue(OriginTravel.safe(level, pos), "Dry solid ground with clearance is safe");
+        for (var block : new net.minecraft.world.level.block.Block[]{Blocks.WATER, Blocks.LAVA,
+            Blocks.MAGMA_BLOCK, Blocks.CACTUS, Blocks.CAMPFIRE, Blocks.SOUL_CAMPFIRE}) {
+            level.setBlockAndUpdate(pos.below(), block.defaultBlockState());
+            h.assertTrue(!OriginTravel.safe(level, pos), "Hazardous/fluid floor must be rejected: " + block);
+        }
+        level.setBlockAndUpdate(pos.below(), Blocks.STONE.defaultBlockState());
+        level.setBlockAndUpdate(pos.above(), Blocks.STONE.defaultBlockState());
+        h.assertTrue(!OriginTravel.safe(level, pos), "Head obstruction must be rejected");
+        h.succeed();
+    }
+
+    @GameTest(template = "empty")
     public static void arrivalSetsPersistentGroundRespawnAndClearsFall(GameTestHelper h) {
         var p = player(h);
         var pos = h.absolutePos(new BlockPos(2, 3, 2));
