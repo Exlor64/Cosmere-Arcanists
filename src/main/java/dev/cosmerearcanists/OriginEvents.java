@@ -68,13 +68,22 @@ public final class OriginEvents {
                 if (p.getRandom().nextBoolean()) a = "none"; else f = "none";
             }
         }
+        var destination = planet.equals("scadrial") ? OriginTravel.scadrial(p) : null;
+        if (planet.equals("scadrial") && destination == null)
+            return message(p, "Scadrial is unavailable. Your origin has not been changed.");
+        var spawn = destination == null ? null : OriginTravel.findSpawn(destination);
+        if (destination != null && spawn == null)
+            return message(p, "No safe Scadrial starting point was found near its world spawn. Ask an administrator to set Scadrial's world spawn on dry land, then try again. Your origin has not been changed.");
         var data = new OriginData(planet, "human", a.equals("none") ? "" : a, f.equals("none") ? "" : f);
         var previous = OriginData.assigned(p) ? OriginData.read(p) : null;
         dev.cosmerearcanists.power.PowerAttributes.assignOrigin(p, previous, data);
         data.save(p);
+        if (destination != null) OriginTravel.arrive(p, destination, spawn);
         message(p, data.summary());
         dev.cosmerearcanists.power.PowerNetwork.sync(p, java.util.List.of());
-        return message(p, "Origin set. Iron/steel Allomancy is available; other effects and planetary travel are still in development.");
+        return message(p, destination != null
+            ? "Origin set. Welcome to Scadrial! Your respawn point is now here."
+            : "Origin set.");
     }
     private boolean valid(String id, ServerConfig.ArtSettings art) {
         return id.equals("none") || art.enabled().get() && Arrays.stream(Metal.values())
