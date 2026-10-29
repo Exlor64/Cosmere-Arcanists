@@ -96,8 +96,9 @@ public final class PowerNetwork {
         @Override public Type<Impulse> type() { return TYPE; }
     }
     public static void register(RegisterPayloadHandlersEvent event) {
-        var r = event.registrar("35");
+        var r = event.registrar("36");
         dev.cosmerearcanists.hemalurgy.HemalurgyNetwork.register(r);
+        r.playToClient(dev.cosmerearcanists.mist.MistPacket.TYPE, dev.cosmerearcanists.mist.MistPacket.CODEC, (packet, context) -> context.enqueueWork(() -> dev.cosmerearcanists.mist.MistPacket.receiver.accept(packet)));
         dev.cosmerearcanists.copper.CopperNetwork.register(r);
         dev.cosmerearcanists.nicrosil.NicrosilNetwork.register(r);
         r.playToClient(dev.cosmerearcanists.connection.ConnectionPacket.TYPE,dev.cosmerearcanists.connection.ConnectionPacket.CODEC,(packet,context)->context.enqueueWork(()->dev.cosmerearcanists.connection.ConnectionPacket.receiver.accept(packet)));

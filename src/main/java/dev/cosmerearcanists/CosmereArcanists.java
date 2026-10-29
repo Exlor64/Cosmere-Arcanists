@@ -11,6 +11,7 @@ public final class CosmereArcanists {
     public static final String MOD_ID = "cosmerearcanists";
     public CosmereArcanists(IEventBus bus, ModContainer container) {
         container.registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC);
+        container.registerConfig(ModConfig.Type.SERVER, dev.cosmerearcanists.mist.MistConfig.SPEC, "cosmerearcanists-mists-server.toml");
         dev.cosmerearcanists.equipment.EquipmentContent.register(bus);
         dev.cosmerearcanists.koloss.KolossContent.register(bus);
         container.registerConfig(ModConfig.Type.SERVER,dev.cosmerearcanists.koloss.KolossConfig.SPEC,"cosmerearcanists-koloss-server.toml");

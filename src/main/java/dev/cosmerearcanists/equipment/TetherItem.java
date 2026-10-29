@@ -63,7 +63,7 @@ public final class TetherItem extends Item {
         double speed=EquipmentConfig.HOOK_SPEED.get()*charge;
         if(!hook){
             if(!PowerService.holdingAbility(player,"a:steel") || !PowerData.available(player).contains("a:steel") || PowerData.state(player,"a:steel")==0
-                || PowerConfig.CONSUMPTION.get() && PowerData.reserve(player,"steel")<PowerConfig.PROJECTILE_RESERVE_COST.get()){
+                || PowerConfig.CONSUMPTION.get() && !PowerData.canSpendReserve(player,"steel",PowerConfig.PROJECTILE_RESERVE_COST.get())){
                 player.displayClientMessage(Component.literal("Hold steel's activation key while burning steel to launch the ball."),true);return false;
             }
             speed=MetalProjectilePhysics.speed(units,PowerService.powerForce(player,"a:steel")/7,PowerConfig.NUGGET_SPEED.get(),PowerConfig.PROJECTILE_MAX_SPEED.get());
@@ -74,7 +74,7 @@ public final class TetherItem extends Item {
         if(!player.serverLevel().addFreshEntity(entity))return false;
         bind(stack,entity.getUUID());
         if(!hook){
-            if(PowerConfig.CONSUMPTION.get())PowerData.reserve(player,"steel",PowerData.reserve(player,"steel")-PowerConfig.PROJECTILE_RESERVE_COST.get());
+            if(PowerConfig.CONSUMPTION.get())PowerData.spendReserve(player,"steel",PowerConfig.PROJECTILE_RESERVE_COST.get());
             if(PowerConfig.RECOIL.get())PowerService.externalImpulse(player,player.getLookAngle().scale(-MetalProjectilePhysics.recoil(units,speed,PowerConfig.NUGGET_MASS.get(),dev.cosmerearcanists.feruchemy.IronFeruchemy.allomanticMass(player))));
         }
         return true;

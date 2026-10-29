@@ -30,7 +30,7 @@ public final class MetalProjectiles {
             if(!downwardCoin)return null; // Other alternate drops retain their ordinary item behavior.
         }
         double cost=(EnhancementService.committed(player,"steel")||ContactService.committed(player,"steel"))?0:PowerConfig.reserveCost(PowerConfig.PROJECTILE_RESERVE_COST.get())*(EnhancementService.profile(player).burst()?1:EnhancementService.profile(player).consumptionMultiplier());
-        if(PowerConfig.CONSUMPTION.get() && PowerData.reserve(player,"steel")<cost)return null;
+        if(PowerConfig.CONSUMPTION.get() && !PowerData.canSpendReserve(player,"steel",cost))return null;
         if(!PowerConfig.FLARING.get() && PowerData.state(player,"a:steel")==3)PowerData.state(player,"a:steel",2);
         double power=PowerService.powerForce(player,"a:steel")/7.0;
         double speed=MetalProjectilePhysics.speed(units,power,PowerConfig.NUGGET_SPEED.get(),EnhancedCaps.velocity(PowerConfig.PROJECTILE_MAX_SPEED.get(),EnhancementService.capMultiplier(player,"a:steel")));

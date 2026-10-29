@@ -181,6 +181,7 @@ public final class PowerService {
         dev.cosmerearcanists.nicrosil.NicrosilService.tick(p);
         PewterService.tick(p);
         TinService.tick(p);
+        dev.cosmerearcanists.mist.MistService.sync(p);
         GoldService.tick(p);
         BubbleService.tickPlayer(p);
         TemporalService.tick(p);

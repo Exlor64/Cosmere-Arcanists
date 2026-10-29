@@ -14,6 +14,8 @@ import net.neoforged.neoforge.common.NeoForge;
 public final class PowerClientMod {
     public PowerClientMod(IEventBus bus, ModContainer container) {
         container.registerConfig(ModConfig.Type.CLIENT, PowerClientConfig.SPEC);
+        dev.cosmerearcanists.mist.MistPacket.receiver = MistClient::receive;
+        NeoForge.EVENT_BUS.register(new MistClient());
         bus.addListener(this::keys);
         bus.addListener((net.neoforged.neoforge.client.event.RegisterMenuScreensEvent e)->e.register(dev.cosmerearcanists.hemalurgy.HemalurgyMenu.TYPE.get(),HemalurgyScreen::new));
         NeoForge.EVENT_BUS.register(new HemalurgyScreen.Events());

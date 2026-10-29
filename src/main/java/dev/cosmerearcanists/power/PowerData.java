@@ -82,7 +82,20 @@ public final class PowerData {
         if(state!=0&&dev.cosmerearcanists.hemalurgy.AluminumSuppression.active(p))return;
         var d=data(p);var states=d.getCompound("states");states.putInt(power,PowerRules.clamp(power,state,storeLevels(p,power),tapLevels(p,power)));d.put("states",states);
     }
-    public static double reserve(ServerPlayer p, String metal) { return Math.max(0, Math.min(PowerConfig.RESERVE_CAP.get(), data(p).getCompound("reserves").getDouble(metal))); }
+    public static double reserve(ServerPlayer p, String metal) {
+        if (dev.cosmerearcanists.mist.MistBenefits.tier(p) == 2 && powerEnabled("a:" + metal)
+            && PowerAttributes.strength(p, "a:" + metal) > 0) return PowerConfig.RESERVE_CAP.get();
+        return Math.max(0, Math.min(PowerConfig.RESERVE_CAP.get(), data(p).getCompound("reserves").getDouble(metal)));
+    }
+    public static boolean canSpendReserve(ServerPlayer p, String metal, double cost) {
+        double reserve = reserve(p, metal);
+        return reserve >= cost || reserve > 0 && dev.cosmerearcanists.mist.MistBenefits.tier(p) > 0;
+    }
+    /** Spending is distinct from aluminum/chromium purges and administrative reserve writes. */
+    public static void spendReserve(ServerPlayer p, String metal, double amount) {
+        if (amount > 0 && dev.cosmerearcanists.mist.MistBenefits.tier(p) == 0)
+            reserve(p, metal, reserve(p, metal) - amount);
+    }
     public static void reserve(ServerPlayer p, String metal, double amount) {
         var d = data(p); var reserves = d.getCompound("reserves");
         reserves.putDouble(metal, Math.max(0, Math.min(PowerConfig.RESERVE_CAP.get(), amount))); d.put("reserves", reserves);

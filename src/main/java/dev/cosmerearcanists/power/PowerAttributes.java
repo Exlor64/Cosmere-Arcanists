@@ -19,6 +19,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public final class PowerAttributes {
     private static final DeferredRegister<Attribute> REGISTER = DeferredRegister.create(Registries.ATTRIBUTE, CosmereArcanists.MOD_ID);
     private static final Map<String, DeferredHolder<Attribute, Attribute>> POWERS = new LinkedHashMap<>();
+    public static final DeferredHolder<Attribute,Attribute> SCADRIAL_CONNECTION=REGISTER.register("scadrial_connection",()->new RangedAttribute("attribute.cosmerearcanists.scadrial_connection",0,0,1000).setSyncable(true));
     public static final DeferredHolder<Attribute,Attribute> IMPLANT_VISION=REGISTER.register("hemalurgic_vision",()->new RangedAttribute("attribute.cosmerearcanists.hemalurgic_vision",1,.01,1).setSyncable(true));
     public static final DeferredHolder<Attribute,Attribute> MASS=REGISTER.register("physical_mass_multiplier",()->new RangedAttribute("attribute.cosmerearcanists.physical_mass_multiplier",1,.01,1000000).setSyncable(true));
     public static final DeferredHolder<Attribute,Attribute> PHYSICAL_STRENGTH=REGISTER.register("physical_strength_multiplier",()->new RangedAttribute("attribute.cosmerearcanists.physical_strength_multiplier",1,.01,1000).setSyncable(true));
@@ -46,7 +47,7 @@ public final class PowerAttributes {
         // Tags are datapack-loaded later, so suppliers support powers on all living types.
         // Zero defaults grant nothing; the humanoid spawn policy alone chooses recipients.
         for(var type:event.getTypes())for(var attribute:POWERS.values())if(!event.has(type,attribute))event.add(type,attribute);
-        event.add(EntityType.PLAYER,IMPLANT_VISION);event.add(EntityType.PLAYER,WEAPON_PREPARATION);event.add(EntityType.PLAYER,MENTAL_SPEED);event.add(EntityType.PLAYER,IDENTITY);event.add(EntityType.PLAYER,MASS);event.add(EntityType.PLAYER,PHYSICAL_STRENGTH);event.add(EntityType.PLAYER,SIGHT);event.add(EntityType.PLAYER,HEARING);event.add(EntityType.PLAYER,TOUCH);
+        event.add(EntityType.PLAYER,SCADRIAL_CONNECTION);event.add(EntityType.PLAYER,IMPLANT_VISION);event.add(EntityType.PLAYER,WEAPON_PREPARATION);event.add(EntityType.PLAYER,MENTAL_SPEED);event.add(EntityType.PLAYER,IDENTITY);event.add(EntityType.PLAYER,MASS);event.add(EntityType.PLAYER,PHYSICAL_STRENGTH);event.add(EntityType.PLAYER,SIGHT);event.add(EntityType.PLAYER,HEARING);event.add(EntityType.PLAYER,TOUCH);
     }
     public static net.minecraft.core.Holder<Attribute> holder(String key){return POWERS.get(key);}
     public static java.util.Set<String> keys() { return java.util.Collections.unmodifiableSet(POWERS.keySet()); }
@@ -110,6 +111,9 @@ public final class PowerAttributes {
     }
     public static void copy(ServerPlayer original, ServerPlayer replacement) {
         migrate(original);
+        var connectionSource = original.getAttribute(SCADRIAL_CONNECTION);
+        var connectionTarget = replacement.getAttribute(SCADRIAL_CONNECTION);
+        if (connectionSource != null && connectionTarget != null) connectionTarget.load(connectionSource.save());
         for (var holder : POWERS.values()) {
             var source = original.getAttribute(holder);
             var target = replacement.getAttribute(holder);
