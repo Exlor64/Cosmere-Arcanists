@@ -24,12 +24,14 @@ public final class SteelProjectile extends ThrowableItemProjectile implements Al
     private static final EntityDataAccessor<Boolean> EMBEDDED=SynchedEntityData.defineId(SteelProjectile.class,EntityDataSerializers.BOOLEAN);
     private BlockPos anchor=BlockPos.ZERO;
     private ItemStack cargo=ItemStack.EMPTY;
-    private double metalUnits=1, referenceSpeed=3.5, nuggetDamage=2, damageCap=100;
+    private double metalUnits=1, referenceSpeed=3.5, nuggetDamage=2, damagePerNugget=.2, damageCap=100;
+    private double shotPower=1, launchSpeed;
     private int flightAge;
-    private boolean enhancedDamage;
+    private boolean enhancedDamage, anvilWearApplied, anvilBreaksAfterFlight;
     public void enhanceDamage(double multiplier){if(multiplier>1){enhancedDamage=true;damageCap=Math.min(100000,damageCap*multiplier);}}
     public SteelProjectile(EntityType<? extends SteelProjectile> type,Level level){super(type,level);}
     @Override protected void defineSynchedData(SynchedEntityData.Builder builder){super.defineSynchedData(builder);builder.define(EMBEDDED,false);}
+    public void damageProfile(double power,double speed){if(Double.isFinite(power)&&power>0&&Double.isFinite(speed)&&speed>0){shotPower=power;launchSpeed=speed;}}
     public boolean embedded(){return entityData.get(EMBEDDED);}
     public boolean coin(){return Coins.coin(cargo);}
     @Override public boolean fixedMetalAnchor(){return embedded();}
@@ -49,7 +51,22 @@ public final class SteelProjectile extends ThrowableItemProjectile implements Al
     @Override protected Item getDefaultItem(){return Items.IRON_NUGGET;}
     public void cargo(ItemStack stack,double units) {
         cargo=stack.copy(); setItem(stack.copyWithCount(1)); metalUnits=units;
-        referenceSpeed=PowerConfig.NUGGET_SPEED.get(); nuggetDamage=PowerConfig.NUGGET_DAMAGE.get(); damageCap=PowerConfig.PROJECTILE_DAMAGE_CAP.get();
+        referenceSpeed=PowerConfig.NUGGET_SPEED.get(); nuggetDamage=PowerConfig.NUGGET_DAMAGE.get(); damagePerNugget=PowerConfig.NUGGET_INCREMENT.get(); damageCap=PowerConfig.PROJECTILE_DAMAGE_CAP.get();
+    }
+    /** Only call after the projectile was successfully inserted into the server level. */
+    public void damageAnvilOnLaunch() {
+        if(level().isClientSide||anvilWearApplied||!PowerConfig.ANVIL_SHOT_WEAR.get())return;
+        Item next=cargo.is(Items.ANVIL)?Items.CHIPPED_ANVIL:cargo.is(Items.CHIPPED_ANVIL)?Items.DAMAGED_ANVIL:null;
+        if(next!=null) {
+            // Round-trip through the ordinary item format to retain names and all component patches.
+            var saved=(CompoundTag)cargo.save(registryAccess());
+            saved.putString("id",net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(next).toString());
+            var worn=ItemStack.parseOptional(registryAccess(),saved);
+            if(worn.isEmpty())return;
+            cargo=worn;setItem(cargo.copyWithCount(1));anvilWearApplied=true;
+        } else if(cargo.is(Items.DAMAGED_ANVIL)) {
+            anvilWearApplied=true;anvilBreaksAfterFlight=true;
+        }
     }
     public boolean allomanticallyDetectable(net.minecraft.server.MinecraftServer server) {
         return !isRemoved() && PowerConfig.DETECTION_PROJECTILES.get() && MetalDetector.detects(server,cargo);
@@ -71,7 +88,9 @@ public final class SteelProjectile extends ThrowableItemProjectile implements Al
         var target=hit.getEntity();
         if(target instanceof Player victim && (!PowerConfig.PLAYER_TARGETS.get() || getOwner() instanceof Player owner && !owner.canHarmPlayer(victim)))return;
         double speed=BubbleService.intrinsicVelocity(this).length();
-        float damage=(float)(enhancedDamage?MetalProjectilePhysics.enhancedDamage(metalUnits,speed,referenceSpeed,nuggetDamage,damageCap):MetalProjectilePhysics.damage(metalUnits,speed,referenceSpeed,nuggetDamage,damageCap));
+        float damage=(float)(launchSpeed>0
+            ? MetalProjectilePhysics.shotDamage(metalUnits,speed,launchSpeed,shotPower,nuggetDamage,damagePerNugget,enhancedDamage?damageCap:Math.min(100,damageCap))
+            : enhancedDamage?MetalProjectilePhysics.enhancedDamage(metalUnits,speed,referenceSpeed,nuggetDamage,damagePerNugget,damageCap):MetalProjectilePhysics.damage(metalUnits,speed,referenceSpeed,nuggetDamage,damagePerNugget,damageCap));
         boolean accepted=target.hurt(damageSources().thrown(this,getOwner()),damage);
         if(accepted && target instanceof LivingEntity living) {
             double knockback=Math.min(2,Math.sqrt(metalUnits)*speed*.05);
@@ -91,6 +110,10 @@ public final class SteelProjectile extends ThrowableItemProjectile implements Al
     }
     private void recover() {
         if(isRemoved())return;
+        if(anvilBreaksAfterFlight){
+            cargo=ItemStack.EMPTY;
+            level().playSound(null,getX(),getY(),getZ(),net.minecraft.sounds.SoundEvents.ANVIL_BREAK,net.minecraft.sounds.SoundSource.PLAYERS,.7f,1);
+        }
         if(!cargo.isEmpty()) {
             var drop=new ItemEntity(level(),getX(),getY(),getZ(),cargo.copy());
             drop.setDefaultPickUpDelay(); level().addFreshEntity(drop); cargo=ItemStack.EMPTY;
@@ -101,13 +124,17 @@ public final class SteelProjectile extends ThrowableItemProjectile implements Al
         super.addAdditionalSaveData(tag);
         if(!cargo.isEmpty())tag.put("Cargo",cargo.save(registryAccess()));
         tag.putBoolean("CoinEmbedded",embedded());tag.putLong("CoinAnchor",anchor.asLong());
+        tag.putBoolean("AnvilWearApplied",anvilWearApplied);tag.putBoolean("AnvilBreaksAfterFlight",anvilBreaksAfterFlight);
+        tag.putDouble("ShotPower",shotPower);tag.putDouble("LaunchSpeed",launchSpeed);
         tag.putDouble("MetalUnits",metalUnits); tag.putDouble("ReferenceSpeed",referenceSpeed);
-        tag.putBoolean("DuraluminEnhancedDamage",enhancedDamage);tag.putDouble("NuggetDamage",nuggetDamage); tag.putDouble("DamageCap",damageCap); tag.putInt("FlightAge",flightAge);
+        tag.putBoolean("DuraluminEnhancedDamage",enhancedDamage);tag.putDouble("NuggetDamage",nuggetDamage);tag.putDouble("DamagePerNugget",damagePerNugget); tag.putDouble("DamageCap",damageCap); tag.putInt("FlightAge",flightAge);
     }
     @Override public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag); cargo=ItemStack.parseOptional(registryAccess(),tag.getCompound("Cargo"));
         metalUnits=Math.clamp(tag.getDouble("MetalUnits"),.001,1e12); referenceSpeed=Math.max(.001,tag.getDouble("ReferenceSpeed"));
-        nuggetDamage=Math.max(0,tag.getDouble("NuggetDamage")); enhancedDamage=tag.getBoolean("DuraluminEnhancedDamage");damageCap=Math.clamp(tag.getDouble("DamageCap"),.001,enhancedDamage?100000:100);
+        nuggetDamage=Math.max(0,tag.getDouble("NuggetDamage")); damagePerNugget=tag.contains("DamagePerNugget")?Math.max(0,tag.getDouble("DamagePerNugget")):PowerConfig.NUGGET_INCREMENT.get(); enhancedDamage=tag.getBoolean("DuraluminEnhancedDamage");damageCap=Math.clamp(tag.getDouble("DamageCap"),.001,enhancedDamage?100000:100);
+        anvilWearApplied=tag.getBoolean("AnvilWearApplied");anvilBreaksAfterFlight=tag.getBoolean("AnvilBreaksAfterFlight");
+        shotPower=tag.contains("ShotPower")?Math.max(0,tag.getDouble("ShotPower")):1;launchSpeed=Math.max(0,tag.getDouble("LaunchSpeed"));
         flightAge=Math.max(0,tag.getInt("FlightAge"));entityData.set(EMBEDDED,coin()&&tag.getBoolean("CoinEmbedded"));anchor=BlockPos.of(tag.getLong("CoinAnchor"));setNoGravity(embedded());
     }
 }

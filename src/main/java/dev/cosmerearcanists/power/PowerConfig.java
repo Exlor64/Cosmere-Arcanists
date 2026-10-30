@@ -6,9 +6,9 @@ public final class PowerConfig {
     public static final ModConfigSpec SPEC;
     public static final java.util.Map<String,ModConfigSpec.DoubleValue> BURN_RATES=new java.util.LinkedHashMap<>();
     public static final ModConfigSpec.BooleanValue METAL_BURN_RATES;
-    public static final ModConfigSpec.BooleanValue ENABLED, IRON_STEEL, DETECTION_BLOCKS, DETECTION_ITEMS, DETECTION_GEAR, RECIPE_DETECTION, CONSUMPTION, FLARING, RECOIL, PLAYER_TARGETS, FALL_MITIGATION, BLOCK_RESISTANCE, STEEL_MOVEMENT, IRON_MOVEMENT, RESIST_WALKING, STEEL_PROJECTILES, ALTERNATE_DROP_DOWN, ALTERNATE_COIN_SHOTS, DETECTION_PROJECTILES, SECONDARY_ENABLED;
+    public static final ModConfigSpec.BooleanValue ENABLED, IRON_STEEL, DETECTION_BLOCKS, DETECTION_ITEMS, DETECTION_GEAR, RECIPE_DETECTION, CONSUMPTION, FLARING, RECOIL, PLAYER_TARGETS, FALL_MITIGATION, BLOCK_RESISTANCE, STEEL_MOVEMENT, IRON_MOVEMENT, RESIST_WALKING, STEEL_PROJECTILES, ALTERNATE_DROP_DOWN, ALTERNATE_COIN_SHOTS, ANVIL_SHOT_WEAR, DETECTION_PROJECTILES, SECONDARY_ENABLED;
     public static final ModConfigSpec.IntValue RANGE_CAP, RANGE, MAX_TARGETS, SCAN_BUDGET, SYNC_INTERVAL, FERUCHEMY_LEVELS, NEAR_SCAN_RADIUS, URGENT_SCAN_BUDGET, PROJECTILE_LIFETIME;
-    public static final ModConfigSpec.DoubleValue PHYSICAL_BURN_RATE, LOW_RANGE, BURN_RANGE, FLARE_RANGE, RANGE_EXPONENT, FORCE, FLARE_STRENGTH, FLARE_DRAIN, BURN_DRAIN, LEGACY_RESERVE_CAP, RESERVE_CAP, MAX_SPEED, PLAYER_MASS, AIM_ANGLE, FALL_MITIGATION_STRENGTH, RESISTANCE_COST, RESISTANCE_HARDNESS_CAP, MOVEMENT_ANGLE, IRON_STRENGTH, STEEL_STRENGTH, LOW_STRENGTH, BURN_STRENGTH, LOW_DRAIN, NUGGET_SPEED, PROJECTILE_MAX_SPEED, NUGGET_DAMAGE, PROJECTILE_DAMAGE_CAP, NUGGET_MASS, UNKNOWN_METAL_UNITS, PROJECTILE_RESERVE_COST;
+    public static final ModConfigSpec.DoubleValue PHYSICAL_BURN_RATE, LOW_RANGE, BURN_RANGE, FLARE_RANGE, RANGE_EXPONENT, FORCE, FLARE_STRENGTH, FLARE_DRAIN, BURN_DRAIN, LEGACY_RESERVE_CAP, RESERVE_CAP, MAX_SPEED, PLAYER_MASS, AIM_ANGLE, FALL_MITIGATION_STRENGTH, RESISTANCE_COST, RESISTANCE_HARDNESS_CAP, MOVEMENT_ANGLE, IRON_STRENGTH, STEEL_STRENGTH, LOW_STRENGTH, BURN_STRENGTH, LOW_DRAIN, NUGGET_SPEED, PROJECTILE_MAX_SPEED, NUGGET_DAMAGE, NUGGET_INCREMENT, PROJECTILE_DAMAGE_CAP, NUGGET_MASS, UNKNOWN_METAL_UNITS, PROJECTILE_RESERVE_COST;
     static {
         var b = new ModConfigSpec.Builder();
         b.push("controls");
@@ -61,12 +61,14 @@ public final class PowerConfig {
         SYNC_INTERVAL = b.comment("Periodic state/reserve updates. Target-list changes are always sent immediately, regardless of this interval.").defineInRange("syncIntervalTicks", 1, 1, 40);
         b.pop(); b.push("steelProjectiles");
         STEEL_PROJECTILES=b.define("enabled",true);
+        ANVIL_SHOT_WEAR=b.comment("Each successful anvil shot advances one vanilla wear stage. A damaged anvil fires once more, then is lost on impact or expiry. Applies to every anvil in a thrown stack.").define("damageFiredAnvils",true);
         ALTERNATE_DROP_DOWN=b.comment("Alt + held steel activation directs drops downward at the feet. Coins can fire downward when alternateCoinProjectiles is enabled. Disabling keeps ordinary vanilla drops in alternate mode.").define("alternateDropDownwards",true);
         ALTERNATE_COIN_SHOTS=b.comment("With downward alternate drops enabled, boxings and clips fire straight down using ordinary steel shot cost, recoil and recoverable coin projectile behavior.").define("alternateCoinProjectiles",true);
         NUGGET_SPEED=b.comment("Blocks per tick for one nugget at reference push force 7, before the steel strength multiplier.").defineInRange("nuggetSpeed",3.5,.1,8.0);
         PROJECTILE_MAX_SPEED=b.defineInRange("maxSpeed",8.0,.1,16.0);
-        NUGGET_DAMAGE=b.comment("Damage before armor at the reference nugget speed.").defineInRange("nuggetDamage",2.0,.01,99.0);
-        PROJECTILE_DAMAGE_CAP=b.comment("Smooth damage ceiling; never exceeds 100 even if configured higher externally.").defineInRange("damageCap",100.0,1.0,100.0);
+        NUGGET_DAMAGE=b.comment("Base shot damage before armor and power/velocity scaling. A single nugget uses only this value.").defineInRange("nuggetDamage",2.0,.01,99.0);
+        NUGGET_INCREMENT=b.comment("Multi-nugget shots add this times their TOTAL nugget-equivalent metal content to base damage: default2+0.2*nuggets. New setting also applies to existing world configs.").defineInRange("damagePerNugget",.2,0.0,10.0);
+        PROJECTILE_DAMAGE_CAP=b.comment("Damage ceiling after the base formula and power/velocity scaling; ordinary shots never exceed100.").defineInRange("damageCap",100.0,1.0,100.0);
         NUGGET_MASS=b.comment("Physical mass used for recoil per nugget-equivalent of metal.").defineInRange("nuggetMass",.2,.001,10.0);
         UNKNOWN_METAL_UNITS=b.comment("Per-item nugget equivalents for detectable metal items without a resolvable recipe.").defineInRange("unknownItemMetalUnits",9.0,.001,1000000.0);
         PROJECTILE_RESERVE_COST=b.comment("Additional steel reserve units per thrown stack; regular burning costs still apply.").defineInRange("reserveCostPerShot",1.0,0.0,1000.0);

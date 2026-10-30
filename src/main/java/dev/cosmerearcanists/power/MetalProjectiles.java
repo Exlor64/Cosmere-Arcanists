@@ -38,8 +38,10 @@ public final class MetalProjectiles {
         var projectile=new SteelProjectile(STEEL.get(),player.level());
         projectile.setOwner(player); projectile.setPos(player.getX(),downwardCoin?player.getY()+.2:player.getEyeY()-.1,player.getZ());
         projectile.cargo(dropped.getItem(),units);projectile.enhanceDamage(EnhancementService.capMultiplier(player,"a:steel")); Vec3 direction=downwardCoin?new Vec3(0,-1,0):player.getLookAngle().normalize();
+        projectile.damageProfile(PowerAttributes.effectiveStrength(player,"a:steel")*PowerRules.levelMultiplier(PowerData.state(player,"a:steel"),PowerConfig.LOW_STRENGTH.get(),PowerConfig.BURN_STRENGTH.get(),PowerConfig.FLARE_STRENGTH.get()),speed);
         projectile.setDeltaMovement(direction.scale(speed));
         if(!player.serverLevel().addFreshEntity(projectile))return null;
+        projectile.damageAnvilOnLaunch();
         if(PowerConfig.CONSUMPTION.get())EnhancementService.consume(player,"steel",PowerConfig.PROJECTILE_RESERVE_COST.get());
         return PowerConfig.RECOIL.get() ? direction.scale(-MetalProjectilePhysics.recoil(units,speed,PowerConfig.NUGGET_MASS.get(),dev.cosmerearcanists.feruchemy.IronFeruchemy.allomanticMass(player))) : Vec3.ZERO;
     }

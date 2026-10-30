@@ -17,6 +17,8 @@ public final class CosmereArcanists {
         container.registerConfig(ModConfig.Type.SERVER,dev.cosmerearcanists.koloss.KolossConfig.SPEC,"cosmerearcanists-koloss-server.toml");
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.koloss.KolossSpawning());
         ModMetals.register(bus);
+        container.registerConfig(ModConfig.Type.SERVER, dev.cosmerearcanists.treasure.TreasureConfig.SPEC, "cosmerearcanists-treasure-server.toml");
+        dev.cosmerearcanists.treasure.TreasureLootModifier.register(bus);
         dev.cosmerearcanists.hemalurgy.HemalurgyMenu.REGISTER.register(bus);
         dev.cosmerearcanists.hemalurgy.ImplantService.registerProviders();
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.hemalurgy.ImplantService());

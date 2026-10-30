@@ -3,9 +3,17 @@ Minecraft **1.21.1**, NeoForge **21.1.256**, Java **21**. Author: **Ex**.
 
 For current project status, accepted design decisions, verification and continuation notes, read [HANDOFF.md](HANDOFF.md). Development and handoff-maintenance instructions are in [AGENTS.md](AGENTS.md).
 
-Current change: **0.53.0-alpha** adds Scadrial mists: an independent 50% roll per night, with clear/misty streaks, varying onset/duration/density and gradual dusk/dawn transitions. Everyone shares the weather, which is stable across restarts. Enhanced Allomantic/Feruchemical tin sight and passive enhanced sight penetrate it in proportion to effective strength; at sight strength6 it is fully clear by default. Water/lava and stronger blindness/darkness fog remain restrictive.
+Current change: **0.54.1-alpha** adjusts coinshot damage: a single nugget deals **2 base damage**; larger shots use **2 + (0.2 × total nugget-equivalents)**. An ingot has3.8base damage; an anvil has57.8. Real shots scale with the captured effective Allomantic strength/burn level and subsequent impact-speed changes. Steel's movement-force multiplier no longer silently boosts base shot damage. Normal100damage cap and enhanced caps remain. The new `steelProjectiles.damagePerNugget=0.2` setting also applies to existing world configs; existing `nuggetDamage=2` supplies the base.
 
-During actual mist weather, strong Scadrial Connection or funded duralumin tap1+ makes existing Allomantic metals free to use; very strong Connection or funded tap20+ provides unlimited virtual reserves for powers you already have. Connection charge is still paid. Ordinary Scadrian home Connection is1; strong/very strong defaults are1.15/4, modifiable through the persistent `cosmerearcanists:scadrial_connection` attribute. Native and actively implanted Scadrian home Connection count, and Connection storing/tapping affects expressed strength. Reserve supply ends immediately when weather, dimension, funded contact or eligibility changes; it is not banked afterward. Tier1 requires some existing metal and preserves explicit purge/admin writes. Compounding retains its existing output reduction and uses mist fuel too. Server config: `cosmerearcanists-mists-server.toml` (enabled, dimensions default Scadrial only, nightly probability, fog distance, sight clearance, supply gates and Connection/tap thresholds). Protocol **36** requires matching client/server versions. Published to `main` in gameplay commit `dae50ec`. [CI40808595046](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/40808595046) passed both Java21 builds/JUnit and all **349 server GameTests** with and without Curios. Graphical client startup also passed. Manual mist appearance, multiplayer behavior and balance remain unverified.
+Successful anvil shots now wear one vanilla stage: **anvil → chipped → damaged → broken**. A fresh anvil lasts three shots; its final shot still hits but cannot be recovered. Worn stacks retain their names/components/count and full metal mass. Failed launches and ordinary drops do not cause shot wear. Set `steelProjectiles.damageFiredAnvils=false` to disable it. Publication of these features and the treasure update below is explicitly approved; Minecraft CI verification is pending. Production math581checks and enhanced-cap13checks passed; native engine/JUnit checks remain pending because Gradle cannot download locally.
+
+Previous change: **0.54.0-alpha** adds exceptionally rare exploration treasure. By default, each eligible chest has a **1-in-2,000** chance to add one item, chosen equally among available categories: one atium-electrum alloy nugget (the existing atium item), a random charged unkeyed metalmind, or a charged Hemalurgic power spike. This is roughly1-in-6,000 per category while all three are available. It uses existing stronghold corridor/crossing/library, ancient-city, End-city treasure, woodland-mansion and bastion-treasure chests in any dimension; no new structures are added. Already-opened/generated chests are unchanged, and reopening does not reroll.
+
+Ordinary metalminds are random rings/bracelets/necklaces filled5–100%; tin selects sight/hearing/touch. They retain normal matching-power requirements. Nicrosilminds instead hold one real, unkeyed random permanent power at strength.25–1 by default and can be tapped by anyone; their charge is the configured capacity cost of that power. Spikes store one enabled power with strength.25–1, using its proper spike material and ordinary source/implantation data. Unsupported spike effects are excluded. Settings live in `cosmerearcanists-treasure-server.toml`: rarity, eligible tables/dimensions, category toggles, charge and strength. Fortune raw-table bonus samples do not multiply the rare-treasure roll. Publication explicitly approved; CI pending. Minecraft compilation and seven new engine tests are pending because the local Gradle distribution download is unavailable. Protocol36 unchanged.
+
+Previous change: **0.53.0-alpha** adds Scadrial mists: an independent 50% roll per night, with clear/misty streaks, varying onset/duration/density and gradual dusk/dawn transitions. Everyone shares the weather, which is stable across restarts. Enhanced Allomantic/Feruchemical tin sight and passive enhanced sight penetrate it in proportion to effective strength; at sight strength6 it is fully clear by default. Water/lava and stronger blindness/darkness fog remain restrictive.
+
+During actual mist weather, strong Scadrial Connection or funded duralumin tap1+ makes existing Allomantic metals free to use; very strong Connection or funded tap20+ provides unlimited virtual reserves for powers you already have. Connection charge is still paid. Ordinary Scadrian home Connection is1; strong/very strong defaults are1.15/4, modifiable through the persistent `cosmerearcanists:scadrial_connection` attribute. Native and actively implanted Scadrian home Connection count, and Connection storing/tapping affects expressed strength. Reserve supply ends immediately when weather, dimension, funded contact or eligibility changes; it is not banked afterward. Tier1 requires some existing metal and preserves explicit purge/admin writes. Compounding retains its existing output reduction and uses mist fuel too. Server config: `cosmerearcanists-mists-server.toml` (enabled, dimensions default Scadrial only, nightly probability, fog distance, sight clearance, supply gates and Connection/tap thresholds). Protocol **36** requires matching client/server versions. Published to `main` in gameplay commit `dae50ec`. [CI40808595046](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/40808595046) passed both Java21 builds/JUnit and all **349 server GameTests** with and without Curios. Graphical client startup also passed. The user reports general multiplayer gameplay tested and mostly working; this does not verify every edge case or the new unpublished treasure/balance changes.
 
 Previous change: **0.52.2-alpha** adds Scadrial-origin relocation and a persistent Scadrial ground respawn. Selecting Scadrial moves you to safe ground near its world spawn and sets your personal spawn there; beds can replace it normally. Existing origins are not relocated on login. Both builds,343server tests and client startup passed.
 
@@ -37,14 +45,13 @@ Use `defaultconfigs/cosmerearcanists-server.toml` to provide defaults for new wo
 - `/cosmere status` reports saved origin identifiers, including powers disabled by config.
 - `/cosmere reset <player>` requires permission level 2 and clears an online player's origin.
 
-Default birth chances are provisional: 25% for each natural art, independently. Each successful roll chooses uniformly among enabled metals. If Twinborn are disabled and both rolls succeed, one art is retained at random. A disabled art or empty metal pool produces no power. Origin selection does not teleport players yet.
+Default birth chances are provisional: 25% for each natural art, independently. Each successful roll chooses uniformly among enabled metals. If Twinborn are disabled and both rolls succeed, one art is retained at random. A disabled art or empty metal pool produces no power. Choosing Scadrial now transports the player there and sets their persistent spawn, with later beds able to replace it. Existing origins are not relocated on login.
 
 ## Development direction
-1. Origin selection screen and expanded ancestry options.
-2. Shared Investiture and ability access services respecting every relevant feature gate.
-3. Remaining Allomancy, then metalminds/Feruchemy, then spikes/Hemalurgy.
-4. Compounding and cross-system physics.
-5. Scadrial terrain, Cognitive Realm, and perpendicularities.
+
+The Metallic Arts core, compounding, Hemalurgy, Scadrial dimension/origin transport, currency, koloss and mists are implemented. Custom Scadrian structures are deferred at the user's request.
+
+Current Scadrial work centers on balance/fixes and whichever remaining god-metal, progression or in-game guidance features are chosen. The user reports multiplayer mostly working. Koloss creation and powered-NPC combat AI are optional later polish and may never be added. Mistwraiths are excluded from this Era2scope; kandra are deferred to the later race system. Survival travel will be developed alongside the next world/Cognitive Realm, then integrated with Scadrial. Origin-selection GUI, ancestry/races and Era2technology remain later or optional work; these deferred systems are not blockers for the current Scadrial scope.
 
 Add behavior settings alongside each implemented feature; avoid presenting unused settings as working mechanics.
 
@@ -216,16 +223,11 @@ alternatives use the smallest resolvable amount. Primitive raw metals/ores use
 one ingot-equivalent as a balance approximation. Unresolved detectable items
 use the configurable fallback. The entire thrown stack is one projectile.
 
-At reference push force 7 a nugget launches at 3.5 blocks/tick and deals about 2 damage
-before armor. Launch speed scales with effective push strength divided by the fourth root
-of metal content. A baseline anvil launches at about 0.86 blocks/tick and gives
+At reference push force7 a nugget launches at3.5blocks/tick. Launch speed scales with effective push strength divided by the fourth root of metal content. At that same reference force an anvil launches at about0.86blocks/tick and gives
 a substantial backward recoil, versus almost no recoil for a nugget.
-Impact energy sets damage through an exponential saturation curve approaching
-100; no hit can exceed 100 raw damage. Higher impact speed/power and more metal
-increase damage smoothly. Armor and normal hurt immunity still apply.
+Current damage uses2base for one nugget, otherwise2+0.2times total nugget-equivalents. Actual player shots multiply by captured effective Allomantic strength/burn level and impact speed relative to launch speed. Ordinary damage caps at100; amplified caps can exceed it under the existing duralumin rules. Armor and normal hurt immunity still apply.
 
-Shots use swept projectile collision, have gravity/drag, and recover the exact
-original stack on their first impact or after five seconds in flight. They do
+Shots use swept projectile collision and gravity/drag. Ordinary shots recover their cargo on first impact or expiry; anvil shots instead recover the next worn stage, and the last damaged-anvil shot breaks without recovery. They do
 not destroy terrain. Normal pickup delay applies. Player hits respect the
 existing player-target toggle, team restrictions, and vanilla damage rules.
 

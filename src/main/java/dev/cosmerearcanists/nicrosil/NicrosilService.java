@@ -71,6 +71,21 @@ public final class NicrosilService {
         else{root.putUUID(KEY,mind.id);root.putInt("cosmerearcanists_nicrosil_count",mind.entries().size());tag.putString("metal","nicrosil");if(mind.owner==null){tag.remove("owner");tag.putBoolean("unkeyed",true);}else{tag.putUUID("owner",mind.owner);tag.remove("unkeyed");}}
         root.put(METALMIND,tag);stack.set(DataComponents.MAX_STACK_SIZE,1);stack.set(DataComponents.CUSTOM_DATA,CustomData.of(root));
     }
+    /** Authoritative acquisition integration. Creates one neutral permanent power in an empty singleton. */
+    public static boolean initializeUnkeyedPower(net.minecraft.server.MinecraftServer server, ItemStack stack,
+                                                 String power, double strength) {
+        if (!server.isSameThread() || !configured() || !NicrosilConfig.POWERS.get() || !physical(stack)
+            || specialized(stack) || Metalminds.bound(stack) || !PowerAttributes.keys().contains(power)
+            || !PowerData.powerEnabled(power)) return false;
+        double charge = NicrosilLedger.powerCharge(strength, NicrosilConfig.POWER_CHARGE.get());
+        if (charge <= 0 || charge > Metalminds.capacity(stack)) return false;
+        var data = NicrosilData.get(server);
+        var mind = new NicrosilLedger.Mind(UUID.randomUUID(), null, Metalminds.capacity(stack));
+        if (!mind.add(new NicrosilLedger.Entry(UUID.randomUUID(), NicrosilLedger.POWER, power, strength, charge, null),
+            NicrosilConfig.ENTRIES.get()) || !data.ledger.add(mind, NicrosilConfig.MINDS.get())) return false;
+        mirror(stack, mind); data.setDirty(); return true;
+    }
+
     /** Wiping a copied item erases its shared record too; stale copies can never resurrect consumed contents. */
     public static boolean eraseItem(ItemStack stack){if(!specialized(stack))return true;var server=net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();if(server==null||!server.isSameThread())return false;var data=NicrosilData.get(server);if(data.ledger.erase(identity(stack)))data.setDirty();var root=stack.getOrDefault(DataComponents.CUSTOM_DATA,CustomData.EMPTY).copyTag();root.remove(KEY);root.remove("cosmerearcanists_nicrosil_count");stack.set(DataComponents.CUSTOM_DATA,CustomData.of(root));return true;}
     public static Session session(ServerPlayer p){return SESSIONS.get(p.getUUID());}

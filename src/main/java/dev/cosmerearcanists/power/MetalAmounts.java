@@ -13,6 +13,7 @@ public final class MetalAmounts {
         BuiltInRegistries.ITEM.forEach(item -> {
             var stack=item.getDefaultInstance(); String id=BuiltInRegistries.ITEM.getKey(item).toString();
             if(!MetalDetector.detects(server,stack)){fixed.put(id,0.0);return;}
+            if(stack.is(net.minecraft.world.item.Items.ANVIL)||stack.is(net.minecraft.world.item.Items.CHIPPED_ANVIL)||stack.is(net.minecraft.world.item.Items.DAMAGED_ANVIL)){fixed.put(id,279.0);return;}
             var tags=stack.getTags().map(t->t.location().getPath()).toList();
             String path=BuiltInRegistries.ITEM.getKey(item).getPath();
             if(path.endsWith("_nugget") || tags.stream().anyMatch(t->t.startsWith("nuggets/"))) fixed.put(id,1.0);
