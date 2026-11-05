@@ -176,10 +176,12 @@ public final class PowerClient {
         return power.equals(selected())?APPLY.getTranslatedKeyMessage().getString():power.equals(snapshot.secondary())?SECONDARY.getTranslatedKeyMessage().getString():"—";
     }
     private static String name(String key) {
+        if(key.equals("sel:aondor"))return "AonDor";
         if (key.isEmpty()) return "No power";
         String metal = key.substring(2); return Character.toUpperCase(metal.charAt(0)) + metal.substring(1) + (key.startsWith("a:") ? " · Allomancy" : " · Feruchemy");
     }
     private static ItemStack icon(String power) {
+        if(power.equals("sel:aondor"))return new ItemStack(net.minecraft.world.item.Items.GLOW_INK_SAC);
         if (power.isEmpty()) return ItemStack.EMPTY;
         String metal = power.substring(2); String namespace = Set.of("iron", "gold", "copper").contains(metal) ? "minecraft" : CosmereArcanists.MOD_ID;
         return new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(namespace, metal + "_ingot")));
@@ -187,7 +189,7 @@ public final class PowerClient {
     private static void panel(GuiGraphics g,String power,int y){
         var font=Minecraft.getInstance().font;g.fill(-3,y-3,194,y+34,0xB0101B29);g.renderItem(icon(power),0,y);
         g.drawString(font,font.plainSubstrByWidth("["+slotLabel(power)+"] "+name(power),170),21,y,0x91CFFF);
-        String label=PowerRules.label(power,state(power));if(!PowerRules.implemented(power))label+=" · effects pending";g.drawString(font,label,21,y+12,0xFFFFFF);
+        String label=PowerRules.label(power,state(power));if(!PowerRules.implemented(power)&&!power.equals("sel:aondor"))label+=" · effects pending";g.drawString(font,label,21,y+12,0xFFFFFF);
         String emotion=PowerClientConfig.EMOTION_HUD.get()?EmotionClient.modeLabel(power):"";int modeX=190-font.width(emotion);
         if(!emotion.isEmpty())g.drawString(font,emotion,modeX,y+24,0x91CFFF);
         if(power.startsWith("a:")){double reserve=snapshot.powers().stream().filter(e->e.power().equals(power)).mapToDouble(PowerNetwork.Entry::reserve).findFirst().orElse(0);g.drawString(font,font.plainSubstrByWidth(String.format(Locale.ROOT,"Reserve: %.1f",reserve),emotion.isEmpty()?170:Math.max(20,modeX-25)),21,y+24,0xACB9C8);}

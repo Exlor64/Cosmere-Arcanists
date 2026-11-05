@@ -11,6 +11,8 @@ public final class CosmereArcanists {
     public static final String MOD_ID = "cosmerearcanists";
     public CosmereArcanists(IEventBus bus, ModContainer container) {
         container.registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC);
+        container.registerConfig(ModConfig.Type.SERVER, dev.cosmerearcanists.aondor.AonDorConfig.SPEC, "cosmerearcanists-aondor-server.toml");
+        NeoForge.EVENT_BUS.register(dev.cosmerearcanists.aondor.AonDorService.events());
         container.registerConfig(ModConfig.Type.SERVER, dev.cosmerearcanists.mist.MistConfig.SPEC, "cosmerearcanists-mists-server.toml");
         dev.cosmerearcanists.equipment.EquipmentContent.register(bus);
         dev.cosmerearcanists.koloss.KolossContent.register(bus);
@@ -34,6 +36,7 @@ public final class CosmereArcanists {
         MetalOreFeature.register(bus);
         AlloyEnabledCondition.register(bus);
         container.registerConfig(ModConfig.Type.COMMON, MetallurgyConfig.SPEC);
+        container.registerConfig(ModConfig.Type.COMMON, dev.cosmerearcanists.cognitive.CognitiveConfig.SPEC, "cosmerearcanists-cognitive-common.toml");
         NeoForge.EVENT_BUS.register(new OriginEvents());
         container.registerConfig(ModConfig.Type.SERVER,dev.cosmerearcanists.mobs.NaturalMobConfig.SPEC,"cosmerearcanists-natural-mob-powers-server.toml");
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.mobs.NaturalMobPowers());

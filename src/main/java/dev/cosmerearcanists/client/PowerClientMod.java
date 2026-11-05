@@ -14,6 +14,12 @@ import net.neoforged.neoforge.common.NeoForge;
 public final class PowerClientMod {
     public PowerClientMod(IEventBus bus, ModContainer container) {
         container.registerConfig(ModConfig.Type.CLIENT, PowerClientConfig.SPEC);
+        dev.cosmerearcanists.aondor.AonDorNetwork.receiver=AonDorClient::receive;
+        dev.cosmerearcanists.aondor.AonDorNetwork.libraryReceiver=AonDorClient::receiveLibrary;
+        dev.cosmerearcanists.aondor.AonDorNetwork.stampReceiver=AonDorClient::receiveStamp;
+        dev.cosmerearcanists.aondor.AonDorNetwork.projectionReceiver=AonProjectionClient::receive;
+        NeoForge.EVENT_BUS.register(new AonProjectionClient());
+        NeoForge.EVENT_BUS.register(new AonDorClient());
         dev.cosmerearcanists.mist.MistPacket.receiver = MistClient::receive;
         NeoForge.EVENT_BUS.register(new MistClient());
         bus.addListener(this::keys);

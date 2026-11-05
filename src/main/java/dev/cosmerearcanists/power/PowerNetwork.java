@@ -96,8 +96,9 @@ public final class PowerNetwork {
         @Override public Type<Impulse> type() { return TYPE; }
     }
     public static void register(RegisterPayloadHandlersEvent event) {
-        var r = event.registrar("36");
+        var r = event.registrar("38");
         dev.cosmerearcanists.hemalurgy.HemalurgyNetwork.register(r);
+        dev.cosmerearcanists.aondor.AonDorNetwork.register(r);
         r.playToClient(dev.cosmerearcanists.mist.MistPacket.TYPE, dev.cosmerearcanists.mist.MistPacket.CODEC, (packet, context) -> context.enqueueWork(() -> dev.cosmerearcanists.mist.MistPacket.receiver.accept(packet)));
         dev.cosmerearcanists.copper.CopperNetwork.register(r);
         dev.cosmerearcanists.nicrosil.NicrosilNetwork.register(r);
@@ -125,7 +126,7 @@ public final class PowerNetwork {
         PacketDistributor.sendToPlayer(p,new TinStatus(p.level().dimension().location().toString(),tin,sight>0 && TinConfig.ZOOM.get() && (PowerService.holdingAbility(p,"a:tin")||dev.cosmerearcanists.feruchemy.TinFeruchemy.sense(p)==0&&PowerService.holdingAbility(p,"f:tin"))?TinMath.zoom(sight,TinConfig.ZOOM_STRENGTH.get(),TinConfig.MAX_ZOOM.get()):1,TinService.revealStrength(p)>0,(float)TinService.nightVision(p),dev.cosmerearcanists.feruchemy.TinFeruchemy.sense(p)));
         double pewter=PewterService.strength(p);
         PacketDistributor.sendToPlayer(p,new PewterStatus(p.level().dimension().location().toString(),PewterService.debt(p),pewter>0,pewter));
-        var list = PowerData.available(p).stream().map(power -> new Entry(power, PowerData.controlState(p, power), power.startsWith("a:") ? PowerData.reserve(p, power.substring(2)) : dev.cosmerearcanists.feruchemy.Metalminds.accessibleCharge(p,power.equals("f:tin")?dev.cosmerearcanists.feruchemy.TinFeruchemy.channel(p):power.substring(2)),PowerData.storeLevels(p,power),PowerData.tapLevels(p,power),power.startsWith("f:")?dev.cosmerearcanists.feruchemy.FeruchemicalEnhancement.committedFuel(p,power.equals("f:tin")?dev.cosmerearcanists.feruchemy.TinFeruchemy.channel(p):power.substring(2)):0,power.startsWith("f:")?dev.cosmerearcanists.feruchemy.FeruchemicalEnhancement.committedTicks(p,power.equals("f:tin")?dev.cosmerearcanists.feruchemy.TinFeruchemy.channel(p):power.substring(2)):0)).toList();
+        var list = PowerData.available(p).stream().map(power -> power.equals(dev.cosmerearcanists.aondor.AonDorService.POWER)?new Entry(power,1,0,0,0,0,0):new Entry(power, PowerData.controlState(p, power), power.startsWith("a:") ? PowerData.reserve(p, power.substring(2)) : dev.cosmerearcanists.feruchemy.Metalminds.accessibleCharge(p,power.equals("f:tin")?dev.cosmerearcanists.feruchemy.TinFeruchemy.channel(p):power.substring(2)),PowerData.storeLevels(p,power),PowerData.tapLevels(p,power),power.startsWith("f:")?dev.cosmerearcanists.feruchemy.FeruchemicalEnhancement.committedFuel(p,power.equals("f:tin")?dev.cosmerearcanists.feruchemy.TinFeruchemy.channel(p):power.substring(2)):0,power.startsWith("f:")?dev.cosmerearcanists.feruchemy.FeruchemicalEnhancement.committedTicks(p,power.equals("f:tin")?dev.cosmerearcanists.feruchemy.TinFeruchemy.channel(p):power.substring(2)):0)).toList();
         PacketDistributor.sendToPlayer(p, new Snapshot(p.level().dimension().location().toString(), PowerData.selected(p), PowerData.secondary(p), PowerConfig.FERUCHEMY_LEVELS.get(), list, targets));
     }
     private PowerNetwork() { }

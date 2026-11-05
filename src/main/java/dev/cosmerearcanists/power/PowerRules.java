@@ -12,6 +12,7 @@ public final class PowerRules {
         return power.startsWith("a:")?(current>=3?0:current+1):current>=tapLevels?-storeLevels:current+1;
     }
     public static String label(String power, int state) {
+        if(power.equals("sel:aondor"))return "Hold use power to draw";
         if (state == 0) return "Off";
         if (power.startsWith("a:")&&state<0) return "Compounding "+Math.abs(state);
         if (power.startsWith("a:")) return switch (state) { case 1 -> "Low burn"; case 2 -> "Burning"; default -> "Flaring"; };
