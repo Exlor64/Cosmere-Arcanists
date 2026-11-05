@@ -174,7 +174,9 @@ public final class AonDorScreen extends Screen {
         for(int index=0;index<glyphs.size();index++){
             var glyph=glyphs.get(index);int x=left(glyph),y=top(glyph),size=size(glyph),color=index==placement?0xFFE6BC71:index==selected?0xFF87EBFF:0xFF426579;
             if(!glyph.effect())line(graphics,canvasX+main.x()*canvasWidth,canvasY+main.y()*canvasHeight,canvasX+glyph.x()*canvasWidth,canvasY+glyph.y()*canvasHeight,0x554F8CA5);
-            graphics.fill(x-1,y-13,x+size+1,y+size+1,color);graphics.fill(x,y,x+size,y+size,0x500A1825);
+            graphics.fill(x-1,y-13,x+size+1,y,color);
+            graphics.fill(x-1,y,x,y+size+1,color);graphics.fill(x+size,y,x+size+1,y+size+1,color);
+            graphics.fill(x,y+size,x+size,y+size+1,color);graphics.fill(x,y,x+size,y+size,0x500A1825);
             graphics.drawString(font,glyph.effect()?(locked?"Effect · LOCKED":"Effect · drawing"):"Arg "+(ordered.indexOf(glyph)+1),x+2,y-11,0xFFFFFFFF,false);
             for(int grid=1;grid<4;grid++){int offset=grid*size/4;graphics.fill(x+offset,y,x+offset+1,y+size,0xFF182E40);graphics.fill(x,y+offset,x+size,y+offset+1,0xFF182E40);}
             strokes(graphics,glyph.strokes(),x,y,size);if(index==selected&&stroke!=null)strokes(graphics,List.of(stroke),x,y,size);
