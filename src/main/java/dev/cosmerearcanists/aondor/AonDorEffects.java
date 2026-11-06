@@ -54,9 +54,9 @@ public final class AonDorEffects {
     }
     public static boolean warm(LivingEntity target,double strength){int before=target.getTicksFrozen();if(before<=0)return false;target.setTicksFrozen(Math.max(0,before-(int)Math.round(AonDorConfig.THAW.get()*strength)));return true;}
     private static String heat(ServerPlayer player,double strength){
-        var target=target(player);if(target!=null){boolean warmed=target instanceof LivingEntity living&&warm(living,strength);player.serverLevel().sendParticles(ParticleTypes.FLAME,target.getX(),target.getY()+target.getBbHeight()*.5,target.getZ(),10,.15,.15,.15,.005);return warmed?"Heat: target warmed; freezing reduced.":target instanceof LivingEntity?"Heat: target is already warm.":"Heat: this entity has no basic warming interaction.";}
-        if(!loadedRay(player))return "Heat: target area is not loaded.";var hit=player.serverLevel().clip(new ClipContext(player.getEyePosition(),player.getEyePosition().add(player.getLookAngle().scale(AonDorConfig.RANGE.get())),ClipContext.Block.OUTLINE,ClipContext.Fluid.NONE,player));if(hit.getType()==HitResult.Type.MISS)return "Heat: look at a cold block, campfire or freezing entity.";
-        return warmBlock(player,hit.getBlockPos())?"Heat: block warmed.":"Heat: this block has no basic warming interaction.";
+        double power=AonHeatPower.effective(1,strength,AonDorConfig.HEAT_MAX_POWER.get());var target=target(player);
+        if(target!=null)return AonHeat.entities(player,java.util.List.of(target),strength,power);
+        var pos=gazeBlock(player);return pos==null?"Heat: look at an entity or block.":AonHeat.block(player,pos,strength,power);
     }
     public static BlockPos gazeBlock(ServerPlayer player){
         if(!loadedRay(player))return null;var hit=player.serverLevel().clip(new ClipContext(player.getEyePosition(),player.getEyePosition().add(player.getLookAngle().scale(AonDorConfig.RANGE.get())),ClipContext.Block.OUTLINE,ClipContext.Fluid.NONE,player));return hit.getType()==HitResult.Type.MISS?null:hit.getBlockPos();

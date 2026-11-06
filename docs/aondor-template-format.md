@@ -27,7 +27,7 @@ learned knowledge remain; no persistent spells or inscriptions are implemented.
 - Light: actual level12light in nearby empty air for20seconds; no blocks overwritten.
 - Force: pushes the nearest valid gaze target of any entity type within8blocks, adding .45velocity.
 - Heat: reduces freezing by140ticks, melts one snow layer or ordinary/frosted ice,
-  or lights a dry unlit campfire. No arbitrary fires, damage or cooking.
+  or lights a dry unlit campfire. Power defaults1 and can ignite; an optional final Number enables fire damage, recipe cooking and smelting. See [Heat controls](aondor-heat-controls.md).
 
 These defaults are at strength1 with precise recognition. Shape-only matches apply
 75%potency by default. Light brightness/duration, Force impulse and thaw amount

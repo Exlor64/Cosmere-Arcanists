@@ -163,6 +163,21 @@ public class VerifyAonDor {
   check(AonProgram.compile(new AonDrawing(createInk),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75).root().arguments().get(1).type()==AonProgram.Type.LIST);
   var targetInk=List.of(placed(byId.get("force"),.5,.8,.06,-1,1),placed(byId.get("list"),.5,.6,.05,0,1),placed(byId.get("caster"),.5,.4,.05,1,1));
   check(AonProgram.compile(new AonDrawing(targetInk),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75).root().arguments().get(0).type()==AonProgram.Type.LIST);
+  var skipHeat=new ArrayList<Glyph>(List.of(placed(byId.get("heat"),.5,.6,.08,-1,1),placed(byId.get("skip"),.53,.3,.08,0,1),placed(byId.get("number"),.8,.6,.08,0,8)));
+  check(AonProgram.compile(new AonDrawing(skipHeat),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75).root().arguments().get(0).type()==AonProgram.Type.SKIP);
+  skipHeat.set(2,placed(byId.get("caster"),.8,.6,.08,0,1));bad(()->AonProgram.compile(new AonDrawing(skipHeat),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75));
+  var criticalSkip=List.of(placed(byId.get("light"),.5,.8,.06,-1,1),placed(byId.get("position_of"),.5,.6,.06,0,1),placed(byId.get("skip"),.5,.4,.06,1,1));bad(()->AonProgram.compile(new AonDrawing(criticalSkip),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75));
+  var skipNode=new AonProgram.Node("cosmerearcanists:skip",0,AonProgram.Type.SKIP,List.of());bad(()->AonLists.resultType("list",List.of(skipNode)));bad(()->AonLists.resultType("if",List.of(boolNode,skipNode,numNode)));
+  check(AonHeatPower.effective(8,.75,64)==6&&AonHeatPower.effective(0,4,64)==0);
+  for(double power:new double[]{-1,Double.NaN,Double.POSITIVE_INFINITY,65})bad(()->AonHeatPower.effective(power,1,64));
+  check(!AonHeatPower.reaches(.75,1)&&AonHeatPower.reaches(4,4));
+  check(AonHeatPower.damage(1,2,1,40)==0&&AonHeatPower.damage(8,2,1,40)==8&&AonHeatPower.damage(64,2,1,40)==40);
+  for(double power:new double[]{8,16,64,128,1024})check(AonHeatPower.effective(power,1,0)==power&&AonHeatPower.damage(power,2,1,0)==power);
+  bad(()->AonHeatPower.effective(Double.MAX_VALUE,2,0));bad(()->AonHeatPower.damage(Float.MAX_VALUE,2,2,0));
+  var lightEntityInk=List.of(placed(byId.get("light"),.5,.6,.08,-1,1),placed(byId.get("caster"),.5,.3,.08,0,1));
+  check(AonProgram.compile(new AonDrawing(lightEntityInk),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75).root().arguments().get(0).type()==AonProgram.Type.ENTITY);
+  var lightListInk=List.of(placed(byId.get("light"),.5,.6,.08,-1,1),placed(byId.get("list"),.5,.3,.08,0,1),placed(byId.get("caster"),.5,.1,.08,1,1));
+  check(AonProgram.compile(new AonDrawing(lightListInk),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75).root().arguments().get(0).type()==AonProgram.Type.LIST);
   var cyclic=new AonDrawing(List.of(rootForce,new Glyph(false,.2,.2,.1,byId.get("caster").strokes(),1,1)));bad(()->AonLayout.parents(cyclic));
   var a=placed(byId.get("gaze_block"),.35,.5,.2,-1,1);var b=placed(byId.get("gaze_block"),.65,.5,.2,-1,1);
   check(AonLayout.parentAt(List.of(a,b),2,p(.5,.2))==-2);
@@ -242,11 +257,11 @@ for resource in sorted((ROOT/'src/main/resources/data/cosmerearcanists/aondor/ao
     data=json.loads(resource.read_text())
     lines=','.join('List.of('+','.join(f'p({x},{y})' for x,y in line)+')' for line in data['strokes'])
     patterns.append(f'patterns.add(new AonRecognition.Template("cosmerearcanists:{resource.stem}","{data["name"]}",{str(data["kind"]=="effect").lower()},List.of({lines})));')
-assert len(patterns)==37, 'Expected four effects and thirty-three argument Aons'
+assert len(patterns)==38, 'Expected four effects and thirty-four argument Aons'
 SOURCE=SOURCE.replace('/* RESOURCE_PATTERNS */','\n'.join(patterns))
 with tempfile.TemporaryDirectory() as tmp:
     source=Path(tmp)/'VerifyAonDor.java';source.write_text(SOURCE)
     subprocess.run(['java','-m','jdk.compiler/com.sun.tools.javac.Main','-d',tmp,
         str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonDrawing.java'),
-        str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonRecognition.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonNumerals.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonLayout.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonProgram.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonMath.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonLists.java'),str(source)],check=True)
+        str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonRecognition.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonNumerals.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonLayout.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonProgram.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonMath.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonLists.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonHeatPower.java'),str(source)],check=True)
     subprocess.run(['java','-cp',tmp,'VerifyAonDor'],check=True)

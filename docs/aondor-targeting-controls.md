@@ -42,8 +42,8 @@ and other entity types. Removed/dead entities and spectators remain unavailable.
 and Mobs narrow lists; Exclude and Nearest work with every entity type. Empty gaze selectors and invalid types produce explicit
 errors; they never silently revert to the default target.
 
-Main signatures: Light([Position]); Force([Entity or Entity list], [Direction]);
-Heat([Entity, Entity list or Block]). Omitting all arguments preserves existing base
+Main signatures: Light([Position / Entity / Entity list]); Force([Entity or Entity list], [Direction]);
+Heat([Entity, Entity list or Block], [Number power=1]). Omitting all arguments preserves existing base
 behavior. Explicit Caster can target Force at oneself. Friendly/PvP protections remain
 for other entities. No strength/duration/filter glyphs yet; arithmetic and vector operators are documented separately.
 
@@ -77,3 +77,7 @@ requires matching clients/server. No variables, arbitrary lists,
 other region shapes, item/block inscription or new Dor costs are implemented yet.
 
 Force accepts generic entities and adds motion where their normal physics permits. Heat ignores nonliving entries in mixed lists; it does not destroy or cook dropped items. Gaze Entity has no vanilla pickability filter, so small items/orbs/projectiles are selectable. Walls still occlude gaze; loaded terrain and the initial query target cap still apply.
+
+Heat power, fire, cooking/smelting and optional Skip slots are documented in [Heat controls](aondor-heat-controls.md).
+
+Coordinate Light is permanent; entity Light applies Glowing. See [Light controls](aondor-light-controls.md).

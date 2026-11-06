@@ -22,7 +22,7 @@ public final class AonEvaluator {
     @SuppressWarnings("unchecked") static Value evaluate(ServerPlayer p,AonProgram.Node node){
         var args=node.arguments();String key=node.id().substring(17);
         if(AonLists.operation(node.id()))return listOperation(p,node);
-        if(key.equals("recall"))return AonMemory.recall(p,args.isEmpty()?0:(Double)input(p,args.get(0),Type.NUMBER));
+        if(key.equals("recall"))return AonMemory.recall(p,!AonProgram.supplied(args,0)?0:(Double)input(p,args.get(0),Type.NUMBER));
         if(AonMath.operation(node.id())){
             var resolved=args.stream().map(n->evaluate(p,n)).toList();
             var runtimeNodes=resolved.stream().map(v->new AonProgram.Node("runtime",0,v.type(),List.of())).toList();
@@ -31,18 +31,19 @@ public final class AonEvaluator {
             Object result=AonMath.apply(key,values);return new Value(type,result instanceof AonMath.Vector v?new Vec3(v.x(),v.y(),v.z()):result);
         }
         Object result=switch(key){
+            case "skip"->null;
             case "caster"->p;
             case "gaze_entity"->{var target=AonDorEffects.target(p);if(target==null)throw new IllegalArgumentException("Gaze Entity found no target");yield target;}
             case "gaze_block"->{var pos=AonDorEffects.gazeBlock(p);if(pos==null)throw new IllegalArgumentException("Gaze Block found no block");yield pos;}
             case "position_of"->{Object target=input(p,args.get(0),Type.ENTITY,Type.BLOCK);yield target instanceof Entity entity?entity.position():((BlockPos)target).getCenter();}
-            case "look_direction"->{var entity=args.isEmpty()?p:(Entity)input(p,args.get(0),Type.ENTITY);yield entity.getLookAngle().normalize();}
+            case "look_direction"->{var entity=!AonProgram.supplied(args,0)?p:(Entity)input(p,args.get(0),Type.ENTITY);yield entity.getLookAngle().normalize();}
             case "number"->node.number();
             case "sphere"->{var center=(Vec3)input(p,args.get(0),Type.POSITION);double radius=(Double)input(p,args.get(1),Type.NUMBER);if(radius<=0||radius>AonDorConfig.RANGE.get())throw new IllegalArgumentException("Sphere radius must be positive and at most "+AonDorConfig.RANGE.get());checkPosition(p,center);yield new Sphere(center,radius);}
             case "entities_in"->{var region=(Sphere)input(p,args.get(0),Type.REGION);yield entities(p,region);}
             case "exclude"->{var list=(List<Entity>)input(p,args.get(0),Type.ENTITIES);Object removed=input(p,args.get(1),Type.ENTITY,Type.ENTITIES);var excluded=removed instanceof List<?> entries?entries:List.of(removed);yield list.stream().filter(e->!excluded.contains(e)).toList();}
             case "players"->((List<Entity>)input(p,args.get(0),Type.ENTITIES)).stream().filter(e->e instanceof net.minecraft.world.entity.player.Player).toList();
             case "mobs"->((List<Entity>)input(p,args.get(0),Type.ENTITIES)).stream().filter(e->e instanceof net.minecraft.world.entity.Mob).toList();
-            case "nearest"->{var list=(List<Entity>)input(p,args.get(0),Type.ENTITIES);var origin=args.size()>1?(Vec3)input(p,args.get(1),Type.POSITION):p.position();checkPosition(p,origin);yield list.stream().min(Comparator.comparingDouble((Entity e)->e.position().distanceToSqr(origin)).thenComparingInt(Entity::getId)).orElseThrow(()->new IllegalArgumentException("Nearest found no targets"));}
+            case "nearest"->{var list=(List<Entity>)input(p,args.get(0),Type.ENTITIES);var origin=AonProgram.supplied(args,1)?(Vec3)input(p,args.get(1),Type.POSITION):p.position();checkPosition(p,origin);yield list.stream().min(Comparator.comparingDouble((Entity e)->e.position().distanceToSqr(origin)).thenComparingInt(Entity::getId)).orElseThrow(()->new IllegalArgumentException("Nearest found no targets"));}
             default->throw new IllegalArgumentException("Unsupported targeting operation "+key);
         };
         return new Value(node.type(),result);
@@ -95,21 +96,30 @@ public final class AonEvaluator {
     @SuppressWarnings("unchecked") public static String execute(ServerPlayer p,AonProgram program,double strength){
         var root=program.root();var args=root.arguments();
         if(root.id().equals("cosmerearcanists:remember")){
-            double key=args.isEmpty()?0:(Double)input(p,args.get(0),Type.NUMBER);var remembered=args.size()>1?evaluate(p,args.get(1)):new Value(Type.ENTITY,p);return AonMemory.remember(p,key,remembered);
+            double key=!AonProgram.supplied(args,0)?0:(Double)input(p,args.get(0),Type.NUMBER);var remembered=AonProgram.supplied(args,1)?evaluate(p,args.get(1)):new Value(Type.ENTITY,p);return AonMemory.remember(p,key,remembered);
         }
-        if(args.isEmpty())return AonDorEffects.cast(p,root.id(),strength);
-        var resolved=evaluate(p,args.get(0));
-        if(root.id().equals("cosmerearcanists:light")){var position=(Vec3)require(resolved,Type.POSITION).data();checkPosition(p,position);return AonDorEffects.lightAt(p,position,strength);}
-        resolved=require(resolved,root.id().equals("cosmerearcanists:force")?new Type[]{Type.ENTITY,Type.ENTITIES}:new Type[]{Type.ENTITY,Type.ENTITIES,Type.BLOCK});
+        boolean heat=root.id().equals("cosmerearcanists:heat");
+        if(root.id().equals("cosmerearcanists:light")){
+            if(!AonProgram.supplied(args,0))return AonDorEffects.cast(p,root.id(),strength);
+            var lightTarget=require(evaluate(p,args.get(0)),Type.POSITION,Type.ENTITY,Type.ENTITIES);
+            if(lightTarget.type()==Type.POSITION){var position=(Vec3)lightTarget.data();checkPosition(p,position);return AonLightEffects.permanent(p,position,strength);}
+            var targets=lightTarget.type()==Type.ENTITY?List.of((Entity)lightTarget.data()):(List<Entity>)lightTarget.data();
+            return AonLightEffects.glow(p,targets,strength);
+        }
+        double heatPower=heat?AonHeatPower.effective(AonProgram.supplied(args,1)?(Double)input(p,args.get(1),Type.NUMBER):1,strength,AonDorConfig.HEAT_MAX_POWER.get()):0;
+        var direction=!heat&&AonProgram.supplied(args,1)?(Vec3)input(p,args.get(1),Type.DIRECTION,Type.VECTOR):p.getLookAngle();
+        if(!heat&&AonProgram.supplied(args,1)&&(!Double.isFinite(direction.length())||direction.length()>AonDorConfig.MAX_FORCE_VECTOR.get()))throw new IllegalArgumentException("Force vector magnitude exceeds "+AonDorConfig.MAX_FORCE_VECTOR.get());
+        Value resolved;
+        if(AonProgram.supplied(args,0))resolved=evaluate(p,args.get(0));
+        else{var gaze=AonDorEffects.target(p);if(gaze!=null)resolved=new Value(Type.ENTITY,gaze);else if(heat){var block=AonDorEffects.gazeBlock(p);if(block==null)return "Heat: look at an entity or block.";resolved=new Value(Type.BLOCK,block);}else return "Force: look at a valid entity within range.";}
+        resolved=require(resolved,heat?new Type[]{Type.ENTITY,Type.ENTITIES,Type.BLOCK}:new Type[]{Type.ENTITY,Type.ENTITIES});
         Object target=resolved.data();var entities=target instanceof List<?>?(List<Entity>)target:target instanceof Entity entity?List.of(entity):List.<Entity>of();
-        var direction=args.size()>1?(Vec3)input(p,args.get(1),Type.DIRECTION,Type.VECTOR):p.getLookAngle();
-        if(root.id().equals("cosmerearcanists:force")&&args.size()>1&&(!Double.isFinite(direction.length())||direction.length()>AonDorConfig.MAX_FORCE_VECTOR.get()))throw new IllegalArgumentException("Force vector magnitude exceeds "+AonDorConfig.MAX_FORCE_VECTOR.get());
         if(entities.size()>AonDorConfig.MAX_TARGETS.get())throw new IllegalArgumentException("Stored list exceeds the current target limit");
         entities=List.copyOf(new LinkedHashSet<>(entities));
         for(var entity:entities){checkPosition(p,entity.position());if(!entity.isAlive()||entity.isSpectator()||entity.level()!=p.level())throw new IllegalArgumentException("A selected entity is no longer available");}
         if(root.id().equals("cosmerearcanists:force")){int applied=0;for(var entity:entities)if(AonDorEffects.push(p,entity,strength,direction,true))applied++;return "Force: pushed "+applied+" target(s).";}
-        if(target instanceof BlockPos pos){checkPosition(p,pos.getCenter());return AonDorEffects.warmBlock(p,pos)?"Heat: block warmed.":"Heat: this block cannot be warmed.";}
-        int warmed=0;for(var entity:entities)if(entity instanceof net.minecraft.world.entity.LivingEntity living&&AonDorEffects.warm(living,strength))warmed++;return "Heat: warmed "+warmed+" freezing target(s).";
+        if(target instanceof BlockPos pos){checkPosition(p,pos.getCenter());return AonHeat.block(p,pos,strength,heatPower);}
+        return AonHeat.entities(p,entities,strength,heatPower);
     }
     private AonEvaluator(){}
 }

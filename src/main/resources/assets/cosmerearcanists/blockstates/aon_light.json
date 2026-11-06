@@ -1,7 +1,10 @@
 {
   "variants": {
-    "": {
+    "persistent=false": {
       "model": "cosmerearcanists:block/aon_light"
+    },
+    "persistent=true": {
+      "model": "cosmerearcanists:block/aon_light_permanent"
     }
   }
 }

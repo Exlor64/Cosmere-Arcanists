@@ -95,8 +95,9 @@ public final class AonDorService {
         String message=execute(player,request);player.displayClientMessage(net.minecraft.network.chat.Component.literal(message),true);
         PacketDistributor.sendToPlayer(player,new AonDorNetwork.Result(request.nonce(),player.level().dimension().location().toString(),message));
     }
-    @SubscribeEvent public void memoryCleanup(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event){if(event.getServer().getTickCount()%20==0)AonMemory.cleanup(event.getServer());}
-    @SubscribeEvent public void memoryStopped(net.neoforged.neoforge.event.server.ServerStoppedEvent event){AonMemory.clear(event.getServer());}
+    @SubscribeEvent public void memoryCleanup(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event){if(event.getServer().getTickCount()%20==0)AonMemory.cleanup(event.getServer());AonLightEffects.tick(event.getServer());}
+    @SubscribeEvent public void memoryStopped(net.neoforged.neoforge.event.server.ServerStoppedEvent event){AonMemory.clear(event.getServer());AonLightEffects.stopped();}
+    @SubscribeEvent public void lightEntityJoined(net.neoforged.neoforge.event.entity.EntityJoinLevelEvent event){AonLightEffects.joined(event.getEntity());}
     private AonDorService(){}
     public static AonDorService events(){return new AonDorService();}
 }

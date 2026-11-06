@@ -12,13 +12,13 @@ public final class AonLists {
     private static void expect(Node node,Type... types){if(node.type()!=Type.VALUE&&Arrays.stream(types).noneMatch(t->t==node.type()))throw new IllegalArgumentException("List/logic argument is "+node.type()+"; expected "+Arrays.toString(types));}
     public static Type resultType(String key,List<Node> args){
         switch(key){
-            case "list"->{count(key,args,0,16);for(var n:args)if(n.type()==Type.EFFECT)throw new IllegalArgumentException("A List contains values, not effects");return Type.LIST;}
-            case "append"->{count(key,args,2,16);expect(args.get(0),Type.LIST,Type.ENTITIES);for(var n:args.subList(1,args.size()))if(n.type()==Type.EFFECT)throw new IllegalArgumentException("Append takes values, not effects");return Type.LIST;}
+            case "list"->{count(key,args,0,16);for(var n:args)if((n.type()==Type.EFFECT||n.type()==Type.SKIP))throw new IllegalArgumentException("A List contains values, not effects");return Type.LIST;}
+            case "append"->{count(key,args,2,16);expect(args.get(0),Type.LIST,Type.ENTITIES);for(var n:args.subList(1,args.size()))if((n.type()==Type.EFFECT||n.type()==Type.SKIP))throw new IllegalArgumentException("Append takes values, not effects");return Type.LIST;}
             case "remove_at","at"->{count(key,args,2,2);expect(args.get(0),Type.LIST,Type.ENTITIES);expect(args.get(1),Type.NUMBER);return key.equals("at")?(args.get(0).type()==Type.ENTITIES?Type.ENTITY:Type.VALUE):args.get(0).type();}
             case "size"->{count(key,args,1,1);expect(args.get(0),Type.LIST,Type.ENTITIES);return Type.NUMBER;}
             case "union","intersection","difference"->{count(key,args,2,16);for(var n:args)expect(n,Type.LIST,Type.ENTITIES);return args.stream().allMatch(n->n.type()==Type.ENTITIES)?Type.ENTITIES:Type.LIST;}
-            case "contains"->{count(key,args,2,2);expect(args.get(0),Type.LIST,Type.ENTITIES);if(args.get(1).type()==Type.EFFECT)throw new IllegalArgumentException("Contains takes a value, not an effect");return Type.BOOLEAN;}
-            case "if"->{count(key,args,3,3);expect(args.get(0),Type.BOOLEAN);if(args.get(1).type()==Type.EFFECT||args.get(2).type()==Type.EFFECT)throw new IllegalArgumentException("If selects values, not effects");return args.get(1).type()==args.get(2).type()?args.get(1).type():Type.VALUE;}
+            case "contains"->{count(key,args,2,2);expect(args.get(0),Type.LIST,Type.ENTITIES);if((args.get(1).type()==Type.EFFECT||args.get(1).type()==Type.SKIP))throw new IllegalArgumentException("Contains takes a value, not an effect");return Type.BOOLEAN;}
+            case "if"->{count(key,args,3,3);expect(args.get(0),Type.BOOLEAN);if((args.get(1).type()==Type.EFFECT||args.get(1).type()==Type.SKIP)||(args.get(2).type()==Type.EFFECT||args.get(2).type()==Type.SKIP))throw new IllegalArgumentException("If selects values, not effects");return args.get(1).type()==args.get(2).type()?args.get(1).type():Type.VALUE;}
             case "and","or","not"->{count(key,args,key.equals("not")?1:2,key.equals("not")?1:16);for(var n:args)expect(n,Type.BOOLEAN);return Type.BOOLEAN;}
             default->throw new IllegalArgumentException("Unknown list operation "+key);
         }
