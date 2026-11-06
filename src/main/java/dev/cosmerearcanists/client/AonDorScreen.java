@@ -167,6 +167,9 @@ public final class AonDorScreen extends Screen {
             pose.popPose();
         }
     }
+    // Screen.render calls this before widgets. Our canvas/background are already drawn;
+    // vanilla's blur here would post-process the completed ink and obscure the projection.
+    @Override public void renderBackground(GuiGraphics graphics,int mouseX,int mouseY,float partial){}
     @Override public void render(GuiGraphics graphics,int mouseX,int mouseY,float partial){
         resizePlacement(mouseX,mouseY);graphics.fill(0,0,width,height,0x65080F19);graphics.drawCenteredString(font,title,width/2,8,0xFFD8F8FF);
         graphics.drawCenteredString(font,"Draw · Ctrl+Z undo · Lock Aon · scroll learned Aons · right-click places",width/2,24,0xFFB7CAD8);
