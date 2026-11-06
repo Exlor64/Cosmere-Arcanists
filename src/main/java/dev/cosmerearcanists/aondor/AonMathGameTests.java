@@ -29,7 +29,7 @@ public final class AonMathGameTests {
     @GameTest(template="empty") public static void positionPlusVectorOffsetsLight(GameTestHelper h){
         var p=player(h);var target=BlockPos.containing(p.position().add(0,2,0));h.getLevel().setBlock(target,net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),3);
         var ink=List.of(glyph(p,"light",.4,.7,-1,1),glyph(p,"add",.4,.5,0,1),glyph(p,"position_of",.4,.3,1,1),glyph(p,"caster",.4,.15,2,1),glyph(p,"vector",.7,.5,1,1),glyph(p,"number",.7,.3,4,0),glyph(p,"number",.88,.5,4,2),glyph(p,"number",.7,.7,4,0));
-        h.assertTrue(cast(p,ink).contains("temporary light")&&h.getLevel().getBlockState(target).is(AonLightBlock.LIGHT.get()),"Adding world vector(0,2,0) offsets caster position and places real light");h.succeed();
+        String result=cast(p,ink);h.assertTrue(result.contains("temporary light")&&h.getLevel().getBlockState(target).is(AonLightBlock.LIGHT.get()),"Adding world vector(0,2,0) offsets caster position and places real light; result="+result+" target="+target+" state="+h.getLevel().getBlockState(target)+" above="+h.getLevel().getBlockState(target.above())+" below="+h.getLevel().getBlockState(target.below())+" eye="+p.getEyePosition()+" position="+p.position()+" mayBuild="+p.getAbilities().mayBuild);h.succeed();
     }
     @GameTest(template="empty") public static void dynamicZeroNormalizationFailsBeforeForce(GameTestHelper h){
         var p=player(h);var pig=EntityType.PIG.create(h.getLevel());pig.setPos(p.getX(),p.getEyeY()-.4,p.getZ()+3);h.getLevel().addFreshEntity(pig);
