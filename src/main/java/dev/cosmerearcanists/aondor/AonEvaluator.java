@@ -100,7 +100,7 @@ public final class AonEvaluator {
         if(args.isEmpty())return AonDorEffects.cast(p,root.id(),strength);
         var resolved=evaluate(p,args.get(0));
         if(root.id().equals("cosmerearcanists:light")){var position=(Vec3)require(resolved,Type.POSITION).data();checkPosition(p,position);return AonDorEffects.lightAt(p,position,strength);}
-        require(resolved,root.id().equals("cosmerearcanists:force")?new Type[]{Type.ENTITY,Type.ENTITIES}:new Type[]{Type.ENTITY,Type.ENTITIES,Type.BLOCK});
+        resolved=require(resolved,root.id().equals("cosmerearcanists:force")?new Type[]{Type.ENTITY,Type.ENTITIES}:new Type[]{Type.ENTITY,Type.ENTITIES,Type.BLOCK});
         Object target=resolved.data();var entities=target instanceof List<?>?(List<Entity>)target:target instanceof Entity entity?List.of(entity):List.<Entity>of();
         var direction=args.size()>1?(Vec3)input(p,args.get(1),Type.DIRECTION,Type.VECTOR):p.getLookAngle();
         if(root.id().equals("cosmerearcanists:force")&&args.size()>1&&(!Double.isFinite(direction.length())||direction.length()>AonDorConfig.MAX_FORCE_VECTOR.get()))throw new IllegalArgumentException("Force vector magnitude exceeds "+AonDorConfig.MAX_FORCE_VECTOR.get());
