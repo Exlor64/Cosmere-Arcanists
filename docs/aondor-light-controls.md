@@ -27,4 +27,4 @@ Protocol43 is required because the existing light block now has temporary/perman
 
 Dynamic Dor costs remain planned, with no new pool or deductions. Future pricing must distinguish temporary duration, permanent placement/brightness, and unique glowing targets/duration. Skip uses the ordinary temporary default and must not waive its cost.
 
-These changes are local. User explicitly approved uploading the combined Heat/Skip/Light changes and running full Minecraft CI. Verification is in progress; main is unchanged.
+Available on test branch `aondor-light-0.64.0`. Both Java21 builds/JUnit, all405required server tests with and without Curios, and graphical client startup passed in [CI42301009965](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/42301009965). No light-model loading errors found; hands-on visual/multiplayer testing remains. Main is unchanged.
