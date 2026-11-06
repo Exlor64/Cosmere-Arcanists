@@ -110,11 +110,11 @@ public final class AonDorNetwork {
             public void encode(RegistryFriendlyByteBuf b,Cast p){Check.CODEC.encode(b,p.request);}};
         @Override public Type<Cast> type(){return TYPE;}
     }
-    public record Identified(UUID nonce,String dimension,int index,String id,String name) implements CustomPacketPayload {
+    public record Identified(UUID nonce,String dimension,int index,String id,String name,double number) implements CustomPacketPayload {
         public static final Type<Identified> TYPE=AonDorNetwork.type("aondor_identified");
         public static final StreamCodec<RegistryFriendlyByteBuf,Identified> CODEC=new StreamCodec<>(){
-            public Identified decode(RegistryFriendlyByteBuf b){return new Identified(b.readUUID(),b.readUtf(128),b.readVarInt(),b.readUtf(128),b.readUtf(128));}
-            public void encode(RegistryFriendlyByteBuf b,Identified p){b.writeUUID(p.nonce);b.writeUtf(p.dimension,128);b.writeVarInt(p.index);b.writeUtf(p.id,128);b.writeUtf(p.name,128);}};
+            public Identified decode(RegistryFriendlyByteBuf b){return new Identified(b.readUUID(),b.readUtf(128),b.readVarInt(),b.readUtf(128),b.readUtf(128),b.readDouble());}
+            public void encode(RegistryFriendlyByteBuf b,Identified p){b.writeUUID(p.nonce);b.writeUtf(p.dimension,128);b.writeVarInt(p.index);b.writeUtf(p.id,128);b.writeUtf(p.name,128);b.writeDouble(p.number);}};
         @Override public Type<Identified> type(){return TYPE;}
     }
     public static void register(PayloadRegistrar registrar){

@@ -25,7 +25,7 @@ public final class AonDorService {
         if(!requestAllowed(player)||!permitted(player,request.dimension(),request.slot()))return;
         var match=AonRecognition.assess(request.glyph(),catalog(player),AonDorConfig.tolerance(),AonDorConfig.SHAPE_ERROR.get(),AonDorConfig.SHAPE_GAP.get());
         var template=match.template();if(template!=null&&AonLearning.learn(player,template))library(player,"Aon learned.");
-        PacketDistributor.sendToPlayer(player,new AonDorNetwork.Identified(request.nonce(),request.dimension(),request.index(),template==null?"":template.id(),template==null?"Not recognized":template.name()));
+        PacketDistributor.sendToPlayer(player,new AonDorNetwork.Identified(request.nonce(),request.dimension(),request.index(),template==null?"":template.id(),template==null?"Not recognized":template.name(),match.number()));
     }
     public static void pick(ServerPlayer player,AonDorNetwork.Pick request){
         if(!requestAllowed(player)||!permitted(player,request.dimension(),request.slot()))return;

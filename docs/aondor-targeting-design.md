@@ -36,7 +36,7 @@ and sampled points. Empty selections/type mismatches must be visible before/at c
 3. Gaze Block -> Block reference (or no target).
 4. Position Of(Entity or Block) -> Position.
 5. Look Direction Of(Entity), default caster -> Direction.
-6. Number -> Number, with a practical numeric entry UI; no separate glyph per number.
+6. Number -> Number: diamond + center circle for0; surrounding circles add1 up to10. Larger values need future math.
 7. Sphere(Position, radius) -> Region.
 8. Entities In(Region) -> List<Entity>.
 

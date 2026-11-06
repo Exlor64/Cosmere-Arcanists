@@ -15,7 +15,8 @@ public class VerifyAonDor {
  static void bad(Runnable action){try{action.run();}catch(IllegalArgumentException expected){check(true);return;}throw new AssertionError("Accepted invalid input");}
  static Point p(double x,double y){return new Point(x,y);}
  static Glyph placed(AonRecognition.Template template,double x,double y,double size,int parent,double number){
-  var lines=template.strokes().stream().map(line->line.stream().map(q->p(x+(q.x()-.5)*size,y+(q.y()-.5)*size)).toList()).toList();return new Glyph(template.effect(),x,y,size,lines,parent,number);
+  var source=template.id().equals("cosmerearcanists:number")?AonNumerals.strokes((int)number):template.strokes();
+  var lines=source.stream().map(line->line.stream().map(q->p(x+(q.x()-.5)*size,y+(q.y()-.5)*size)).toList()).toList();return new Glyph(template.effect(),x,y,size,lines,parent,number);
  }
  public static void main(String[] args){
   var path=List.of(p(0,0),p(0,1),p(1,1));
@@ -126,6 +127,24 @@ public class VerifyAonDor {
   check(AonLayout.parentAt(List.of(tinyA),1,p(.175,.1))==0);
   var explicitFar=new AonDrawing(List.of(rootForce,placed(byId.get("caster"),.05,.05,.05,0,1)));
   check(AonLayout.parents(explicitFar)[1]==0);
+
+  for(int n=0;n<=10;n++){
+   var numeral=new Glyph(false,.5,.5,.3,AonNumerals.strokes(n),0,98765);
+   var match=AonRecognition.assess(numeral,patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018);
+   check(match.template()!=null&&match.template().id().equals("cosmerearcanists:number")&&match.number()==n&&match.precise());
+   var narrow=numeral.strokes().stream().map(stroke->stroke.stream().map(q->p(.05+q.x()*.85,q.y())).toList()).toList();
+   var narrowMatch=AonRecognition.assess(new Glyph(false,.5,.5,narrow),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018);
+   check(narrowMatch.template()!=null&&narrowMatch.number()==n&&narrowMatch.precise());
+   var reverse=new ArrayList<List<Point>>();for(var circle:numeral.strokes()){var strokeCopy=new ArrayList<Point>(circle);Collections.reverse(strokeCopy);reverse.add(strokeCopy);}Collections.reverse(reverse);
+   var fallback=AonRecognition.assess(new Glyph(false,.5,.5,reverse),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018);
+   check(fallback.template()!=null&&fallback.number()==n&&!fallback.precise());
+   var scaled=numeral.strokes().stream().map(stroke->stroke.stream().map(q->p(.1+q.x()*.28,.2+q.y()*.28)).toList()).toList();
+   check(AonNumerals.read(new Glyph(false,.5,.5,scaled),AonRecognition.Tolerance.defaults(.12,.025)).value()==n);
+  }
+  var tooMany=new ArrayList<List<Point>>(AonNumerals.strokes(10));tooMany.add(AonNumerals.strokes(1).get(2));
+  check(AonNumerals.read(new Glyph(false,.5,.5,tooMany),AonRecognition.Tolerance.defaults(.12,.025))==null);
+  var missingCenter=new ArrayList<List<Point>>(AonNumerals.strokes(3));missingCenter.remove(1);check(AonNumerals.read(new Glyph(false,.5,.5,missingCenter),AonRecognition.Tolerance.defaults(.12,.025))==null);
+  var duplicateRing=new ArrayList<List<Point>>(AonNumerals.strokes(2));duplicateRing.add(duplicateRing.get(2));check(AonNumerals.read(new Glyph(false,.5,.5,duplicateRing),AonRecognition.Tolerance.defaults(.12,.025))==null);
   System.out.println("PASS: "+checks+" production Aon recognition/order/bounds checks (Java17; no Minecraft runtime).");
  }
 }
@@ -141,5 +160,5 @@ with tempfile.TemporaryDirectory() as tmp:
     source=Path(tmp)/'VerifyAonDor.java';source.write_text(SOURCE)
     subprocess.run(['java','-m','jdk.compiler/com.sun.tools.javac.Main','-d',tmp,
         str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonDrawing.java'),
-        str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonRecognition.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonLayout.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonProgram.java'),str(source)],check=True)
+        str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonRecognition.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonNumerals.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonLayout.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonProgram.java'),str(source)],check=True)
     subprocess.run(['java','-cp',tmp,'VerifyAonDor'],check=True)

@@ -29,11 +29,11 @@ public record AonProgram(Node root,double quality) {
             case "heat"->{arity(args,0,1,key);if(!args.isEmpty())expect(args.get(0),key,Type.ENTITY,Type.ENTITIES,Type.BLOCK);yield Type.EFFECT;}
             default->throw new IllegalArgumentException("No operation configured for "+id);
         };
-        return new Node(id,glyph.number(),type,List.copyOf(args));
+        return new Node(id,type==Type.NUMBER?match.number():glyph.number(),type,List.copyOf(args));
     }
     public static String signature(String id){if(id==null)return "Draw an Aon to identify it";return switch(id){
         case "cosmerearcanists:caster"->"Caster() → Entity";case "cosmerearcanists:gaze_entity"->"Gaze Entity() → Entity";case "cosmerearcanists:gaze_block"->"Gaze Block() → Block";
-        case "cosmerearcanists:position_of"->"Position Of(Entity / Block) → Position";case "cosmerearcanists:look_direction"->"Look Direction([Entity]) → Direction";case "cosmerearcanists:number"->"Number: edit its value below";
+        case "cosmerearcanists:position_of"->"Position Of(Entity / Block) → Position";case "cosmerearcanists:look_direction"->"Look Direction([Entity]) → Direction";case "cosmerearcanists:number"->"Number: center = 0; outer circles = 1–10";
         case "cosmerearcanists:sphere"->"Sphere(Position, Number radius) → Region";case "cosmerearcanists:entities_in"->"Entities In(Region) → Entity list";
         case "cosmerearcanists:light"->"Light([Position])";case "cosmerearcanists:force"->"Force([Entity / Entity list], [Direction])";case "cosmerearcanists:heat"->"Heat([Entity / Entity list / Block])";default->id;};}
     private static void arity(List<Node> args,int min,int max,String id){if(args.size()<min||args.size()>max)throw new IllegalArgumentException(id+" expects "+(min==max?min:min+"–"+max)+" arguments; received "+args.size());}

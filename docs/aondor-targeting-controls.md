@@ -1,4 +1,4 @@
-# Targeting Aons (0.57.0-alpha)
+# Targeting Aons (0.57.1-alpha)
 
 ![Exact targeting glyphs and stroke directions](aondor-targeting-guide.svg)
 
@@ -19,9 +19,13 @@ changes. Explicit parent references survive ordinary edits.
 
 Each parent's direct children are ordered clockwise, starting provisionally at12o'clock.
 Nested children evaluate first. Link labels show argument numbers. Selecting an Aon
-shows its signature. Recognized Number Aons have a numeric text field below the canvas;
-default1, decimals/negative values supported, finite range±1000000. An invalid text
-entry cancels casting. Sphere requires positive radius, at most configured casting range.
+shows its signature. Number is a diamond with a circle at its center (zero). Each
+additional circle around the center adds1, up to10. Keep the circles separate and
+inside the diamond; their exact angular placement is flexible. Each circle is a closed
+stroke. No typed numbers, negative or decimal literals, or direct values above10.
+See the [Number examples](aondor-number-guide.svg). Larger values need future math
+expressions, which are not implemented yet. Zero is a valid literal, but Sphere
+requires a positive radius no greater than configured casting range.
 
 | Aon | Arguments | Result |
 |---|---|---|
@@ -30,7 +34,7 @@ entry cancels casting. Sphere requires positive radius, at most configured casti
 | Gaze Block | None | Block under gaze |
 | Position Of | Entity or Block | Sampled position |
 | Look Direction | Optional Entity; defaults caster | Direction |
-| Number | Edited numeric literal | Number |
+| Number | Count of surrounding circles (0–10) | Number |
 | Sphere | Position, Number radius | Region |
 | Entities In | Region | List of living entities, including caster |
 
@@ -68,6 +72,6 @@ same ownership rules. In-air ink includes the argument drawings, bounded separat
 from individual-glyph recognition (128strokes/3000points; active preview capped125
 resampled strokes). Release held power to cast; Escape/focus loss/slot change cancel.
 
-Limits:17glyphs total,16strokes/glyph,48points/stroke,3000points total. Protocol40
+Limits:17glyphs total,16strokes/glyph,48points/stroke,3000points total. Protocol41
 requires matching clients/server. No variables, general vector math, arbitrary lists,
 other region shapes, item/block inscription or new Dor costs are implemented yet.

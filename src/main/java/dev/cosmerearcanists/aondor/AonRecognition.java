@@ -19,7 +19,8 @@ public final class AonRecognition {
         public static Tolerance defaults(double error,double gap){return new Tolerance(error,gap,.01,.55,.25,.1,.1);}
     }
     public record Match(Template template,double error,boolean ambiguous) {}
-    public record Assessment(Template template,double error,boolean ambiguous,boolean precise) {
+    public record Assessment(Template template,double error,boolean ambiguous,boolean precise,double number) {
+        public Assessment(Template template,double error,boolean ambiguous,boolean precise){this(template,error,ambiguous,precise,Double.NaN);}
         public double potency(double fallbackPotency){return template==null?0:precise?1:fallbackPotency;}
     }
     /** Combined ink geometry: stroke sequence, direction and pen lifts do not affect this score. */
@@ -49,18 +50,20 @@ public final class AonRecognition {
     }
     public static Assessment assess(Glyph glyph,List<Template> templates,Tolerance tolerance,double shapeLimit,double shapeGap){
         Template best=null;double first=Double.POSITIVE_INFINITY,second=Double.POSITIVE_INFINITY;
-        for(var template:templates){double error=shapeError(glyph.strokes(),template,tolerance.minimumExtent());
+        var numeral=AonNumerals.read(glyph,tolerance);
+        for(var template:templates){double error=template.id().equals("cosmerearcanists:number")?(numeral==null?Double.POSITIVE_INFINITY:numeral.error()):shapeError(glyph.strokes(),template,tolerance.minimumExtent());
             if(error<first){second=first;first=error;best=template;}else second=Math.min(second,error);}
         if(best==null)return new Assessment(null,first,false,false);
         // Shape ambiguity cannot be overridden by a convenient drawing sequence.
         if(second-first<shapeGap)return new Assessment(null,first,true,false);
         var ordered=recognize(glyph,templates,tolerance);
-        boolean precise=ordered.template()!=null&&ordered.template().id().equals(best.id());
+        boolean precise=best.id().equals("cosmerearcanists:number")?numeral.precise():ordered.template()!=null&&ordered.template().id().equals(best.id());
+        double number=best.id().equals("cosmerearcanists:number")?numeral.value():Double.NaN;
         // A clear ordered/directional match uses its own configured tolerance. The
         // stricter shape-only threshold must not veto it (notably Heat's narrow bends).
-        if(precise)return new Assessment(best,ordered.error(),false,true);
+        if(precise)return new Assessment(best,best.id().equals("cosmerearcanists:number")?numeral.error():ordered.error(),false,true,number);
         if(first>shapeLimit)return new Assessment(null,first,false,false);
-        return new Assessment(best,first,false,false);
+        return new Assessment(best,first,false,false,number);
     }
     public static List<Point> resample(List<Point> points,int samples) {
         if(points.size()<2||samples<2)throw new IllegalArgumentException("Stroke needs two points");

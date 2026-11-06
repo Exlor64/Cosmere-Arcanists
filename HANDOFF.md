@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-11-05 (America/New_York)**. Current mod version: **0.57.0-alpha**.
+Last updated: **2026-11-05 (America/New_York)**. Current mod version: **0.57.1-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -8,6 +8,11 @@ Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
 Read this and `AGENTS.md` when beginning a session. The user requires this file to be updated after every change or project chat. Keep it current rather than appending conflicting summaries.
 
 ## Latest session and next action
+
+- **Drawn Number and modifier art redesign (2026-11-05; implemented locally, CI pending):** User replaces typed Number with diamond+central circle for0; each surrounding circle adds1, literals0–10, larger values require future math/logic. User also rejects pumpkin-face Entities In and arrow Look Direction; redesigned both as asymmetric angular open forms with restrained circles, no face or arrowhead. Existing operation IDs/semantics retained. Updated targeting stroke guide and new docs/aondor-number-guide.svg show0/1/5/10. Number uses dedicated AonNumerals recognition: closed small rings, diamond geometry, exactly one central ring, separate nonoverlapping surrounding rings within frame. Preferred diamond-first/central-second and clockwise loops give precise quality; reordered/reversed drawing falls back without changing value. Diamond may use multiple strokes; each counted circle is one closed stroke. Arbitrary angular placement is allowed within the diamond. Extra rings, duplicate/overlapping rings or missing center reject, never clamp.
+
+  Number is derived from ink server-side at compile and trace. Payload numeric field is ignored for evaluation, so old typed values cannot forge a count. Numeric text entry removed; canvas label shows acknowledged count. Palette Number uses zero template and can be edited by adding rings within its diamond bounds, preserving grouping. Negative/fraction/>10literals no longer supported; math/logic operators are not yet implemented. Sphere still requires positive radius within config range (zero literal itself valid).19AonJavafiles syntax parse and719production checks passed for all11templates, counting0–10, scale, reversal, missing-center/duplicate/overflow rejection and unchanged nested typing/grouping. New native server numeral-spoof test and updated nested numeric fixtures added; Minecraft CI pending. Local Gradle remains distribution-network blocked. Version0.57.1-alpha/protocol41 (numeric count in identified reply); matching clients/server required. Learned IDs retained, no world save migration or new Aons. Main remains prior0.57.0; test branch/publication pending. Updated docs/recognition expectations, no new math systems or changes to other glyphs.
+
 
 - **Targeting publication to main (2026-11-05; explicit user approval):** Fast-forwarded main from11c228342876e537af3dd28effc8dc8255c45689 to87aa2e49e3149b4a38d0600810ad1fdf7c9df124, publishing0.57.0-alpha/protocol40. Gameplay matches tested045aca5eaa1059a1ca57f896654e23190daba9bf; CI42147631462 passed both builds/JUnit, all371server tests with/without Curios and standalone client startup. Subsequent notes are documentation-only. Main publication is complete; next action is user playtesting of grouping, Number input and new glyphs. No new gameplay checks needed for branch promotion.
 

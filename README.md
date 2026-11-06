@@ -3,7 +3,11 @@ Minecraft **1.21.1**, NeoForge **21.1.256**, Java **21**. Author: **Ex**.
 
 For current project status, accepted design decisions, verification and continuation notes, read [HANDOFF.md](HANDOFF.md). Development and handoff-maintenance instructions are in [AGENTS.md](AGENTS.md).
 
-Current change: **0.57.0-alpha** adds eight targeting Aons and nested typed expressions. Automatic relative-distance grouping is the default; **Alt-click** selects a parent and **Draw Argument** explicitly attaches a child when needed. No locking. Number has an editable numeric value. Release power to cast; Escape cancels. [Glyph guide and controls](docs/aondor-targeting-controls.md).
+Current change: **0.57.1-alpha** replaces typed Number with a drawn diamond and circles: center circle means0, each surrounding circle adds1, up to10. Values come from server-recognized ink; the numeric text field is removed. More-than-ten values will require future math expressions. **Entities In** and **Look Direction** now use asymmetric Aon-style linework instead of a face/arrow. [Updated modifier guide](docs/aondor-targeting-guide.svg) · [Number examples](docs/aondor-number-guide.svg).
+
+719production recognition/counting/type/layout checks passed; Minecraft CI and hands-on testing pending. Protocol41 requires matching client/server. Existing operation IDs and learned knowledge remain.
+
+Previous change: **0.57.0-alpha** adds eight targeting Aons and nested typed expressions. Automatic relative-distance grouping is the default; **Alt-click** selects a parent and **Draw Argument** explicitly attaches a child when needed. No locking. Number has an editable numeric value. Release power to cast; Escape cancels. [Glyph guide and controls](docs/aondor-targeting-controls.md).
 
 **Caster, Gaze Entity, Gaze Block, Position Of, Look Direction, Number, Sphere, Entities In** compose with Light/Force/Heat. For example: `Heat(Entities In(Sphere(Position Of(Caster), Number(3))))`. Existing standalone defaults remain. Region queries currently select living entities, including caster; filters/item selectors are future work. Targets remain bounded, loaded and server-validated. Protocol40 requires matching clients/server.
 
