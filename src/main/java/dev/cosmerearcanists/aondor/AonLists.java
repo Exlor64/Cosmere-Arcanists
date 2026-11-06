@@ -6,12 +6,14 @@ import static dev.cosmerearcanists.aondor.AonProgram.*;
 /** Pure bounded list/set operations; set outputs preserve first-encounter order. */
 public final class AonLists {
     public static final int MAX_ENTRIES=128,MAX_DEPTH=8,MAX_VALUES=512;
-    private static final Set<String> OPERATIONS=Set.of("list","append","remove_at","at","size","intersection","union","difference","contains","if","and","or","not");
+    private static final Set<String> OPERATIONS=Set.of("list","append","remove_at","at","size","intersection","union","difference","contains","if","and","or","not","equal","greater_than","less_than");
     public static boolean operation(String id){return id.startsWith("cosmerearcanists:")&&OPERATIONS.contains(id.substring(17));}
     private static void count(String key,List<Node> args,int min,int max){if(args.size()<min||args.size()>max)throw new IllegalArgumentException(key+" expects "+min+(min==max?"":"–"+max)+" arguments");}
     private static void expect(Node node,Type... types){if(node.type()!=Type.VALUE&&Arrays.stream(types).noneMatch(t->t==node.type()))throw new IllegalArgumentException("List/logic argument is "+node.type()+"; expected "+Arrays.toString(types));}
     public static Type resultType(String key,List<Node> args){
         switch(key){
+            case "equal"->{count(key,args,2,2);for(var n:args)if(n.type()==Type.EFFECT||n.type()==Type.SKIP)throw new IllegalArgumentException("Equal needs actual values");return Type.BOOLEAN;}
+            case "greater_than","less_than"->{count(key,args,2,2);for(var n:args)expect(n,Type.NUMBER);return Type.BOOLEAN;}
             case "list"->{count(key,args,0,16);for(var n:args)if((n.type()==Type.EFFECT||n.type()==Type.SKIP))throw new IllegalArgumentException("A List contains values, not effects");return Type.LIST;}
             case "append"->{count(key,args,2,16);expect(args.get(0),Type.LIST,Type.ENTITIES);for(var n:args.subList(1,args.size()))if((n.type()==Type.EFFECT||n.type()==Type.SKIP))throw new IllegalArgumentException("Append takes values, not effects");return Type.LIST;}
             case "remove_at","at"->{count(key,args,2,2);expect(args.get(0),Type.LIST,Type.ENTITIES);expect(args.get(1),Type.NUMBER);return key.equals("at")?(args.get(0).type()==Type.ENTITIES?Type.ENTITY:Type.VALUE):args.get(0).type();}

@@ -22,6 +22,7 @@ public final class AonDorClient {
         return false;
     }
     public static void remember(AonDorScreen screen) {owner=screen.owner();dimension=screen.dimension();draft=screen.drawing();draftRecognized=screen.recognized();}
+    public static void receiveDraft(AonDorNetwork.Draft packet){var mc=Minecraft.getInstance();var value=packet.drawing();if(mc.player==null||mc.level==null||!value.dimension().equals(mc.level.dimension().location().toString()))return;if(mc.screen instanceof AonDorScreen)mc.setScreen(null);owner=mc.player.getUUID();dimension=value.dimension();draft=value.drawing();draftRecognized=false;opened=true;}
     public static void receive(AonDorNetwork.Result result) {var mc=Minecraft.getInstance();if(mc.screen instanceof AonDorScreen screen)screen.result(result);}
     public static void receiveLibrary(AonDorNetwork.Library packet){var mc=Minecraft.getInstance();if(mc.level!=null&&mc.player!=null&&mc.screen instanceof AonDorScreen screen)screen.library(packet);}
     public static void receiveStamp(AonDorNetwork.Stamp packet){var mc=Minecraft.getInstance();if(mc.level!=null&&mc.player!=null&&mc.screen instanceof AonDorScreen screen)screen.stamp(packet);}

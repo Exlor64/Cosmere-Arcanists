@@ -178,6 +178,14 @@ public class VerifyAonDor {
   check(AonProgram.compile(new AonDrawing(lightEntityInk),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75).root().arguments().get(0).type()==AonProgram.Type.ENTITY);
   var lightListInk=List.of(placed(byId.get("light"),.5,.6,.08,-1,1),placed(byId.get("list"),.5,.3,.08,0,1),placed(byId.get("caster"),.5,.1,.08,1,1));
   check(AonProgram.compile(new AonDrawing(lightListInk),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75).root().arguments().get(0).type()==AonProgram.Type.LIST);
+  check(AonCost.connected(1,3,3)&&!AonCost.connected(1,2.999,3)&&AonCost.connected(4,12,3));
+  check(!AonCost.connected(0,3,3)&&!AonCost.connected(Double.NaN,3,3)&&!AonCost.connected(1,Double.POSITIVE_INFINITY,3));
+  var work=new AonCost.Builder(2);work.add("force",3);work.add("force",4);work.add("query",.5);check(work.quote().total()==15&&work.quote().lines().size()==2);bad(()->work.add("bad",Double.NaN));bad(()->work.add("bad",-1));
+  var overflow=new AonCost.Builder(2);overflow.add("bad",Double.MAX_VALUE);bad(overflow::quote);
+  for(String comparator:List.of("equal","greater_than","less_than"))check(AonLists.resultType(comparator,List.of(numNode,numNode))==AonProgram.Type.BOOLEAN);
+  bad(()->AonLists.resultType("greater_than",List.of(entityNode,numNode)));
+  var connectionInk=List.of(placed(byId.get("connection"),.5,.6,.08,-1,1),placed(byId.get("number"),.55,.3,.06,0,3),placed(byId.get("number"),.8,.6,.06,0,5));
+  check(AonProgram.compile(new AonDrawing(connectionInk),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75).root().type()==AonProgram.Type.EFFECT);
   var cyclic=new AonDrawing(List.of(rootForce,new Glyph(false,.2,.2,.1,byId.get("caster").strokes(),1,1)));bad(()->AonLayout.parents(cyclic));
   var a=placed(byId.get("gaze_block"),.35,.5,.2,-1,1);var b=placed(byId.get("gaze_block"),.65,.5,.2,-1,1);
   check(AonLayout.parentAt(List.of(a,b),2,p(.5,.2))==-2);
@@ -257,11 +265,11 @@ for resource in sorted((ROOT/'src/main/resources/data/cosmerearcanists/aondor/ao
     data=json.loads(resource.read_text())
     lines=','.join('List.of('+','.join(f'p({x},{y})' for x,y in line)+')' for line in data['strokes'])
     patterns.append(f'patterns.add(new AonRecognition.Template("cosmerearcanists:{resource.stem}","{data["name"]}",{str(data["kind"]=="effect").lower()},List.of({lines})));')
-assert len(patterns)==38, 'Expected four effects and thirty-four argument Aons'
+assert len(patterns)==42, 'Expected five effects and thirty-seven argument Aons'
 SOURCE=SOURCE.replace('/* RESOURCE_PATTERNS */','\n'.join(patterns))
 with tempfile.TemporaryDirectory() as tmp:
     source=Path(tmp)/'VerifyAonDor.java';source.write_text(SOURCE)
     subprocess.run(['java','-m','jdk.compiler/com.sun.tools.javac.Main','-d',tmp,
         str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonDrawing.java'),
-        str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonRecognition.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonNumerals.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonLayout.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonProgram.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonMath.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonLists.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonHeatPower.java'),str(source)],check=True)
+        str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonRecognition.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonNumerals.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonLayout.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonProgram.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonMath.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonLists.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonHeatPower.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonCost.java'),str(source)],check=True)
     subprocess.run(['java','-cp',tmp,'VerifyAonDor'],check=True)

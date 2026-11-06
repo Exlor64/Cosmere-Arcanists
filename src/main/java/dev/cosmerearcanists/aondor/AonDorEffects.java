@@ -34,8 +34,9 @@ public final class AonDorEffects {
         }return nearest;
     }
     public static boolean push(ServerPlayer player,Entity target,double strength){return push(player,target,strength,player.getLookAngle(),false);}
+    static boolean canPush(ServerPlayer player,Entity target,boolean explicit){return !((target==player&&!explicit)||!target.isAlive()||target.isSpectator()||target.level()!=player.level()||target!=player&&(player.isAlliedTo(target)||target instanceof ServerPlayer other&&!player.canHarmPlayer(other)));}
     public static boolean push(ServerPlayer player,Entity target,double strength,Vec3 heading,boolean explicit){
-        if((target==player&&!explicit)||!target.isAlive()||target.isSpectator()||target.level()!=player.level()||target!=player&&(player.isAlliedTo(target)||target instanceof ServerPlayer other&&!player.canHarmPlayer(other)))return false;
+        if(!canPush(player,target,explicit))return false;
         var direction=heading.scale(AonDorConfig.FORCE.get()*strength);
         if(direction.lengthSqr()<1e-16)return false;
         if(target instanceof ServerPlayer other)PowerService.externalImpulse(other,direction);

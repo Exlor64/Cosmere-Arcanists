@@ -2,10 +2,11 @@ package dev.cosmerearcanists.aondor;
 import net.neoforged.neoforge.common.ModConfigSpec;
 public final class AonDorConfig {
     public static final ModConfigSpec SPEC;
-    public static final ModConfigSpec.BooleanValue ENABLED,HEAT_IGNITE,HEAT_DAMAGE,HEAT_COOK,HEAT_SMELT;
+    public static final ModConfigSpec.BooleanValue ENABLED,ACCESS,HEAT_IGNITE,HEAT_DAMAGE,HEAT_COOK,HEAT_SMELT;
     public static final ModConfigSpec.IntValue LIGHT_SECONDS,LIGHT_LEVEL,GLOW_SECONDS,THAW,CAST_COOLDOWN,MAX_TARGETS,MEMORY_SECONDS,MEMORY_ENTRIES,HEAT_ITEMS;
-    public static final ModConfigSpec.DoubleValue RANGE,FORCE,MAX_FORCE_VECTOR,HEAT_MAX_POWER,HEAT_IGNITE_POWER,HEAT_DAMAGE_POWER,HEAT_COOK_POWER,HEAT_SMELT_POWER,HEAT_DAMAGE_RATE,HEAT_DAMAGE_CAP;
+    public static final ModConfigSpec.DoubleValue RANGE,FORCE,MAX_FORCE_VECTOR,HEAT_MAX_POWER,HEAT_IGNITE_POWER,HEAT_DAMAGE_POWER,HEAT_COOK_POWER,HEAT_SMELT_POWER,HEAT_DAMAGE_RATE,HEAT_DAMAGE_CAP,CONNECTION_RATIO,CONNECTION_CAP,CONNECTION_SECONDS,COST_SCALE;
     public static final ModConfigSpec.DoubleValue SHAPE_ERROR,SHAPE_GAP,FALLBACK_POTENCY,ERROR,GAP,MINIMUM_EXTENT,PATH_WEIGHT,ENDPOINT_WEIGHT,CORNER_WEIGHT,LENGTH_WEIGHT;
+    public static final ModConfigSpec.ConfigValue<java.util.List<? extends String>> DOR_DIMENSIONS;
     static {var b=new ModConfigSpec.Builder();ENABLED=b.define("enabled",true);
         ERROR=b.comment("Maximum normalized stroke error; for the precise stroke-order/direction recognition pass.").defineInRange("maximumRecognitionError",.12,.01,.4);
         MINIMUM_EXTENT=b.comment("Smallest glyph extent as a fraction of its tile; this rejects taps, not differences in drawing size.").defineInRange("minimumGlyphExtent",.01,.001,.1);
@@ -16,6 +17,10 @@ public final class AonDorConfig {
         SHAPE_ERROR=b.comment("Maximum combined-ink error for shape-only fallback.").defineInRange("maximumShapeError",.065,.005,.2);
         SHAPE_GAP=b.defineInRange("minimumShapeGap",.018,.001,.2);
         FALLBACK_POTENCY=b.comment("Potency multiplier shown for shape-only matches; applies to standalone spell effects.").defineInRange("shapeOnlyPotency",.75,.05,1.0);
+        b.push("investiture");
+        ACCESS=b.comment("Require Sel ambient Dor or both high Connection and a registered external source. Disable only for explicit development/testing worlds.").define("enforceAccess",true);
+        DOR_DIMENSIONS=b.defineListAllowEmpty("ambientDorDimensions",java.util.List.of("cosmerearcanists:sel"),()->"cosmerearcanists:sel",v->v instanceof String s&&net.minecraft.resources.ResourceLocation.tryParse(s)!=null);
+        CONNECTION_RATIO=b.defineInRange("offworldConnectionRatio",3.0,1.0,1000.0);CONNECTION_CAP=b.defineInRange("maximumAonConnectionMultiplier",32.0,1.0,1000.0);CONNECTION_SECONDS=b.defineInRange("maximumAonConnectionSeconds",3600.0,1.0,86400.0);COST_SCALE=b.defineInRange("workCostScale",1.0,.000001,1000000.0);b.pop();
         b.push("memory");MEMORY_SECONDS=b.defineInRange("temporarySeconds",60,1,3600);MEMORY_ENTRIES=b.defineInRange("maximumEntries",64,1,256);b.pop();
         b.push("heat");
         HEAT_IGNITE=b.define("ignition",true);HEAT_DAMAGE=b.define("fireDamage",true);HEAT_COOK=b.define("cooking",true);HEAT_SMELT=b.define("smelting",true);

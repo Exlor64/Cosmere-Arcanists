@@ -8,6 +8,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public final class AonDorNetwork {
+    public static Consumer<Draft> draftReceiver=p->{};
     public static Consumer<Identified> identifiedReceiver=p->{};
     public static Consumer<Projection> projectionReceiver=p->{};
     public static Consumer<Result> receiver=p->{};
@@ -117,7 +118,13 @@ public final class AonDorNetwork {
             public void encode(RegistryFriendlyByteBuf b,Identified p){b.writeUUID(p.nonce);b.writeUtf(p.dimension,128);b.writeVarInt(p.index);b.writeUtf(p.id,128);b.writeUtf(p.name,128);b.writeDouble(p.number);}};
         @Override public Type<Identified> type(){return TYPE;}
     }
+    public record Draft(Check drawing) implements CustomPacketPayload {
+        public static final Type<Draft> TYPE=AonDorNetwork.type("aondor_draft");
+        public static final StreamCodec<RegistryFriendlyByteBuf,Draft> CODEC=new StreamCodec<>(){public Draft decode(RegistryFriendlyByteBuf b){return new Draft(Check.CODEC.decode(b));}public void encode(RegistryFriendlyByteBuf b,Draft p){Check.CODEC.encode(b,p.drawing);}};
+        @Override public Type<Draft> type(){return TYPE;}
+    }
     public static void register(PayloadRegistrar registrar){
+        registrar.playToClient(Draft.TYPE,Draft.CODEC,(p,c)->c.enqueueWork(()->draftReceiver.accept(p)));
         registrar.playToServer(Cast.TYPE,Cast.CODEC,(p,c)->c.enqueueWork(()->{if(c.player() instanceof net.minecraft.server.level.ServerPlayer player)AonDorService.cast(player,p.request());}));
         registrar.playToServer(Preview.TYPE,Preview.CODEC,(p,c)->c.enqueueWork(()->{if(c.player() instanceof net.minecraft.server.level.ServerPlayer player)AonDorService.preview(player,p);}));
         registrar.playToClient(Identified.TYPE,Identified.CODEC,(p,c)->c.enqueueWork(()->identifiedReceiver.accept(p)));

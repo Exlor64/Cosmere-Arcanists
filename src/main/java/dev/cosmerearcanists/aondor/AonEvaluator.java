@@ -20,9 +20,10 @@ public final class AonEvaluator {
         if(!Arrays.asList(expected).contains(value.type()))throw new IllegalArgumentException("Stored/expression value is "+value.type()+"; expected "+Arrays.toString(expected));return value;}
     private static Object input(ServerPlayer p,AonProgram.Node n,Type... types){return require(evaluate(p,n),types).data();}
     @SuppressWarnings("unchecked") static Value evaluate(ServerPlayer p,AonProgram.Node node){
+        AonCost.add("expression",.01);
         var args=node.arguments();String key=node.id().substring(17);
         if(AonLists.operation(node.id()))return listOperation(p,node);
-        if(key.equals("recall"))return AonMemory.recall(p,!AonProgram.supplied(args,0)?0:(Double)input(p,args.get(0),Type.NUMBER));
+        if(key.equals("recall")){var value=AonMemory.recall(p,!AonProgram.supplied(args,0)?0:(Double)input(p,args.get(0),Type.NUMBER));AonCost.add("memory_read",AonMemory.encode(p,value).toString().getBytes(java.nio.charset.StandardCharsets.UTF_8).length*.001);return value;}
         if(AonMath.operation(node.id())){
             var resolved=args.stream().map(n->evaluate(p,n)).toList();
             var runtimeNodes=resolved.stream().map(v->new AonProgram.Node("runtime",0,v.type(),List.of())).toList();
@@ -70,6 +71,8 @@ public final class AonEvaluator {
         if(key.equals("if")){boolean condition=(Boolean)input(p,args.get(0),Type.BOOLEAN);return evaluate(p,args.get(condition?1:2));}
         if(key.equals("not"))return new Value(Type.BOOLEAN,!(Boolean)input(p,args.get(0),Type.BOOLEAN));
         if(key.equals("and")||key.equals("or")){boolean and=key.equals("and");for(var arg:args){boolean result=(Boolean)input(p,arg,Type.BOOLEAN);if(result!=and)return new Value(Type.BOOLEAN,result);}return new Value(Type.BOOLEAN,and);}
+        if(key.equals("equal"))return new Value(Type.BOOLEAN,evaluate(p,args.get(0)).equals(evaluate(p,args.get(1))));
+        if(key.equals("greater_than")||key.equals("less_than")){double a=(Double)input(p,args.get(0),Type.NUMBER),b=(Double)input(p,args.get(1),Type.NUMBER);return new Value(Type.BOOLEAN,key.equals("greater_than")?a>b:a<b);}
         if(key.equals("list"))return listResult(args.stream().map(n->evaluate(p,n)).toList(),false);
         var first=evaluate(p,args.get(0));var entries=list(first);
         return switch(key){
@@ -84,6 +87,7 @@ public final class AonEvaluator {
     }
     private static List<Entity> entities(ServerPlayer p,Sphere region){
         double radius=region.radius();if(!Double.isFinite(radius)||radius<=0||radius>AonDorConfig.RANGE.get())throw new IllegalArgumentException("Stored region exceeds the current radius limit");checkPosition(p,region.center());
+        AonCost.add("region_query",4.0/3.0*Math.PI*radius*radius*radius*.01);
         var box=new AABB(region.center().subtract(radius,radius,radius),region.center().add(radius,radius,radius));
         for(int x=(int)Math.floor(box.minX/16);x<=(int)Math.floor(box.maxX/16);x++)for(int z=(int)Math.floor(box.minZ/16);z<=(int)Math.floor(box.maxZ/16);z++)if(!p.serverLevel().hasChunk(x,z))throw new IllegalArgumentException("Sphere reaches unloaded terrain");
         var list=p.serverLevel().getEntitiesOfClass(Entity.class,box,e->e.isAlive()&&!e.isSpectator()&&e.position().distanceToSqr(region.center())<=radius*radius);
@@ -93,33 +97,47 @@ public final class AonEvaluator {
     static void checkPosition(ServerPlayer p,Vec3 pos){
         if(!Double.isFinite(pos.x)||!Double.isFinite(pos.y)||!Double.isFinite(pos.z)||pos.distanceToSqr(p.getEyePosition())>AonDorConfig.RANGE.get()*AonDorConfig.RANGE.get()||!p.serverLevel().hasChunkAt(BlockPos.containing(pos))||!p.serverLevel().getWorldBorder().isWithinBounds(BlockPos.containing(pos)))throw new IllegalArgumentException("Target position is outside loaded casting range");
     }
-    @SuppressWarnings("unchecked") public static String execute(ServerPlayer p,AonProgram program,double strength){
+    /** Low-level effect execution for trusted integrations/tests; player casting must use AonDorService. */
+    public static String execute(ServerPlayer p,AonProgram program,double strength){return prepare(p,program,strength).apply().get().message();}
+    public static AonCastPlan prepare(ServerPlayer p,AonProgram program,double strength){
+        var previous=AonCost.ACTIVE.get();var builder=new AonCost.Builder(AonDorConfig.COST_SCALE.get());AonCost.ACTIVE.set(builder);
+        try{var apply=prepareEffect(p,program,strength);return new AonCastPlan(builder.quote(),apply);}finally{if(previous==null)AonCost.ACTIVE.remove();else AonCost.ACTIVE.set(previous);}
+    }
+    @SuppressWarnings("unchecked") private static java.util.function.Supplier<AonCastPlan.Outcome> prepareEffect(ServerPlayer p,AonProgram program,double strength){
+        AonCost.add("cast",1);
         var root=program.root();var args=root.arguments();
         if(root.id().equals("cosmerearcanists:remember")){
-            double key=!AonProgram.supplied(args,0)?0:(Double)input(p,args.get(0),Type.NUMBER);var remembered=AonProgram.supplied(args,1)?evaluate(p,args.get(1)):new Value(Type.ENTITY,p);return AonMemory.remember(p,key,remembered);
+            double key=!AonProgram.supplied(args,0)?0:(Double)input(p,args.get(0),Type.NUMBER);var remembered=AonProgram.supplied(args,1)?evaluate(p,args.get(1)):new Value(Type.ENTITY,p);AonMemory.key(key);
+            int bytes=AonMemory.encode(p,remembered).toString().getBytes(java.nio.charset.StandardCharsets.UTF_8).length;boolean copper=dev.cosmerearcanists.copper.CopperService.memoryMode(p)<0;
+            AonCost.add("memory_store",bytes*.001*(copper?20:Math.max(1,AonDorConfig.MEMORY_SECONDS.get()/60.0)));
+            return ()->new AonCastPlan.Outcome(AonMemory.remember(p,key,remembered),true);
         }
+        if(root.id().equals("cosmerearcanists:connection"))return AonConnectionBoosts.plan(p,AonProgram.supplied(args,0)?(Double)input(p,args.get(0),Type.NUMBER):3,AonProgram.supplied(args,1)?(Double)input(p,args.get(1),Type.NUMBER):60,strength);
         boolean heat=root.id().equals("cosmerearcanists:heat");
         if(root.id().equals("cosmerearcanists:light")){
-            if(!AonProgram.supplied(args,0))return AonDorEffects.cast(p,root.id(),strength);
+            if(!AonProgram.supplied(args,0))return AonLightEffects.planTemporary(p,p.getEyePosition().add(p.getLookAngle().scale(.8)),strength);
             var lightTarget=require(evaluate(p,args.get(0)),Type.POSITION,Type.ENTITY,Type.ENTITIES);
-            if(lightTarget.type()==Type.POSITION){var position=(Vec3)lightTarget.data();checkPosition(p,position);return AonLightEffects.permanent(p,position,strength);}
+            if(lightTarget.type()==Type.POSITION){var position=(Vec3)lightTarget.data();checkPosition(p,position);return AonLightEffects.planPermanent(p,position,strength);}
             var targets=lightTarget.type()==Type.ENTITY?List.of((Entity)lightTarget.data()):(List<Entity>)lightTarget.data();
-            return AonLightEffects.glow(p,targets,strength);
+            return AonLightEffects.planGlow(p,targets,strength);
         }
         double heatPower=heat?AonHeatPower.effective(AonProgram.supplied(args,1)?(Double)input(p,args.get(1),Type.NUMBER):1,strength,AonDorConfig.HEAT_MAX_POWER.get()):0;
         var direction=!heat&&AonProgram.supplied(args,1)?(Vec3)input(p,args.get(1),Type.DIRECTION,Type.VECTOR):p.getLookAngle();
         if(!heat&&AonProgram.supplied(args,1)&&(!Double.isFinite(direction.length())||direction.length()>AonDorConfig.MAX_FORCE_VECTOR.get()))throw new IllegalArgumentException("Force vector magnitude exceeds "+AonDorConfig.MAX_FORCE_VECTOR.get());
         Value resolved;
         if(AonProgram.supplied(args,0))resolved=evaluate(p,args.get(0));
-        else{var gaze=AonDorEffects.target(p);if(gaze!=null)resolved=new Value(Type.ENTITY,gaze);else if(heat){var block=AonDorEffects.gazeBlock(p);if(block==null)return "Heat: look at an entity or block.";resolved=new Value(Type.BLOCK,block);}else return "Force: look at a valid entity within range.";}
+        else{var gaze=AonDorEffects.target(p);if(gaze!=null)resolved=new Value(Type.ENTITY,gaze);else if(heat){var block=AonDorEffects.gazeBlock(p);if(block==null)return AonCastPlan.none("Heat: look at an entity or block.");resolved=new Value(Type.BLOCK,block);}else return AonCastPlan.none("Force: look at a valid entity within range.");}
         resolved=require(resolved,heat?new Type[]{Type.ENTITY,Type.ENTITIES,Type.BLOCK}:new Type[]{Type.ENTITY,Type.ENTITIES});
         Object target=resolved.data();var entities=target instanceof List<?>?(List<Entity>)target:target instanceof Entity entity?List.of(entity):List.<Entity>of();
         if(entities.size()>AonDorConfig.MAX_TARGETS.get())throw new IllegalArgumentException("Stored list exceeds the current target limit");
         entities=List.copyOf(new LinkedHashSet<>(entities));
         for(var entity:entities){checkPosition(p,entity.position());if(!entity.isAlive()||entity.isSpectator()||entity.level()!=p.level())throw new IllegalArgumentException("A selected entity is no longer available");}
-        if(root.id().equals("cosmerearcanists:force")){int applied=0;for(var entity:entities)if(AonDorEffects.push(p,entity,strength,direction,true))applied++;return "Force: pushed "+applied+" target(s).";}
-        if(target instanceof BlockPos pos){checkPosition(p,pos.getCenter());return AonHeat.block(p,pos,strength,heatPower);}
-        return AonHeat.entities(p,entities,strength,heatPower);
+        if(root.id().equals("cosmerearcanists:force")){
+            var selected=entities.stream().filter(entity->AonDorEffects.canPush(p,entity,true)).toList();AonCost.add("force",selected.size()*direction.length()*AonDorConfig.FORCE.get()*strength);
+            return ()->{for(var entity:selected){checkPosition(p,entity.position());if(!entity.isAlive()||entity.isSpectator()||entity.level()!=p.level())throw new IllegalArgumentException("Force target changed during payment");}int applied=0;for(var entity:selected)if(AonDorEffects.push(p,entity,strength,direction,true))applied++;return new AonCastPlan.Outcome("Force: pushed "+applied+" target(s).",applied>0);};
+        }
+        if(target instanceof BlockPos pos){checkPosition(p,pos.getCenter());return AonHeat.planBlock(p,pos,strength,heatPower);}
+        return AonHeat.planEntities(p,entities,strength,heatPower);
     }
     private AonEvaluator(){}
 }

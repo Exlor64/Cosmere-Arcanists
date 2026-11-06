@@ -24,9 +24,10 @@ public record AonProgram(Node root,double quality) {
             case "look_direction"->{arity(args,0,1,key);if(supplied(args,0))expect(args.get(0),key,Type.ENTITY);yield Type.DIRECTION;}
             case "number"->{arity(args,0,0,key);yield Type.NUMBER;}
             case "add","subtract","multiply","divide","vector","length","normalize"->AonMath.resultType(key,args);
-            case "list","append","remove_at","at","size","intersection","union","difference","contains","if","and","or","not"->AonLists.resultType(key,args);
+            case "list","append","remove_at","at","size","intersection","union","difference","contains","if","and","or","not","equal","greater_than","less_than"->AonLists.resultType(key,args);
             case "sphere"->{arity(args,2,2,key);expect(args.get(0),key,Type.POSITION);expect(args.get(1),key,Type.NUMBER);yield Type.REGION;}
             case "entities_in"->{arity(args,1,1,key);expect(args.get(0),key,Type.REGION);yield Type.ENTITIES;}
+            case "connection"->{arity(args,0,2,key);if(supplied(args,0))expect(args.get(0),key,Type.NUMBER);if(supplied(args,1))expect(args.get(1),key,Type.NUMBER);yield Type.EFFECT;}
             case "remember"->{arity(args,0,2,key);if(supplied(args,0))expect(args.get(0),key,Type.NUMBER);if(args.size()>1&&args.get(1).type()==Type.EFFECT)throw new IllegalArgumentException("Remember stores a value, not an effect");yield Type.EFFECT;}
             case "recall"->{arity(args,0,1,key);if(supplied(args,0))expect(args.get(0),key,Type.NUMBER);yield Type.VALUE;}
             case "exclude"->{arity(args,2,2,key);expect(args.get(0),key,Type.ENTITIES);expect(args.get(1),key,Type.ENTITY,Type.ENTITIES);yield Type.ENTITIES;}
@@ -52,6 +53,10 @@ public record AonProgram(Node root,double quality) {
         case "cosmerearcanists:length"->"Length(Vector / Direction) → Number";
         case "cosmerearcanists:normalize"->"Normalize(Vector / Direction) → Direction";
         case "cosmerearcanists:sphere"->"Sphere(Position, Number radius) → Region";case "cosmerearcanists:entities_in"->"Entities In(Region) → Entity list";
+        case "cosmerearcanists:connection"->"Connection([Number multiplier = 3], [Number seconds = 60]): self";
+        case "cosmerearcanists:equal"->"Equal(Value, Value) → Boolean";
+        case "cosmerearcanists:greater_than"->"Greater Than(Number, Number) → Boolean";
+        case "cosmerearcanists:less_than"->"Less Than(Number, Number) → Boolean";
         case "cosmerearcanists:skip"->"Skip() → omit an optional argument; use its default";
         case "cosmerearcanists:list"->"List([Values…]) → List (empty allowed)";
         case "cosmerearcanists:append"->"Append(List, Values…) → List";

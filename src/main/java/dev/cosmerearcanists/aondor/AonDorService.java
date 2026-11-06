@@ -68,9 +68,13 @@ public final class AonDorService {
 
     public static String inspect(ServerPlayer player,AonDorNetwork.Check request){
         boolean selected=(request.slot()==0||request.slot()==1)&&POWER.equals(request.slot()==0?PowerData.selected(player):PowerData.secondary(player));
-        return !allowed(player)||!selected||!request.dimension().equals(player.level().dimension().location().toString())
-            ? "AonDor is no longer available in this power slot."
-            :validate(request.drawing(),CATALOGS.computeIfAbsent(player.server,AonDorService::load));
+        if(!allowed(player)||!selected||!request.dimension().equals(player.level().dimension().location().toString()))return "AonDor is no longer available in this power slot.";
+        var templates=CATALOGS.computeIfAbsent(player.server,AonDorService::load);String recognized="";
+        try{var program=AonProgram.compile(request.drawing(),templates,AonDorConfig.tolerance(),AonDorConfig.SHAPE_ERROR.get(),AonDorConfig.SHAPE_GAP.get(),AonDorConfig.FALLBACK_POTENCY.get());
+            AonSavedSpells.checked(player,request.drawing());recognized="Recognized: "+program.root().id()+"; potency "+Math.round(program.quality()*100)+"%. Release power to cast."+program.calculations();
+            double strength=Math.max(.1,Math.min(4,player.getAttributeValue(PowerAttributes.AONDOR)))*program.quality();var plan=AonEvaluator.prepare(player,program,strength);
+            return recognized+" Estimated work: "+AonInvestiture.format(plan.quote().total())+". "+AonInvestiture.describe(player)+".";
+        }catch(IllegalArgumentException error){return recognized.isEmpty()?error.getMessage():recognized+" Preview: "+error.getMessage();}
     }
     public static void check(ServerPlayer player,AonDorNetwork.Check request){
         long now=player.level().getGameTime();var previous=CHECKED.get(player);if(previous!=null&&now>=previous&&now-previous<10)return;CHECKED.put(player,now);
@@ -84,10 +88,11 @@ public final class AonDorService {
         if(!permitted(player,request.dimension(),request.slot()))return "AonDor is no longer available in this power slot.";
         final AonProgram program;
         try{program=AonProgram.compile(request.drawing(),catalog(player),AonDorConfig.tolerance(),AonDorConfig.SHAPE_ERROR.get(),AonDorConfig.SHAPE_GAP.get(),AonDorConfig.FALLBACK_POTENCY.get());}catch(IllegalArgumentException invalid){return invalid.getMessage();}
+        AonSavedSpells.checked(player,request.drawing());
         long now=player.serverLevel().getGameTime();var last=CASTED.get(player);if(last!=null&&now>=last&&now-last<AonDorConfig.CAST_COOLDOWN.get())return "Wait a moment before casting again.";
         CASTED.put(player,now);
         double strength=Math.max(.1,Math.min(4,player.getAttributeValue(PowerAttributes.AONDOR)))*program.quality();
-        try{return AonEvaluator.execute(player,program,strength);}catch(IllegalArgumentException invalid){return invalid.getMessage();}
+        try{AonInvestiture.requireAccess(player);return AonInvestiture.execute(player,AonEvaluator.prepare(player,program,strength));}catch(IllegalArgumentException invalid){return invalid.getMessage();}
     }
 
     public static void cast(ServerPlayer player,AonDorNetwork.Check request){
@@ -98,6 +103,7 @@ public final class AonDorService {
     @SubscribeEvent public void memoryCleanup(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event){if(event.getServer().getTickCount()%20==0)AonMemory.cleanup(event.getServer());AonLightEffects.tick(event.getServer());}
     @SubscribeEvent public void memoryStopped(net.neoforged.neoforge.event.server.ServerStoppedEvent event){AonMemory.clear(event.getServer());AonLightEffects.stopped();}
     @SubscribeEvent public void lightEntityJoined(net.neoforged.neoforge.event.entity.EntityJoinLevelEvent event){AonLightEffects.joined(event.getEntity());}
+    @SubscribeEvent public void savedSpellCommands(net.neoforged.neoforge.event.RegisterCommandsEvent event){AonSavedSpells.commands(event);}
     private AonDorService(){}
     public static AonDorService events(){return new AonDorService();}
 }
