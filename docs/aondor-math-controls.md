@@ -88,7 +88,7 @@ Position Of(A) from Position Of(B), then Normalize that vector if desired.
 - Expression errors are resolved before effects. World-dependent errors also resolve
   before the first target changes. No partial cast on a failed calculation.
 - Math does not raise world-query limits: default casting range8blocks and maximum32
-  living targets still apply. Sphere requires a positive radius within that range.
+  entity targets of all types still apply. Sphere requires a positive radius within that range.
 - Explicit Force vectors default to maximum magnitude8. Larger vectors reject before
   applying force; configure baseEffects.maximumForceVectorMagnitude(.1–64) if needed.
 - Existing17glyph/3000point limits remain. No dot/cross products, comparisons, variables,

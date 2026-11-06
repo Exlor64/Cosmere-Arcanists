@@ -109,6 +109,36 @@ public class VerifyAonDor {
   }
   check(AonRecognition.assess(new Glyph(true,.5,.5,List.of(List.of(p(.1,.1),p(.9,.9)))),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018).template()==null);
 
+  var first=List.of(3.0,1.0,3.0,2.0);var second=List.of(2.0,3.0,4.0);var third=List.of(3.0,5.0);
+  check(AonLists.sets("intersection",List.of(first,second,third)).equals(List.of(3.0)));
+  check(AonLists.sets("union",List.of(first,second,third)).equals(List.of(3.0,1.0,2.0,4.0,5.0)));
+  check(AonLists.sets("difference",List.of(first,second,third)).equals(List.of(1.0)));
+  check(AonLists.sets("intersection",List.of(first,List.<Double>of())).isEmpty());
+  check(AonLists.sets("difference",List.of(first,first)).isEmpty());
+  check(AonLists.removeAt(first,2).equals(List.of(3.0,1.0,2.0))&&first.equals(List.of(3.0,1.0,3.0,2.0)));
+  check(AonLists.at(first,0)==3.0&&AonLists.at(first,3)==2.0);
+  check(AonLists.append(first,List.of(7.0,8.0)).equals(List.of(3.0,1.0,3.0,2.0,7.0,8.0)));
+  check(AonLists.create(List.of()).isEmpty());
+  for(double index:new double[]{-1,.5,4,Double.NaN,Double.POSITIVE_INFINITY})bad(()->AonLists.at(first,index));
+  bad(()->AonLists.removeAt(List.of(),0));bad(()->AonLists.create(Collections.nCopies(129,0)));bad(()->AonLists.append(Collections.nCopies(128,0),List.of(1)));bad(()->AonLists.sets("union",List.of(first)));
+  try{AonLists.create(first).add(9.0);throw new AssertionError("Mutable list");}catch(UnsupportedOperationException expected){check(true);}
+  for(int i=0;i<80;i++){
+   var listLeft=new ArrayList<Integer>();var listRight=new ArrayList<Integer>();for(int j=0;j<20;j++){listLeft.add((i+j*3)%11);listRight.add((i*2+j*5)%13);}
+   var common=AonLists.sets("intersection",List.of(listLeft,listRight));var union=AonLists.sets("union",List.of(listLeft,listRight));var difference=AonLists.sets("difference",List.of(listLeft,listRight));
+   check(new HashSet<>(common).size()==common.size()&&common.stream().allMatch(n->listLeft.contains(n)&&listRight.contains(n)));
+   check(union.containsAll(listLeft)&&union.containsAll(listRight)&&new HashSet<>(union).size()==union.size());
+   check(difference.stream().allMatch(n->listLeft.contains(n)&&!listRight.contains(n))&&listLeft.stream().filter(n->!listRight.contains(n)).allMatch(difference::contains));
+  }
+  var listNode=new AonProgram.Node("test",0,AonProgram.Type.LIST,List.of());var boolNode=new AonProgram.Node("test",0,AonProgram.Type.BOOLEAN,List.of());var numNode=new AonProgram.Node("test",0,AonProgram.Type.NUMBER,List.of());var entityNode=new AonProgram.Node("test",0,AonProgram.Type.ENTITY,List.of());
+  check(AonLists.resultType("list",List.of(numNode,entityNode))==AonProgram.Type.LIST);
+  for(String key:List.of("union","intersection","difference"))check(AonLists.resultType(key,List.of(listNode,listNode,listNode))==AonProgram.Type.LIST);
+  check(AonLists.resultType("at",List.of(listNode,numNode))==AonProgram.Type.VALUE);
+  check(AonLists.resultType("contains",List.of(listNode,numNode))==AonProgram.Type.BOOLEAN);
+  check(AonLists.resultType("if",List.of(boolNode,numNode,numNode))==AonProgram.Type.NUMBER);
+  check(AonLists.resultType("if",List.of(boolNode,numNode,entityNode))==AonProgram.Type.VALUE);
+  for(String key:List.of("and","or"))check(AonLists.resultType(key,List.of(boolNode,boolNode,boolNode))==AonProgram.Type.BOOLEAN);
+  check(AonLists.resultType("not",List.of(boolNode))==AonProgram.Type.BOOLEAN);
+  bad(()->AonLists.resultType("if",List.of(numNode,numNode,numNode)));bad(()->AonLists.resultType("append",List.of(numNode,numNode)));bad(()->AonLists.resultType("intersection",List.of(listNode,numNode)));bad(()->AonLists.resultType("not",List.of(numNode)));
   var byId=new HashMap<String,AonRecognition.Template>();for(var entry:patterns)byId.put(entry.id().substring(17),entry);
   var rootForce=placed(byId.get("force"),.5,.7,.16,-1,1);
   var explicit=new AonDrawing(List.of(rootForce,placed(byId.get("caster"),.5,.3,.08,0,1),placed(byId.get("look_direction"),.8,.7,.08,0,1)));
@@ -129,6 +159,10 @@ public class VerifyAonDor {
   check(AonProgram.compile(new AonDrawing(memoryInk),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75).root().type()==AonProgram.Type.EFFECT);
   var recallInk=List.of(placed(byId.get("heat"),.5,.7,.08,-1,1),placed(byId.get("recall"),.5,.4,.08,0,1),placed(byId.get("number"),.5,.2,.08,1,2));
   check(AonProgram.compile(new AonDrawing(recallInk),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75).root().arguments().get(0).type()==AonProgram.Type.VALUE);
+  var createInk=List.of(placed(byId.get("remember"),.5,.8,.06,-1,1),placed(byId.get("number"),.5,.6,.05,0,0),placed(byId.get("list"),.8,.8,.06,0,1),placed(byId.get("number"),.8,.6,.05,2,1),placed(byId.get("caster"),.95,.8,.05,2,1));
+  check(AonProgram.compile(new AonDrawing(createInk),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75).root().arguments().get(1).type()==AonProgram.Type.LIST);
+  var targetInk=List.of(placed(byId.get("force"),.5,.8,.06,-1,1),placed(byId.get("list"),.5,.6,.05,0,1),placed(byId.get("caster"),.5,.4,.05,1,1));
+  check(AonProgram.compile(new AonDrawing(targetInk),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75).root().arguments().get(0).type()==AonProgram.Type.LIST);
   var cyclic=new AonDrawing(List.of(rootForce,new Glyph(false,.2,.2,.1,byId.get("caster").strokes(),1,1)));bad(()->AonLayout.parents(cyclic));
   var a=placed(byId.get("gaze_block"),.35,.5,.2,-1,1);var b=placed(byId.get("gaze_block"),.65,.5,.2,-1,1);
   check(AonLayout.parentAt(List.of(a,b),2,p(.5,.2))==-2);
@@ -208,11 +242,11 @@ for resource in sorted((ROOT/'src/main/resources/data/cosmerearcanists/aondor/ao
     data=json.loads(resource.read_text())
     lines=','.join('List.of('+','.join(f'p({x},{y})' for x,y in line)+')' for line in data['strokes'])
     patterns.append(f'patterns.add(new AonRecognition.Template("cosmerearcanists:{resource.stem}","{data["name"]}",{str(data["kind"]=="effect").lower()},List.of({lines})));')
-assert len(patterns)==24, 'Expected four effects and twenty argument Aons'
+assert len(patterns)==37, 'Expected four effects and thirty-three argument Aons'
 SOURCE=SOURCE.replace('/* RESOURCE_PATTERNS */','\n'.join(patterns))
 with tempfile.TemporaryDirectory() as tmp:
     source=Path(tmp)/'VerifyAonDor.java';source.write_text(SOURCE)
     subprocess.run(['java','-m','jdk.compiler/com.sun.tools.javac.Main','-d',tmp,
         str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonDrawing.java'),
-        str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonRecognition.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonNumerals.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonLayout.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonProgram.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonMath.java'),str(source)],check=True)
+        str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonRecognition.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonNumerals.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonLayout.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonProgram.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonMath.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonLists.java'),str(source)],check=True)
     subprocess.run(['java','-cp',tmp,'VerifyAonDor'],check=True)

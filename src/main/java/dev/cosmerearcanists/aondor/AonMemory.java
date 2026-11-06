@@ -5,7 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.*;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import dev.cosmerearcanists.copper.CopperService;
 import static dev.cosmerearcanists.aondor.AonProgram.Type;
@@ -35,37 +35,45 @@ public final class AonMemory {
         else{var entry=temporary(p).get(key);if(entry==null)throw new IllegalArgumentException("Memory key "+key+" is missing or expired");snapshot=entry.value();}
         return decode(p,snapshot);
     }
-    @SuppressWarnings("unchecked") static CompoundTag encode(ServerPlayer p,AonEvaluator.Value value){
+    @SuppressWarnings("unchecked") static CompoundTag encode(ServerPlayer p,AonEvaluator.Value value){return encode(p,value,0,new int[]{AonLists.MAX_VALUES});}
+    @SuppressWarnings("unchecked") private static CompoundTag encode(ServerPlayer p,AonEvaluator.Value value,int depth,int[] budget){
+        if(depth>AonLists.MAX_DEPTH||--budget[0]<0)throw new IllegalArgumentException("Remembered list exceeds nesting/value limits");
         var tag=new CompoundTag();tag.putString("type",value.type().name());Object data=value.data();
         switch(value.type()){
+            case BOOLEAN->tag.putBoolean("boolean",(Boolean)data);
+            case LIST->{var values=(List<AonEvaluator.Value>)data;if(values.size()>AonLists.MAX_ENTRIES)throw new IllegalArgumentException("Remembered list is too long");var encoded=new ListTag();for(var entry:values)encoded.add(encode(p,entry,depth+1,budget));tag.put("values",encoded);}
             case NUMBER->{double n=(Double)data;if(!Double.isFinite(n))throw new IllegalArgumentException("Cannot remember a nonfinite number");tag.putDouble("number",n);}
             case DIRECTION,VECTOR,POSITION->{var v=(Vec3)data;vector(tag,v);if(value.type()==Type.POSITION)dimension(p,tag);}
             case BLOCK->{tag.putLong("block",((BlockPos)data).asLong());dimension(p,tag);}
-            case ENTITY->{entity(tag,(LivingEntity)data);dimension(p,tag);}
-            case ENTITIES->{var list=(List<LivingEntity>)data;if(list.size()>AonDorConfig.MAX_TARGETS.get())throw new IllegalArgumentException("Too many remembered entities");var refs=new ListTag();for(var entity:list){var ref=new CompoundTag();entity(ref,entity);refs.add(ref);}tag.put("entities",refs);dimension(p,tag);}
+            case ENTITY->{entity(tag,(Entity)data);dimension(p,tag);}
+            case ENTITIES->{var list=(List<Entity>)data;if(list.size()>AonDorConfig.MAX_TARGETS.get())throw new IllegalArgumentException("Too many remembered entities");budget[0]-=list.size();if(budget[0]<0)throw new IllegalArgumentException("Remembered list exceeds value limits");var refs=new ListTag();for(var entity:list){var ref=new CompoundTag();entity(ref,entity);refs.add(ref);}tag.put("entities",refs);dimension(p,tag);}
             case REGION->{var region=(AonEvaluator.Sphere)data;vector(tag,region.center());tag.putDouble("radius",region.radius());dimension(p,tag);}
             default->throw new IllegalArgumentException("Remember requires a concrete value");
         }
         return tag;
     }
     private static void dimension(ServerPlayer p,CompoundTag tag){tag.putString("dimension",p.level().dimension().location().toString());}
-    private static void entity(CompoundTag tag,LivingEntity entity){tag.putUUID("entity",entity.getUUID());}
+    private static void entity(CompoundTag tag,Entity entity){tag.putUUID("entity",entity.getUUID());}
     private static void vector(CompoundTag tag,Vec3 v){if(!Double.isFinite(v.x)||!Double.isFinite(v.y)||!Double.isFinite(v.z))throw new IllegalArgumentException("Cannot remember nonfinite coordinates");tag.putDouble("x",v.x);tag.putDouble("y",v.y);tag.putDouble("z",v.z);}
-    private static LivingEntity resolve(ServerPlayer p,CompoundTag tag){
+    private static Entity resolve(ServerPlayer p,CompoundTag tag){
         if(!tag.hasUUID("entity"))throw new IllegalArgumentException("Invalid remembered entity reference");
         var entity=p.serverLevel().getEntity(tag.getUUID("entity"));
         if(entity==null&&p.getUUID().equals(tag.getUUID("entity")))entity=p;
-        if(!(entity instanceof LivingEntity living)||!living.isAlive()||living.isSpectator())throw new IllegalArgumentException("Remembered entity is dead, unloaded or unavailable");return living;
+        if(entity==null||!entity.isAlive()||entity.isSpectator())throw new IllegalArgumentException("Remembered entity is dead, unloaded or unavailable");return entity;
     }
-    static AonEvaluator.Value decode(ServerPlayer p,CompoundTag tag){
+    static AonEvaluator.Value decode(ServerPlayer p,CompoundTag tag){return decode(p,tag,0,new int[]{AonLists.MAX_VALUES});}
+    private static AonEvaluator.Value decode(ServerPlayer p,CompoundTag tag,int depth,int[] budget){
+        if(depth>AonLists.MAX_DEPTH||--budget[0]<0)throw new IllegalArgumentException("Remembered list exceeds nesting/value limits");
         if(tag.contains("dimension")&&!tag.getString("dimension").equals(p.level().dimension().location().toString()))throw new IllegalArgumentException("Remembered value belongs to another dimension");
         final Type type;try{type=Type.valueOf(tag.getString("type"));}catch(IllegalArgumentException e){throw new IllegalArgumentException("Invalid memory value type");}
         Object data=switch(type){
+            case BOOLEAN->tag.getBoolean("boolean");
+            case LIST->{var encoded=tag.getList("values",Tag.TAG_COMPOUND);if(encoded.size()>AonLists.MAX_ENTRIES)throw new IllegalArgumentException("Remembered list is too long");var values=new ArrayList<AonEvaluator.Value>();for(int i=0;i<encoded.size();i++)values.add(decode(p,encoded.getCompound(i),depth+1,budget));yield List.copyOf(values);}
             case NUMBER->{double n=tag.getDouble("number");if(!Double.isFinite(n))throw new IllegalArgumentException("Invalid remembered number");yield n;}
             case DIRECTION,VECTOR,POSITION->{var v=new Vec3(tag.getDouble("x"),tag.getDouble("y"),tag.getDouble("z"));new AonMath.Vector(v.x,v.y,v.z);yield v;}
             case BLOCK->BlockPos.of(tag.getLong("block"));
             case ENTITY->resolve(p,tag);
-            case ENTITIES->{var refs=tag.getList("entities",Tag.TAG_COMPOUND);if(refs.size()>AonDorConfig.MAX_TARGETS.get())throw new IllegalArgumentException("Stored list exceeds the current target limit");var list=new ArrayList<LivingEntity>();for(int i=0;i<refs.size();i++)list.add(resolve(p,refs.getCompound(i)));yield List.copyOf(list);}
+            case ENTITIES->{var refs=tag.getList("entities",Tag.TAG_COMPOUND);if(refs.size()>AonDorConfig.MAX_TARGETS.get())throw new IllegalArgumentException("Stored list exceeds the current target limit");budget[0]-=refs.size();if(budget[0]<0)throw new IllegalArgumentException("Remembered list exceeds value limits");var list=new ArrayList<Entity>();for(int i=0;i<refs.size();i++)list.add(resolve(p,refs.getCompound(i)));yield List.copyOf(list);}
             case REGION->{var v=new Vec3(tag.getDouble("x"),tag.getDouble("y"),tag.getDouble("z"));new AonMath.Vector(v.x,v.y,v.z);double radius=tag.getDouble("radius");if(!Double.isFinite(radius)||radius<=0)throw new IllegalArgumentException("Invalid remembered region");yield new AonEvaluator.Sphere(v,radius);}
             default->throw new IllegalArgumentException("Invalid remembered value");
         };

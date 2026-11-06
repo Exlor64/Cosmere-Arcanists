@@ -25,7 +25,7 @@ learned knowledge remain; no persistent spells or inscriptions are implemented.
 ## Standalone defaults
 
 - Light: actual level12light in nearby empty air for20seconds; no blocks overwritten.
-- Force: pushes the nearest valid living gaze target within8blocks, adding .45velocity.
+- Force: pushes the nearest valid gaze target of any entity type within8blocks, adding .45velocity.
 - Heat: reduces freezing by140ticks, melts one snow layer or ordinary/frosted ice,
   or lights a dry unlit campfire. No arbitrary fires, damage or cooking.
 

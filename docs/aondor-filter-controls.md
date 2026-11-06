@@ -9,7 +9,7 @@
 | Mobs | Entity list | Only Minecraft mobs, including animals; excludes players and armor stands |
 | Nearest | Entity list, optional Position | One entity closest to that position; defaults to caster feet |
 
-Lists retain their original order. Nearest breaks equal-distance ties by entity ID. Empty lists remain empty through filters; Nearest on an empty list fails without casting a default effect. The server evaluates all arguments before applying effects. Existing range, loaded-terrain and maximum-target limits remain: filtering does not allow an oversized initial Sphere query.
+Unfiltered lists include all entity types: mobs, players, dropped items, projectiles, XP orbs, vehicles and more. Removed/dead entities and spectators are unavailable. Lists retain their original order. Nearest breaks equal-distance ties by entity ID. Empty lists remain empty through filters; Nearest on an empty list fails without casting a default effect. The server evaluates all arguments before applying effects. Existing range, loaded-terrain and maximum-target limits remain: filtering does not allow an oversized initial Sphere query.
 
 Examples use expression notation to explain the drawing hierarchy:
 

@@ -3,7 +3,15 @@ Minecraft **1.21.1**, NeoForge **21.1.256**, Java **21**. Author: **Ex**.
 
 For current project status, accepted design decisions, verification and continuation notes, read [HANDOFF.md](HANDOFF.md). Development and handoff-maintenance instructions are in [AGENTS.md](AGENTS.md).
 
-Current change: **0.60.0-alpha** adds **Remember and Recall**: typed variables indexed by numeric keys. Ordinary caster-private memory lasts60seconds; feruchemical copper storing/tapping writes/reads persistent values in a touching coppermind. Numbers, vectors/directions, positions, blocks, regions, entity references and entity lists retain their types. [Memory guide](docs/aondor-memory-guide.svg) · [Controls and examples](docs/aondor-memory-controls.md).
+Current local change: **0.62.0-alpha** adds **List, Append, Remove At, At, Size, Intersection, Union, Difference, Contains, If, And, Or and Not**. Lists hold typed values, including nested lists; sets support two or more inputs, and logical conditions choose spell values with lazy evaluation. Booleans/lists can be remembered normally or stored in copperminds. Includes all-entity Gaze/zone support from the local0.61.0 changes. [List/set guide](docs/aondor-list-guide.svg) · [Logic guide](docs/aondor-logic-guide.svg) · [Signatures and examples](docs/aondor-list-controls.md).
+
+**3336production checks passed** across all37glyphs, list/set semantics, bounds and compiler types. Syntax-only parse330Java sources passed. Nine new native tests added (4entity +5list), not yet run. Both required local Gradle commands fail downloading Gradle (network unavailable). User has explicitly approved uploading these combined changes and publishing everything to main after full CI; upload/CI are in progress. No new branch/main publication is claimed. The last verified remote memory branch remains0.60.0 with384server tests. Protocol remains42; matching code versions required for the expanded catalog/types.
+
+Previous change: **0.61.0-alpha** expands **Gaze Entity and Entities In to all entity types**: dropped items, projectiles, XP orbs, vehicles and living entities. Position Of, Look Direction, filters and both temporary/coppermind memory accept these generic entity references. Force applies additive motion; Heat skips nonliving entries in mixed lists. Normal obstruction, loaded terrain, range and target caps remain. Removed/dead entities and spectators remain unavailable.
+
+1786production recognition/language checks passed; four native generic-entity tests added, full CI pending. No glyph changes or memory migration. Protocol remains42; use matching mod versions. Main unchanged.
+
+Previous change: **0.60.0-alpha** adds **Remember and Recall**: typed variables indexed by numeric keys. Ordinary caster-private memory lasts60seconds; feruchemical copper storing/tapping writes/reads persistent values in a touching coppermind. Numbers, vectors/directions, positions, blocks, regions, entity references and entity lists retain their types. [Memory guide](docs/aondor-memory-guide.svg) · [Controls and examples](docs/aondor-memory-controls.md).
 
 1786production recognition/type/math checks and both Java21 builds/JUnit/all384required server tests with and without Curios passed, including standalone graphical client startup in [CI42257856969](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/42257856969). Available on test branch `aondor-memory-0.60.0`. New drawing/copper controls still need hands-on playtesting. Existing copper Identity, capacity, entry limits and wipe rules apply. Recalled entities never load chunks and effects retain normal range/target limits. Protocol42 remains; install matching versions for the new glyph catalog. Main unchanged.
 
@@ -23,7 +31,7 @@ Previous change: **0.57.1-alpha** replaces typed Number with a drawn diamond and
 
 Previous change: **0.57.0-alpha** adds eight targeting Aons and nested typed expressions. Automatic relative-distance grouping is the default; **Alt-click** selects a parent and **Draw Argument** explicitly attaches a child when needed. No locking. Number has an editable numeric value. Release power to cast; Escape cancels. [Glyph guide and controls](docs/aondor-targeting-controls.md).
 
-**Caster, Gaze Entity, Gaze Block, Position Of, Look Direction, Number, Sphere, Entities In** compose with Light/Force/Heat. For example: `Heat(Entities In(Sphere(Position Of(Caster), Number(3))))`. Existing standalone defaults remain. Region queries currently select living entities, including caster; filters/item selectors are future work. Targets remain bounded, loaded and server-validated. Protocol40 requires matching clients/server.
+**Caster, Gaze Entity, Gaze Block, Position Of, Look Direction, Number, Sphere, Entities In** compose with Light/Force/Heat. For example: `Heat(Entities In(Sphere(Position Of(Caster), Number(3))))`. Existing standalone defaults remain. Region queries now select all entity types, including caster, dropped items, projectiles and XP orbs. Players/Mobs/Exclude/Nearest filters are available. Targets remain bounded, loaded and server-validated. Protocol40 requires matching clients/server.
 
 674production recognition/layout/type checks and18Java syntax checks passed. [CI42147631462](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/42147631462) passed both Java21 builds/JUnit, all371required server tests with and without Curios, and standalone client startup. Published to **main** with explicit user approval; gameplay matches the verified targeting branch. Hands-on grouping, numeric input and new-glyph usability still need playtesting.
 
@@ -32,7 +40,7 @@ Previous change: **0.56.0-alpha** adds base effects for the three existing Aons.
 | Aon | Base effect |
 |---|---|
 | Light | Temporary actual light near the caster: level12,20seconds at normal strength |
-| Force | Additive gaze-direction push on the nearest valid living target within8blocks |
+| Force | Additive gaze-direction push on the nearest valid entity of any type within8blocks |
 | Heat | Thaws freezing entities, melts a snow layer or ordinary/frosted ice, or lights a dry campfire |
 
 Shape-only recognition retains75%potency. Server validates the raw drawing, permissions and targets; default cooldown1second. No modifiers or Dor fuel system yet. Modifiers need their own designed argument glyphs and grouping/typing UI next; see the [proposed targeting language](docs/aondor-targeting-design.md). Protocol39 requires matching client/server versions.261recognition checks passed. [CI42139793273](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/42139793273) passed both builds/JUnit, all368required server tests and standalone graphical client startup. Published to **main** with explicit user approval; gameplay matches the tested branch. User reports the canvas, release controls and base effects work perfectly in-game; broader targeted/multiplayer verification remains separate.

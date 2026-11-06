@@ -7,7 +7,7 @@
 | Remember | Optional Number key, optional Value | Store the evaluated value; defaults to key 0 and Caster |
 | Recall | Optional Number key | Return the stored value; defaults to key 0 |
 
-Keys are whole numbers 0–1,000,000. Draw 0–10 or calculate a larger key. Arguments follow the normal clockwise order. All current concrete values are supported: Number, Entity, Entity list, Block, Position, Direction, Vector and Region. Remember stores the evaluated value, not the drawing or a spell to run later. Coordinate/region snapshots retain their dimension; entity references retain UUIDs. A stored entity position updates when Position Of resolves its reference; a stored Position stays fixed.
+Keys are whole numbers 0–1,000,000. Draw 0–10 or calculate a larger key. Arguments follow the normal clockwise order. All current concrete values are supported: Number, Boolean, Entity, Entity list, List, Block, Position, Direction, Vector and Region. Remember stores the evaluated value, not the drawing or a spell to run later. Coordinate/region snapshots retain their dimension; entity references retain UUIDs for all entity types, including items, projectiles and XP orbs. A stored entity position updates when Position Of resolves its reference; a stored Position stays fixed.
 
 Ordinary entries belong only to the caster and last **60 seconds of server ticks**, configurable with `memory.temporarySeconds`. Each caster can have 64 entries by default (`memory.maximumEntries`). Replacing a key replaces its value and restarts the timer. Reading does not consume it or refresh expiry. Expired keys are reusable. Temporary memory survives dimension travel and relogging within that timer, but clears on server shutdown. It is not a save-file storage system.
 
@@ -24,4 +24,6 @@ Examples:
 
 A missing/expired key, unloaded/dead entity, wrong dimension or wrong value type reports an error before effects. Recall does not load chunks, summon entities, bypass casting range, permit cross-dimension effects or lift target/vector caps. Entity lists are snapshots, while a stored Region can be queried again using Entities In. New values keep their type: a Position cannot be multiplied as a Vector. Runtime type checks handle Recall because its stored type may change between casts.
 
-No strings, arbitrary NBT, saved spell execution, conditions, variables local to loops, or inscription system are introduced in this slice. Future language values can extend the typed memory codec.
+No strings, arbitrary NBT, saved spell execution, variables local to loops, or inscription system are introduced in this slice. Future language values can extend the typed memory codec.
+
+Lists and Booleans are available in0.62.0: [list/set/logic controls](aondor-list-controls.md). Nested memory is bounded to128entries per list,512total values and depth8, in addition to copper capacity.

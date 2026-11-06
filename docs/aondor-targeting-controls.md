@@ -29,16 +29,17 @@ requires a positive radius no greater than configured casting range.
 | Aon | Arguments | Result |
 |---|---|---|
 | Caster | None | Caster entity |
-| Gaze Entity | None | Nearest valid living entity under gaze |
+| Gaze Entity | None | Nearest valid entity under gaze, of any type |
 | Gaze Block | None | Block under gaze |
 | Position Of | Entity or Block | Sampled position |
 | Look Direction | Optional Entity; defaults caster | Direction |
 | Number | Count of surrounding circles (0–10) | Number |
 | Sphere | Position, Number radius | Region |
-| Entities In | Region | List of living entities, including caster |
+| Entities In | Region | List of entities of all types, including caster |
 
-Current query scope is living entities, not dropped items/projectiles; further selectors
-and filters are future Aons. Empty gaze selectors and invalid types produce explicit
+Entity selectors include living entities, dropped items, projectiles, XP orbs, vehicles
+and other entity types. Removed/dead entities and spectators remain unavailable. Players
+and Mobs narrow lists; Exclude and Nearest work with every entity type. Empty gaze selectors and invalid types produce explicit
 errors; they never silently revert to the default target.
 
 Main signatures: Light([Position]); Force([Entity or Entity list], [Direction]);
@@ -74,3 +75,5 @@ resampled strokes). Release held power to cast; Escape/focus loss/slot change ca
 Limits:17glyphs total,16strokes/glyph,48points/stroke,3000points total. Protocol41
 requires matching clients/server. No variables, arbitrary lists,
 other region shapes, item/block inscription or new Dor costs are implemented yet.
+
+Force accepts generic entities and adds motion where their normal physics permits. Heat ignores nonliving entries in mixed lists; it does not destroy or cook dropped items. Gaze Entity has no vanilla pickability filter, so small items/orbs/projectiles are selectable. Walls still occlude gaze; loaded terrain and the initial query target cap still apply.
