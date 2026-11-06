@@ -72,6 +72,16 @@ public class VerifyAonDor {
    check(precise.template()==pattern&&precise.precise()&&precise.potency(.75)==1);
    var transmitted=pattern.strokes().stream().map(points->AonRecognition.resample(points,24).stream().map(q->p((double)(float)q.x(),(double)(float)q.y())).toList()).toList();
    check(AonRecognition.assess(new Glyph(true,.5,.5,transmitted),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018).precise());
+   if(pattern.id().endsWith(":heat")){
+    var narrower=pattern.strokes().stream().map(line->line.stream().map(q->p(.05+q.x()*.85,q.y())).toList()).toList();
+    var handDrawn=new Glyph(true,.5,.5,narrower);
+    check(AonRecognition.error(narrower,pattern)<.12);
+    check(AonRecognition.shapeError(narrower,pattern,.01)>.065);
+    var result=AonRecognition.assess(handDrawn,patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018);
+    check(result.template()==pattern&&result.precise());
+    var duplicateHeat=new AonRecognition.Template("test:heat_copy",true,pattern.strokes());
+    check(AonRecognition.assess(handDrawn,List.of(pattern,duplicateHeat),AonRecognition.Tolerance.defaults(.12,.025),.065,.018).ambiguous());
+   }
    var reversedLines=new ArrayList<List<Point>>();
    for(var line:pattern.strokes()){var reverse=new ArrayList<Point>(line);Collections.reverse(reverse);reversedLines.add(reverse);}Collections.reverse(reversedLines);
    var fallback=AonRecognition.assess(new Glyph(true,.5,.5,reversedLines),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018);

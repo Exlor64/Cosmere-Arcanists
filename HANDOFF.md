@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-11-05 (America/New_York)**. Current mod version: **0.55.3-alpha**.
+Last updated: **2026-11-05 (America/New_York)**. Current mod version: **0.55.4-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -8,6 +8,9 @@ Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
 Read this and `AGENTS.md` when beginning a session. The user requires this file to be updated after every change or project chat. Keep it current rather than appending conflicting summaries.
 
 ## Latest session and next action
+
+- **Heat recognition correction (2026-11-05; implemented, publication/CI pending):** User reports Light and Force work in-game, Heat does not. Reproduced a concrete recognition-policy bug using Heat with15%less width: ordered error .07128 is within .12 precise tolerance, but shape error .07755 exceeds .065 fallback tolerance, so the fallback threshold vetoed an otherwise valid precise match. Assessment now checks shape winner/ambiguity, then accepts an agreeing unambiguous ordered match using its own tolerance; only shape-only matches require the stricter shape threshold. No global tolerance increase, symbol redesign, new Aons or modifier/effect changes. Same-ID candidate agreement and cross-template shape ambiguity protections remain. This reproduces a plausible cause, not an assertion that the user's exact mouse trace was captured. Version0.55.4-alpha/protocol38 unchanged. Standalone261checks passed (new regression failed before fix), including correct narrower Heat recognition and duplicate-shape rejection; all previous257checks retained. Syntax-only parsing11Aon Javafiles and diff check passed. CI compilation/engine/client startup and user's visual retry pending. User-reported success for Light/Force is separate from automated verification.
+
 
 - **AonDor screen blur fix (2026-11-05; PUBLISHED, CI pending):** User reports entire drawing screen blurred in gameplay. Root cause confirmed against official NeoForge1.21.1 Screen patch: superclass Screen.render invokes renderBackground after our custom canvas/ink has already rendered, applying vanilla background blur over the drawing. AonDorScreen now overrides renderBackground with a no-op; its own translucent backdrop remains and superclass still renders widgets. This preserves sharp ink, controls and in-world projection without changing global blur settings or other screens. Version0.55.3-alpha, protocol38 unchanged. Published to main as66d527ee8073bc05e981146812c99d53da16797a. No recognition/network/gameplay changes. Local syntax/diff checks passed; Minecraft compilation and client startup will be checked through CI; hands-on visual confirmation remains pending. Previous CI365tests/builds/startup applies to0.55.2, not this fix.
 

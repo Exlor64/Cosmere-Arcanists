@@ -3,7 +3,9 @@ Minecraft **1.21.1**, NeoForge **21.1.256**, Java **21**. Author: **Ex**.
 
 For current project status, accepted design decisions, verification and continuation notes, read [HANDOFF.md](HANDOFF.md). Development and handoff-maintenance instructions are in [AGENTS.md](AGENTS.md).
 
-Current change: **0.55.3-alpha** fixes vanilla menu blur obscuring the drawing canvas and in-air projection. The AonDor screen skips the default blurred background while retaining its translucent canvas and controls. This fix is awaiting CI and visual playtesting.
+Current change: **0.55.4-alpha** fixes Heat drawings being rejected when their stroke sequence matched but the stricter shape-only threshold failed. Precise matches now use their own configured tolerance; fallback potency and ambiguity rejection remain.261production recognition checks passed, including a narrower Heat regression. CI and hands-on confirmation pending.
+
+Previous change: **0.55.3-alpha** fixes vanilla menu blur obscuring the drawing canvas and in-air projection. The AonDor screen skips the default blurred background while retaining its translucent canvas and controls. This fix is awaiting CI and visual playtesting.
 
 Previous change: **0.55.2-alpha** adds a drawing-only test for **Light, Force and Heat**. Hold G/H with AonDor selected, free-draw the central tile, then choose **Lock Aon**. The server reports its name and either precise-stroke recognition (100% potency) or shape-only recognition (75% by default). Shape fallback tolerates reordered/reversed strokes and different pen lifts; ambiguous shapes are rejected. Size and position are normalized. **Ctrl+Z / Undo** reverses edits, including locking; **Edit Aon** unlocks and **Reset** clears. Locked shapes cannot be accidentally drawn over. Strokes and previews have a soft white glow with a brighter white center. The current drawing also appears in the air ahead of the player, including unfinished strokes, and is synchronized to tracking players. It disappears when drawing ends (remote timeout up to30ticks). The drawing menu is translucent. No modifiers or live casting are included in this test.
 

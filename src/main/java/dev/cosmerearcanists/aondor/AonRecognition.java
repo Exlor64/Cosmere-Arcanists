@@ -51,12 +51,16 @@ public final class AonRecognition {
         Template best=null;double first=Double.POSITIVE_INFINITY,second=Double.POSITIVE_INFINITY;
         for(var template:templates){double error=shapeError(glyph.strokes(),template,tolerance.minimumExtent());
             if(error<first){second=first;first=error;best=template;}else second=Math.min(second,error);}
-        if(best==null||first>shapeLimit)return new Assessment(null,first,false,false);
+        if(best==null)return new Assessment(null,first,false,false);
         // Shape ambiguity cannot be overridden by a convenient drawing sequence.
         if(second-first<shapeGap)return new Assessment(null,first,true,false);
         var ordered=recognize(glyph,templates,tolerance);
         boolean precise=ordered.template()!=null&&ordered.template().id().equals(best.id());
-        return new Assessment(best,precise?ordered.error():first,false,precise);
+        // A clear ordered/directional match uses its own configured tolerance. The
+        // stricter shape-only threshold must not veto it (notably Heat's narrow bends).
+        if(precise)return new Assessment(best,ordered.error(),false,true);
+        if(first>shapeLimit)return new Assessment(null,first,false,false);
+        return new Assessment(best,first,false,false);
     }
     public static List<Point> resample(List<Point> points,int samples) {
         if(points.size()<2||samples<2)throw new IllegalArgumentException("Stroke needs two points");
