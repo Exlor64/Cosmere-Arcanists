@@ -9,7 +9,7 @@ import net.minecraft.world.phys.*;
 /** Typed evaluation precedes mutation; selection failures never turn into default targeting. */
 public final class AonEvaluator {
     private record Sphere(Vec3 center,double radius){}
-    private static Object value(ServerPlayer player,AonProgram.Node node){
+    static Object value(ServerPlayer player,AonProgram.Node node){
         var args=node.arguments();String key=node.id().substring(17);
         return switch(key){
             case "caster"->player;
