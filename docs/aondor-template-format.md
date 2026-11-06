@@ -1,6 +1,7 @@
-# AonDor drawing test
+# AonDor template format and base effects
 
-Only **Light, Force and Heat** ship in this test. Their main outlines stay angular,
+**Light, Force and Heat** are the three main effects. Eight targeting Aons now compose
+with them; see [current targeting controls and glyphs](aondor-targeting-controls.md). Their main outlines stay angular,
 with small circular marks. Exact shapes and stroke starts/directions:
 
 ![Three Aon stroke guide](aondor-test-guide.svg)
@@ -30,9 +31,9 @@ learned knowledge remain; no persistent spells or inscriptions are implemented.
 
 These defaults are at strength1 with precise recognition. Shape-only matches apply
 75%potency by default. Light brightness/duration, Force impulse and thaw amount
-scale; discrete block interactions remain one block. Server cooldown20ticks. Fuel,
-modifiers, typed/nested expressions and item/block inscription are future work.
-Only the three existing effect glyphs ship. Modifier workspace/glyph design is next.
+scale; discrete block interactions remain one block. Server cooldown20ticks. Typed
+nested targeting expressions are available; the three effects retain these defaults
+when drawn alone. Fuel and item/block inscription remain future work.
 
 ## Defining simplified Aons
 
@@ -76,6 +77,6 @@ cornerWeight(0.1) and relativeStrokeLengthWeight(0.1). Uniform drawing size is
 normalized away; relative stroke lengths, endpoints and signed turns help
 distinguish similar shapes while retaining order/direction. Known IDs are bounded
 to1024per player; at most256active definitions appear in a library snapshot.
-Matching client/server protocol39 is required. Sel's acquisition, regional power
+Matching client/server protocol40 is required. Sel's acquisition, regional power
 attenuation, live effect evaluator, argument types, costs and cross-world behavior
 remain unimplemented and must be designed separately.
