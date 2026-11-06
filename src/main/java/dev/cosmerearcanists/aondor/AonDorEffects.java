@@ -35,7 +35,8 @@ public final class AonDorEffects {
     public static boolean push(ServerPlayer player,LivingEntity target,double strength){return push(player,target,strength,player.getLookAngle(),false);}
     public static boolean push(ServerPlayer player,LivingEntity target,double strength,Vec3 heading,boolean explicit){
         if((target==player&&!explicit)||!target.isAlive()||target.isSpectator()||target.level()!=player.level()||target!=player&&(player.isAlliedTo(target)||target instanceof ServerPlayer other&&!player.canHarmPlayer(other)))return false;
-        var direction=heading.normalize().scale(AonDorConfig.FORCE.get()*strength);
+        var direction=heading.scale(AonDorConfig.FORCE.get()*strength);
+        if(direction.lengthSqr()<1e-16)return false;
         if(target instanceof ServerPlayer other)PowerService.externalImpulse(other,direction);
         else {target.setDeltaMovement(target.getDeltaMovement().add(direction));target.hasImpulse=true;target.hurtMarked=true;}
         player.serverLevel().sendParticles(ParticleTypes.END_ROD,target.getX(),target.getY()+target.getBbHeight()*.5,target.getZ(),8,.15,.15,.15,.01);return true;

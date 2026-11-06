@@ -4,7 +4,7 @@ public final class AonDorConfig {
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.BooleanValue ENABLED;
     public static final ModConfigSpec.IntValue LIGHT_SECONDS,LIGHT_LEVEL,THAW,CAST_COOLDOWN,MAX_TARGETS;
-    public static final ModConfigSpec.DoubleValue RANGE,FORCE;
+    public static final ModConfigSpec.DoubleValue RANGE,FORCE,MAX_FORCE_VECTOR;
     public static final ModConfigSpec.DoubleValue SHAPE_ERROR,SHAPE_GAP,FALLBACK_POTENCY,ERROR,GAP,MINIMUM_EXTENT,PATH_WEIGHT,ENDPOINT_WEIGHT,CORNER_WEIGHT,LENGTH_WEIGHT;
     static {var b=new ModConfigSpec.Builder();ENABLED=b.define("enabled",true);
         ERROR=b.comment("Maximum normalized stroke error; for the precise stroke-order/direction recognition pass.").defineInRange("maximumRecognitionError",.12,.01,.4);
@@ -21,6 +21,7 @@ public final class AonDorConfig {
         LIGHT_SECONDS=b.defineInRange("lightSeconds",20,1,120);
         LIGHT_LEVEL=b.defineInRange("lightLevel",12,1,15);
         RANGE=b.defineInRange("range",8.0,1.0,32.0);
+        MAX_FORCE_VECTOR=b.comment("Reject larger explicit Force vectors before affecting any target; vectors are never silently normalized.").defineInRange("maximumForceVectorMagnitude",8.0,.1,64.0);
         FORCE=b.defineInRange("forceImpulse",.45,.01,2.0);
         THAW=b.defineInRange("thawTicks",140,1,1000);
         CAST_COOLDOWN=b.defineInRange("castCooldownTicks",20,1,1200);b.pop();

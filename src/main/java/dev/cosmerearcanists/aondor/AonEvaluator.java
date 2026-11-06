@@ -18,6 +18,10 @@ public final class AonEvaluator {
             case "position_of"->{Object target=value(player,args.get(0));yield target instanceof LivingEntity entity?entity.position():((BlockPos)target).getCenter();}
             case "look_direction"->{var entity=args.isEmpty()?player:(LivingEntity)value(player,args.get(0));yield entity.getLookAngle().normalize();}
             case "number"->node.number();
+            case "add","subtract","multiply","divide","vector","length","normalize"->{
+                var values=new Object[args.size()];for(int i=0;i<values.length;i++){var v=value(player,args.get(i));values[i]=v instanceof Vec3 vector?new AonMath.Vector(vector.x,vector.y,vector.z):v;}
+                var result=AonMath.apply(key,values);yield result instanceof AonMath.Vector vector?new Vec3(vector.x(),vector.y(),vector.z()):result;
+            }
             case "sphere"->{var center=(Vec3)value(player,args.get(0));double radius=(Double)value(player,args.get(1));if(radius<=0||radius>AonDorConfig.RANGE.get())throw new IllegalArgumentException("Sphere radius must be positive and at most "+AonDorConfig.RANGE.get());checkPosition(player,center);yield new Sphere(center,radius);}
             case "entities_in"->{var region=(Sphere)value(player,args.get(0));var box=new AABB(region.center().subtract(region.radius(),region.radius(),region.radius()),region.center().add(region.radius(),region.radius(),region.radius()));
                 for(int x=(int)Math.floor(box.minX/16);x<=(int)Math.floor(box.maxX/16);x++)for(int z=(int)Math.floor(box.minZ/16);z<=(int)Math.floor(box.maxZ/16);z++)if(!player.serverLevel().hasChunk(x,z))throw new IllegalArgumentException("Sphere reaches unloaded terrain");
@@ -37,6 +41,7 @@ public final class AonEvaluator {
         var entities=target instanceof List<?>?(List<LivingEntity>)target:target instanceof LivingEntity entity?List.of(entity):List.<LivingEntity>of();
         // Resolve and validate all positional/directional inputs before changing the world.
         var direction=args.size()>1?(Vec3)value(player,args.get(1)):player.getLookAngle();
+        if(root.id().equals("cosmerearcanists:force")&&args.size()>1&&(!Double.isFinite(direction.length())||direction.length()>AonDorConfig.MAX_FORCE_VECTOR.get()))throw new IllegalArgumentException("Force vector magnitude exceeds "+AonDorConfig.MAX_FORCE_VECTOR.get());
         for(var entity:entities){checkPosition(player,entity.position());if(!entity.isAlive()||entity.level()!=player.level())throw new IllegalArgumentException("A selected entity is no longer available");}
         if(root.id().equals("cosmerearcanists:force")){
             int applied=0;for(var entity:entities)if(AonDorEffects.push(player,entity,strength,direction,true))applied++;return "Force: pushed "+applied+" target(s).";

@@ -23,8 +23,7 @@ shows its signature. Number is a diamond with a circle at its center (zero). Eac
 additional circle around the center adds1, up to10. Keep the circles separate and
 inside the diamond; their exact angular placement is flexible. Each circle is a closed
 stroke. No typed numbers, negative or decimal literals, or direct values above10.
-See the [Number examples](aondor-number-guide.svg). Larger values need future math
-expressions, which are not implemented yet. Zero is a valid literal, but Sphere
+See the [Number examples](aondor-number-guide.svg). Larger values, fractions and negatives use the [arithmetic Aons](aondor-math-controls.md). Zero is a valid literal, but Sphere
 requires a positive radius no greater than configured casting range.
 
 | Aon | Arguments | Result |
@@ -45,7 +44,7 @@ errors; they never silently revert to the default target.
 Main signatures: Light([Position]); Force([Entity or Entity list], [Direction]);
 Heat([Entity, Entity list or Block]). Omitting all arguments preserves existing base
 behavior. Explicit Caster can target Force at oneself. Friendly/PvP protections remain
-for other entities. No new strength/duration/filter glyphs in this release.
+for other entities. No strength/duration/filter glyphs yet; arithmetic and vector operators are documented separately.
 
 Example: Force → Caster (push yourself along your gaze).
 
@@ -73,5 +72,5 @@ from individual-glyph recognition (128strokes/3000points; active preview capped1
 resampled strokes). Release held power to cast; Escape/focus loss/slot change cancel.
 
 Limits:17glyphs total,16strokes/glyph,48points/stroke,3000points total. Protocol41
-requires matching clients/server. No variables, general vector math, arbitrary lists,
+requires matching clients/server. No variables, arbitrary lists,
 other region shapes, item/block inscription or new Dor costs are implemented yet.

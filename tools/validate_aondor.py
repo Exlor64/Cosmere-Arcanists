@@ -148,6 +148,46 @@ public class VerifyAonDor {
   check(AonRecognition.assess(new Glyph(false,.5,.5,tooMany),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018).template()==null);
   check(AonRecognition.assess(new Glyph(false,.5,.5,missingCenter),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018).template()==null);
   check(AonRecognition.assess(new Glyph(false,.5,.5,duplicateRing),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018).template()==null);
+
+  check(AonMath.apply("add",10.0,7.0).equals(17.0));
+  check(AonMath.apply("subtract",2.0,7.0).equals(-5.0));
+  check(AonMath.apply("multiply",7.0,8.0).equals(56.0));
+  check(AonMath.apply("divide",7.0,2.0).equals(3.5));
+  var v=new AonMath.Vector(1,2,3);var w=new AonMath.Vector(4,5,6);
+  check(AonMath.apply("add",v,w).equals(new AonMath.Vector(5,7,9)));
+  check(AonMath.apply("subtract",w,v).equals(new AonMath.Vector(3,3,3)));
+  check(AonMath.apply("multiply",v,2.0).equals(new AonMath.Vector(2,4,6)));
+  check(AonMath.apply("multiply",2.0,v).equals(new AonMath.Vector(2,4,6)));
+  check(AonMath.apply("divide",v,2.0).equals(new AonMath.Vector(.5,1,1.5)));
+  check(AonMath.apply("length",new AonMath.Vector(3,4,0)).equals(5.0));
+  check(AonMath.apply("normalize",new AonMath.Vector(0,0,4)).equals(new AonMath.Vector(0,0,1)));
+  check(AonMath.apply("normalize",new AonMath.Vector(Double.MIN_VALUE,0,0)).equals(new AonMath.Vector(1,0,0)));
+  bad(()->AonMath.apply("divide",1.0,0.0));bad(()->AonMath.apply("divide",v,-0.0));bad(()->AonMath.apply("divide",1.0,v));
+  bad(()->AonMath.apply("normalize",new AonMath.Vector(0,0,0)));bad(()->AonMath.apply("multiply",Double.MAX_VALUE,2.0));bad(()->new AonMath.Vector(Double.NaN,0,0));
+  var scalar=new AonProgram.Node("cosmerearcanists:number",2,AonProgram.Type.NUMBER,List.of());
+  var vecNode=new AonProgram.Node("cosmerearcanists:vector",0,AonProgram.Type.VECTOR,List.of(scalar,scalar,scalar));
+  var dirNode=new AonProgram.Node("cosmerearcanists:look_direction",0,AonProgram.Type.DIRECTION,List.of());
+  var posNode=new AonProgram.Node("cosmerearcanists:position_of",0,AonProgram.Type.POSITION,List.of());
+  check(AonMath.resultType("multiply",List.of(dirNode,scalar))==AonProgram.Type.VECTOR);
+  check(AonMath.resultType("add",List.of(posNode,vecNode))==AonProgram.Type.POSITION);
+  check(AonMath.resultType("add",List.of(vecNode,posNode))==AonProgram.Type.POSITION);
+  check(AonMath.resultType("subtract",List.of(posNode,posNode))==AonProgram.Type.VECTOR);
+  check(AonMath.resultType("subtract",List.of(posNode,dirNode))==AonProgram.Type.POSITION);
+  bad(()->AonMath.resultType("add",List.of(posNode,posNode)));bad(()->AonMath.resultType("divide",List.of(scalar,vecNode)));bad(()->AonMath.resultType("multiply",List.of(vecNode,vecNode)));
+  var dynamicDivideZero=new AonProgram.Node("cosmerearcanists:divide",0,AonProgram.Type.VECTOR,List.of(dirNode,new AonProgram.Node("cosmerearcanists:number",0,AonProgram.Type.NUMBER,List.of())));
+  bad(()->AonMath.constant(dynamicDivideZero));
+  // Compile actual drawn operator/Number templates, ordered clockwise, inside a Sphere.
+  var mathDrawing=new ArrayList<Glyph>(List.of(rootForce,placed(byId.get("entities_in"),.5,.45,.07,0,1),placed(byId.get("sphere"),.5,.28,.07,1,1),placed(byId.get("position_of"),.5,.15,.04,2,1),placed(byId.get("caster"),.5,.07,.04,3,1),placed(byId.get("divide"),.72,.28,.07,2,1),placed(byId.get("number"),.72,.15,.07,5,7),placed(byId.get("number"),.85,.28,.07,5,2)));
+  var mathProgram=AonProgram.compile(new AonDrawing(mathDrawing),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75);
+  check(mathProgram.calculations().contains("Divide = 3.5"));
+  var division=mathProgram.root().arguments().get(0).arguments().get(0).arguments().get(1);
+  check(AonMath.constant(division).equals(3.5));
+  mathDrawing.set(7,placed(byId.get("number"),.85,.28,.07,5,0));bad(()->AonProgram.compile(new AonDrawing(mathDrawing),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75));
+  var rng=new Random(20261106);for(int i=0;i<100;i++){
+   var sample=new AonMath.Vector(rng.nextDouble()*20-10,rng.nextDouble()*20-10,rng.nextDouble()*20-10);double factor=.1+rng.nextDouble()*9;
+   var restored=(AonMath.Vector)AonMath.apply("divide",AonMath.apply("multiply",sample,factor),factor);
+   check(Math.abs(restored.x()-sample.x())<1e-12&&Math.abs(restored.y()-sample.y())<1e-12&&Math.abs(restored.z()-sample.z())<1e-12);
+  }
   System.out.println("PASS: "+checks+" production Aon recognition/order/bounds checks (Java17; no Minecraft runtime).");
  }
 }
@@ -157,11 +197,11 @@ for resource in sorted((ROOT/'src/main/resources/data/cosmerearcanists/aondor/ao
     data=json.loads(resource.read_text())
     lines=','.join('List.of('+','.join(f'p({x},{y})' for x,y in line)+')' for line in data['strokes'])
     patterns.append(f'patterns.add(new AonRecognition.Template("cosmerearcanists:{resource.stem}","{data["name"]}",{str(data["kind"]=="effect").lower()},List.of({lines})));')
-assert len(patterns)==11, 'Expected three effects and eight targeting Aons'
+assert len(patterns)==18, 'Expected three effects and fifteen argument Aons'
 SOURCE=SOURCE.replace('/* RESOURCE_PATTERNS */','\n'.join(patterns))
 with tempfile.TemporaryDirectory() as tmp:
     source=Path(tmp)/'VerifyAonDor.java';source.write_text(SOURCE)
     subprocess.run(['java','-m','jdk.compiler/com.sun.tools.javac.Main','-d',tmp,
         str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonDrawing.java'),
-        str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonRecognition.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonNumerals.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonLayout.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonProgram.java'),str(source)],check=True)
+        str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonRecognition.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonNumerals.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonLayout.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonProgram.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonMath.java'),str(source)],check=True)
     subprocess.run(['java','-cp',tmp,'VerifyAonDor'],check=True)

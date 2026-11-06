@@ -3,7 +3,7 @@ import java.util.*;
 
 /** Pure typed expression compiler; no world mutation occurs until the complete program is valid. */
 public record AonProgram(Node root,double quality) {
-    public enum Type {ENTITY,BLOCK,POSITION,DIRECTION,NUMBER,REGION,ENTITIES,EFFECT}
+    public enum Type {ENTITY,BLOCK,POSITION,DIRECTION,VECTOR,NUMBER,REGION,ENTITIES,EFFECT}
     public record Node(String id,double number,Type type,List<Node> arguments){}
     public static AonProgram compile(AonDrawing drawing,List<AonRecognition.Template> templates,AonRecognition.Tolerance tolerance,double shapeError,double gap,double fallback){
         if(!drawing.glyphs().get(0).effect())throw new IllegalArgumentException("Draw the main effect first");
@@ -22,20 +22,36 @@ public record AonProgram(Node root,double quality) {
             case "position_of"->{arity(args,1,1,key);expect(args.get(0),key,Type.ENTITY,Type.BLOCK);yield Type.POSITION;}
             case "look_direction"->{arity(args,0,1,key);if(!args.isEmpty())expect(args.get(0),key,Type.ENTITY);yield Type.DIRECTION;}
             case "number"->{arity(args,0,0,key);yield Type.NUMBER;}
+            case "add","subtract","multiply","divide","vector","length","normalize"->AonMath.resultType(key,args);
             case "sphere"->{arity(args,2,2,key);expect(args.get(0),key,Type.POSITION);expect(args.get(1),key,Type.NUMBER);yield Type.REGION;}
             case "entities_in"->{arity(args,1,1,key);expect(args.get(0),key,Type.REGION);yield Type.ENTITIES;}
             case "light"->{arity(args,0,1,key);if(!args.isEmpty())expect(args.get(0),key,Type.POSITION);yield Type.EFFECT;}
-            case "force"->{arity(args,0,2,key);if(!args.isEmpty())expect(args.get(0),key,Type.ENTITY,Type.ENTITIES);if(args.size()>1)expect(args.get(1),key,Type.DIRECTION);yield Type.EFFECT;}
+            case "force"->{arity(args,0,2,key);if(!args.isEmpty())expect(args.get(0),key,Type.ENTITY,Type.ENTITIES);if(args.size()>1)expect(args.get(1),key,Type.DIRECTION,Type.VECTOR);yield Type.EFFECT;}
             case "heat"->{arity(args,0,1,key);if(!args.isEmpty())expect(args.get(0),key,Type.ENTITY,Type.ENTITIES,Type.BLOCK);yield Type.EFFECT;}
             default->throw new IllegalArgumentException("No operation configured for "+id);
         };
-        return new Node(id,type==Type.NUMBER?match.number():glyph.number(),type,List.copyOf(args));
+        var result=new Node(id,key.equals("number")?match.number():glyph.number(),type,List.copyOf(args));
+        if(AonMath.operation(id))AonMath.constant(result);
+        return result;
     }
     public static String signature(String id){if(id==null)return "Draw an Aon to identify it";return switch(id){
         case "cosmerearcanists:caster"->"Caster() → Entity";case "cosmerearcanists:gaze_entity"->"Gaze Entity() → Entity";case "cosmerearcanists:gaze_block"->"Gaze Block() → Block";
         case "cosmerearcanists:position_of"->"Position Of(Entity / Block) → Position";case "cosmerearcanists:look_direction"->"Look Direction([Entity]) → Direction";case "cosmerearcanists:number"->"Number: center = 0; outer circles = 1–10";
+        case "cosmerearcanists:add"->"Add(A, B): Numbers, Vectors, or Position + Vector";
+        case "cosmerearcanists:subtract"->"Subtract(A, B): A − B; positions yield a vector";
+        case "cosmerearcanists:multiply"->"Multiply(A, B): Numbers or Vector × Number";
+        case "cosmerearcanists:divide"->"Divide(A, B): Number / Number or Vector / Number";
+        case "cosmerearcanists:vector"->"Vector(Number X, Number Y, Number Z)";
+        case "cosmerearcanists:length"->"Length(Vector / Direction) → Number";
+        case "cosmerearcanists:normalize"->"Normalize(Vector / Direction) → Direction";
         case "cosmerearcanists:sphere"->"Sphere(Position, Number radius) → Region";case "cosmerearcanists:entities_in"->"Entities In(Region) → Entity list";
-        case "cosmerearcanists:light"->"Light([Position])";case "cosmerearcanists:force"->"Force([Entity / Entity list], [Direction])";case "cosmerearcanists:heat"->"Heat([Entity / Entity list / Block])";default->id;};}
+        case "cosmerearcanists:light"->"Light([Position])";case "cosmerearcanists:force"->"Force([Target], [Vector / Direction])";case "cosmerearcanists:heat"->"Heat([Entity / Entity list / Block])";default->id;};}
+    public String calculations(){var values=new ArrayList<String>();collect(root,values);return values.isEmpty()?"":" Calculations: "+String.join("; ",values);}
+    private static void collect(Node node,List<String> values){
+        if(AonMath.operation(node.id())&&values.size()<3){Object value=AonMath.constant(node);if(value!=null){String id=node.id().substring(17);values.add(Character.toUpperCase(id.charAt(0))+id.substring(1)+" = "+(value instanceof AonMath.Vector v?"("+format(v.x())+", "+format(v.y())+", "+format(v.z())+")":format((Double)value)));}}
+        for(var child:node.arguments())collect(child,values);
+    }
+    private static String format(double value){String text=Double.toString(value);return text.endsWith(".0")?text.substring(0,text.length()-2):text;}
     private static void arity(List<Node> args,int min,int max,String id){if(args.size()<min||args.size()>max)throw new IllegalArgumentException(id+" expects "+(min==max?min:min+"–"+max)+" arguments; received "+args.size());}
     private static void expect(Node node,String id,Type... types){if(Arrays.stream(types).noneMatch(t->t==node.type()))throw new IllegalArgumentException(id+" received "+node.type()+"; expected "+Arrays.toString(types));}
 }

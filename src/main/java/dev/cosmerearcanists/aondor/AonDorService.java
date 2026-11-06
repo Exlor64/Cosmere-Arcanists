@@ -59,7 +59,7 @@ public final class AonDorService {
     }
     public static String validate(AonDrawing drawing,List<AonRecognition.Template> templates){
         if(templates.isEmpty())return "No Aon patterns are configured yet. Your drawing was not cast.";
-        if(!drawing.arguments().isEmpty())try{var program=AonProgram.compile(drawing,templates,AonDorConfig.tolerance(),AonDorConfig.SHAPE_ERROR.get(),AonDorConfig.SHAPE_GAP.get(),AonDorConfig.FALLBACK_POTENCY.get());return "Recognized: "+program.root().id()+"; typed arguments valid. Release power to cast.";}catch(IllegalArgumentException invalid){return invalid.getMessage();}
+        if(!drawing.arguments().isEmpty())try{var program=AonProgram.compile(drawing,templates,AonDorConfig.tolerance(),AonDorConfig.SHAPE_ERROR.get(),AonDorConfig.SHAPE_GAP.get(),AonDorConfig.FALLBACK_POTENCY.get());return "Recognized: "+program.root().id()+"; typed arguments valid. Release power to cast."+program.calculations();}catch(IllegalArgumentException invalid){return invalid.getMessage();}
         var effect=AonRecognition.assess(drawing.main(),templates,AonDorConfig.tolerance(),AonDorConfig.SHAPE_ERROR.get(),AonDorConfig.SHAPE_GAP.get());
         if(effect.template()==null)return effect.ambiguous()?"Main Aon is ambiguous; refine its shape.":"Main Aon was not recognized. Refine its shape or undo a stroke.";
         if(!effect.template().effect())return "The central Aon must be an effect.";
