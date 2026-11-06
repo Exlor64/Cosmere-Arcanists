@@ -11,7 +11,8 @@ If two parents fit almost equally, the system rejects the guess.
 
 **Alt-click** an existing Aon to select it. **Draw Argument**, then click the canvas,
 explicitly attaches a child to that parent regardless of spacing. This is the fallback
-for ambiguity and cramped layouts. Draw Argument does not lock the parent. Undo/Ctrl+Z
+for ambiguity and cramped layouts. With Draw Argument armed, clicking an existing
+recognized child reattaches it instead of redrawing (the parent must have been drawn first). Draw Argument does not lock the parent. Undo/Ctrl+Z
 reverses strokes/placement/number edits; Remove deletes the selected argument and its
 children; Reset clears the spell. Automatic attachment is recomputed when geometry
 changes. Explicit parent references survive ordinary edits.

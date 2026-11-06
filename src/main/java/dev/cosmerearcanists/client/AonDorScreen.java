@@ -17,6 +17,7 @@ public final class AonDorScreen extends Screen {
     private final Deque<Edit> history=new ArrayDeque<>();
     private final Map<Integer,String> ids=new HashMap<>(),names=new HashMap<>();
     private final Map<Integer,UUID> probes=new HashMap<>();
+    private final Set<Integer> invalidNumbers=new HashSet<>();private final Map<Integer,String> numberText=new HashMap<>();
     private List<AonDorNetwork.Known> known=List.of();
     private final Map<String,AonDorNetwork.Stamp> cache=new HashMap<>();
     private int selected,forcedParent=-1,placement=-1,libraryIndex=-1,canvasX,canvasY,canvasWidth,canvasHeight;
@@ -29,22 +30,22 @@ public final class AonDorScreen extends Screen {
     public boolean recognized(){return ids.containsKey(0);}public void restoreRecognition(boolean value){}
     public AonDrawing drawing(){return new AonDrawing(glyphs);}
     private void save(){history.addLast(new Edit(List.copyOf(glyphs),selected));while(history.size()>100)history.removeFirst();pending=null;}
-    private void restore(Edit edit){glyphs.clear();glyphs.addAll(edit.glyphs());selected=Math.min(edit.selected(),glyphs.size()-1);ids.clear();names.clear();probes.clear();pending=null;forcedParent=-1;stroke=null;for(int i=0;i<glyphs.size();i++)probe(i);needsCheck=true;updateNumber();}
+    private void restore(Edit edit){glyphs.clear();glyphs.addAll(edit.glyphs());selected=Math.min(edit.selected(),glyphs.size()-1);ids.clear();names.clear();probes.clear();invalidNumbers.clear();numberText.clear();numberValid=true;pending=null;forcedParent=-1;stroke=null;for(int i=0;i<glyphs.size();i++)probe(i);needsCheck=true;updateNumber();}
     private void undo(){if(placement>=0){cancelPlacement();return;}if(stroke!=null){stroke=null;return;}if(!history.isEmpty())restore(history.removeLast());}
     private void button(String text,int x,int width,Runnable action){addRenderableWidget(Button.builder(Component.literal(text),b->action.run()).bounds(x,height-62,width,20).build());}
     @Override protected void init(){
         cancelPlacement();stroke=null;canvasX=12;canvasY=48;canvasWidth=Math.max(120,width-24);canvasHeight=Math.max(100,height-118);
-        int x=Math.max(4,(width-350)/2);button("Undo",x,46,this::undo);button("Reset",x+50,48,()->{save();restore(new Edit(List.of(new AonDrawing.Glyph(true,.5,.5,1,List.of())),0));});
-        button("Draw Argument",x+102,104,()->{if(ids.containsKey(selected)){forcedParent=selected;message="Click to begin a separate argument of "+names.get(selected)+".";}else message="Recognize and select the parent first.";});
-        button("Remove",x+210,58,this::remove);
-        numberBox=new EditBox(font,x+272,height-62,72,20,Component.literal("Number value"));numberBox.setMaxLength(24);numberBox.setResponder(this::numberChanged);addRenderableWidget(numberBox);updateNumber();
+        int x=Math.max(4,(width-306)/2);button("Undo",x,42,this::undo);button("Reset",x+46,42,()->{save();restore(new Edit(List.of(new AonDrawing.Glyph(true,.5,.5,1,List.of())),0));});
+        button("Draw Argument",x+92,92,()->{if(ids.containsKey(selected)){forcedParent=selected;message="Click to begin a separate argument of "+names.get(selected)+".";}else message="Recognize and select the parent first.";});
+        button("Remove",x+188,50,this::remove);
+        numberBox=new EditBox(font,x+242,height-62,60,20,Component.literal("Number value"));numberBox.setMaxLength(24);numberBox.setResponder(this::numberChanged);addRenderableWidget(numberBox);updateNumber();
         if(!requestedLibrary){requestedLibrary=true;PacketDistributor.sendToServer(new AonDorNetwork.Pick(UUID.randomUUID(),dimension,slot,""));for(int i=0;i<glyphs.size();i++)probe(i);}
     }
     private int scale(){return Math.max(canvasWidth,canvasHeight);}
     private AonDrawing.Point point(double x,double y){return new AonDrawing.Point(Math.max(0,Math.min(canvasWidth,(x-canvasX)))/scale(),Math.max(0,Math.min(canvasHeight,(y-canvasY)))/scale());}
     private boolean inCanvas(double x,double y){return x>=canvasX&&x<=canvasX+canvasWidth&&y>=canvasY&&y<=canvasY+canvasHeight&&!(x>=width-140&&y<height-78);}
-    private void updateNumber(){if(numberBox==null)return;updatingNumber=true;boolean show="cosmerearcanists:number".equals(ids.get(selected));numberBox.setVisible(show);numberBox.setEditable(show);numberBox.setValue(Double.toString(glyphs.get(selected).number()));numberValid=true;updatingNumber=false;}
-    private void numberChanged(String value){if(updatingNumber||!"cosmerearcanists:number".equals(ids.get(selected)))return;try{double number=Double.parseDouble(value);if(!Double.isFinite(number)||Math.abs(number)>1000000)throw new NumberFormatException();var g=glyphs.get(selected);save();glyphs.set(selected,new AonDrawing.Glyph(g.effect(),g.x(),g.y(),g.size(),g.strokes(),g.parent(),number));numberValid=true;needsCheck=true;}catch(NumberFormatException invalid){numberValid=false;message="Enter a finite Number between -1000000 and 1000000.";}}
+    private void updateNumber(){if(numberBox==null)return;updatingNumber=true;boolean show="cosmerearcanists:number".equals(ids.get(selected));numberBox.setVisible(show);numberBox.setEditable(show);numberBox.setValue(numberText.getOrDefault(selected,Double.toString(glyphs.get(selected).number())));numberValid=invalidNumbers.isEmpty();updatingNumber=false;}
+    private void numberChanged(String value){if(updatingNumber||!"cosmerearcanists:number".equals(ids.get(selected)))return;numberText.put(selected,value);try{double number=Double.parseDouble(value);if(!Double.isFinite(number)||Math.abs(number)>1000000)throw new NumberFormatException();var g=glyphs.get(selected);save();glyphs.set(selected,new AonDrawing.Glyph(g.effect(),g.x(),g.y(),g.size(),g.strokes(),g.parent(),number));invalidNumbers.remove(selected);numberValid=invalidNumbers.isEmpty();needsCheck=true;}catch(NumberFormatException invalid){invalidNumbers.add(selected);numberValid=false;message="Enter a finite Number between -1000000 and 1000000.";}}
     private void remove(){if(selected==0){message="Reset removes the main Aon and its arguments.";return;}save();int[] parents;try{parents=AonLayout.parents(drawing());}catch(IllegalArgumentException invalid){parents=new int[glyphs.size()];for(int i=0;i<parents.length;i++)parents[i]=glyphs.get(i).parent();}var removed=new HashSet<Integer>();removed.add(selected);for(int i=selected+1;i<parents.length;i++)if(removed.contains(parents[i]))removed.add(i);var out=new ArrayList<AonDrawing.Glyph>();int[] remap=new int[glyphs.size()];Arrays.fill(remap,-1);
         int next=0;for(int i=0;i<glyphs.size();i++)if(!removed.contains(i))remap[i]=next++;
         for(int i=0;i<glyphs.size();i++)if(!removed.contains(i)){var g=glyphs.get(i);out.add(new AonDrawing.Glyph(g.effect(),g.x(),g.y(),g.size(),g.strokes(),g.parent()<0?-1:remap[g.parent()],g.number()));}restore(new Edit(out,0));}
@@ -57,10 +58,10 @@ public final class AonDorScreen extends Screen {
         if(button==1){startPlacement(p);return true;}if(button!=0)return false;
         if(hasAltDown()){int hit=at(p);if(hit>=0){selected=hit;updateNumber();message="Selected "+names.getOrDefault(hit,"unrecognized Aon")+". Draw Argument explicitly attaches a child.";}return true;}
         save();
-        if(forcedParent>=0){int created=newArgument(p,forcedParent);if(created<0)return true;selected=created;forcedParent=-1;}
+        if(forcedParent>=0){int hit=at(p);if(hit>forcedParent&&ids.containsKey(hit)){var g=glyphs.get(hit);glyphs.set(hit,new AonDrawing.Glyph(g.effect(),g.x(),g.y(),g.size(),g.strokes(),forcedParent,g.number()));selected=hit;forcedParent=-1;needsCheck=true;updateNumber();message="Argument reattached to selected parent.";return true;}int created=newArgument(p,forcedParent);if(created<0)return true;selected=created;forcedParent=-1;}
         else if(!ids.containsKey(selected)&&!glyphs.get(selected).effect()){}
         else {int hit=at(p);if(hit>=0)selected=hit;else if(ids.containsKey(0)){int parent=autoParent(p);if(parent<0){history.removeLast();message=parent==-2?"Ambiguous parent. Alt-click a parent and use Draw Argument.":"Outside attachment bands. Move closer, or use Draw Argument.";return true;}int created=newArgument(p,-1);if(created<0)return true;selected=created;}else selected=0;}
-        ids.remove(selected);names.remove(selected);probes.remove(selected);pending=null;stroke=new ArrayList<>();stroke.add(p);updateNumber();return true;
+        ids.remove(selected);names.remove(selected);probes.remove(selected);invalidNumbers.remove(selected);numberText.remove(selected);numberValid=invalidNumbers.isEmpty();pending=null;stroke=new ArrayList<>();stroke.add(p);updateNumber();return true;
     }
     @Override public boolean mouseDragged(double x,double y,int button,double dx,double dy){if(placement>=0){resizePlacement(x,y);return true;}if(button==0&&stroke!=null){var p=point(x,y);if(stroke.size()>=256)stroke=new ArrayList<>(AonRecognition.resample(stroke,128));stroke.add(p);return true;}return super.mouseDragged(x,y,button,dx,dy);}
     private void finishStroke(){if(stroke==null)return;var raw=stroke;stroke=null;if(raw.size()==1)raw.add(raw.getFirst());var g=glyphs.get(selected);var lines=new ArrayList<>(g.strokes());lines.add(AonRecognition.resample(raw,24));try{var updated=new AonDrawing.Glyph(g.effect(),g.x(),g.y(),g.size(),lines,g.parent(),g.number());var b=AonLayout.bounds(updated);updated=new AonDrawing.Glyph(g.effect(),b.x(),b.y(),Math.min(1,b.diameter()),lines,g.parent(),g.number());var candidate=new ArrayList<>(glyphs);candidate.set(selected,updated);new AonDrawing(candidate);glyphs.set(selected,updated);probe(selected);needsCheck=true;}catch(IllegalArgumentException invalid){message=invalid.getMessage();}}
