@@ -1,6 +1,6 @@
 # AonDor Investiture access — accepted design (2026-11-06)
 
-Status: implemented locally in0.65.0; full Minecraft CI pending. See [access controls](aondor-access-controls.md) and [provider API](aondor-investiture-api.md). Sel world generation and physical external sources remain deferred.
+Status: implemented and verified on aondor-access-0.65.0; both Java21 builds/JUnit,413server tests with and without Curios, and client startup passed in CI42307582358. Main unchanged. See [access controls](aondor-access-controls.md) and [provider API](aondor-investiture-api.md). Sel world generation and physical external sources remain deferred.
 
 - On Sel, Elantrians access the Dor directly. It is effectively unlimited; no personal reserve, regeneration timer, personal expenditure or Dor meter is needed there.
 - Away from Sel, Elantrians normally cannot use AonDor. They need effective Connection to Sel at least **3× their normal unboosted Connection** AND an eligible external Investiture supply. The reference is the current unboosted baseline before temporary boosts, not a recursively increasing threshold based on the already-boosted value. These are independent requirements: fuel alone does not enable casting, and Connection alone does not supply ambient Dor off-world. Failure of either requirement must prevent effects.

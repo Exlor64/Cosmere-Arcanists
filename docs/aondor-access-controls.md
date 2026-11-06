@@ -47,7 +47,7 @@ The quote includes the following prototype work units, multiplied by server `inv
 | --- | --- |
 | Cast / evaluated expression node | 1 / 0.01 |
 | Spherical query | 0.01×volume |
-| Force | Unique eligible targets × actual impulse magnitude |
+| Force | Unique eligible targets × planned impulse magnitude |
 | Heat on living targets | Actual thaw amount/140 + planned direct damage + ignition power and0.1×burn seconds |
 | Cooking / smelting | Effective power × every processed input item |
 | Block warming / ignition | 1+power / power |
@@ -60,7 +60,7 @@ The quote includes the following prototype work units, multiplied by server `inv
 
 These are configurable-scale prototype work units, not claimed canonical Investiture conversions. Power0 thawing still costs work; Skip resolves real defaults rather than waiving their cost. Lazy If/And/Or do not price unused branches. Set/list/math operations are priced when evaluated. Protected or duplicate Force targets do not multiply its work. Numeric overflow rejects rather than creating infinite/negative prices.
 
-After preparation, the source reserves the complete quote. Access, ownership and world/position are rechecked before/after committing payment. Failed reservation/commit produces no spell effects. Invalid target recipes reject before any list member changes. Heat inputs and targets are revalidated after payment so consuming/changing a targeted item as fuel cannot duplicate its earlier contents. A fully denied/no-op application is refunded; thrown application failures request a refund. Existing permission/place events still apply. No multi-source partial spending is introduced: one source must cover the quote.
+After preparation, the source reserves the complete quote. Access, ownership and world/position are rechecked before/after committing payment. Failed reservation/commit produces no spell effects. Invalid target recipes reject before any list member changes. Heat inputs and targets are revalidated after payment so consuming/changing a targeted item as fuel cannot duplicate its earlier contents. An application reported by the effect as fully denied/no-work is refunded; attempted/resisted work may still cost units. thrown application failures request a refund. Existing permission/place events still apply. No multi-source partial spending is introduced: one source must cover the quote.
 
 ## Saved spell layouts
 
@@ -72,3 +72,5 @@ After preparation, the source reserves the complete quote. Access, ownership and
 Names use1–32lowercase letters, digits, underscores or hyphens. Up to8layouts are saved per player. Raw ink/geometry/parent links are stored in player data and preserved through normal saves and clones. Existing17glyph/3000point budgets apply. Loading re-recognizes and re-types against current server templates; casting rechecks live context, Connection, targets and funds. No executable IDs, cached targets, cached cost/payment or other-player memories are trusted. Saved layouts and learned glyphs are preserved when access is unavailable.
 
 Protocol44 adds the bounded server-to-client draft restore payload; update both clients/server. The4newglyphs bring the library to42templates (5effects,37arguments). Other worlds, regional acquisition, Bondsmith powers and physical external-source items remain deferred.
+
+Verified on test branch `aondor-access-0.65.0`:3947production checks, both Java21 builds/JUnit, all413required server tests with/withoutCurios and graphical client startup passed in [CI42307582358](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/42307582358). Actual command/drawing/provider usability and multiplayer remain for hands-on testing. Main unchanged.
