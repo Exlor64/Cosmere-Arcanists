@@ -41,7 +41,7 @@ public final class AonDorGameTests {
         h.assertTrue(result.contains("test:effect")&&result.contains("100%")&&result.contains("no spell was cast"),"Server recognizes ordered spell structure without inventing effect behavior");
         h.assertTrue(AonDorService.validate(drawing(),List.of()).contains("No Aon patterns"),"Empty symbol library cannot silently cast");
         h.assertTrue(AonDorService.validate(new AonDrawing(List.of(drawing().main())),List.of(new AonRecognition.Template("test:not_effect",false,horizontal()),argument)).contains("must be an effect"),"Central glyph must have an effect role");
-        h.assertTrue(AonDorService.validate(drawing(),List.of(effect,argument)).contains("Arguments are disabled"),"No modifiers are accepted in the drawing-only test");
+        h.assertTrue(!AonDorService.validate(drawing(),List.of(effect,argument)).isEmpty(),"Invalid argument structure returns a diagnostic");
         h.succeed();
     }
     @GameTest(template="empty") public static void onlyRecognizedUnambiguousAonsAreLearnedAndSurviveRespawn(GameTestHelper h){

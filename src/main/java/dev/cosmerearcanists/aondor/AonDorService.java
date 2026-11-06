@@ -16,11 +16,17 @@ public final class AonDorService {
     private static boolean requestAllowed(ServerPlayer player){long now=player.level().getGameTime();var old=REQUESTS.get(player);int count=old==null||now<old.tick()||now-old.tick()>=20?1:old.count()+1;REQUESTS.put(player,new Budget(old==null||now<old.tick()||now-old.tick()>=20?now:old.tick(),count));return count<=32;}
     public static boolean permitted(ServerPlayer player,String dimension,int slot){return (slot==0||slot==1)&&allowed(player)&&dimension.equals(player.level().dimension().location().toString())&&POWER.equals(slot==0?PowerData.selected(player):PowerData.secondary(player));}
     private static List<AonRecognition.Template> catalog(ServerPlayer player){return CATALOGS.computeIfAbsent(player.server,AonDorService::load);}
+    public static List<AonRecognition.Template> definitions(ServerPlayer player){return catalog(player);}
     public static AonRecognition.Match recognize(AonDrawing.Glyph glyph,List<AonRecognition.Template> templates){return AonRecognition.recognize(glyph,templates,AonDorConfig.tolerance());}
     public static boolean learnDrawing(ServerPlayer player,AonDrawing.Glyph glyph,List<AonRecognition.Template> templates){var match=AonRecognition.assess(glyph,templates,AonDorConfig.tolerance(),AonDorConfig.SHAPE_ERROR.get(),AonDorConfig.SHAPE_GAP.get());return match.template()!=null&&AonLearning.learn(player,match.template());}
     public static AonRecognition.Template learnedTemplate(ServerPlayer player,String id,List<AonRecognition.Template> templates){return AonLearning.known(player).contains(id)?templates.stream().filter(t->t.id().equals(id)).findFirst().orElse(null):null;}
     private static void library(ServerPlayer player,String message){var known=AonLearning.known(player);var list=catalog(player).stream().filter(t->known.contains(t.id())).map(t->new AonDorNetwork.Known(t.id(),t.name(),t.effect())).toList();PacketDistributor.sendToPlayer(player,new AonDorNetwork.Library(player.level().dimension().location().toString(),list,message));}
-    public static void trace(ServerPlayer player,AonDorNetwork.Trace request){if(requestAllowed(player)&&permitted(player,request.dimension(),request.slot())&&learnDrawing(player,request.glyph(),catalog(player)))library(player,"Aon learned.");}
+    public static void trace(ServerPlayer player,AonDorNetwork.Trace request){
+        if(!requestAllowed(player)||!permitted(player,request.dimension(),request.slot()))return;
+        var match=AonRecognition.assess(request.glyph(),catalog(player),AonDorConfig.tolerance(),AonDorConfig.SHAPE_ERROR.get(),AonDorConfig.SHAPE_GAP.get());
+        var template=match.template();if(template!=null&&AonLearning.learn(player,template))library(player,"Aon learned.");
+        PacketDistributor.sendToPlayer(player,new AonDorNetwork.Identified(request.nonce(),request.dimension(),request.index(),template==null?"":template.id(),template==null?"Not recognized":template.name()));
+    }
     public static void pick(ServerPlayer player,AonDorNetwork.Pick request){
         if(!requestAllowed(player)||!permitted(player,request.dimension(),request.slot()))return;
         if(request.id().isEmpty()){library(player,"");return;}
@@ -29,7 +35,7 @@ public final class AonDorService {
     }
     private static final Map<ServerPlayer,Long> PREVIEWED=new WeakHashMap<>();
     public static void preview(ServerPlayer player,AonDorNetwork.Preview request){
-        if(!permitted(player,request.dimension(),request.slot())||!request.glyph().effect())return;
+        if(!permitted(player,request.dimension(),request.slot()))return;
         long now=player.level().getGameTime();var last=PREVIEWED.get(player);
         if(request.active()&&last!=null&&now>=last&&now-last<5)return;
         if(!requestAllowed(player))return;
@@ -53,7 +59,7 @@ public final class AonDorService {
     }
     public static String validate(AonDrawing drawing,List<AonRecognition.Template> templates){
         if(templates.isEmpty())return "No Aon patterns are configured yet. Your drawing was not cast.";
-        if(!drawing.arguments().isEmpty())return "Arguments are disabled for this drawing test. Reset to a single central Aon.";
+        if(!drawing.arguments().isEmpty())try{var program=AonProgram.compile(drawing,templates,AonDorConfig.tolerance(),AonDorConfig.SHAPE_ERROR.get(),AonDorConfig.SHAPE_GAP.get(),AonDorConfig.FALLBACK_POTENCY.get());return "Recognized: "+program.root().id()+"; typed arguments valid. Release power to cast.";}catch(IllegalArgumentException invalid){return invalid.getMessage();}
         var effect=AonRecognition.assess(drawing.main(),templates,AonDorConfig.tolerance(),AonDorConfig.SHAPE_ERROR.get(),AonDorConfig.SHAPE_GAP.get());
         if(effect.template()==null)return effect.ambiguous()?"Main Aon is ambiguous; refine its shape.":"Main Aon was not recognized. Refine its shape or undo a stroke.";
         if(!effect.template().effect())return "The central Aon must be an effect.";
@@ -76,14 +82,14 @@ public final class AonDorService {
     private static final Map<ServerPlayer,Long> CASTED=new WeakHashMap<>();
     public static String execute(ServerPlayer player,AonDorNetwork.Check request){
         if(!permitted(player,request.dimension(),request.slot()))return "AonDor is no longer available in this power slot.";
-        if(!request.drawing().arguments().isEmpty())return "Modifiers are not available yet.";
-        var match=AonRecognition.assess(request.drawing().main(),catalog(player),AonDorConfig.tolerance(),AonDorConfig.SHAPE_ERROR.get(),AonDorConfig.SHAPE_GAP.get());
-        if(match.template()==null||!match.template().effect())return "Aon not recognized unambiguously; no spell cast.";
+        final AonProgram program;
+        try{program=AonProgram.compile(request.drawing(),catalog(player),AonDorConfig.tolerance(),AonDorConfig.SHAPE_ERROR.get(),AonDorConfig.SHAPE_GAP.get(),AonDorConfig.FALLBACK_POTENCY.get());}catch(IllegalArgumentException invalid){return invalid.getMessage();}
         long now=player.serverLevel().getGameTime();var last=CASTED.get(player);if(last!=null&&now>=last&&now-last<AonDorConfig.CAST_COOLDOWN.get())return "Wait a moment before casting again.";
         CASTED.put(player,now);
-        double strength=Math.max(.1,Math.min(4,player.getAttributeValue(PowerAttributes.AONDOR)))*match.potency(AonDorConfig.FALLBACK_POTENCY.get());
-        return AonDorEffects.cast(player,match.template().id(),strength);
+        double strength=Math.max(.1,Math.min(4,player.getAttributeValue(PowerAttributes.AONDOR)))*program.quality();
+        try{return AonEvaluator.execute(player,program,strength);}catch(IllegalArgumentException invalid){return invalid.getMessage();}
     }
+
     public static void cast(ServerPlayer player,AonDorNetwork.Check request){
         if(!requestAllowed(player))return;
         String message=execute(player,request);player.displayClientMessage(net.minecraft.network.chat.Component.literal(message),true);

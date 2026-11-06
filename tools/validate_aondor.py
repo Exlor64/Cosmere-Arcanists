@@ -14,6 +14,9 @@ public class VerifyAonDor {
  static void check(boolean value){checks++;if(!value)throw new AssertionError("Check "+checks);}
  static void bad(Runnable action){try{action.run();}catch(IllegalArgumentException expected){check(true);return;}throw new AssertionError("Accepted invalid input");}
  static Point p(double x,double y){return new Point(x,y);}
+ static Glyph placed(AonRecognition.Template template,double x,double y,double size,int parent,double number){
+  var lines=template.strokes().stream().map(line->line.stream().map(q->p(x+(q.x()-.5)*size,y+(q.y()-.5)*size)).toList()).toList();return new Glyph(template.effect(),x,y,size,lines,parent,number);
+ }
  public static void main(String[] args){
   var path=List.of(p(0,0),p(0,1),p(1,1));
   var template=new AonRecognition.Template("test:l",true,List.of(path));
@@ -88,7 +91,7 @@ public class VerifyAonDor {
    check(fallback.template()==pattern&&!fallback.precise()&&fallback.potency(.75)==.75);
    var split=new ArrayList<List<Point>>();
    // Split only the framework so the drawing remains within the network stroke budget.
-   var framework=pattern.strokes().get(0);for(int j=1;j<framework.size();j++)split.add(List.of(framework.get(j-1),framework.get(j)));split.addAll(pattern.strokes().subList(1,pattern.strokes().size()));
+   var framework=pattern.strokes().get(0);int middle=Math.max(1,framework.size()/2);split.add(framework.subList(0,middle+1));if(middle<framework.size()-1)split.add(framework.subList(middle,framework.size()));split.addAll(pattern.strokes().subList(1,pattern.strokes().size()));
    check(AonRecognition.assess(new Glyph(true,.5,.5,split),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018).template()==pattern);
    for(int trial=0;trial<30;trial++){
     final int seed=trial;var noise=pattern.strokes().stream().map(line->line.stream().map(q->p(.15+.65*q.x()+.004*Math.sin(q.y()*29+seed),.15+.65*q.y()+.004*Math.cos(q.x()*31+seed))).toList()).toList();
@@ -99,6 +102,25 @@ public class VerifyAonDor {
    for(var other:patterns)if(other!=pattern)check(AonRecognition.shapeError(pattern.strokes(),other,.01)>.065+.018);
   }
   check(AonRecognition.assess(new Glyph(true,.5,.5,List.of(List.of(p(.1,.1),p(.9,.9)))),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018).template()==null);
+
+  var byId=new HashMap<String,AonRecognition.Template>();for(var entry:patterns)byId.put(entry.id().substring(17),entry);
+  var rootForce=placed(byId.get("force"),.5,.7,.16,-1,1);
+  var explicit=new AonDrawing(List.of(rootForce,placed(byId.get("caster"),.5,.3,.08,0,1),placed(byId.get("look_direction"),.8,.7,.08,0,1)));
+  var program=AonProgram.compile(explicit,patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75);
+  check(program.root().arguments().size()==2&&program.root().arguments().get(0).type()==AonProgram.Type.ENTITY&&program.root().arguments().get(1).type()==AonProgram.Type.DIRECTION);
+  var nestedGlyphs=new ArrayList<Glyph>(List.of(rootForce,placed(byId.get("entities_in"),.5,.4,.1,0,1),placed(byId.get("sphere"),.5,.2,.08,1,1),placed(byId.get("position_of"),.5,.1,.05,2,1),placed(byId.get("caster"),.5,.04,.04,3,1),placed(byId.get("number"),.7,.2,.08,2,5)));
+  var nested=AonProgram.compile(new AonDrawing(nestedGlyphs),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75);
+  check(nested.root().arguments().get(0).type()==AonProgram.Type.ENTITIES&&nested.root().arguments().get(0).arguments().get(0).arguments().get(1).number()==5);
+  nestedGlyphs.set(5,placed(byId.get("caster"),.7,.2,.08,2,1));bad(()->AonProgram.compile(new AonDrawing(nestedGlyphs),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75));
+  var cyclic=new AonDrawing(List.of(rootForce,new Glyph(false,.2,.2,.1,byId.get("caster").strokes(),1,1)));bad(()->AonLayout.parents(cyclic));
+  var a=placed(byId.get("gaze_block"),.35,.5,.2,-1,1);var b=placed(byId.get("gaze_block"),.65,.5,.2,-1,1);
+  check(AonLayout.parentAt(List.of(a,b),2,p(.5,.2))==-2);
+  check(AonLayout.parentAt(List.of(a,b),2,p(.35,.2))==0);
+  check(AonLayout.parentAt(List.of(a),1,p(.9,.1))==-1);
+  var tinyA=placed(byId.get("gaze_block"),.175,.25,.1,-1,1);
+  check(AonLayout.parentAt(List.of(tinyA),1,p(.175,.1))==0);
+  var explicitFar=new AonDrawing(List.of(rootForce,placed(byId.get("caster"),.05,.05,.05,0,1)));
+  check(AonLayout.parents(explicitFar)[1]==0);
   System.out.println("PASS: "+checks+" production Aon recognition/order/bounds checks (Java17; no Minecraft runtime).");
  }
 }
@@ -107,12 +129,12 @@ patterns=[]
 for resource in sorted((ROOT/'src/main/resources/data/cosmerearcanists/aondor/aons').glob('*.json')):
     data=json.loads(resource.read_text())
     lines=','.join('List.of('+','.join(f'p({x},{y})' for x,y in line)+')' for line in data['strokes'])
-    patterns.append(f'patterns.add(new AonRecognition.Template("cosmerearcanists:{resource.stem}","{data["name"]}",true,List.of({lines})));')
-assert len(patterns)==3, 'The drawing test must ship exactly three Aons'
+    patterns.append(f'patterns.add(new AonRecognition.Template("cosmerearcanists:{resource.stem}","{data["name"]}",{str(data["kind"]=="effect").lower()},List.of({lines})));')
+assert len(patterns)==11, 'Expected three effects and eight targeting Aons'
 SOURCE=SOURCE.replace('/* RESOURCE_PATTERNS */','\n'.join(patterns))
 with tempfile.TemporaryDirectory() as tmp:
     source=Path(tmp)/'VerifyAonDor.java';source.write_text(SOURCE)
     subprocess.run(['java','-m','jdk.compiler/com.sun.tools.javac.Main','-d',tmp,
         str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonDrawing.java'),
-        str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonRecognition.java'),str(source)],check=True)
+        str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonRecognition.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonLayout.java'),str(ROOT/'src/main/java/dev/cosmerearcanists/aondor/AonProgram.java'),str(source)],check=True)
     subprocess.run(['java','-cp',tmp,'VerifyAonDor'],check=True)

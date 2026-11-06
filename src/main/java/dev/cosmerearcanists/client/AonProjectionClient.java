@@ -10,7 +10,7 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 
 /** Transient, depth-tested luminous ink; local ink updates every frame, remote ink four times/second. */
 public final class AonProjectionClient {
-    private record View(String dimension,AonDrawing.Glyph glyph,long tick){}
+    private record View(String dimension,AonDrawing.Ink glyph,long tick){}
     private static final Map<UUID,View> VIEWS=new HashMap<>();
     public static void receive(AonDorNetwork.Projection packet){
         var mc=Minecraft.getInstance();if(mc.level==null||!mc.level.dimension().location().toString().equals(packet.dimension()))return;

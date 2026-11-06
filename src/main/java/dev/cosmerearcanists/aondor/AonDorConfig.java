@@ -3,7 +3,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 public final class AonDorConfig {
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.BooleanValue ENABLED;
-    public static final ModConfigSpec.IntValue LIGHT_SECONDS,LIGHT_LEVEL,THAW,CAST_COOLDOWN;
+    public static final ModConfigSpec.IntValue LIGHT_SECONDS,LIGHT_LEVEL,THAW,CAST_COOLDOWN,MAX_TARGETS;
     public static final ModConfigSpec.DoubleValue RANGE,FORCE;
     public static final ModConfigSpec.DoubleValue SHAPE_ERROR,SHAPE_GAP,FALLBACK_POTENCY,ERROR,GAP,MINIMUM_EXTENT,PATH_WEIGHT,ENDPOINT_WEIGHT,CORNER_WEIGHT,LENGTH_WEIGHT;
     static {var b=new ModConfigSpec.Builder();ENABLED=b.define("enabled",true);
@@ -17,6 +17,7 @@ public final class AonDorConfig {
         SHAPE_GAP=b.defineInRange("minimumShapeGap",.018,.001,.2);
         FALLBACK_POTENCY=b.comment("Potency multiplier shown for shape-only matches; applies to standalone spell effects.").defineInRange("shapeOnlyPotency",.75,.05,1.0);
         b.push("baseEffects");
+        MAX_TARGETS=b.defineInRange("maximumTargets",32,1,128);
         LIGHT_SECONDS=b.defineInRange("lightSeconds",20,1,120);
         LIGHT_LEVEL=b.defineInRange("lightLevel",12,1,15);
         RANGE=b.defineInRange("range",8.0,1.0,32.0);

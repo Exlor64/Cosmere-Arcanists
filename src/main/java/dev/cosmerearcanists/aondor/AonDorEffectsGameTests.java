@@ -39,8 +39,8 @@ public final class AonDorEffectsGameTests {
         h.assertTrue(AonDorService.execute(player,request).contains("no longer available"),"Unowned casting rejected");
         player.getAttribute(PowerAttributes.AONDOR).setBaseValue(1);PowerData.assignSlot(player,AonDorService.POWER,0);
         h.assertTrue(AonDorService.execute(player,new AonDorNetwork.Check(UUID.randomUUID(),"minecraft:wrong",0,request.drawing())).contains("no longer available"),"Wrong dimension rejected");
-        var args=new AonDrawing(List.of(glyph,new AonDrawing.Glyph(false,.5,.1,line)));
-        h.assertTrue(AonDorService.execute(player,new AonDorNetwork.Check(UUID.randomUUID(),dimension,0,args)).contains("Modifiers"),"Unsupported modifiers cannot silently cast");
-        h.assertTrue(AonDorService.execute(player,request).contains("no spell cast"),"Unknown raw geometry cannot cast by claiming an ID");h.succeed();
+        var args=new AonDrawing(List.of(glyph,new AonDrawing.Glyph(false,.5,.1,.18,line,0,1)));
+        h.assertTrue(AonDorService.execute(player,new AonDorNetwork.Check(UUID.randomUUID(),dimension,0,args)).contains("not recognized"),"Unknown modifier shapes cannot silently cast");
+        h.assertTrue(AonDorService.execute(player,request).contains("not recognized"),"Unknown raw geometry cannot cast by claiming an ID");h.succeed();
     }
 }

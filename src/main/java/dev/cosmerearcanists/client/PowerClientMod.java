@@ -14,6 +14,7 @@ import net.neoforged.neoforge.common.NeoForge;
 public final class PowerClientMod {
     public PowerClientMod(IEventBus bus, ModContainer container) {
         container.registerConfig(ModConfig.Type.CLIENT, PowerClientConfig.SPEC);
+        dev.cosmerearcanists.aondor.AonDorNetwork.identifiedReceiver=p->{if(net.minecraft.client.Minecraft.getInstance().screen instanceof AonDorScreen screen)screen.identified(p);};
         dev.cosmerearcanists.aondor.AonDorNetwork.receiver=AonDorClient::receive;
         dev.cosmerearcanists.aondor.AonDorNetwork.libraryReceiver=AonDorClient::receiveLibrary;
         dev.cosmerearcanists.aondor.AonDorNetwork.stampReceiver=AonDorClient::receiveStamp;

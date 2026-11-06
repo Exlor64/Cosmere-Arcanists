@@ -3,7 +3,13 @@ Minecraft **1.21.1**, NeoForge **21.1.256**, Java **21**. Author: **Ex**.
 
 For current project status, accepted design decisions, verification and continuation notes, read [HANDOFF.md](HANDOFF.md). Development and handoff-maintenance instructions are in [AGENTS.md](AGENTS.md).
 
-Current change: **0.56.0-alpha** adds base effects for the three existing Aons. **Hold power to draw; release to cast.** Recognition updates automatically without locking the drawing. Escape cancels. The larger canvas has thin white grid lines; learned palette placement and in-air projection remain.
+Current change: **0.57.0-alpha** adds eight targeting Aons and nested typed expressions. Automatic relative-distance grouping is the default; **Alt-click** selects a parent and **Draw Argument** explicitly attaches a child when needed. No locking. Number has an editable numeric value. Release power to cast; Escape cancels. [Glyph guide and controls](docs/aondor-targeting-controls.md).
+
+**Caster, Gaze Entity, Gaze Block, Position Of, Look Direction, Number, Sphere, Entities In** compose with Light/Force/Heat. For example: `Heat(Entities In(Sphere(Position Of(Caster), Number(3))))`. Existing standalone defaults remain. Region queries currently select living entities, including caster; filters/item selectors are future work. Targets remain bounded, loaded and server-validated. Protocol40 requires matching clients/server.
+
+654production recognition/layout/type checks and18Java syntax checks passed. New engine tests/Minecraft compilation and GUI testing await CI; changes not yet published to main.
+
+Previous change: **0.56.0-alpha** adds base effects for the three existing Aons. **Hold power to draw; release to cast.** Recognition updates automatically without locking the drawing. Escape cancels. The larger canvas has thin white grid lines; learned palette placement and in-air projection remain.
 
 | Aon | Base effect |
 |---|---|
@@ -11,7 +17,7 @@ Current change: **0.56.0-alpha** adds base effects for the three existing Aons. 
 | Force | Additive gaze-direction push on the nearest valid living target within8blocks |
 | Heat | Thaws freezing entities, melts a snow layer or ordinary/frosted ice, or lights a dry campfire |
 
-Shape-only recognition retains75%potency. Server validates the raw drawing, permissions and targets; default cooldown1second. No modifiers or Dor fuel system yet. Modifiers need their own designed argument glyphs and grouping/typing UI next. Protocol39 requires matching client/server versions.261recognition checks passed. [CI42139793273](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/42139793273) passed both builds/JUnit, all368required server tests and standalone graphical client startup. Published to **main** with explicit user approval; gameplay matches the tested branch. Hands-on canvas/release/effect gameplay remains unverified.
+Shape-only recognition retains75%potency. Server validates the raw drawing, permissions and targets; default cooldown1second. No modifiers or Dor fuel system yet. Modifiers need their own designed argument glyphs and grouping/typing UI next; see the [proposed targeting language](docs/aondor-targeting-design.md). Protocol39 requires matching client/server versions.261recognition checks passed. [CI42139793273](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/42139793273) passed both builds/JUnit, all368required server tests and standalone graphical client startup. Published to **main** with explicit user approval; gameplay matches the tested branch. User reports the canvas, release controls and base effects work perfectly in-game; broader targeted/multiplayer verification remains separate.
 
 Previous change: **0.55.4-alpha** fixes Heat drawings being rejected when their stroke sequence matched but the stricter shape-only threshold failed. Precise matches now use their own configured tolerance; fallback potency and ambiguity rejection remain.261production recognition checks passed, including a narrower Heat regression. CI and hands-on confirmation pending.
 

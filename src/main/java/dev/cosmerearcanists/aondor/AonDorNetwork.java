@@ -8,6 +8,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public final class AonDorNetwork {
+    public static Consumer<Identified> identifiedReceiver=p->{};
     public static Consumer<Projection> projectionReceiver=p->{};
     public static Consumer<Result> receiver=p->{};
     public static Consumer<Library> libraryReceiver=p->{};
@@ -15,14 +16,14 @@ public final class AonDorNetwork {
     private static <T extends CustomPacketPayload> CustomPacketPayload.Type<T> type(String name){return new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(CosmereArcanists.MOD_ID,name));}
     private static void context(String dimension,int slot){if(dimension.length()>128||slot<0||slot>1)throw new IllegalArgumentException("Invalid drawing context");}
     private static AonDrawing.Glyph readGlyph(RegistryFriendlyByteBuf b,int[] budget){
-        boolean effect=b.readBoolean();double x=b.readFloat(),y=b.readFloat(),size=b.readDouble();int count=b.readVarInt();
+        boolean effect=b.readBoolean();double x=b.readFloat(),y=b.readFloat(),size=b.readDouble();int parent=b.readVarInt();double number=b.readDouble();int count=b.readVarInt();
         if(count<0||count>AonDrawing.MAX_STROKES)throw new IllegalArgumentException("Too many strokes");var strokes=new ArrayList<List<AonDrawing.Point>>();
         for(int i=0;i<count;i++){int n=b.readVarInt();if(n<2||n>AonDrawing.MAX_POINTS||n>budget[0])throw new IllegalArgumentException("Drawing exceeds point budget");budget[0]-=n;
             var points=new ArrayList<AonDrawing.Point>();for(int j=0;j<n;j++)points.add(new AonDrawing.Point(b.readFloat(),b.readFloat()));strokes.add(points);}
-        return new AonDrawing.Glyph(effect,x,y,size,strokes);
+        return new AonDrawing.Glyph(effect,x,y,size,strokes,parent,number);
     }
     private static void writeGlyph(RegistryFriendlyByteBuf b,AonDrawing.Glyph glyph){
-        b.writeBoolean(glyph.effect());b.writeFloat((float)glyph.x());b.writeFloat((float)glyph.y());b.writeDouble(glyph.size());b.writeVarInt(glyph.strokes().size());
+        b.writeBoolean(glyph.effect());b.writeFloat((float)glyph.x());b.writeFloat((float)glyph.y());b.writeDouble(glyph.size());b.writeVarInt(glyph.parent());b.writeDouble(glyph.number());b.writeVarInt(glyph.strokes().size());
         for(var stroke:glyph.strokes()){b.writeVarInt(stroke.size());for(var point:stroke){b.writeFloat((float)point.x());b.writeFloat((float)point.y());}}
     }
     public record Check(UUID nonce,String dimension,int slot,AonDrawing drawing) implements CustomPacketPayload {
@@ -36,12 +37,13 @@ public final class AonDorNetwork {
         };
         @Override public Type<Check> type(){return TYPE;}
     }
-    public record Trace(String dimension,int slot,AonDrawing.Glyph glyph) implements CustomPacketPayload {
-        public Trace {context(dimension,slot);}
+    public record Trace(String dimension,int slot,AonDrawing.Glyph glyph,UUID nonce,int index) implements CustomPacketPayload {
+        public Trace(String dimension,int slot,AonDrawing.Glyph glyph){this(dimension,slot,glyph,UUID.randomUUID(),0);}
+        public Trace {context(dimension,slot);if(index<0||index>=AonDrawing.MAX_GLYPHS)throw new IllegalArgumentException("Invalid Aon index");}
         public static final Type<Trace> TYPE=AonDorNetwork.type("aondor_trace");
         public static final StreamCodec<RegistryFriendlyByteBuf,Trace> CODEC=new StreamCodec<>(){
-            public Trace decode(RegistryFriendlyByteBuf b){return new Trace(b.readUtf(128),b.readVarInt(),readGlyph(b,new int[]{AonDrawing.MAX_TOTAL_POINTS}));}
-            public void encode(RegistryFriendlyByteBuf b,Trace p){b.writeUtf(p.dimension,128);b.writeVarInt(p.slot);writeGlyph(b,p.glyph);}};
+            public Trace decode(RegistryFriendlyByteBuf b){return new Trace(b.readUtf(128),b.readVarInt(),readGlyph(b,new int[]{AonDrawing.MAX_TOTAL_POINTS}),b.readUUID(),b.readVarInt());}
+            public void encode(RegistryFriendlyByteBuf b,Trace p){b.writeUtf(p.dimension,128);b.writeVarInt(p.slot);writeGlyph(b,p.glyph);b.writeUUID(p.nonce);b.writeVarInt(p.index);}};
         @Override public Type<Trace> type(){return TYPE;}
     }
     /** Empty id requests the library; nonempty id requests a previously learned shape. */
@@ -78,20 +80,27 @@ public final class AonDorNetwork {
             public void encode(RegistryFriendlyByteBuf b,Result p){b.writeUUID(p.nonce);b.writeUtf(p.dimension,128);b.writeUtf(p.message,2048);}};
         @Override public Type<Result> type(){return TYPE;}
     }
-    public record Preview(String dimension,int slot,boolean active,AonDrawing.Glyph glyph) implements CustomPacketPayload {
+    private static AonDrawing.Ink readInk(RegistryFriendlyByteBuf b){
+        double size=b.readDouble();int count=b.readVarInt(),remaining=AonDrawing.MAX_TOTAL_POINTS;if(count<0||count>128)throw new IllegalArgumentException("Too much projected ink");var lines=new ArrayList<List<AonDrawing.Point>>();
+        for(int i=0;i<count;i++){int n=b.readVarInt();if(n<2||n>AonDrawing.MAX_POINTS||n>remaining)throw new IllegalArgumentException("Projection point budget exceeded");remaining-=n;var points=new ArrayList<AonDrawing.Point>();for(int j=0;j<n;j++)points.add(new AonDrawing.Point(b.readFloat(),b.readFloat()));lines.add(points);}return new AonDrawing.Ink(lines,size);
+    }
+    private static void writeInk(RegistryFriendlyByteBuf b,AonDrawing.Ink ink){b.writeDouble(ink.size());b.writeVarInt(ink.strokes().size());for(var line:ink.strokes()){b.writeVarInt(line.size());for(var point:line){b.writeFloat((float)point.x());b.writeFloat((float)point.y());}}}
+    public record Preview(String dimension,int slot,boolean active,AonDrawing.Ink glyph) implements CustomPacketPayload {
+        public Preview(String dimension,int slot,boolean active,AonDrawing.Glyph glyph){this(dimension,slot,active,new AonDrawing.Ink(glyph));}
         public Preview {context(dimension,slot);}
         public static final Type<Preview> TYPE=AonDorNetwork.type("aondor_preview");
         public static final StreamCodec<RegistryFriendlyByteBuf,Preview> CODEC=new StreamCodec<>(){
-            public Preview decode(RegistryFriendlyByteBuf b){return new Preview(b.readUtf(128),b.readVarInt(),b.readBoolean(),readGlyph(b,new int[]{AonDrawing.MAX_TOTAL_POINTS}));}
-            public void encode(RegistryFriendlyByteBuf b,Preview p){b.writeUtf(p.dimension,128);b.writeVarInt(p.slot);b.writeBoolean(p.active);writeGlyph(b,p.glyph);}};
+            public Preview decode(RegistryFriendlyByteBuf b){return new Preview(b.readUtf(128),b.readVarInt(),b.readBoolean(),readInk(b));}
+            public void encode(RegistryFriendlyByteBuf b,Preview p){b.writeUtf(p.dimension,128);b.writeVarInt(p.slot);b.writeBoolean(p.active);writeInk(b,p.glyph);}};
         @Override public Type<Preview> type(){return TYPE;}
     }
-    public record Projection(UUID owner,String dimension,boolean active,AonDrawing.Glyph glyph) implements CustomPacketPayload {
+    public record Projection(UUID owner,String dimension,boolean active,AonDrawing.Ink glyph) implements CustomPacketPayload {
+        public Projection(UUID owner,String dimension,boolean active,AonDrawing.Glyph glyph){this(owner,dimension,active,new AonDrawing.Ink(glyph));}
         public Projection {if(dimension.length()>128)throw new IllegalArgumentException("Invalid projection dimension");}
         public static final Type<Projection> TYPE=AonDorNetwork.type("aondor_projection");
         public static final StreamCodec<RegistryFriendlyByteBuf,Projection> CODEC=new StreamCodec<>(){
-            public Projection decode(RegistryFriendlyByteBuf b){return new Projection(b.readUUID(),b.readUtf(128),b.readBoolean(),readGlyph(b,new int[]{AonDrawing.MAX_TOTAL_POINTS}));}
-            public void encode(RegistryFriendlyByteBuf b,Projection p){b.writeUUID(p.owner);b.writeUtf(p.dimension,128);b.writeBoolean(p.active);writeGlyph(b,p.glyph);}};
+            public Projection decode(RegistryFriendlyByteBuf b){return new Projection(b.readUUID(),b.readUtf(128),b.readBoolean(),readInk(b));}
+            public void encode(RegistryFriendlyByteBuf b,Projection p){b.writeUUID(p.owner);b.writeUtf(p.dimension,128);b.writeBoolean(p.active);writeInk(b,p.glyph);}};
         @Override public Type<Projection> type(){return TYPE;}
     }
     public record Cast(Check request) implements CustomPacketPayload {
@@ -101,9 +110,17 @@ public final class AonDorNetwork {
             public void encode(RegistryFriendlyByteBuf b,Cast p){Check.CODEC.encode(b,p.request);}};
         @Override public Type<Cast> type(){return TYPE;}
     }
+    public record Identified(UUID nonce,String dimension,int index,String id,String name) implements CustomPacketPayload {
+        public static final Type<Identified> TYPE=AonDorNetwork.type("aondor_identified");
+        public static final StreamCodec<RegistryFriendlyByteBuf,Identified> CODEC=new StreamCodec<>(){
+            public Identified decode(RegistryFriendlyByteBuf b){return new Identified(b.readUUID(),b.readUtf(128),b.readVarInt(),b.readUtf(128),b.readUtf(128));}
+            public void encode(RegistryFriendlyByteBuf b,Identified p){b.writeUUID(p.nonce);b.writeUtf(p.dimension,128);b.writeVarInt(p.index);b.writeUtf(p.id,128);b.writeUtf(p.name,128);}};
+        @Override public Type<Identified> type(){return TYPE;}
+    }
     public static void register(PayloadRegistrar registrar){
         registrar.playToServer(Cast.TYPE,Cast.CODEC,(p,c)->c.enqueueWork(()->{if(c.player() instanceof net.minecraft.server.level.ServerPlayer player)AonDorService.cast(player,p.request());}));
         registrar.playToServer(Preview.TYPE,Preview.CODEC,(p,c)->c.enqueueWork(()->{if(c.player() instanceof net.minecraft.server.level.ServerPlayer player)AonDorService.preview(player,p);}));
+        registrar.playToClient(Identified.TYPE,Identified.CODEC,(p,c)->c.enqueueWork(()->identifiedReceiver.accept(p)));
         registrar.playToClient(Projection.TYPE,Projection.CODEC,(p,c)->c.enqueueWork(()->projectionReceiver.accept(p)));
         registrar.playToServer(Check.TYPE,Check.CODEC,(p,c)->c.enqueueWork(()->{if(c.player() instanceof net.minecraft.server.level.ServerPlayer player)AonDorService.check(player,p);}));
         registrar.playToServer(Trace.TYPE,Trace.CODEC,(p,c)->c.enqueueWork(()->{if(c.player() instanceof net.minecraft.server.level.ServerPlayer player)AonDorService.trace(player,p);}));
