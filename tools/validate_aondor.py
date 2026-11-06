@@ -73,6 +73,11 @@ public class VerifyAonDor {
    var exact=new Glyph(true,.5,.5,pattern.strokes());
    var precise=AonRecognition.assess(exact,patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018);
    check(precise.template()==pattern&&precise.precise()&&precise.potency(.75)==1);
+   for(int count=1;count<pattern.strokes().size();count++){
+    var partial=new Glyph(pattern.effect(),.5,.5,pattern.strokes().subList(0,count));
+    var partialMatch=AonRecognition.assess(partial,patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018);
+    check(partialMatch.template()==null||partialMatch.template()==pattern);
+   }
    var transmitted=pattern.strokes().stream().map(points->AonRecognition.resample(points,24).stream().map(q->p((double)(float)q.x(),(double)(float)q.y())).toList()).toList();
    check(AonRecognition.assess(new Glyph(true,.5,.5,transmitted),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018).precise());
    if(pattern.id().endsWith(":heat")){

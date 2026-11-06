@@ -35,17 +35,17 @@ public final class AonRecognition {
             if(weight<1e-12)continue;
             for(int j=0;j<8;j++){
                 double t=(j+.5)/8;var point=new Point(a.x()+(b.x()-a.x())*t,a.y()+(b.y()-a.y())*t);
-                double nearest=Double.POSITIVE_INFINITY;
-                for(var line:target)for(int k=1;k<line.size();k++)nearest=Math.min(nearest,segmentDistance(point,line.get(k-1),line.get(k)));
-                sum+=nearest*weight;total+=weight;worst=Math.max(worst,nearest);
+                double nearestSquared=Double.POSITIVE_INFINITY;
+                for(var line:target)for(int k=1;k<line.size();k++)nearestSquared=Math.min(nearestSquared,segmentDistanceSquared(point,line.get(k-1),line.get(k)));
+                double nearest=Math.sqrt(nearestSquared);sum+=nearest*weight;total+=weight;worst=Math.max(worst,nearest);
             }
         }
         return total==0?Double.POSITIVE_INFINITY:.65*sum/total+.35*worst;
     }
-    private static double segmentDistance(Point p,Point a,Point b){
+    private static double segmentDistanceSquared(Point p,Point a,Point b){
         double dx=b.x()-a.x(),dy=b.y()-a.y(),length=dx*dx+dy*dy;
         double t=length<1e-16?0:Math.max(0,Math.min(1,((p.x()-a.x())*dx+(p.y()-a.y())*dy)/length));
-        return Math.hypot(p.x()-a.x()-t*dx,p.y()-a.y()-t*dy);
+        double x=p.x()-a.x()-t*dx,y=p.y()-a.y()-t*dy;return x*x+y*y;
     }
     public static Assessment assess(Glyph glyph,List<Template> templates,Tolerance tolerance,double shapeLimit,double shapeGap){
         Template best=null;double first=Double.POSITIVE_INFINITY,second=Double.POSITIVE_INFINITY;
