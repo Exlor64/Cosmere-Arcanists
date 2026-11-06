@@ -118,6 +118,13 @@ public class VerifyAonDor {
   var nested=AonProgram.compile(new AonDrawing(nestedGlyphs),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75);
   check(nested.root().arguments().get(0).type()==AonProgram.Type.ENTITIES&&nested.root().arguments().get(0).arguments().get(0).arguments().get(1).number()==5);
   nestedGlyphs.set(5,placed(byId.get("caster"),.7,.2,.08,2,1));bad(()->AonProgram.compile(new AonDrawing(nestedGlyphs),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75));
+  for(String filter:List.of("players","mobs","nearest","exclude")){
+   var filtered=new ArrayList<Glyph>(List.of(placed(byId.get("heat"),.5,.85,.08,-1,1),placed(byId.get(filter),.5,.65,.08,0,1),placed(byId.get("entities_in"),.5,.45,.08,1,1),placed(byId.get("sphere"),.5,.3,.08,2,1),placed(byId.get("position_of"),.5,.18,.06,3,1),placed(byId.get("caster"),.5,.06,.05,4,1),placed(byId.get("number"),.7,.3,.07,3,3)));
+   if(filter.equals("exclude"))filtered.add(placed(byId.get("caster"),.8,.65,.07,1,1));
+   check(AonProgram.compile(new AonDrawing(filtered),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75).root().arguments().get(0).type()==(filter.equals("nearest")?AonProgram.Type.ENTITY:AonProgram.Type.ENTITIES));
+   filtered.set(2,placed(byId.get("number"),.5,.45,.08,1,2));
+   bad(()->AonProgram.compile(new AonDrawing(filtered),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75));
+  }
   var cyclic=new AonDrawing(List.of(rootForce,new Glyph(false,.2,.2,.1,byId.get("caster").strokes(),1,1)));bad(()->AonLayout.parents(cyclic));
   var a=placed(byId.get("gaze_block"),.35,.5,.2,-1,1);var b=placed(byId.get("gaze_block"),.65,.5,.2,-1,1);
   check(AonLayout.parentAt(List.of(a,b),2,p(.5,.2))==-2);
@@ -197,7 +204,7 @@ for resource in sorted((ROOT/'src/main/resources/data/cosmerearcanists/aondor/ao
     data=json.loads(resource.read_text())
     lines=','.join('List.of('+','.join(f'p({x},{y})' for x,y in line)+')' for line in data['strokes'])
     patterns.append(f'patterns.add(new AonRecognition.Template("cosmerearcanists:{resource.stem}","{data["name"]}",{str(data["kind"]=="effect").lower()},List.of({lines})));')
-assert len(patterns)==18, 'Expected three effects and fifteen argument Aons'
+assert len(patterns)==22, 'Expected three effects and nineteen argument Aons'
 SOURCE=SOURCE.replace('/* RESOURCE_PATTERNS */','\n'.join(patterns))
 with tempfile.TemporaryDirectory() as tmp:
     source=Path(tmp)/'VerifyAonDor.java';source.write_text(SOURCE)

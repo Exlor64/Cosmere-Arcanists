@@ -25,6 +25,9 @@ public record AonProgram(Node root,double quality) {
             case "add","subtract","multiply","divide","vector","length","normalize"->AonMath.resultType(key,args);
             case "sphere"->{arity(args,2,2,key);expect(args.get(0),key,Type.POSITION);expect(args.get(1),key,Type.NUMBER);yield Type.REGION;}
             case "entities_in"->{arity(args,1,1,key);expect(args.get(0),key,Type.REGION);yield Type.ENTITIES;}
+            case "exclude"->{arity(args,2,2,key);expect(args.get(0),key,Type.ENTITIES);expect(args.get(1),key,Type.ENTITY,Type.ENTITIES);yield Type.ENTITIES;}
+            case "players","mobs"->{arity(args,1,1,key);expect(args.get(0),key,Type.ENTITIES);yield Type.ENTITIES;}
+            case "nearest"->{arity(args,1,2,key);expect(args.get(0),key,Type.ENTITIES);if(args.size()>1)expect(args.get(1),key,Type.POSITION);yield Type.ENTITY;}
             case "light"->{arity(args,0,1,key);if(!args.isEmpty())expect(args.get(0),key,Type.POSITION);yield Type.EFFECT;}
             case "force"->{arity(args,0,2,key);if(!args.isEmpty())expect(args.get(0),key,Type.ENTITY,Type.ENTITIES);if(args.size()>1)expect(args.get(1),key,Type.DIRECTION,Type.VECTOR);yield Type.EFFECT;}
             case "heat"->{arity(args,0,1,key);if(!args.isEmpty())expect(args.get(0),key,Type.ENTITY,Type.ENTITIES,Type.BLOCK);yield Type.EFFECT;}
@@ -45,6 +48,10 @@ public record AonProgram(Node root,double quality) {
         case "cosmerearcanists:length"->"Length(Vector / Direction) → Number";
         case "cosmerearcanists:normalize"->"Normalize(Vector / Direction) → Direction";
         case "cosmerearcanists:sphere"->"Sphere(Position, Number radius) → Region";case "cosmerearcanists:entities_in"->"Entities In(Region) → Entity list";
+        case "cosmerearcanists:exclude"->"Exclude(Entity list, Entity / Entity list) → Entity list";
+        case "cosmerearcanists:players"->"Players(Entity list) → Entity list";
+        case "cosmerearcanists:mobs"->"Mobs(Entity list) → Entity list";
+        case "cosmerearcanists:nearest"->"Nearest(Entity list, [Position; default caster]) → Entity";
         case "cosmerearcanists:light"->"Light([Position])";case "cosmerearcanists:force"->"Force([Target], [Vector / Direction])";case "cosmerearcanists:heat"->"Heat([Entity / Entity list / Block])";default->id;};}
     public String calculations(){var values=new ArrayList<String>();collect(root,values);return values.isEmpty()?"":" Calculations: "+String.join("; ",values);}
     private static void collect(Node node,List<String> values){

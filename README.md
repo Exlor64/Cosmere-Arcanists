@@ -3,7 +3,11 @@ Minecraft **1.21.1**, NeoForge **21.1.256**, Java **21**. Author: **Ex**.
 
 For current project status, accepted design decisions, verification and continuation notes, read [HANDOFF.md](HANDOFF.md). Development and handoff-maintenance instructions are in [AGENTS.md](AGENTS.md).
 
-Current change: **0.58.0-alpha** adds **Add, Subtract, Multiply, Divide, Vector, Length and Normalize** Aons. Numbers0–10 can now produce larger values, fractions and negatives through nested expressions. Math supports vectors, scalar scaling/division and position offsets/differences. Force preserves vector magnitude; Normalize explicitly creates a unit direction. [Math glyph guide](docs/aondor-math-guide.svg) · [Types, controls and test spells](docs/aondor-math-controls.md).
+Current change: **0.59.0-alpha** adds **Exclude, Players, Mobs and Nearest** targeting filters. Filters compose with entity-list selections; Nearest accepts an optional position and defaults to caster feet. Empty Nearest rejects without a default cast. [Filter stroke guide](docs/aondor-filter-guide.svg) · [Signatures and examples](docs/aondor-filter-controls.md).
+
+Implemented locally; 1620 production recognition/type/math checks passed. Two native filter tests added; full Minecraft CI pending. Both local Gradle commands cannot download the distribution (network unavailable). Protocol remains42; use matching mod versions for the new catalog. Main remains unchanged.
+
+Previous change: **0.58.0-alpha** adds **Add, Subtract, Multiply, Divide, Vector, Length and Normalize** Aons. Numbers0–10 can now produce larger values, fractions and negatives through nested expressions. Math supports vectors, scalar scaling/division and position offsets/differences. Force preserves vector magnitude; Normalize explicitly creates a unit direction. [Math glyph guide](docs/aondor-math-guide.svg) · [Types, controls and test spells](docs/aondor-math-controls.md).
 
 Division by zero, invalid types, overflow and zero normalization reject before effects. Numeric/vector values retain their meaning regardless of drawing quality. Existing target/range caps remain; maximumForceVectorMagnitude defaults8. Temporary Light now works in empty chunk sections and has no outline; pistons destroy it rather than moving it away from its expiry. Protocol42 requires matching clients/server.
 

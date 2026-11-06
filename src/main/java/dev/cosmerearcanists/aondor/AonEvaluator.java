@@ -9,7 +9,7 @@ import net.minecraft.world.phys.*;
 /** Typed evaluation precedes mutation; selection failures never turn into default targeting. */
 public final class AonEvaluator {
     private record Sphere(Vec3 center,double radius){}
-    static Object value(ServerPlayer player,AonProgram.Node node){
+    @SuppressWarnings("unchecked") static Object value(ServerPlayer player,AonProgram.Node node){
         var args=node.arguments();String key=node.id().substring(17);
         return switch(key){
             case "caster"->player;
@@ -28,6 +28,10 @@ public final class AonEvaluator {
                 var list=player.serverLevel().getEntitiesOfClass(LivingEntity.class,box,e->e.isAlive()&&!e.isSpectator()&&e.position().distanceToSqr(region.center())<=region.radius()*region.radius());
                 list.sort(Comparator.comparingDouble((LivingEntity e)->e.position().distanceToSqr(region.center())).thenComparingInt(LivingEntity::getId));
                 if(list.size()>AonDorConfig.MAX_TARGETS.get())throw new IllegalArgumentException("Too many targets; use a smaller sphere");yield List.copyOf(list);}
+            case "exclude"->{var list=(List<LivingEntity>)value(player,args.get(0));Object removed=value(player,args.get(1));var excluded=removed instanceof List<?> entries?entries:List.of(removed);yield list.stream().filter(e->!excluded.contains(e)).toList();}
+            case "players"->((List<LivingEntity>)value(player,args.get(0))).stream().filter(e->e instanceof net.minecraft.world.entity.player.Player).toList();
+            case "mobs"->((List<LivingEntity>)value(player,args.get(0))).stream().filter(e->e instanceof net.minecraft.world.entity.Mob).toList();
+            case "nearest"->{var list=(List<LivingEntity>)value(player,args.get(0));var origin=args.size()>1?(Vec3)value(player,args.get(1)):player.position();checkPosition(player,origin);yield list.stream().min(Comparator.comparingDouble((LivingEntity e)->e.position().distanceToSqr(origin)).thenComparingInt(LivingEntity::getId)).orElseThrow(()->new IllegalArgumentException("Nearest found no targets"));}
             default->throw new IllegalArgumentException("Unsupported targeting operation "+key);
         };
     }

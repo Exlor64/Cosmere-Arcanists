@@ -1,6 +1,6 @@
 # Cosmere Arcanists — project handoff
 
-Last updated: **2026-11-06 (America/New_York)**. Current mod version: **0.58.0-alpha**.
+Last updated: **2026-11-06 (America/New_York)**. Current mod version: **0.59.0-alpha**.
 Repository: [Exlor64/Cosmere-Arcanists](https://github.com/Exlor64/Cosmere-Arcanists).
 Platform: **Minecraft 1.21.1 / NeoForge 21.1.256 / Java 21 / Gradle 9.2.1**.
 Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
@@ -8,6 +8,10 @@ Author: **Ex**. Package/mod ID: `dev.cosmerearcanists` / `cosmerearcanists`.
 Read this and `AGENTS.md` when beginning a session. The user requires this file to be updated after every change or project chat. Keep it current rather than appending conflicting summaries.
 
 ## Latest session and next action
+
+- **Targeting filters (2026-11-06; implemented locally; full CI pending):** User says continue after arithmetic/vector branch. Added Exclude(List, Entity|List)→List, Players(List)→List, Mobs(List)→List and Nearest(List,[Position default caster feet])→Entity. Mobs means Minecraft Mob (including animals), excludes players/armor stands. Lists retain order; Nearest breaks distance ties by entity ID and errors on empty lists without fallback casting. Explicit origin checked against loaded casting range. Queries retain initial max-target cap; filters cannot evade it. Server resolves full expression before effects. No new effects, no wire changes (protocol42); version0.59.0-alpha, 22templates. Four distinct asymmetric angular glyphs with restrained circles; exact docs/aondor-filter-guide.svg rendered and visually inspected, controls/examples in docs/aondor-filter-controls.md.
+
+  Verification: tools/validate_aondor.py passed1620actual-production recognition/math/type checks, including all22templates, pairwise confusion, prefix/noise/scale and nested valid/invalid filter typing. Two native GameTests added for list/single exclusion, real Mob/Player/armor stand classification, deterministic Nearest/default/explicit origin, selected Heat and empty-selection failure before mutation. These native tests are pending CI. Both required local Gradle commands failed before compilation downloading Gradle (Network is unreachable). Main unchanged. Next: upload isolated aondor-filters-0.59.0 branch, run both CI builds/server suites/client startup, fix actual failures, record evidence. Previous verified math branch remains846c674fb89254e9a139667915d439bf5de696bf.
 
 - **Arithmetic and vector additions (2026-11-06; implemented locally; implemented on aondor-math-0.58.0; CI GREEN; main unchanged):** User requests Add/Subtract/Multiply/Divide with high-priority Aon art quality and then explicitly requests vector-compatible math. Implemented those4plus Vector(X,Y,Z), Length and Normalize, all non-effect glyphs; 18total templates (3effects+15arguments). Angular asymmetric3–4stroke forms with small circles, no generic +/−/×/÷ icons. Exact guide docs/aondor-math-guide.svg and overloads/examples docs/aondor-math-controls.md. Existing drawn Number0–10 and the Entities In/Look Direction redesigns are included unchanged. User reports current Aons working and specifically recalls successful nested targeting tests (version unspecified); distinguish that feedback from new math verification.
 
