@@ -12,7 +12,7 @@ import net.neoforged.neoforge.registries.*;
 public final class AonLightBlock extends Block {
     public static final DeferredRegister.Blocks BLOCKS=DeferredRegister.createBlocks("cosmerearcanists");
     public static final DeferredBlock<AonLightBlock> LIGHT=BLOCKS.register("aon_light",()->new AonLightBlock());
-    private AonLightBlock(){super(BlockBehaviour.Properties.of().replaceable().noCollission().noOcclusion().noLootTable().lightLevel(s->s.getValue(BlockStateProperties.LEVEL)));registerDefaultState(stateDefinition.any().setValue(BlockStateProperties.LEVEL,12));}
+    private AonLightBlock(){super(BlockBehaviour.Properties.of().replaceable().pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY).noCollission().noOcclusion().noLootTable().lightLevel(s->s.getValue(BlockStateProperties.LEVEL)));registerDefaultState(stateDefinition.any().setValue(BlockStateProperties.LEVEL,12));}
     @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block,BlockState> builder){builder.add(BlockStateProperties.LEVEL);}
     // Keep this a real (non-air) state so empty chunk sections store it. Its geometry is still empty.
     @Override protected net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState state,net.minecraft.world.level.BlockGetter level,BlockPos pos,net.minecraft.world.phys.shapes.CollisionContext context){return net.minecraft.world.phys.shapes.Shapes.empty();}

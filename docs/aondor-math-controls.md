@@ -94,4 +94,6 @@ Position Of(A) from Position Of(B), then Normalize that vector if desired.
 - Existing17glyph/3000point limits remain. No dot/cross products, comparisons, variables,
   loops, persistence, inscriptions or new Dor fuel system in this release.
 
-Protocol41 is unchanged; use matching mod versions for the new glyph/signature UI.
+Protocol42 requires matching clients/server. Light is now stored correctly in empty
+chunk sections, has no outline/collision, and is destroyed by pistons rather than
+moved away from its expiry tick. New glyph/signature UI also needs the updated client.
