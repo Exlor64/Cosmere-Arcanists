@@ -145,6 +145,9 @@ public class VerifyAonDor {
   check(AonNumerals.read(new Glyph(false,.5,.5,tooMany),AonRecognition.Tolerance.defaults(.12,.025))==null);
   var missingCenter=new ArrayList<List<Point>>(AonNumerals.strokes(3));missingCenter.remove(1);check(AonNumerals.read(new Glyph(false,.5,.5,missingCenter),AonRecognition.Tolerance.defaults(.12,.025))==null);
   var duplicateRing=new ArrayList<List<Point>>(AonNumerals.strokes(2));duplicateRing.add(duplicateRing.get(2));check(AonNumerals.read(new Glyph(false,.5,.5,duplicateRing),AonRecognition.Tolerance.defaults(.12,.025))==null);
+  check(AonRecognition.assess(new Glyph(false,.5,.5,tooMany),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018).template()==null);
+  check(AonRecognition.assess(new Glyph(false,.5,.5,missingCenter),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018).template()==null);
+  check(AonRecognition.assess(new Glyph(false,.5,.5,duplicateRing),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018).template()==null);
   System.out.println("PASS: "+checks+" production Aon recognition/order/bounds checks (Java17; no Minecraft runtime).");
  }
 }

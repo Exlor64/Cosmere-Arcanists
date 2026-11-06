@@ -5,7 +5,7 @@ For current project status, accepted design decisions, verification and continua
 
 Current change: **0.57.1-alpha** replaces typed Number with a drawn diamond and circles: center circle means0, each surrounding circle adds1, up to10. Values come from server-recognized ink; the numeric text field is removed. More-than-ten values will require future math expressions. **Entities In** and **Look Direction** now use asymmetric Aon-style linework instead of a face/arrow. [Updated modifier guide](docs/aondor-targeting-guide.svg) · [Number examples](docs/aondor-number-guide.svg).
 
-719production recognition/counting/type/layout checks passed; Minecraft CI and hands-on testing pending. Protocol41 requires matching client/server. Existing operation IDs and learned knowledge remain.
+722production recognition/counting/type/layout checks and both Java21 builds/JUnit/all372required server tests and standalone client startup passed in [CI42152373207](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/42152373207). Available on branch `aondor-modifier-redesign-0.57.1`; main unchanged. New drawings still need hands-on testing. Protocol41 requires matching client/server. Existing operation IDs and learned knowledge remain.
 
 Previous change: **0.57.0-alpha** adds eight targeting Aons and nested typed expressions. Automatic relative-distance grouping is the default; **Alt-click** selects a parent and **Draw Argument** explicitly attaches a child when needed. No locking. Number has an editable numeric value. Release power to cast; Escape cancels. [Glyph guide and controls](docs/aondor-targeting-controls.md).
 
