@@ -7,7 +7,7 @@ Current change: **0.57.0-alpha** adds eight targeting Aons and nested typed expr
 
 **Caster, Gaze Entity, Gaze Block, Position Of, Look Direction, Number, Sphere, Entities In** compose with Light/Force/Heat. For example: `Heat(Entities In(Sphere(Position Of(Caster), Number(3))))`. Existing standalone defaults remain. Region queries currently select living entities, including caster; filters/item selectors are future work. Targets remain bounded, loaded and server-validated. Protocol40 requires matching clients/server.
 
-674production recognition/layout/type checks and18Java syntax checks passed. [CI42147631462](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/42147631462) passed both Java21 builds/JUnit, all371required server tests with and without Curios, and standalone client startup. Implemented on branch `aondor-targeting-0.57.0`; main is unchanged. Hands-on grouping, numeric input and new-glyph usability still need playtesting.
+674production recognition/layout/type checks and18Java syntax checks passed. [CI42147631462](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/42147631462) passed both Java21 builds/JUnit, all371required server tests with and without Curios, and standalone client startup. Published to **main** with explicit user approval; gameplay matches the verified targeting branch. Hands-on grouping, numeric input and new-glyph usability still need playtesting.
 
 Previous change: **0.56.0-alpha** adds base effects for the three existing Aons. **Hold power to draw; release to cast.** Recognition updates automatically without locking the drawing. Escape cancels. The larger canvas has thin white grid lines; learned palette placement and in-air projection remain.
 
