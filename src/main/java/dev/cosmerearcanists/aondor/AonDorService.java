@@ -57,7 +57,7 @@ public final class AonDorService {
         var effect=AonRecognition.assess(drawing.main(),templates,AonDorConfig.tolerance(),AonDorConfig.SHAPE_ERROR.get(),AonDorConfig.SHAPE_GAP.get());
         if(effect.template()==null)return effect.ambiguous()?"Main Aon is ambiguous; refine its shape.":"Main Aon was not recognized. Refine its shape or undo a stroke.";
         if(!effect.template().effect())return "The central Aon must be an effect.";
-        return "Recognized: "+effect.template().name()+" — "+(effect.precise()?"Precise strokes":"Shape only")+"; potency "+Math.round(100*effect.potency(AonDorConfig.FALLBACK_POTENCY.get()))+"%. Drawing test only; no spell was cast.";
+        return "Recognized: "+effect.template().name()+" — "+(effect.precise()?"Precise strokes":"Shape only")+"; potency "+Math.round(100*effect.potency(AonDorConfig.FALLBACK_POTENCY.get()))+"%. Ready to cast; no spell was cast.";
     }
 
     public static String inspect(ServerPlayer player,AonDorNetwork.Check request){
@@ -71,6 +71,22 @@ public final class AonDorService {
         if(permitted(player,request.dimension(),request.slot())){boolean learned=false;for(var glyph:request.drawing().glyphs())learned|=learnDrawing(player,glyph,catalog(player));if(learned)library(player,"Aon learned.");}
         String message=inspect(player,request);
         if(message.length()>2048)message=message.substring(0,2048);
+        PacketDistributor.sendToPlayer(player,new AonDorNetwork.Result(request.nonce(),player.level().dimension().location().toString(),message));
+    }
+    private static final Map<ServerPlayer,Long> CASTED=new WeakHashMap<>();
+    public static String execute(ServerPlayer player,AonDorNetwork.Check request){
+        if(!permitted(player,request.dimension(),request.slot()))return "AonDor is no longer available in this power slot.";
+        if(!request.drawing().arguments().isEmpty())return "Modifiers are not available yet.";
+        var match=AonRecognition.assess(request.drawing().main(),catalog(player),AonDorConfig.tolerance(),AonDorConfig.SHAPE_ERROR.get(),AonDorConfig.SHAPE_GAP.get());
+        if(match.template()==null||!match.template().effect())return "Aon not recognized unambiguously; no spell cast.";
+        long now=player.serverLevel().getGameTime();var last=CASTED.get(player);if(last!=null&&now>=last&&now-last<AonDorConfig.CAST_COOLDOWN.get())return "Wait a moment before casting again.";
+        CASTED.put(player,now);
+        double strength=Math.max(.1,Math.min(4,player.getAttributeValue(PowerAttributes.AONDOR)))*match.potency(AonDorConfig.FALLBACK_POTENCY.get());
+        return AonDorEffects.cast(player,match.template().id(),strength);
+    }
+    public static void cast(ServerPlayer player,AonDorNetwork.Check request){
+        if(!requestAllowed(player))return;
+        String message=execute(player,request);player.displayClientMessage(net.minecraft.network.chat.Component.literal(message),true);
         PacketDistributor.sendToPlayer(player,new AonDorNetwork.Result(request.nonce(),player.level().dimension().location().toString(),message));
     }
     private AonDorService(){}

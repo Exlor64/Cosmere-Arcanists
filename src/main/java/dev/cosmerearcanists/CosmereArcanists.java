@@ -18,6 +18,7 @@ public final class CosmereArcanists {
         dev.cosmerearcanists.koloss.KolossContent.register(bus);
         container.registerConfig(ModConfig.Type.SERVER,dev.cosmerearcanists.koloss.KolossConfig.SPEC,"cosmerearcanists-koloss-server.toml");
         NeoForge.EVENT_BUS.register(new dev.cosmerearcanists.koloss.KolossSpawning());
+        dev.cosmerearcanists.aondor.AonLightBlock.BLOCKS.register(bus);
         ModMetals.register(bus);
         container.registerConfig(ModConfig.Type.SERVER, dev.cosmerearcanists.treasure.TreasureConfig.SPEC, "cosmerearcanists-treasure-server.toml");
         dev.cosmerearcanists.treasure.TreasureLootModifier.register(bus);

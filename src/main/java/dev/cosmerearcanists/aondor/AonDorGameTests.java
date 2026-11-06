@@ -73,6 +73,9 @@ public final class AonDorGameTests {
         var projection=new AonDorNetwork.Projection(UUID.randomUUID(),preview.dimension(),true,glyph);
         var projectionBuffer=new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(),h.getLevel().registryAccess());
         try{AonDorNetwork.Projection.CODEC.encode(projectionBuffer,projection);h.assertTrue(projection.equals(AonDorNetwork.Projection.CODEC.decode(projectionBuffer)),"Projection owner, dimension and ink round-trip");}finally{projectionBuffer.release();}
+        var cast=new AonDorNetwork.Cast(new AonDorNetwork.Check(UUID.randomUUID(),preview.dimension(),0,new AonDrawing(List.of(new AonDrawing.Glyph(true,.5,.5,horizontal())))));
+        var castBuffer=new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(),h.getLevel().registryAccess());
+        try{AonDorNetwork.Cast.CODEC.encode(castBuffer,cast);h.assertTrue(cast.equals(AonDorNetwork.Cast.CODEC.decode(castBuffer)),"Cast raw drawing and request context round-trip");}finally{castBuffer.release();}
         var library=new AonDorNetwork.Library(h.getLevel().dimension().location().toString(),List.of(new AonDorNetwork.Known("test:argument","Argument name",false)),"Learned");
         var listBuffer=new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(),h.getLevel().registryAccess());
         try{AonDorNetwork.Library.CODEC.encode(listBuffer,library);h.assertTrue(library.equals(AonDorNetwork.Library.CODEC.decode(listBuffer)),"Only the bounded learned-name list is transmitted with the library");}

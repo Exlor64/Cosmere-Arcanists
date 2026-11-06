@@ -9,7 +9,7 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import org.lwjgl.glfw.GLFW;
 
 public final class AonDorClient {
-    private static boolean opened,draftLocked;
+    private static boolean opened,draftRecognized;
     private static UUID owner;
     private static String dimension="";
     private static AonDrawing draft;
@@ -21,7 +21,7 @@ public final class AonDorClient {
         for(int code=GLFW.GLFW_KEY_SPACE;code<=GLFW.GLFW_KEY_LAST;code++)if(GLFW.glfwGetKeyScancode(code)==key.getValue())return InputConstants.isKeyDown(window,code);
         return false;
     }
-    public static void remember(AonDorScreen screen) {owner=screen.owner();dimension=screen.dimension();draft=screen.drawing();draftLocked=screen.locked();}
+    public static void remember(AonDorScreen screen) {owner=screen.owner();dimension=screen.dimension();draft=screen.drawing();draftRecognized=screen.recognized();}
     public static void receive(AonDorNetwork.Result result) {var mc=Minecraft.getInstance();if(mc.screen instanceof AonDorScreen screen)screen.result(result);}
     public static void receiveLibrary(AonDorNetwork.Library packet){var mc=Minecraft.getInstance();if(mc.level!=null&&mc.player!=null&&mc.screen instanceof AonDorScreen screen)screen.library(packet);}
     public static void receiveStamp(AonDorNetwork.Stamp packet){var mc=Minecraft.getInstance();if(mc.level!=null&&mc.player!=null&&mc.screen instanceof AonDorScreen screen)screen.stamp(packet);}
@@ -33,6 +33,6 @@ public final class AonDorClient {
         int slot=primary&&PowerClient.APPLY.isDown()&&AonDorService.POWER.equals(PowerClient.primaryPower())?0:secondary&&PowerClient.SECONDARY.isDown()&&AonDorService.POWER.equals(PowerClient.secondaryPower())?1:-1;
         if(slot<0)return;opened=true;
         if(!mc.player.getUUID().equals(owner)||!mc.level.dimension().location().toString().equals(dimension))draft=null;
-        var screen=new AonDorScreen(slot,draft);screen.restoreLock(draft!=null&&draftLocked);mc.setScreen(screen);
+        var screen=new AonDorScreen(slot,draft);screen.restoreRecognition(draft!=null&&draftRecognized);mc.setScreen(screen);
     }
 }

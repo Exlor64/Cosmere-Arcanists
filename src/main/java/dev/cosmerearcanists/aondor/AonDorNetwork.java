@@ -94,7 +94,15 @@ public final class AonDorNetwork {
             public void encode(RegistryFriendlyByteBuf b,Projection p){b.writeUUID(p.owner);b.writeUtf(p.dimension,128);b.writeBoolean(p.active);writeGlyph(b,p.glyph);}};
         @Override public Type<Projection> type(){return TYPE;}
     }
+    public record Cast(Check request) implements CustomPacketPayload {
+        public static final Type<Cast> TYPE=AonDorNetwork.type("aondor_cast");
+        public static final StreamCodec<RegistryFriendlyByteBuf,Cast> CODEC=new StreamCodec<>(){
+            public Cast decode(RegistryFriendlyByteBuf b){return new Cast(Check.CODEC.decode(b));}
+            public void encode(RegistryFriendlyByteBuf b,Cast p){Check.CODEC.encode(b,p.request);}};
+        @Override public Type<Cast> type(){return TYPE;}
+    }
     public static void register(PayloadRegistrar registrar){
+        registrar.playToServer(Cast.TYPE,Cast.CODEC,(p,c)->c.enqueueWork(()->{if(c.player() instanceof net.minecraft.server.level.ServerPlayer player)AonDorService.cast(player,p.request());}));
         registrar.playToServer(Preview.TYPE,Preview.CODEC,(p,c)->c.enqueueWork(()->{if(c.player() instanceof net.minecraft.server.level.ServerPlayer player)AonDorService.preview(player,p);}));
         registrar.playToClient(Projection.TYPE,Projection.CODEC,(p,c)->c.enqueueWork(()->projectionReceiver.accept(p)));
         registrar.playToServer(Check.TYPE,Check.CODEC,(p,c)->c.enqueueWork(()->{if(c.player() instanceof net.minecraft.server.level.ServerPlayer player)AonDorService.check(player,p);}));

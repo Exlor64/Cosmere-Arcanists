@@ -7,49 +7,32 @@ with small circular marks. Exact shapes and stroke starts/directions:
 
 ## Trying the interface
 
-Grant development access as an operator:
+Grant `/attribute <player> cosmerearcanists:aondor_strength base set 1`, then select
+AonDor. Hold G (or H in the secondary slot) to open the drawing canvas. Draw with
+left mouse, undo with Ctrl+Z, and **release the held power key to cast**. Recognition
+updates automatically; recognition never locks the canvas. Escape cancels without
+casting. Focus loss, death or slot/dimension change also cancel. The server checks
+the finished raw drawing again at cast time. Unknown/ambiguous drawings do nothing.
 
-```mcfunction
-/attribute <player> cosmerearcanists:aondor_strength base set 1
-```
+The canvas fills most of the screen with thin white grid lines. Ink has a soft white
+halo and bright core. The in-air projection is visible to tracking players. Scroll
+learned Aons for a preview; right-click anchors a template, mouse distance sets size,
+left-click confirms, right-click/Escape cancels placement. Unfinished placement is
+cancelled on power release; the previously completed drawing is used. Drafts and
+learned knowledge remain; no persistent spells or inscriptions are implemented.
 
-Select AonDor, then hold primary use-power (G) or secondary (H). Left-drag
-inside the large central tile; strokes and previews have a soft white halo and bright white core; each mouse release ends a stroke. Use **Lock Aon**
-for authoritative server recognition. Successful recognition locks the drawing,
-shows its name, recognition mode and potency. Further drawing cannot change it.
-**Edit Aon** unlocks; **Reset** clears; **Undo / Ctrl+Z** reverses strokes, moving,
-confirmed placement, locking, unlocking and reset (up to 100 edits per screen).
-An unfinished stroke or placement is cancelled first. Drag the unlocked tile title
-to reposition it. Releasing the power key closes without casting.
+## Standalone defaults
 
-A matching luminous projection floats1.5blocks ahead of the player while the screen
-is open. The artist sees ink update each frame; tracking players receive snapshots
-at most4times/second. It follows facing, respects terrain depth, and disappears on
-close (remote timeout30ticks). It is cosmetic and emits no actual world light.
+- Light: actual level12light in nearby empty air for20seconds; no blocks overwritten.
+- Force: pushes the nearest valid living gaze target within8blocks, adding .45velocity.
+- Heat: reduces freezing by140ticks, melts one snow layer or ordinary/frosted ice,
+  or lights a dry unlit campfire. No arbitrary fires, damage or cooking.
 
-Recognition normalizes translation and uniform scale, preserving proportions and
-orientation. The precise pass checks stroke order/direction, path, endpoints,
-corners and relative lengths. A separate symmetric combined-ink comparison ignores
-order, direction and pen lifts. Clear shape-only matches show **75% potency** by
-default; precise matches show **100%**. Shape ambiguity is rejected even if stroke
-order favors one candidate. Potency is a test readout: no live spell is executed.
-
-A clear recognized drawing unlocks the server-owned learned palette, including a
-shape-only match. Scroll previews learned names/shapes; right-click anchors a
-shape, mouse distance controls size, left-click confirms and requests recognition.
-Right-click/Escape cancels unfinished placement. Proper palette templates give
-normal potency. Locked drawings must be unlocked before replacement.
-
-Knowledge survives saves/relogs/death. Draft drawings and lock state survive
-closing/reopening in the same client/player/dimension; undo history is per screen,
-not persisted. Unknown patterns cannot be fetched as palette stamps. No modifiers
-are exposed; server validation rejects argument-bearing drawings for this test.
-Future typed/nested clockwise expressions, standalone default effects, item/block
-inscriptions and Elantrian regional acquisition remain planned.
-
-Config `cosmerearcanists-aondor-server.toml` includes ordered recognition metrics,
-`maximumShapeError=.065`, `minimumShapeGap=.018`, `shapeOnlyPotency=.75`.
-Changing config in existing worlds follows normal server-config rules.
+These defaults are at strength1 with precise recognition. Shape-only matches apply
+75%potency by default. Light brightness/duration, Force impulse and thaw amount
+scale; discrete block interactions remain one block. Server cooldown20ticks. Fuel,
+modifiers, typed/nested expressions and item/block inscription are future work.
+Only the three existing effect glyphs ship. Modifier workspace/glyph design is next.
 
 ## Defining simplified Aons
 
@@ -93,6 +76,6 @@ cornerWeight(0.1) and relativeStrokeLengthWeight(0.1). Uniform drawing size is
 normalized away; relative stroke lengths, endpoints and signed turns help
 distinguish similar shapes while retaining order/direction. Known IDs are bounded
 to1024per player; at most256active definitions appear in a library snapshot.
-Matching client/server protocol38 is required. Sel's acquisition, regional power
+Matching client/server protocol39 is required. Sel's acquisition, regional power
 attenuation, live effect evaluator, argument types, costs and cross-world behavior
 remain unimplemented and must be designed separately.
