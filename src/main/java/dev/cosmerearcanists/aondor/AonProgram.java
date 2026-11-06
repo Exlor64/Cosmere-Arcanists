@@ -3,7 +3,7 @@ import java.util.*;
 
 /** Pure typed expression compiler; no world mutation occurs until the complete program is valid. */
 public record AonProgram(Node root,double quality) {
-    public enum Type {ENTITY,BLOCK,POSITION,DIRECTION,VECTOR,NUMBER,REGION,ENTITIES,EFFECT}
+    public enum Type {ENTITY,BLOCK,POSITION,DIRECTION,VECTOR,NUMBER,REGION,ENTITIES,VALUE,EFFECT}
     public record Node(String id,double number,Type type,List<Node> arguments){}
     public static AonProgram compile(AonDrawing drawing,List<AonRecognition.Template> templates,AonRecognition.Tolerance tolerance,double shapeError,double gap,double fallback){
         if(!drawing.glyphs().get(0).effect())throw new IllegalArgumentException("Draw the main effect first");
@@ -25,6 +25,8 @@ public record AonProgram(Node root,double quality) {
             case "add","subtract","multiply","divide","vector","length","normalize"->AonMath.resultType(key,args);
             case "sphere"->{arity(args,2,2,key);expect(args.get(0),key,Type.POSITION);expect(args.get(1),key,Type.NUMBER);yield Type.REGION;}
             case "entities_in"->{arity(args,1,1,key);expect(args.get(0),key,Type.REGION);yield Type.ENTITIES;}
+            case "remember"->{arity(args,0,2,key);if(!args.isEmpty())expect(args.get(0),key,Type.NUMBER);if(args.size()>1&&args.get(1).type()==Type.EFFECT)throw new IllegalArgumentException("Remember stores a value, not an effect");yield Type.EFFECT;}
+            case "recall"->{arity(args,0,1,key);if(!args.isEmpty())expect(args.get(0),key,Type.NUMBER);yield Type.VALUE;}
             case "exclude"->{arity(args,2,2,key);expect(args.get(0),key,Type.ENTITIES);expect(args.get(1),key,Type.ENTITY,Type.ENTITIES);yield Type.ENTITIES;}
             case "players","mobs"->{arity(args,1,1,key);expect(args.get(0),key,Type.ENTITIES);yield Type.ENTITIES;}
             case "nearest"->{arity(args,1,2,key);expect(args.get(0),key,Type.ENTITIES);if(args.size()>1)expect(args.get(1),key,Type.POSITION);yield Type.ENTITY;}
@@ -48,6 +50,8 @@ public record AonProgram(Node root,double quality) {
         case "cosmerearcanists:length"->"Length(Vector / Direction) → Number";
         case "cosmerearcanists:normalize"->"Normalize(Vector / Direction) → Direction";
         case "cosmerearcanists:sphere"->"Sphere(Position, Number radius) → Region";case "cosmerearcanists:entities_in"->"Entities In(Region) → Entity list";
+        case "cosmerearcanists:remember"->"Remember([Number key = 0], [Value = Caster])";
+        case "cosmerearcanists:recall"->"Recall([Number key = 0]) → stored value";
         case "cosmerearcanists:exclude"->"Exclude(Entity list, Entity / Entity list) → Entity list";
         case "cosmerearcanists:players"->"Players(Entity list) → Entity list";
         case "cosmerearcanists:mobs"->"Mobs(Entity list) → Entity list";
@@ -60,5 +64,5 @@ public record AonProgram(Node root,double quality) {
     }
     private static String format(double value){String text=Double.toString(value);return text.endsWith(".0")?text.substring(0,text.length()-2):text;}
     private static void arity(List<Node> args,int min,int max,String id){if(args.size()<min||args.size()>max)throw new IllegalArgumentException(id+" expects "+(min==max?min:min+"–"+max)+" arguments; received "+args.size());}
-    private static void expect(Node node,String id,Type... types){if(Arrays.stream(types).noneMatch(t->t==node.type()))throw new IllegalArgumentException(id+" received "+node.type()+"; expected "+Arrays.toString(types));}
+    private static void expect(Node node,String id,Type... types){if(node.type()!=Type.VALUE&&Arrays.stream(types).noneMatch(t->t==node.type()))throw new IllegalArgumentException(id+" received "+node.type()+"; expected "+Arrays.toString(types));}
 }

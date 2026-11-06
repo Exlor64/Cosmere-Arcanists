@@ -3,9 +3,13 @@ Minecraft **1.21.1**, NeoForge **21.1.256**, Java **21**. Author: **Ex**.
 
 For current project status, accepted design decisions, verification and continuation notes, read [HANDOFF.md](HANDOFF.md). Development and handoff-maintenance instructions are in [AGENTS.md](AGENTS.md).
 
-Current change: **0.59.0-alpha** adds **Exclude, Players, Mobs and Nearest** targeting filters. Filters compose with entity-list selections; Nearest accepts an optional position and defaults to caster feet. Empty Nearest rejects without a default cast. [Filter stroke guide](docs/aondor-filter-guide.svg) · [Signatures and examples](docs/aondor-filter-controls.md).
+Current change: **0.60.0-alpha** adds **Remember and Recall**: typed variables indexed by numeric keys. Ordinary caster-private memory lasts60seconds; feruchemical copper storing/tapping writes/reads persistent values in a touching coppermind. Numbers, vectors/directions, positions, blocks, regions, entity references and entity lists retain their types. [Memory guide](docs/aondor-memory-guide.svg) · [Controls and examples](docs/aondor-memory-controls.md).
 
-Implemented locally; 1620 production recognition/type/math checks passed. Two native filter tests added; full Minecraft CI pending. Both local Gradle commands cannot download the distribution (network unavailable). Protocol remains42; use matching mod versions for the new catalog. Main remains unchanged.
+1786production recognition/type/math checks passed. Five native memory tests added; full Minecraft CI pending. Existing copper Identity, capacity, entry limits and wipe rules apply. Recalled entities never load chunks and effects retain normal range/target limits. Protocol42 remains; install matching versions for the new glyph catalog. Main unchanged.
+
+Previous change: **0.59.0-alpha** adds **Exclude, Players, Mobs and Nearest** targeting filters. Filters compose with entity-list selections; Nearest accepts an optional position and defaults to caster feet. Empty Nearest rejects without a default cast. [Filter stroke guide](docs/aondor-filter-guide.svg) · [Signatures and examples](docs/aondor-filter-controls.md).
+
+1620 production checks and both Java21 builds/JUnit/all379required server tests passed in [CI42256395145](https://github.com/Exlor64/Cosmere-Arcanists/actions/runs/42256395145), including standalone graphical client startup. Available on `aondor-filters-0.59.0`; main unchanged. Protocol42.
 
 Previous change: **0.58.0-alpha** adds **Add, Subtract, Multiply, Divide, Vector, Length and Normalize** Aons. Numbers0–10 can now produce larger values, fractions and negatives through nested expressions. Math supports vectors, scalar scaling/division and position offsets/differences. Force preserves vector magnitude; Normalize explicitly creates a unit direction. [Math glyph guide](docs/aondor-math-guide.svg) · [Types, controls and test spells](docs/aondor-math-controls.md).
 

@@ -3,7 +3,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 public final class AonDorConfig {
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.BooleanValue ENABLED;
-    public static final ModConfigSpec.IntValue LIGHT_SECONDS,LIGHT_LEVEL,THAW,CAST_COOLDOWN,MAX_TARGETS;
+    public static final ModConfigSpec.IntValue LIGHT_SECONDS,LIGHT_LEVEL,THAW,CAST_COOLDOWN,MAX_TARGETS,MEMORY_SECONDS,MEMORY_ENTRIES;
     public static final ModConfigSpec.DoubleValue RANGE,FORCE,MAX_FORCE_VECTOR;
     public static final ModConfigSpec.DoubleValue SHAPE_ERROR,SHAPE_GAP,FALLBACK_POTENCY,ERROR,GAP,MINIMUM_EXTENT,PATH_WEIGHT,ENDPOINT_WEIGHT,CORNER_WEIGHT,LENGTH_WEIGHT;
     static {var b=new ModConfigSpec.Builder();ENABLED=b.define("enabled",true);
@@ -16,6 +16,7 @@ public final class AonDorConfig {
         SHAPE_ERROR=b.comment("Maximum combined-ink error for shape-only fallback.").defineInRange("maximumShapeError",.065,.005,.2);
         SHAPE_GAP=b.defineInRange("minimumShapeGap",.018,.001,.2);
         FALLBACK_POTENCY=b.comment("Potency multiplier shown for shape-only matches; applies to standalone spell effects.").defineInRange("shapeOnlyPotency",.75,.05,1.0);
+        b.push("memory");MEMORY_SECONDS=b.defineInRange("temporarySeconds",60,1,3600);MEMORY_ENTRIES=b.defineInRange("maximumEntries",64,1,256);b.pop();
         b.push("baseEffects");
         MAX_TARGETS=b.defineInRange("maximumTargets",32,1,128);
         LIGHT_SECONDS=b.defineInRange("lightSeconds",20,1,120);

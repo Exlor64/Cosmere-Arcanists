@@ -125,6 +125,10 @@ public class VerifyAonDor {
    filtered.set(2,placed(byId.get("number"),.5,.45,.08,1,2));
    bad(()->AonProgram.compile(new AonDrawing(filtered),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75));
   }
+  var memoryInk=List.of(placed(byId.get("remember"),.5,.7,.08,-1,1),placed(byId.get("number"),.5,.4,.08,0,2),placed(byId.get("caster"),.8,.7,.08,0,1));
+  check(AonProgram.compile(new AonDrawing(memoryInk),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75).root().type()==AonProgram.Type.EFFECT);
+  var recallInk=List.of(placed(byId.get("heat"),.5,.7,.08,-1,1),placed(byId.get("recall"),.5,.4,.08,0,1),placed(byId.get("number"),.5,.2,.08,1,2));
+  check(AonProgram.compile(new AonDrawing(recallInk),patterns,AonRecognition.Tolerance.defaults(.12,.025),.065,.018,.75).root().arguments().get(0).type()==AonProgram.Type.VALUE);
   var cyclic=new AonDrawing(List.of(rootForce,new Glyph(false,.2,.2,.1,byId.get("caster").strokes(),1,1)));bad(()->AonLayout.parents(cyclic));
   var a=placed(byId.get("gaze_block"),.35,.5,.2,-1,1);var b=placed(byId.get("gaze_block"),.65,.5,.2,-1,1);
   check(AonLayout.parentAt(List.of(a,b),2,p(.5,.2))==-2);
@@ -204,7 +208,7 @@ for resource in sorted((ROOT/'src/main/resources/data/cosmerearcanists/aondor/ao
     data=json.loads(resource.read_text())
     lines=','.join('List.of('+','.join(f'p({x},{y})' for x,y in line)+')' for line in data['strokes'])
     patterns.append(f'patterns.add(new AonRecognition.Template("cosmerearcanists:{resource.stem}","{data["name"]}",{str(data["kind"]=="effect").lower()},List.of({lines})));')
-assert len(patterns)==22, 'Expected three effects and nineteen argument Aons'
+assert len(patterns)==24, 'Expected four effects and twenty argument Aons'
 SOURCE=SOURCE.replace('/* RESOURCE_PATTERNS */','\n'.join(patterns))
 with tempfile.TemporaryDirectory() as tmp:
     source=Path(tmp)/'VerifyAonDor.java';source.write_text(SOURCE)

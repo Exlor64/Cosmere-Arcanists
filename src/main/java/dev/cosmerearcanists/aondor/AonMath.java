@@ -14,8 +14,9 @@ public final class AonMath {
         int needed=operation.equals("vector")?3:operation.equals("length")||operation.equals("normalize")?1:2;
         if(args.size()!=needed)throw new IllegalArgumentException(operation+" expects "+needed+" arguments; received "+args.size());
         var a=args.get(0).type();var b=args.size()>1?args.get(1).type():null;
-        if(operation.equals("vector")){if(args.stream().anyMatch(n->n.type()!=Type.NUMBER))throw new IllegalArgumentException("Vector expects three Numbers (X, Y, Z)");return Type.VECTOR;}
-        if(operation.equals("length")||operation.equals("normalize")){if(!vector(a))throw new IllegalArgumentException(operation+" expects a Vector or Direction");return operation.equals("length")?Type.NUMBER:Type.DIRECTION;}
+        if(operation.equals("vector")){if(args.stream().anyMatch(n->n.type()!=Type.NUMBER&&n.type()!=Type.VALUE))throw new IllegalArgumentException("Vector expects three Numbers (X, Y, Z)");return Type.VECTOR;}
+        if(operation.equals("length")||operation.equals("normalize")){if(!vector(a)&&a!=Type.VALUE)throw new IllegalArgumentException(operation+" expects a Vector or Direction");return operation.equals("length")?Type.NUMBER:Type.DIRECTION;}
+        if(a==Type.VALUE||b==Type.VALUE)return Type.VALUE;
         if(a==Type.NUMBER&&b==Type.NUMBER&&Set.of("add","subtract","multiply","divide").contains(operation))return Type.NUMBER;
         return switch(operation){
             case "add"->{if(vector(a)&&vector(b))yield Type.VECTOR;if(a==Type.POSITION&&vector(b)||vector(a)&&b==Type.POSITION)yield Type.POSITION;throw types(operation,a,b);}

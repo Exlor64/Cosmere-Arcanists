@@ -61,7 +61,7 @@ public final class CopperService {
         var root=stack.getOrDefault(DataComponents.CUSTOM_DATA,CustomData.EMPTY).copyTag();root.remove(KEY);stack.set(DataComponents.CUSTOM_DATA,CustomData.of(root));return true;
     }
     public static void eraseBook(net.minecraft.server.MinecraftServer server,UUID book){
-        var data=CopperBooks.get(server);var pages=data.books.remove(book);
+        var data=CopperBooks.get(server);var pages=data.books.remove(book);data.variables.remove(book);
         if(pages!=null){var images=new LinkedHashSet<UUID>();for(var page:pages.values())if(page.kind()==CopperPage.SCREENSHOT)images.add(page.id());images.addAll(data.erasedImages);data.erasedImages.clear();data.erasedImages.addAll(images);data.setDirty();}
         for(var session:List.copyOf(SESSIONS.values()))if(session.book.equals(book))close(session.player,"This coppermind has been emptied; its memories were erased.");
         for(var entry:List.copyOf(TRACKED.entrySet()))if(entry.getValue().book.equals(book)){
@@ -102,7 +102,7 @@ public final class CopperService {
                 case SAVE -> {var id=page==null?UUID.randomUUID():page.id();var update=new CopperPage(id,page==null?CopperPage.NOTE:page.kind(),title(r.title()),text(r.text()),page==null?"":page.dimension(),page==null?BlockPos.ZERO:page.position(),page==null?0:page.imageBytes());put(p,s,update);}
                 case LOCATION -> put(p,s,new CopperPage(UUID.randomUUID(),CopperPage.WAYPOINT,title(r.title()),text(r.text()),p.level().dimension().location().toString(),p.blockPosition()));
                 case DELETE -> {if(page!=null){if(page.kind()==CopperPage.SCREENSHOT)CopperImages.delete(p.server,page.id());pages.remove(page.id());data.setDirty();var track=TRACKED.get(p.getUUID());if(track!=null&&track.page.equals(page.id()))clearWaypoint(p);snapshot(p,s,"");}}
-                case BEGIN -> {long now=p.server.overworld().getGameTime();if(now-UPLOAD_TICKS.getOrDefault(p.getUUID(),now-100)<100)throw new IOException("Wait a few seconds before capturing another screenshot");if(!FeruchemyConfig.COPPER_SCREENSHOTS.get()||r.number()<8||r.number()>FeruchemyConfig.COPPER_IMAGE_BYTES.get()||pages.size()>=FeruchemyConfig.COPPER_PAGES.get())throw new IOException("Screenshot or notebook limit reached");if(SESSIONS.values().stream().filter(x->x.upload!=null).count()>=8)throw new IOException("Screenshot transfers are busy; try again");var u=new Upload();u.transfer=r.entry();u.id=UUID.randomUUID();u.title=title(r.title());u.text=text(r.text());u.total=r.number();u.expires=p.server.overworld().getGameTime()+200;s.upload=u;UPLOAD_TICKS.put(p.getUUID(),now);}
+                case BEGIN -> {long now=p.server.overworld().getGameTime();if(now-UPLOAD_TICKS.getOrDefault(p.getUUID(),now-100)<100)throw new IOException("Wait a few seconds before capturing another screenshot");if(!FeruchemyConfig.COPPER_SCREENSHOTS.get()||r.number()<8||r.number()>FeruchemyConfig.COPPER_IMAGE_BYTES.get()||(pages.size()+CopperBooks.get(p.server).variables.getOrDefault(s.book,new LinkedHashMap<>()).size())>=FeruchemyConfig.COPPER_PAGES.get())throw new IOException("Screenshot or notebook limit reached");if(SESSIONS.values().stream().filter(x->x.upload!=null).count()>=8)throw new IOException("Screenshot transfers are busy; try again");var u=new Upload();u.transfer=r.entry();u.id=UUID.randomUUID();u.title=title(r.title());u.text=text(r.text());u.total=r.number();u.expires=p.server.overworld().getGameTime()+200;s.upload=u;UPLOAD_TICKS.put(p.getUUID(),now);}
                 case CHUNK -> {var u=s.upload;if(u==null||p.server.overworld().getGameTime()>u.expires||!u.transfer.equals(r.entry())||r.number()!=u.bytes.size()||r.bytes().length==0||u.bytes.size()+r.bytes().length>u.total){s.upload=null;return;}u.bytes.write(r.bytes());}
                 case FINISH -> {var u=s.upload;s.upload=null;if(u==null||p.server.overworld().getGameTime()>u.expires||!u.transfer.equals(r.entry())||u.bytes.size()!=u.total)return;byte[] png=CopperImages.normalize(u.bytes.toByteArray());var image=new CopperPage(u.id,CopperPage.SCREENSHOT,u.title,u.text,p.level().dimension().location().toString(),p.blockPosition(),png.length);validatePage(p,s,image);CopperImages.write(p.server,u.id,png);try{put(p,s,image);}catch(IOException e){data.erasedImages.add(u.id);data.setDirty();retryErasedImages(p.server,64);throw e;}}
                 default -> {}
@@ -115,11 +115,11 @@ public final class CopperService {
     private static int bytesPerCharge(ServerPlayer p){return (int)Math.min(Integer.MAX_VALUE,Math.floor(FeruchemyConfig.COPPER_BYTES_PER_CHARGE.get()*(1+dev.cosmerearcanists.hemalurgy.ImplantService.memoryBonus(p))));}
     public static long capacityBytes(ServerPlayer p,ItemStack stack){return CopperCapacity.bytes(Math.min(Metalminds.charge(stack),Metalminds.capacity(stack)),bytesPerCharge(p));}
     public static long capacityBytes(ItemStack stack){return CopperCapacity.bytes(Math.min(Metalminds.charge(stack),Metalminds.capacity(stack)),FeruchemyConfig.COPPER_BYTES_PER_CHARGE.get());}
-    public static long usedBytes(ServerPlayer p,Session s){return CopperBooks.get(p.server).books.get(s.book).values().stream().mapToLong(CopperPage::dataBytes).sum();}
+    public static long usedBytes(ServerPlayer p,Session s){return CopperBooks.get(p.server).books.get(s.book).values().stream().mapToLong(CopperPage::dataBytes).sum()+variableBytes(CopperBooks.get(p.server),s.book);}
     private static long proposedBytes(ServerPlayer p,Session s,CopperPage page){var old=CopperBooks.get(p.server).books.get(s.book).get(page.id());return usedBytes(p,s)-(old==null?0:old.dataBytes())+page.dataBytes();}
     private static void validatePage(ServerPlayer p,Session s,CopperPage page)throws IOException{
         var pages=CopperBooks.get(p.server).books.get(s.book);
-        if(!pages.containsKey(page.id())&&pages.size()>=FeruchemyConfig.COPPER_PAGES.get())throw new IOException("This coppermind is full");
+        if(!pages.containsKey(page.id())&&(pages.size()+CopperBooks.get(p.server).variables.getOrDefault(s.book,new LinkedHashMap<>()).size())>=FeruchemyConfig.COPPER_PAGES.get())throw new IOException("This coppermind is full");
         int length=pages.values().stream().filter(row->!row.id().equals(page.id())).mapToInt(row->row.text().length()).sum()+page.text().length();
         if(length>FeruchemyConfig.COPPER_TEXT.get())throw new IOException("Notebook text limit reached");
         var access=find(p,s.book);if(access==null||!Metalminds.writable(p,access.stack(),"copper"))throw new IOException("This coppermind is no longer writable");
@@ -136,6 +136,35 @@ public final class CopperService {
             if(capacityBytes(p,access.stack())<proposed)throw new IOException("Could not store enough copper charge for this memory.");
         }
         var data=CopperBooks.get(p.server);data.books.get(s.book).put(page.id(),page);data.setDirty();snapshot(p,s,"");
+    }
+    /** Uses the existing copper state, Identity/aluminum gates, touching pieces and physical capacity. */
+    public static int memoryMode(ServerPlayer p){return eligible(p)?Integer.signum(PowerData.state(p,"f:copper")):0;}
+    private static Metalminds.Access memoryAccess(ServerPlayer p,boolean storing){
+        if(!eligible(p)||(PowerData.state(p,"f:copper")<0)!=storing)throw new IllegalArgumentException(storing?"Store copper to write Aon memory":"Tap copper to read Aon memory");
+        var list=pieces(p);var session=session(p);
+        if(session!=null){var selected=find(p,session.book);if(selected!=null)return selected;}
+        for(var access:list)if(storing||!identity(access.stack()).equals(ZERO)&&CopperBooks.get(p.server).books.containsKey(identity(access.stack())))return access;
+        throw new IllegalArgumentException("Hold or wear an accessible copper metalmind");
+    }
+    private static long variableSize(net.minecraft.nbt.CompoundTag value){return 16L+value.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8).length;}
+    private static long variableBytes(CopperBooks data,UUID book){return data.variables.getOrDefault(book,new LinkedHashMap<>()).values().stream().mapToLong(CopperService::variableSize).sum();}
+    public static void storeVariable(ServerPlayer p,int key,net.minecraft.nbt.CompoundTag value){
+        if(key<0||key>1000000||value.toString().length()>32768)throw new IllegalArgumentException("Invalid Aon memory entry");
+        var access=memoryAccess(p,true);if(!Metalminds.writable(p,access.stack(),"copper"))throw new IllegalArgumentException("This coppermind is not writable");
+        UUID book=prepare(p,access);if(book.equals(ZERO))throw new IllegalArgumentException("Could not prepare this coppermind");
+        var data=CopperBooks.get(p.server);var values=data.variables.computeIfAbsent(book,id->new LinkedHashMap<>());var pages=data.books.get(book);
+        if(!values.containsKey(key)&&values.size()+pages.size()>=FeruchemyConfig.COPPER_PAGES.get())throw new IllegalArgumentException("This coppermind is full");
+        long used=pages.values().stream().mapToLong(CopperPage::dataBytes).sum()+variableBytes(data,book);long proposed=used-(values.containsKey(key)?variableSize(values.get(key)):0)+variableSize(value);
+        if(proposed>used&&proposed>CopperCapacity.bytes(Metalminds.capacity(access.stack()),bytesPerCharge(p)))throw new IllegalArgumentException("Not enough copper capacity for this variable");
+        if(proposed>used&&proposed>capacityBytes(p,access.stack())){
+            double target=CopperCapacity.requiredCharge(proposed,bytesPerCharge(p));double moved=Metalminds.transferForStorage(p,access.stack(),"copper",Math.nextUp(target-Metalminds.charge(access.stack())));if(moved>0)access.changed().run();
+            if(capacityBytes(p,access.stack())<proposed)throw new IllegalArgumentException("Could not store enough copper charge for this variable");
+        }
+        values.put(key,value.copy());data.setDirty();var active=session(p);if(active!=null&&active.book.equals(book))snapshot(p,active,"Aon memory stored at key "+key);
+    }
+    public static net.minecraft.nbt.CompoundTag recallVariable(ServerPlayer p,int key){
+        var access=memoryAccess(p,false);var values=CopperBooks.get(p.server).variables.get(identity(access.stack()));
+        if(values==null||!values.containsKey(key))throw new IllegalArgumentException("Coppermind has no Aon memory at key "+key);return values.get(key).copy();
     }
     public static void tick(ServerPlayer p){
         int mode=eligible(p)?Integer.signum(PowerData.state(p,"f:copper")):0;int previous=MODES.getOrDefault(p.getUUID(),0);MODES.put(p.getUUID(),mode);
